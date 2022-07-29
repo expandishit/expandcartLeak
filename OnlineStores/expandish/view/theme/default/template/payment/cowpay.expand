@@ -1,0 +1,159 @@
+<div id="cowpay-form" class="payment-method__info">
+    <div class="row" style="padding: 10px 0px;">
+        <aside class="col-sm-12">
+            <article class="card">
+                <div class="card-body p-5">
+                    <!-- COWPAY_ERROR -->
+                    <div id="cowpay-error" class="alert alert-danger alert-dismissible" style="display: none"
+                         role="alert">
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span
+                                    aria-hidden="true">×</span></button>
+                        <span id="cowpay-error-message"></span>
+                    </div>
+                    <!-- END COWPAY_ERROR -->
+
+                    <!-- COWPAY_FORM -->
+                    <form role="form" id="cc-payment-form">
+
+                        <!-- COWPAY_HOLDER_NAME -->
+                        <div class="form-group">
+                            <label for="username">{{ lang('card_holder_name') }}</label>
+                            <div class="input-group">
+                                <div class="input-group-addon">
+                                    <span class="input-group-text"><i class="fa fa-user"></i></span>
+                                </div>
+                                <input type="text" class="form-control username" id="cowpay-ccname" name="card_holder"
+                                       placeholder="" required="">
+                            </div>
+                        </div>
+                        <!-- END COWPAY_HOLDER_NAME -->
+
+                        <!-- COWPAY_CARD_NUMBER -->
+                        <div class="form-group">
+                            <label for="cardNumber">{{ lang('card_number') }}</label>
+                            <div class="input-group">
+                                <div class="input-group-addon">
+                                    <span class="input-group-text"><i class="fa fa-credit-card"></i></span>
+                                </div>
+                                <input type="text" class="form-control cardNumber" id="cowpay-ccnum" name="card_number"
+                                       required="">
+                            </div>
+                        </div>
+                        <!-- END COWPAY_CARD_NUMBER -->
+
+
+                        <div class="row">
+                            <!-- COWPAY_EXPIREATION_DATE -->
+                            <div class="col-sm-8">
+                                <div class="form-group">
+                                    <label><span class="hidden-xs">{{ lang('expiration_date') }}</span> </label>
+                                    <div class="form-inline">
+                                        <label data-toggle="tooltip" title=""
+                                               data-original-title="3 digits code on back side of the card">{{ lang('expiration_date_month') }}
+                                            <input type="text" id="cowpay-expmonth" class="form-control months"
+                                                   style="width:45%" maxlength="2" name="expiry_month" value="MM">
+                                            <span style="width:10%; text-align: center"> / </span></label>
+                                        <label data-toggle="tooltip" title=""
+                                               data-original-title="3 digits code on back side of the card">{{ lang('expiration_date_year') }}
+                                            <input type="text" id="cowpay-expyear" class="form-control year"
+                                                   style="width:45%" maxlength="2" name="expiry_year" value="YY"></label>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- END COWPAY_EXPIREATION_DATE -->
+
+                            <!-- COWPAY_CVV -->
+                            <div class="col-sm-4">
+                                <div class="form-group">
+                                    <label data-toggle="tooltip" title=""
+                                           data-original-title="3 digits code on back side of the card">CVV <i
+                                                class="fa fa-question-circle"></i></label>
+                                    <input class="form-control ccv" id="cowpay-cvv" name="cvv" required=""
+                                           type="password">
+                                </div>
+                            </div>
+                            <!-- END COWPAY_CVV -->
+
+                        </div>
+                        <!-- COWPAY_EXPIREATION_DATE -->
+
+                    </form>
+                    <!-- END COWPAY_FORM -->
+                </div>
+            </article>
+            <div>
+                <button type="button" class="btn-rect text-uppercase bg-color btn btn-inline"
+                        id="cowpay-confirm-payment" style="display: none">Confirm Payment
+                </button>
+            </div>
+        </aside>
+
+    </div>
+</div>
+
+
+{#<div class="buttons" style="">#}
+{#    <div class="right"><a id="button-confirm" class="button"><span>{{ lang('button_confirm') }}</span></a></div>#}
+{#</div>#}
+<script type="text/javascript">
+
+    $('#cowpay-confirm-payment').on('click', function () {
+        // init();
+        confirmPayment();
+    });
+
+
+    /**
+     *
+     */
+    function confirmPayment() {
+        $.ajax({
+            type: 'post',
+            url: 'index.php?route=payment/cowpay/confirmPayment',
+            cache: false,
+            data: $("form").serializeArray(),
+            success: function (data) {
+                data = JSON.parse(data);
+                if (data['response']['success'] != true) {
+                    $("#cowpay-error").css("display", "block");
+                    if(data['response']['message']){
+                        $("#cowpay-error-message").empty().text(data['response']['message']);
+                    }else{
+                        $("#cowpay-error-message").empty().text(data['response']['status_description']);
+                    }
+                    return;
+                }
+                window.location = data['callback_url'];
+                return;
+            },
+            error: function (err) {
+                console.log(err);
+            }
+        });
+    }
+
+    /**
+     * intialize IFRAME
+     */
+    function init() {
+        $.ajax({
+            type: 'post',
+            url: 'index.php?route=payment/cowpay/init',
+            cache: false,
+            success: function (data) {
+                let response = JSON.parse(data);
+                console.log("SUCCESS", response['response']);
+                if (response['response'] !== null && response['response']['success'] == true) {
+                    $("#cowpay_payment").attr('src', 'https://cowpay.me/api/v0/iframes/cc/' + response['response']['token'] + '/load/' + response['iframe_id']).css('display', 'block');
+                } else {
+                    $("#cowpay_error").text(response['response']['message']).css('display', 'block');
+                    console.log(response);
+                }
+            },
+            error: function (err) {
+                console.log(err);
+            }
+        });
+    }
+
+</script>

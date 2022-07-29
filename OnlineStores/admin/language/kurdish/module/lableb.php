@@ -1,0 +1,66 @@
+<?php
+$_  = [ 
+    'lableb_heading_title'  => 'Lableb', 
+    'error_warning'    => 'Hişyarî: Ji kerema xwe bizanin ku zeviyên çewt an pêwîst binirxînin!', 
+    'text_settings'  => 'Mîhengên', 
+    'text_enabled'  => 'Enabled', 
+    'text_disabled'  => 'Seqet kirin', 
+    'please_wait' => 'Ji kerema xwe li bendê be ...', 
+
+    //entry
+    'entry_status'  => 'Rewş', 
+    'entry_name'  => 'Navê Hesabê', 
+    'entry_first_name'  => 'Navê yekem', 
+    'entry_last_name'  => 'Navê paşîn', 
+    'entry_phone_number'  => 'Telefon', 
+    'entry_payment_method_id'  => 'Nasnameya Payment Payment', 
+    'entry_email'  => 'Email', 
+    'entry_password'  => 'Şîfre', 
+    'entry_confirm_password'  => 'Passwordîfreya piştrast bike', 
+    'entry_project'  => 'Projeya', 
+    'entry_index_apikey'  => 'Index Apikey', 
+    'entry_search_apikey'  => 'Lêgerîn Apikey', 
+
+    //text
+    'text_settings_success'  => 'Mîhengên bi serfirazî hate nûve kirin', 
+    'text_success'  => 'Mîhengên bi serfirazî hate nûve kirin', 
+    'text_register_success'  => 'Hesab bi serkeftî hate afirandin', 
+    'text_bulkdelete_success'  => 'Koda bi serfirazî hate jêbirin', 
+    'text_lableb_info'  => "Heke hûn hesabê we nebin divê hûn pêşî li LebleB ji vê girêdanê qeyd bikin", 
+    'text_lableb_account_info'  => 'Agahdariya Hesabê LableB', 
+    'text_register_now'  => 'Naha qeyd bikin', 
+    'text_register'  => 'Naha qeyd bikin', 
+    'text_register_new_account'  => 'Hesabê nû ya LableB-ê biafirîne', 
+    'text_get_payment_method_id'  => 'Ji bo we ji bo xwe bikirtînin', 
+    'text_payment_method_head'  => 'Nasnameya Methodê ya Dayikê bistînin', 
+    'text_import'  => 'Indexing', 
+    'text_import_help'  => 'Ji kerema xwe gava ku serîlêdanê tenê tê saz kirin, hilberên yekem nîşan didin. Dê hilberek piştî wê were zêdekirin dê bixweber were index kirin ', 
+    'text_indexing_help'  => 'Indexing dibe ku demek dirêj bike, li gorî hejmara hilberên we!', 
+
+    //btn
+    'btn_index_products'  => 'Berhemên Index', 
+    'button_register'  => 'Register', 
+    'btn_confirm'  => 'Piştrast bike', 
+    'button_start'  => 'Indeksa Destpêkê', 
+
+    // error
+    'error_permission'      => 'Hişyarî: Hûn destûr nînin ku hûn kodên guhêzbar bikin!', 
+    'text_bulkdelete_error'      => 'Errorewtiyek nediyar çêbû', 
+    'unexpected_error'      => 'Errorewtiyek nediyar çêbû', 
+    'error_index_apikey_required'      => 'Index Apikey Pêdivî ye', 
+    'error_search_apikey_required'      => 'Vebijarka API-yê hewce bike', 
+    'error_name_required'      => 'Navê Hesabê Pêdivî ye', 
+    'error_first_name_required'      => 'Navê yekem hewce ye', 
+    'error_last_name_required'      => 'Navê paşîn hewce ye', 
+    'error_phone_number_required'      => 'Hejmara têlefonê hewce ye', 
+    'error_payment_method_id_required'      => 'Nasnameya Payment', 
+    'error_email_required'      => 'Pêwîst e', 
+    'error_password_required'      => 'Passwordîfreya Pêdivî ye', 
+    'error_confirm_password_required'      => 'Passwordîfreya Pêdivî ya Pêdivî ye', 
+    'error_confirm_password_not_match'      => "Passwordîfre û piştrast bikin ku şîfreya hev nagirin", 
+    'error_invalid_email_password'      => "Daneyên Lebleb Hesabê Berbiçav an şîfreya", 
+    'job_done_message'  => 'Indexing bi serfirazî hate çêkirin', 
+    'this_account_already_existed'  => 'Hesabek ji bo wê e-nameyê jixwe heye', 
+    'entered_automitaically'  => 'Dê piştî tomarkirina e-name û şîfreyê bixweber were têkevin', 
+    'text_products_already_indexed'  => 'Berhemên ku berê hatine nîşankirin' 
+];

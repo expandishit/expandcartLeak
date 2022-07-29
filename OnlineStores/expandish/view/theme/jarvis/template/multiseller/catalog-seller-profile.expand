@@ -1,0 +1,297 @@
+<div id="content" class="container ms-catalog-seller-products">
+
+        {# Start :: Breadcrumb #}
+        <div class="block block-breadcrumbs clearfix">
+            <ul>
+                {% for breadcrumb in breadcrumbs %} {% if loop.last %}
+                <li>
+                    <li>{{ breadcrumb['text'] }}</li>
+                </li>
+                {% else %}
+                <li class="home">
+                    <a href="{{ breadcrumb['href'] }}">{{ breadcrumb['text'] }}</a>
+                    <span></span>
+                </li>
+                {% endif %} {% endfor %}
+            </ul>
+        </div>
+        {# End :: Breadcrumb #}
+    
+        {# Start :: Seller informations #}
+        <div class="category-desc" style="text-align: center;">
+            <br>
+            <a href="{{ seller.href }}"><img src="{{ seller.thumb }}"/></a>
+            <br>
+            <a href="{{ seller.href }}"><h1 class="title30 seller-title-h1" style="margin-bottom:10px;">{{ seller.nickname }}</h1></a>
+            {% if seller.description %}
+            <p>{{ seller.description }}</p>
+            {% endif %}
+    
+            {% if seller.country %}
+            <p><b>{{ ms_catalog_seller_profile_country }}</b> {{ seller.country }}</p>
+            {% endif %}
+    
+            {% if seller.company %}
+            <p><b>{{ ms_catalog_seller_profile_company }}</b> {{ seller.company }}</p>
+            {% endif %}
+    
+            {% if seller.website %}
+            <p><b>{{ ms_catalog_seller_profile_website }}</b> {{ seller.website }}</p>
+            {% endif %}
+
+            <p><b>{{ ms_catalog_seller_profile_totalproducts }}</b> {{ seller['total_products'] }}</p>
+            {% if (sellers_totals == 'yes_show') or (sellers_totals == 'yes_show_if_value' and seller['total_sales'] > 0) %}
+                <p><b>{{ ms_catalog_seller_profile_totalsales }}</b> {{seller['total_sales'] }}</p>
+            {% endif %}
+        </div>
+        {# End :: Seller informations #}
+    
+        <br><br>
+        {% if seller['products'] %}
+    
+            {# Start :: Products navigation #}
+            <div class="sortPagiBar">
+                <ul class="display-product-option">
+                    <li class="view-as-grid selected" onclick="$('.products-grid').show(); $('.products-list').hide(); $('.view-as-list').removeClass('selected'); $('.view-as-grid').addClass('selected'); return false;">
+                        <span>grid</span>
+                    </li>
+                    <li class="view-as-list" onclick="$('.products-list').show(); $('.products-grid').hide(); $('.view-as-grid').removeClass('selected'); $('.view-as-list').addClass('selected'); return false;">
+                        <span>list</span>
+                    </li>
+                </ul>
+            </div>
+            {# End :: Products navigation #}
+    
+            <!-- Grid Products 33-->
+            <div class="products-grid category-products">
+                <ul class="products row">
+                    {% for product in seller.products %}
+                    <li class="product col-xs-12 col-sm-4 col-md-3">
+                        <div class="product-container padding-custom">
+                            <div>
+                                <div class="product-left">
+                                    <div class="product-thumb">
+                                        <a class="product-img" href="{{ product.href }}"><img src="{{ image(product.image, 500, 500) }}" alt="{{ product.name }}"></a>
+                                        <a title="Quick View" href="{{ product.href }}" class="btn-quick-view  fancybox.iframe">Quick View</a>
+                                    </div>
+                                </div>
+                                <div class="product-right box-custom">
+                                    <div class="price-box">
+                                        {% if ('-1' in product.price) or ('-1' in product.special) %}
+                                            <span class="product-price clickable" onclick="contact_us('{{ product.product_id }}');">{{ lang('button_req_quote') }}</span>
+                                            <div id="enquiry-{{ product.product_id }}" style="display:none">{{ product.name }}:</div>
+                                        {% elseif product.special %}
+                                            <span class="product-price">{{ product.special }}</span>
+                                            <span class="product-price-old">&nbsp;&nbsp;&nbsp;&nbsp;{{ product.price }}</span>
+                                        {% else %}
+                                            <span class="product-price">{{ product.price }}</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="product-name">
+                                        {% if config('show_brands') %}
+                                        <a href="{{ product.manufacturer_href }}">{{ product.manufacturer }}</a><br>
+                                        {% endif %}
+                                        <a href="{{ product.href }}">{{ product.name }}</a>
+                                        <!-- Show seller -->
+                                        {% if config('show_seller') %}
+                                        <div style="padding-top: 8px" class="title-seller">
+                                            <span >{{lang('Text-Seller')}} : </span>
+                                            <a href="javascript://"> {{ seller.nickname }}</a>
+                                        </div>                                            
+                                        {% endif %}
+                                        <!-- /Show seller -->
+                                        <!-- Show Quantity box -->
+                                        {% if config('show_quantity') %}
+                                        <div class="block-product-info" style="margin-top: 0">
+                                            <table class="variations-table">
+                                                <tr>
+                                                    <td class="table-label">{{ lang('text_Quantity') }} : </td>
+                                                    <td class="table-value">
+                                                        <div class="box-qty">
+                                                            <a class="quantity-minus" onclick="$('#qty_sp{{ product.product_id }}').val( parseInt($('#qty_sp{{ product.product_id }}').val()) - 1 )">-</a>
+                                                            <input type="text" style="width: 50px;" class="form-control qty qty-val input-qty quantity" name="quantity" id="qty_sp{{ product.product_id }}" name="qty{{ product.product_id }}" value="1" maxlength="12" minlength="1" min="1">
+                                                            <a class="quantity-plus" onclick="$('#qty_sp{{ product.product_id }}').val( parseInt($('#qty_sp{{ product.product_id }}').val()) + 1 )">+</a>
+                                                        </div>
+                                                     </td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                        {% endif %}
+                                        <!-- /Show Quantity box -->
+                                    </div>                                    
+                                    <div class="product-star">
+                                            {% if product.rating == 0 %}
+                                            <i class="fa fa-star-o"></i>
+                                            <i class="fa fa-star-o"></i>
+                                            <i class="fa fa-star-o"></i>
+                                            <i class="fa fa-star-o"></i>
+                                            <i class="fa fa-star-o"></i>
+                                            {% elseif product.rating == 1 %}
+                                            <i class="fa fa-star"></i>
+                                            <i class="fa fa-star-o"></i>
+                                            <i class="fa fa-star-o"></i>
+                                            <i class="fa fa-star-o"></i>
+                                            <i class="fa fa-star-o"></i>
+                                            {% elseif product.rating == 2 %}
+                                            <i class="fa fa-star"></i>
+                                            <i class="fa fa-star"></i>
+                                            <i class="fa fa-star-o"></i>
+                                            <i class="fa fa-star-o"></i>
+                                            <i class="fa fa-star-o"></i>
+                                            {% elseif product.rating == 3 %}
+                                            <i class="fa fa-star"></i>
+                                            <i class="fa fa-star"></i>
+                                            <i class="fa fa-star"></i>
+                                            <i class="fa fa-star-o"></i>
+                                            <i class="fa fa-star-o"></i>
+                                            {% elseif product.rating == 4 %}
+                                            <i class="fa fa-star"></i>
+                                            <i class="fa fa-star"></i>
+                                            <i class="fa fa-star"></i>
+                                            <i class="fa fa-star"></i>
+                                            <i class="fa fa-star-o"></i>
+                                            {% else %}
+                                            <i class="fa fa-star"></i>
+                                            <i class="fa fa-star"></i>
+                                            <i class="fa fa-star"></i>
+                                            <i class="fa fa-star"></i>
+                                            <i class="fa fa-star"></i>
+                                            {% endif %}
+                                    </div>
+                                    <div class="product-button product-extra-link padding-custom-link">
+                                        {% if ('-1' in product.price) or ('-1' in product.special) %}
+                                            <a class="button-radius btn-add-cart" onclick="contact_us('{{ product.product_id }}');">Buy<span class="icon"></span></a>
+                                        {% else %}
+                                            <a class="addcart-link custom-btn width-custom" href="javascript://" 
+                                            {% if config('show_quantity') %}
+                                            onclick="addToCartQty({{ product.product_id }}, 'sp'); return false;"
+                                            {% else %}
+                                            onclick="addToCart({{ product.product_id }}, 1); return false;"
+                                            {% endif %}
+                                            >
+                                            <!-- Buy<span class="icon"></span> -->
+                                            {{lang('button_cart')}}
+											<span>{{lang('button_cart')}}</span>
+                                        </a>
+                                        {% endif %}
+                                        <a class="wishlist-link" href="#" onclick="addToWishList({{ product.product_id }}); return false;">
+                                            <span>{{ lang('button_wishlist') }}</span>
+                                        </a>
+                                        <a class="compare-link" href="#" onclick="addToCompare({{ product.product_id }}, 1); return false;">
+                                            <span>
+                                                    {{ lang('button_compare') }}
+                                            </span>
+                                        </a>    
+                                    </div>
+                                </div>
+                            </div>   
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+    
+            <!-- List Products -->
+            <div class="products-list category-products" style="display:none;">
+                <ul class="products list row">
+                    {% for product in seller.products %}
+                    <li class="product col-xs-12 col-sm-6">
+                            <div class="product-container">
+                                <div class="inner row">
+                                    <div class="product-left col-sm-6">
+                                        <div class="product-thumb">
+                                            <a class="product-img" href="{{ product.href }}"><img src="{{ image(product.image, 500, 500) }}" alt="Product"></a>
+                                            <a title="Quick View" href="{{ product.href }}" class="btn-quick-view  fancybox.iframe">Quick View</a>
+                                        </div>
+                                    </div>
+                                    <div class="product-right col-sm-6">
+                                        <div class="product-name">
+                                            {% if config('show_brands') %}
+                                            <a href="{{ product.manufacturer_href }}">{{ product.manufacturer }}</a><br>
+                                            {% endif %}
+                                            <a href="{{ product.href }}">{{ product.name }}</a>
+                                        </div>
+                                        <div class="price-box">
+                                                {% if product.special > 0 %}
+                                                <span class="product-price">{{ product.special }}</span>
+                                                <span class="product-price-old">{{ product.price }}</span>
+                                                {% else %}
+                                                <span class="product-price">{{ product.price }}</span>
+                                                {% endif %}
+                                        </div>
+                                        <div class="product-star">
+                                                {% if product.rating == 0 %}
+                                                <i class="fa fa-star-o"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                {% elseif product.rating == 1 %}
+                                                <i class="fa fa-star"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                {% elseif product.rating == 2 %}
+                                                <i class="fa fa-star"></i>
+                                                <i class="fa fa-star"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                {% elseif product.rating == 3 %}
+                                                <i class="fa fa-star"></i>
+                                                <i class="fa fa-star"></i>
+                                                <i class="fa fa-star"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                {% elseif product.rating == 4 %}
+                                                <i class="fa fa-star"></i>
+                                                <i class="fa fa-star"></i>
+                                                <i class="fa fa-star"></i>
+                                                <i class="fa fa-star"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                {% else %}
+                                                <i class="fa fa-star"></i>
+                                                <i class="fa fa-star"></i>
+                                                <i class="fa fa-star"></i>
+                                                <i class="fa fa-star"></i>
+                                                <i class="fa fa-star"></i>
+                                                {% endif %}
+                                        </div>
+                                        <div class="desc">{{ product.description }}</div>
+                                        <div class="product-button">
+                                            <a class="btn-add-wishlist" title="Add to Wishlist" href="#" onclick="addToWishList({{ product.product_id }}); return false;">Add Wishlist</a>
+                                            <a class="btn-add-comparre" title="Add to Compare" href="#" onclick="addToCompare({{ product.product_id }}, 1); return false;">Add Compare</a>
+                                            <a class="button-radius btn-add-cart" title="Add to Cart" href="#" onclick="addToCart({{ product.product_id }}, 1); return false;">Buy<span class="icon"></span></a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+    
+            {# Start :: Products navigation #}
+            <div class="sortPagiBar">
+                <ul class="display-product-option">
+                    <li class="view-as-grid selected" onclick="$('.products-grid').show(); $('.products-list').hide(); $('.view-as-list').removeClass('selected'); $('.view-as-grid').addClass('selected'); return false;">
+                        <span>grid</span>
+                    </li>
+                    <li class="view-as-list" onclick="$('.products-list').show(); $('.products-grid').hide(); $('.view-as-grid').removeClass('selected'); $('.view-as-list').addClass('selected'); return false;">
+                        <span>list</span>
+                    </li>
+                </ul>
+            </div>
+            {# End :: Products navigation #}
+    
+            {# <br><br>
+            <p style="text-align: center;">
+                <a href="{{ seller.href }}">{{ ms_catalog_seller_profile_view }}</a>
+            </p> #}
+    
+        {% else %}
+            <div class="content">{{ ms_catalog_seller_products_empty }}</div>
+        {% endif %}
+    
+    </div>

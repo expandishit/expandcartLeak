@@ -1,0 +1,114 @@
+{% set allFeaturedCategories = getFeaturedCategories(fields['categories']['field_value'], 500, 500) %}
+{% set items_count = allFeaturedCategories|length %}
+{% set rows = ' ' %}
+{% if fields.productsPerRow.field_value == '1' %}
+      {% set rows = 'two-in-row' %}
+{% elseif fields.productsPerRow.field_value == '2' %}
+      {% set rows = 'two-in-row' %}
+{% elseif fields.productsPerRow.field_value == '3' %}
+      {% set rows = 'three-in-row' %}
+{% elseif fields.productsPerRow.field_value == '4' %}
+    {% set rows = 'four-in-row' %}
+{% elseif fields.productsPerRow.field_value == '5' %}
+    {% set rows = 'five-in-row' %}
+{% elseif fields.productsPerRow.field_value == '6' %}
+    {% set rows = 'six-in-row' %}
+{% elseif fields.productsPerRow.field_value == '7' %}
+    {% set rows = 'seven-in-row' %}
+{% elseif fields.productsPerRow.field_value == '8' %}
+    {% set rows = 'eight-in-row' %}
+{% endif %}
+{% if items_count > 0 %}
+<section class="content  " id="section-{{ section_id }}" style="background-color:{{fields.sectionColor.field_value}}">
+    <div class="container">
+        {% if fields.displaysectiontitle.field_value == '1' %}
+        <h2 class="text-center text-uppercase">{{ fields.sectiontitle.field_value }}</h2>
+        {% endif %}
+        <!-- Filters -->
+        <section class="filters-by-category">
+            <div class="container">
+                <ul class="option-set" data-option-key="filter">
+                    <li><a href="#filter" data-option-value="*" class="selected">{{lang('button_view_all')}}</a></li>
+                    {% for category in allFeaturedCategories %}
+                    <li><a href="#filter" data-option-value=".{{category['category_id']}}" class="">{{category.name}}</a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </section>
+        <!-- //end Filters --> 
+        <div class="products-grid products-listing products-col products-isotope {{rows}}">
+            {% for category in allFeaturedCategories %}
+            {% set items = fields.noOfProducts.field_value %}
+            {% set categoryProducts = getProductsByCategoryId(category['category_id'], items , 500, 500) %}
+            {% for item_product in categoryProducts %}
+            <div class="product-preview-wrapper {{category['category_id']}}">
+              <div class="product-preview">
+                <div class="product-preview__image"><a href="{{ item_product.href }}"><img src="{{ item_product.thumb }}" data-lazy="{{ item_product.thumb }}" alt=""/></a></div>
+
+                <div class="product-preview__label product-preview__label--left product-preview__label--new"><span>{{lang('text_new')}}</span></div>
+                <div class="hide productAvailableDate">{{item_product.date_available }}</div>
+                <div class="hide timeInterval">{{ templatesettings.newProductDuration['newInterval'] }}</div>
+                
+                {% if item_product.special != ''%}
+                <div class="product-preview__label product-preview__label--right product-preview__label--sale">
+                  <span>{{ lang("text_sale")}}<br>
+                  -{{item_product.saving}} %</span>
+                </div>
+                {% endif %}
+                <div class="product-preview__info text-center">
+                  <div class="product-preview__info__btns">
+                    <a href="#" onclick="event.preventDefault(); addToCart({{ item_product.product_id }},1); return false;" class="btn btn--round ajax-to-cart"><span class="icon icon-ecommerce"></span></a> 
+                    <a href="{{ item_product.href }}" class="btn btn--round btn--dark" ><span class="icon icon-eye"></span></a>
+                  </div>
+                  <div class="product-preview__info__title">
+                    <h2><a href="{{ item_product.href }}">{{ item_product.name }}</a></h2>
+                    {% if config('show_brands') and item_product.manufacturer %}
+                    <h6><a href="{{ item_product.manufacturer_href }}" id="brand_sections" alt"{{ item_product.manufacturer }}">{{ item_product.manufacturer }}</a></h6>
+                    {% endif %}
+                  </div>
+                  {% if config('config_review_status') == '1'  %}
+                  <div class="rating">
+                      <img src="{{ asset('image/stars-' ~ item_product.rating ~ '.png') }}" alt="{{ lang('text_reviews')|format(reviews_count) }}"/>  
+                  </div>
+                  {% endif %}
+                  <div class="price-box ">
+                    {% if ('-1' in item_product.price) or ('-1' in item_product.special) %}
+                    <span class="price-box__new clickable" onclick="contact_us('{{ item_product.product_id }}');">{{ lang('button_req_quote') }} </span>
+                    <div id="enquiry-{{ item_product.product_id }}"  style="display:none">{{ item_product.name }}:</div>
+                    {% elseif item_product.special != ''%}
+                    <span class="price-box__new">{{item_product.special}}</span> <span class="price-box__old">{{item_product.price}}</span>
+                    {% else %}
+                    <div class="price-box">{{item_product.price}}</div>
+                    {% endif %}
+                  </div>
+                  {% if item_product.short_description != '' %}
+                  <div class="product-preview__info__description">
+                    <p>{{ item_product.short_description }}</p>
+                  </div>
+                  {% endif %}
+                  <div class="product-preview__info__link">
+                    <a href="#" onclick="event.preventDefault(); addToCompare('{{ item_product.product_id }}',1); return false;" class="compare-link"><span class="icon icon-bars"></span><span class="product-preview__info__link__text">{{lang('button_compare')}}</span></a> 
+                    <a href="#" onclick="event.preventDefault(); addToWishList('{{ item_product.product_id }}',1); return false;" class="ajax-to-wishlist"><span class="icon icon-favorite"></span><span class="product-preview__info__link__text">{{lang('button_wishlist')}}</span></a>
+                    <a href="#" onclick="event.preventDefault(); addToCart({{ item_product.product_id }},1, {{ ('-1' in item_product.price) or ('-1' in item_product.special) ? 'true' : 'false' }}); return false;" class="btn btn--wd buy-link"><span class="icon icon-ecommerce"></span><span class="product-preview__info__link__text">{{ ('-1' in item_product.price) or ('-1' in item_product.special) ? lang('button_req_quote') : lang('button_cart') }}</span></a></div>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+            {% endfor %}
+        </div>
+    </div>
+</section>  
+{% endif %}
+<script>
+  $(document).ready(function() {
+
+      $(".product-preview-wrapper").each(function (index, value){
+        var dateofProduct = ( $(this).find('.productAvailableDate').html());
+        var interVal = ( $(this).find('.timeInterval').html());
+        var end = new Date(dateofProduct);
+        var newDate = new Date(end.setTime( end.getTime() + interVal * 86400000 ));
+        var today = new Date();
+        if(newDate<today) { ( $(this).find('.product-preview__label--new').hide()) } 
+      });
+  });
+</script>

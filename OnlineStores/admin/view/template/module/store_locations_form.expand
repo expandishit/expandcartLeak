@@ -1,0 +1,328 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% import 'controls/uploader.expand' as uploader %}
+
+{% block title %}
+    {{ lang('heading_title', 'module/store_locations') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+    {% include "includes/buttons_top.expand" %}
+{% endblock headelements %}
+
+{% block content %}
+<style>
+  #map{
+    width:100%;
+    min-height:300px;
+  }
+</style>
+    <form action="{{ action }}" class="form" method="post" enctype="multipart/form-data">
+
+      <div class="panel panel-flat">
+        <div class="panel-heading">
+          <div class="heading-elements">
+            <ul class="icons-list">
+              <li><a data-action="collapse"></a></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="panel-body">
+          <div class="row">
+            <div class="col-md-12">
+              <fieldset>
+                <div class="row">
+                  <div class="col-md-12">
+                    <div class="form-group">
+                      <label>{{ store_loc_name }}</label>
+                      <input type="text" name="Name" class="form-control" value="{{ Name }}">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <p>ابحث عنوان</p>
+                      <input type="text" name="autocompleteField" id="autocompleteField" class="form-control" placeholder="ابحث عن عنوان">
+                      <br>
+                      <div id="map"></div>
+                      <input type="hidden" id="latMap" name="latMap" value="{{lat}}">
+                      <input type="hidden" id="lngMap" name="lngMap" value="{{lon}}">
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label>{{ store_loc_address }}</label>
+                      <textarea id="Address" name="Address" class="form-control" rows="3">{{ Address }}</textarea>
+                    </div>
+                    <div class="form-group">
+                      <label>{{ store_loc_email }}</label>
+                      <input type="text" id="Email" name="Email" class="form-control" value="{{ Email }}">
+                    </div>
+                    <div class="form-group">
+                      <label>{{ store_loc_phone }}</label>
+                      <input type="text" id="Phone" name="Phone" class="form-control" value="{{ Phone }}">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label>{{ store_loc_offers }}</label>
+                      <input type="text" name="SpecialOffers" class="form-control" value="{{ SpecialOffers }}">
+                    </div>
+                  </div>
+
+                  <div class="col-md-3">
+                    <div class="form-group">
+                      <label>{{ store_loc_timing }}</label>
+                      <input type="text" name="Timing" class="form-control" value="{{ Timing }}">
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="form-group">
+                      <label>{{ entry_sort_order }}</label>
+                      <input type="text" name="sort_order" class="form-control" value="{{ sort_order }}">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-12">
+                      <div class="form-group">
+                        <label>{{ store_loc_detail }}</label>
+                        <textarea id="Details" name="Details" rows="3" class="form-control">{{ Details }}</textarea>
+                      </div>
+                  </div>
+                </div>
+              </fieldset>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel panel-flat">
+        <div class="panel-heading">
+          <div class="heading-elements">
+            <ul class="icons-list">
+              <li><a data-action="collapse"></a></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="panel-body">
+
+          </div>
+          <div class="table-responsive">
+               <table id="images" class="table table-hover">
+            <thead>
+              <tr>
+                <td class="left">{{ store_loc_image }}</td>
+                <td class="right">{{ entry_sort_order }}</td>
+                <td></td>
+              </tr>
+            </thead>
+            {% set image_row = 0 %}
+            {% for location_image in location_images %}
+            <tbody id="image-row{{ loop.index }}">
+              <tr>
+                <td class="left">
+                  <div class="image">
+                    <img src="{{ location_image['thumb'] }}" alt="" id="thumb{{ loop.index }}" />
+                    <input type="hidden" name="location_image[{{ loop.index }}][image]" value="{{ location_image['image'] }}" id="image{{ loop.index }}" />
+                    <br />
+                    {{ uploader.image({ 'thumbPath': thumb, 'imagePath': image }) }}
+                  </div>
+                </td>
+                <td class="right">
+                  <input type="text" name="location_image[{{ loop.index }}][sort_order]" value="{{ location_image['sort_order'] }}" class="form-control" />
+                </td>
+                <td class="text-center">
+                  <a href="javascript://" onclick="confirmMessage(function () {$('#image-row{{ loop.index }}').remove();})" class="text-danger-600"><i class="icon-trash"></i></a>
+                </td>
+              </tr>
+            </tbody>
+            {% set image_row = loop.index + 1 %}
+            {% endfor %}
+            <tfoot>
+              <tr>
+                <td colspan="2"></td>
+                <td class="text-right">
+                  <a onclick="addImage();" class="btn btn-success btn-labeled btn-xs"><b><i class="icon-plus3"></i></b> {{ button_add_image }}</a>
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+          </div>
+      </div>
+    </form>
+<script src="https://maps.googleapis.com/maps/api/js?key={{ store_locations_api_key }}&libraries=places&callback=initMap&language=ar" async defer></script>
+<script>
+	let map, coords, infoWindow, marker, geocoder,autocomplete,defaultZoom,latMap,lngMap;
+  latMap = document.getElementById("latMap");
+  lngMap = document.getElementById("lngMap");
+
+  if(lngMap.value == null || lngMap.value == undefined || lngMap.value == 0 || lngMap.value == ''){
+    coords = {lat:24.7083919,lng:46.6787582};
+  }else{
+    coords = {lat:parseInt(latMap.value),lng:parseInt(lngMap.value)};
+  }
+
+  function initMap(){
+    defaultZoom = 8;
+		infoWindow = new google.maps.InfoWindow;
+		geocoder = new google.maps.Geocoder;
+    
+    map = new google.maps.Map(document.getElementById('map'), {
+      center: coords,
+      zoom: defaultZoom,
+      mapTypeId: 'roadmap',
+    });
+
+    var marker = new google.maps.Marker({
+      position: coords,
+      map: map,
+      draggable: true,
+    });
+
+    autocomplete = new google.maps.places.Autocomplete(document.getElementById('autocompleteField'));
+
+    // Bind the map's bounds (viewport) property to the autocomplete object,
+		// so that the autocomplete requests use the current map bounds for the
+		// bounds option in the request.
+		autocomplete.bindTo('bounds', map);
+
+    // Set the data fields to return when the user selects a place.
+		autocomplete.setFields(['address_components', 'geometry', 'icon', 'name']);
+
+    marker.setMap(map);
+
+    autocomplete.addListener('place_changed', function(e) {
+			marker.setVisible(false);
+
+			var place = autocomplete.getPlace();
+			
+			if (!place.geometry) {
+				// User entered the name of a Place that was not suggested and
+				// pressed the Enter key, or the Place Details request failed.
+				// window.alert("No details available for input: '" + place.name + "'");
+				return;
+			}
+
+			// If the place has a geometry, then present it on a map.
+			if (place.geometry.viewport) {
+				map.fitBounds(place.geometry.viewport);
+			} else {
+				map.setCenter(place.geometry.location);
+				map.setZoom(defaultZoom);
+			}
+
+			marker.setPosition(place.geometry.location);
+			marker.setVisible(true);
+
+			var address = '';
+			if (place.address_components) {
+				address = [
+				(place.address_components[0] && place.address_components[0].short_name || ''),
+				(place.address_components[1] && place.address_components[1].short_name || ''),
+				(place.address_components[2] && place.address_components[2].short_name || '')
+				].join(' ');
+			}
+
+			document.getElementById('Address').value = address;
+		});
+
+    map.addListener('click',function(e){
+      latMap.value = e.latLng.lat();
+      lngMap.value = e.latLng.lng();
+			coords = {lat: e.latLng.lat(),lng: e.latLng.lng()}
+			marker.setPosition(coords);
+			map.setCenter(coords);
+			marker.setVisible(true);
+			geocodeLatLng(geocoder, map, infoWindow);
+		});
+
+		marker.addListener('dragend',function(e){
+      latMap.value = e.latLng.lat();
+      lngMap.value = e.latLng.lng();
+			geocodeLatLng(geocoder, map, infoWindow);
+			coords = marker.getPosition();
+		});
+
+    function geocodeLatLng(geocoder, map, infowindow) {
+      var latlng = coords;
+
+      geocoder.geocode({'location': latlng}, function(results, status) {
+        if (status === 'OK') {
+          if (results[0]) {
+            document.getElementById("Address").value = results[0].formatted_address;
+            // infowindow.setContent(results[0].formatted_address);
+            // infowindow.open(map, marker);
+          } else {
+            window.alert('No results found');
+          }
+        } else {
+          window.alert('Geocoder failed due to: ' + status);
+        }
+      });
+	  }
+  }
+</script>
+ <!-- Lower Buttons -->
+{% include "includes/buttons_bottom.expand" %}
+<!-- End Lower Buttons --> 
+
+<script type="text/javascript" src="view/javascript/ckeditor/ckeditor.js"></script> 
+<script type="text/javascript">
+
+</script> 
+
+<script type="text/javascript">
+	var image_row = {{ image_row }};
+	function addImage() {
+		html  = '<tbody id="image-row' + image_row + '">';
+		html += '  <tr>';
+		html += '    <td class="left"><div class="image"><img src="{{ no_image }}" alt="" id="thumb' + image_row + '" /><input type="hidden" name="location_image[' + image_row + '][image]" value="" id="image' + image_row + '" /><br /><a onclick="image_upload(\'image' + image_row + '\', \'thumb' + image_row + '\');">{{ text_browse }}</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a onclick="$(\'#thumb' + image_row + '\').attr(\'src\', \'{{ no_image }}\'); $(\'#image' + image_row + '\').attr(\'value\', \'\');">{{ text_clear }}</a></div></td>';
+		html += '    <td class="right"><input type="text" name="location_image[' + image_row + '][sort_order]" value="0" class="form-control"/></td>';
+		html += '    <td class="text-center"><a onclick="confirmMessage(function () {$(\'#image-row' + image_row  + '\').remove();})" class="text-danger-600"><i class="icon-trash"></i></a></td>';
+		html += '  </tr>';
+		html += '</tbody>';
+		
+		$('tfoot').before(html);
+		
+		image_row++;
+	}
+</script> 
+<script type="text/javascript"><!--
+function image_upload(field, thumb) {
+            if (typeof editorFunc == 'undefined') {
+                editorFunc = "null";
+            }
+
+            if (typeof callerName == 'undefined') {
+                callerName = "null";
+            }
+
+            $('#modal-image').remove();
+
+            $.ajax({
+                url: 'common/filemanager?target=' + field + '&thumb=' + thumb + '&editorFunc=' + editorFunc + '&callerName=' + callerName,
+                dataType: 'html',
+                success: function (html) {
+                    $('body').append('<div id="modal-image" class="modal">' + html + '</div>');
+
+                    $('#modal-image').modal('show');
+                }
+            });
+        };
+//--></script>
+<script type="text/javascript" src="view/javascript/cube/scripts.js"></script>
+{% endblock %}

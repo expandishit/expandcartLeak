@@ -1,0 +1,456 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block title %}
+    {{ lang('heading_title', 'localisation/geo_zone') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+    <a class="button btn btn-success" id="add-geo-zone-button"><i class="fa fa-plus"></i> {{ lang('button_add_geo_zone') }}</a>
+    <a href="{{ cancel }}" type="button" class="btn btn-default"> {{ lang('button_cancel') }}</a>
+    <button type="button" class="btn btn-primary" onclick="$('.form').submit();"><i class="far fa-save fa-lg position-left"></i> {{ lang('button_save') }}</button>
+{% endblock headelements %}
+
+{% block content %}
+    <style>
+        .page-header-default {
+            background-color: transparent;
+        }
+        .page-header-content + .breadcrumb-line {
+            border: 0;
+        }
+    </style>
+
+    <!-- Start Form -->
+    <form id="geo-zones-form" class="form" action="{{ action }}">
+        <!-- Fields -->
+        <div class="col-md-12">
+            <div class="panel panel-white">
+                <div class="panel-heading">
+                    <h6 class="panel-title"><span class="text-bold">{{ lang('heading_title') }}</span></h6>
+                    <div class="heading-elements not-collapsible">
+                        <ul class="icons-list">
+                            <li><a data-action="collapse" class=""></a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="collapse in" id="fields-panel">
+                        <!-- Name -->
+                        <div class="form-group col-md-6" id="name-group">
+                            <label for="name" class="control-label">{{ lang('entry_name') }} <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="name" name="name" value="{{ name }}">
+                            <span class="help-block"></span>
+                        </div>
+                        <!-- /Name -->
+                       <!-- Description -->
+                        <div class="form-group col-md-6" id="description-group">
+                            <label for="description" class="control-label">{{ lang('entry_description') }} <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="description" name="description" value="{{ description }}">
+                            <span class="help-block"></span>
+                        </div>
+                        <!-- /Description -->
+
+
+                        {% set zone_to_geo_zone_row = 0 %}
+                        {% if zone_to_geo_zones %}
+                       <!-- this form for update -->
+                        {% for value in zone_to_geo_zones %}
+                            <div id="zone-to-geo-zone-row{{ zone_to_geo_zone_row }}" class="wrapper_div col-md-12" data-row="{{ zone_to_geo_zone_row }}">
+                                <!-- Geo Country -->
+                                <div class="form-group col-md-3" id="geo_zones-group">
+                                    <label for="zone-to-geo-zone-row{{zone_to_geo_zone_row}}" class="control-label">{{ lang('entry_country') }}</label>
+                                    <select name="zone_to_geo_zone[{{zone_to_geo_zone_row}}][country_id]" id="country{{zone_to_geo_zone_row}}" class="form-control geo-country-select a-select"
+                                    data-row="{{ zone_to_geo_zone_row }}" data-zone-id="{{ zone_to_geo_zone['zone_id'] }}">
+
+                                           <option value="{{value.country_id}}"  'selected' >
+                                                {{value.country_name}}
+                                            </option>
+                                    </select>
+                                    <span class="help-block"></span>
+                                </div>
+                                <!-- /Geo Country -->
+                                <!-- Geo city -->
+                                <div class="form-group col-md-3" id="geo_zones-group">
+                                    <label class="control-label">{{ lang('entry_city') }}</label>
+                                    <select name="zone_to_geo_zone[{{ zone_to_geo_zone_row }}][zone_id]" id="zone{{ zone_to_geo_zone_row }}" class="form-control zone" >
+                                    <option value="{{value.zone_id}}"  'selected' > {{value.zone_name}} </option>
+                                                      </select>
+                                    <span class="help-block"></span>
+                                </div>
+                                <!-- /Geo city -->
+                                <!-- Geo Zone -->
+                                <div class="form-group col-md-3" id="geo_zones-group">
+                                    <label class="control-label">{{ lang('entry_zone') }}</label>
+                                    <select name="zone_to_geo_zone[{{ zone_to_geo_zone_row }}][area_id]" id="area{{ zone_to_geo_zone_row }}" class="form-control area" >
+                                    <option value="{{value.area_id}}"  'selected' > {{value.area_name}} </option>
+                                                      </select>
+                                    <span class="help-block"></span>
+                                </div>
+                                <!-- /Geo Zone -->
+                                <!-- Remove Button -->
+                                <div class="form-group col-md-3" id="geo_zones-group">
+                                    <label class="control-label">{{ lang('button_remove') }}</label>
+                                    <br>
+                                    <a class="button btn btn-danger remove_button" data-row="{{ zone_to_geo_zone_row }}"><i class="fa fa-trash"></i> {{ lang('button_remove') }}</a>
+                                </div>
+                                <!-- /Remove Button -->
+                                {% set zone_to_geo_zone_row = zone_to_geo_zone_row + 1 %}
+                            </div>
+                        {% endfor %}
+                        {% else %}
+                        <!-- this form for new insert -->
+                            <div id="zone-to-geo-zone-row{{ zone_to_geo_zone_row }}" class="wrapper_div col-md-12" data-row="{{ zone_to_geo_zone_row }}">
+                                <!-- Geo Country -->
+                                <div class="form-group col-md-3" id="geo_zones-group">
+                                    <label for="zone-to-geo-zone-row{{zone_to_geo_zone_row}}" class="control-label">{{ lang('entry_country') }}</label>
+                                    <select name="zone_to_geo_zone[{{zone_to_geo_zone_row}}][country_id]" id="country{{zone_to_geo_zone_row}}" class="form-control geo-country-select a-select"
+                                    data-row="{{ zone_to_geo_zone_row }}" data-zone-id="{{ zone_to_geo_zone['zone_id'] }}">
+                                        {% for country in countries %}
+                                            <option value="{{ country['country_id'] }}" {{ country['country_id'] == zone_to_geo_zone['country_id'] ? 'selected' }}>
+                                                {{ country['name'] }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    <span class="help-block"></span>
+                                </div>
+                                <!-- /Geo Country -->
+                                <!-- Geo city -->
+                                <div class="form-group col-md-3" id="geo_zones-group">
+                                    <label class="control-label">{{ lang('entry_city') }}</label>
+                                    <select name="zone_to_geo_zone[{{ zone_to_geo_zone_row }}][zone_id]" id="zone{{ zone_to_geo_zone_row }}" class="form-control zone"></select>
+                                    <span class="help-block"></span>
+                                </div>
+                                <!-- /Geo city -->
+                                 <!-- Geo Zone -->
+                                <div class="form-group col-md-3" id="geo_zones-group">
+                                    <label class="control-label">{{ lang('entry_zone') }}</label>
+                                    <select name="zone_to_geo_zone[{{ zone_to_geo_zone_row }}][area_id]" id="area{{ zone_to_geo_zone_row }}" class="form-control area"></select>
+                                    <span class="help-block"></span>
+                                </div>
+                                <!-- /Geo Zone -->
+                                <!-- Remove Button -->
+                                <div class="form-group col-md-3" id="geo_zones-group">
+                                    <label class="control-label">{{ lang('button_remove') }}</label>
+                                    <br>
+                                    <a class="button btn btn-danger remove_button" data-row="{{ zone_to_geo_zone_row }}"><i class="fa fa-trash"></i> {{ lang('button_remove') }}</a>
+                                </div>
+                                <!-- /Remove Button -->
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End of Fields -->
+
+    </form>
+    <!-- End Form -->
+
+<!-- Lower Buttons -->
+{% include "includes/buttons_bottom.expand" %}
+<!-- End Lower Buttons -->
+<script>
+
+    var zone_link = '{{ link("localisation/geo_zone/zone_autocomplete") }}';
+    var area_link = '{{ link("localisation/geo_zone/area_autocomplete") }}';
+
+
+    $(document).ready(function() {
+
+      $(".a-select").select2({
+
+                    tokenSeparators: [','],
+                    minimumResultsForSearch: 20,
+
+                    ajax: {
+                        url: '{{ link("localisation/geo_zone/country_autocomplete") }}',
+                        dataType: 'json',
+                        type: 'GET',
+                        delay: 250,
+                            data: function (params) {
+                            return {
+                                filter_name: params.term
+                            };
+                        },
+
+                        processResults: function (data,params) {
+                  country_id=$(this).attr('id');
+
+                      var results=new Array();
+
+                                  data.forEach(function makeResults(item, index) {
+                                    results.push({
+                                      id: item.country_id,
+                                      text:item.name
+                                    });
+                                  });
+                                  return {
+                                    results: results
+                                  };
+                        },
+                        cache: true
+                    }
+                });
+
+      $(".zone").select2({
+                     tokenSeparators: [','],
+                     minimumResultsForSearch: 20,
+                     ajax: {
+                         url: zone_link,
+                         dataType: 'json',
+                         type: 'GET',
+                         delay: 250,
+                          minimumResultsForSearch: 20,
+
+                         data: function (params) {
+                         //get current zone id to get country id to get 20 zone of that country
+                         id=$(this).attr('id');
+                         var splitted=id.split('zone');
+                        select_zone_id=splitted[1];
+                            //get country value
+                       country_id = $('#country' +select_zone_id+ ' option:selected').attr('value');
+
+                             return {
+                                 filter_name: params.term,
+                                 coun_id:country_id
+                             };
+                         },
+
+                         processResults: function (data,params) {
+
+                              const results = [{id:'0',text:'{{lang('text_all_zones')}}'}];
+                                    data.forEach(function makeResults(item, index) {
+                                     results.push({
+                                       id: item.zone_id,
+                                       text:item.name
+                                     });
+                                   });
+                                   return {
+                                     results: results
+                                   };
+                         },
+                         cache: true
+                     }
+     });
+
+       $(".area").select2({
+                     tokenSeparators: [','],
+                     minimumResultsForSearch: 20,
+                     ajax: {
+                         url: area_link,
+                         dataType: 'json',
+                         type: 'GET',
+                         delay: 250,
+                          minimumResultsForSearch: 20,
+
+                         data: function (params) {
+                         //get current zone id to get country id to get 20 zone of that country
+                         id=$(this).attr('id');
+                         var splitted=id.split('area');
+                        select_zone_id=splitted[1];
+                            //get country value
+                        zoneID = $('#zone' +select_zone_id+ ' option:selected').attr('value');                     
+                             return {
+                                 filter_name: params.term,
+                                 zone_id:zoneID
+                             };
+                         },
+
+                         processResults: function (data,params) {
+
+                              const results = [{id:'0',text:'{{lang('text_all_zones')}}'}];
+                                    data.forEach(function makeResults(item, index) {
+                                     results.push({
+                                       id: item.area_id,
+                                       text:item.name
+                                     });
+                                   });
+                                   return {
+                                     results: results
+                                   };
+                         },
+                         cache: true
+                     }
+     });
+
+
+       $('.touchspinney').TouchSpin({
+            'postfix': '{{ current_currency_code }}',
+            'decimals': 2,
+        });
+
+    $(document).on('click', '.remove_button', function(){
+        row = $(this).attr('data-row');
+        $('#zone-to-geo-zone-row'+row).remove();
+
+    }).on('click', '#add-geo-zone-button', function() {
+
+        current_row = parseInt($('.wrapper_div').last().attr('data-row')) + 1;
+
+        last_row = $('.wrapper_div').last();
+
+        html = '';
+        html += '<div id="zone-to-geo-zone-row'+current_row+'" class="wrapper_div col-md-12" data-row="' + current_row + '">';
+        html += '<!-- Geo Country -->';
+        html += '<div class="form-group col-md-3" id="geo_zones-group">';
+        html += '<label for="zone-to-geo-zone-row'+current_row+'" class="control-label">{{ lang("entry_country") }}</label>';
+        html += '<select name="zone_to_geo_zone['+current_row+'][country_id]" id="country'+current_row+'" class="form-control geo-country-select a-select zone" data-row="'+current_row+'">';
+
+        html += '</select>';
+        html += '<span class="help-block"></span>';
+        html += '</div>';
+        html += '<!-- /Geo Country -->';
+
+        html += '<!-- Geo Zone -->';
+        html += '<div class="form-group col-md-3" id="geo_zones-group">';
+        html += '<label class="control-label">{{ lang("entry_city") }}</label>';
+        html+= '<select name="zone_to_geo_zone['+current_row+'][zone_id]" id="zone'+current_row+'" class="form-control zone"></select>';
+        html+= '<span class="help-block"></span>';
+        html += '</div>';
+        html += '<!-- /Geo Zone -->';
+
+        html += '<!-- area Zone -->';
+        html += '<div class="form-group col-md-3" id="geo_zones-group">';
+        html += '<label class="control-label">{{ lang("entry_zone") }}</label>';
+        html+= '<select name="zone_to_geo_zone['+current_row+'][area_id]" id="area'+current_row+'" class="form-control area"></select>';
+        html+= '<span class="help-block"></span>';
+        html += '</div>';
+        html += '<!-- /area Zone -->';
+
+        html += '<!-- Remove Button -->';
+        html += '<div class="form-group col-md-3" id="geo_zones-group">';
+        html += '<label class="control-label">{{ lang("button_remove") }}</label>';
+        html += '<br>';
+        html += '<a class="button btn btn-danger remove_button" data-row="' + current_row + '"><i class="fa fa-trash"></i> {{ lang("button_remove") }}</a>';
+        html += '</div>';
+        html += '<!-- /Remove Button -->';
+        html += '</div>';
+
+        last_row.after(html);
+
+        $('#country'+current_row).select2({
+
+                    tokenSeparators: [','],
+                    minimumResultsForSearch: 20,
+
+                    ajax: {
+                        url: '{{ link("localisation/geo_zone/country_autocomplete") }}',
+                        dataType: 'json',
+                        type: 'GET',
+                        delay: 250,
+                        minimumResultsForSearch: 20,
+
+                        data: function (params) {
+                        country_id=$(this).attr('value');
+                            return {
+                                filter_name: params.term,
+                                coun_id:country_id
+                            };
+                        },
+
+                        processResults: function (data,params) {
+
+                            const results = [];
+                                    data.forEach(function makeResults(item, index) {
+                                    results.push({
+                                        id: item.country_id,
+                                    text:item.name
+                                    });
+                                });
+                                return {
+                                    results: results
+                                };
+                        },
+                        cache: true
+                    }
+                });
+
+                $('#zone' + current_row).select2({
+
+                tokenSeparators: [','],
+                minimumResultsForSearch: 20,
+                ajax: {
+                    url: zone_link,
+                    dataType: 'json',
+                    type: 'GET',
+                    delay: 250,
+                    minimumResultsForSearch: 20,
+
+                    data: function (params) {
+                    id=$(this).attr('id');
+                    console.log(id);
+                    var splitted=id.split('zone');
+                        select_zone_id=splitted[1];
+                        country_id = $('#country' +select_zone_id+ ' option:selected').attr('value');
+                        console.log(country_id);
+                        return {
+                            filter_name: params.term,
+                            coun_id:country_id
+                        };
+                    },
+
+                    processResults: function (data,params) {
+
+                        const results = [{id:'0',text:'{{lang('text_all_zones')}}'}];
+                                data.forEach(function makeResults(item, index) {
+                                results.push({
+                                    id: item.zone_id,
+                                    text:item.name
+                                });
+                                });
+                                return {
+                                results: results
+                                };
+                    },
+                    cache: true
+                }
+            });
+             $('#area' + current_row).select2({
+
+                tokenSeparators: [','],
+                minimumResultsForSearch: 20,
+                ajax: {
+                    url: area_link,
+                    dataType: 'json',
+                    type: 'GET',
+                    delay: 250,
+                    minimumResultsForSearch: 20,
+
+                    data: function (params) {
+                         //get current zone id to get country id to get 20 zone of that country
+                         id=$(this).attr('id');
+                         var splitted=id.split('area');
+                        select_zone_id=splitted[1];
+                            //get country value
+                        zoneID = $('#zone' +select_zone_id+ ' option:selected').attr('value');                     
+                             return {
+                                 filter_name: params.term,
+                                 zone_id:zoneID
+                             };
+                         },
+
+                    processResults: function (data,params) {
+
+                        const results = [{id:'0',text:'{{lang('text_all_zones')}}'}];
+                                data.forEach(function makeResults(item, index) {
+                                results.push({
+                                    id: item.area_id,
+                                    text:item.name
+                                });
+                                });
+                                return {
+                                results: results
+                                };
+                    },
+                    cache: true
+                }
+            });
+            });
+        });
+</script>
+{% endblock %}

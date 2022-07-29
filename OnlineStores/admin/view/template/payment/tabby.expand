@@ -1,0 +1,330 @@
+{% import 'controls/uploader.expand' as uploader %}
+<style type="text/css">
+.separator {display: flex;align-items: center;text-align: center; color: #999999;margin-bottom: 15px;}.separator::before, .separator::after {content: '';flex: 1;border-bottom: 1px solid #e8e8e8;}.separator::before {margin-right: .25em;}.separator::after {margin-left: .25em;}
+</style>
+<!-- Start Form -->
+<form class="form" action="{{ action }}" method="POST">
+    <div class="row">
+        <!-- Status -->
+        <div class="col-md-3">
+            <div class="panel panel-flat">
+                <div class="panel-body">
+                    <fieldset>
+                        <legend class="text-semibold">
+                            <i class="fas fa-check-circle fa-lg position-left"></i>
+                            {{ lang('entry_status') }}
+                            <a class="control-arrow" data-toggle="collapse" data-target="#panel1">
+                                <i class="icon-circle-down2"></i>
+                            </a>
+                        </legend>
+                        <div class="collapse in text-center" id="panel1">
+
+                            <!-- Status -->
+                            <div class="form-group">
+                                <label class="control-label">{{ lang('entry_status') }}</label>
+                                <div class="checkbox checkbox-switchery">
+                                    <label>
+                                        <input type="checkbox" onchange="changeStatus(this);" name="tabby[status]" class="switchery" {{ tabby.status not in ['0', 0, 'off'] or tabby.status is null ? 'checked' }}>
+                                        <span class="switchery-status">{{ tabby.status not in ['0', 0, 'off'] or tabby.status is null ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <!-- /Status -->
+                            
+                            <!-- show_promo_image_in_checkout -->
+                            <div class="form-group">
+                                <label class="control-label">{{ lang('entry_show_promo_image_in_checkout') }}</label>
+                                <div class="checkbox checkbox-switchery">
+                                    <label>
+                                        <input type="checkbox" 
+                                            onchange="changeStatus(this);" 
+                                            class="switchery" 
+                                            name="tabby[show_promo_image_in_checkout]" 
+                                            {# {{ tabby.show_promo_image_in_checkout not in ['0', 0, 'off'] ? 'checked' }} #}
+                                            checked
+                                            disabled
+                                        >
+                                        <span class="switchery-status">
+                                            {# {{ tabby.show_promo_image_in_checkout not in ['0', 0, 'off'] ? lang('text_enabled') : lang('text_disabled') }} #}
+                                            {{ lang('text_enabled') }}
+                                        </span>
+                                    </label>
+                                </div>
+                            </div>
+                            <!-- /show_promo_image_in_checkout -->
+                            
+                            <!-- show_promo_image_in_product_page -->
+                            <div class="form-group">
+                                <label class="control-label">{{ lang('entry_show_promo_image_in_product_page') }}</label>
+                                <div class="checkbox checkbox-switchery">
+                                    <label>
+                                        <input type="checkbox" 
+                                            class="switchery" 
+                                            onchange="changeStatus(this);" 
+                                            name="tabby[show_promo_image_in_product_page]" 
+                                            {# {{ tabby.show_promo_image_in_product_page not in ['0', 0, 'off'] ? 'checked' }} #}
+                                            checked
+                                            disabled
+                                        >
+                                        <span class="switchery-status">
+                                            {# {{ tabby.show_promo_image_in_product_page not in ['0', 0, 'off'] ? lang('text_enabled') : lang('text_disabled') }} #}
+                                            {{ lang('text_enabled') }}
+                                        </span>
+                                    </label>
+                                </div>
+                            </div>
+                            <!-- /show_promo_image_in_product_page -->
+                            
+                        </div>
+                    </fieldset>
+                </div>
+            </div>
+        </div>
+        <!-- End of Status -->
+
+        <!-- Fields -->
+        <div class="col-md-9">
+            <div class="panel panel-flat">
+                {# <div class="panel-heading">
+                    <h6 class="panel-title"><span class="text-bold">{{ lang('settings') }}</span></h6>
+                    <div class="heading-elements not-collapsible">
+                        <ul class="icons-list">
+                            <li><a data-action="collapse" class=""></a></li>
+                        </ul>
+                    </div>
+                </div> #}
+                <div class="panel-body">
+                    <fieldset>
+                        <legend class="text-semibold">
+                            <i class="fas fa-cogs fa-lg position-left"></i>
+                            {{ lang('settings') }}
+                            <a class="control-arrow" data-toggle="collapse" data-target="#panel2">
+                                <i class="icon-circle-down2"></i>
+                            </a>
+                        </legend>
+                        <div class="collapse in" id="panel2">
+                            <div class="row">
+                                <!-- public_key -->
+                                <div class="form-group col-md-12">
+                                    <label for="public_key" class="control-label">{{ lang('entry_tabbyـpublic_key') }} <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="public_key" name="tabby[public_key]" value="{{ tabby.public_key ?: '' }}">
+                                    <span class="help-block"></span>
+                                </div>
+                                <!-- /public_key -->
+                            </div>
+                            
+                            <div class="row">
+                                <!-- secret_key -->
+                                <div class="form-group col-md-12">
+                                    <label for="secret_key" class="control-label">{{ lang('entry_tabbyـsecret_key') }} <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="secret_key" name="tabby[secret_key]" value="{{ tabby.secret_key ?: '' }}">
+                                    <span class="help-block"></span>
+                                </div>
+                                <!-- /secret_key -->
+                            </div>
+
+                            <div class="row">
+                                {# Account Currency #}
+                                <div class="form-group col-md-6">
+                                    <label for="tabby_account_currency" class="control-label">{{ lang('entry_account_currency') }}</label>
+                                    <select name="tabby[account_currency]" id="tabby_account_currency" class="form-control">
+                                        <option value="SAR" {{ tabby.account_currency == 'SAR' ? 'selected' :'' }}>{{ lang('text_sar') }}</option>
+                                        <option value="AED" {{ tabby.account_currency == 'AED' ? 'selected' :'' }}>{{ lang('text_aed') }}</option>
+                                    </select>
+                                    <span class="help-block"></span>
+                                </div>
+                                {# /Account Currency #}
+
+                                {# Account Country Code #}
+                                <div class="form-group col-md-6">
+                                    <label for="tabby_account_country_code" class="control-label">{{ lang('entry_account_country_code') }}</label>
+                                    <select name="tabby[account_country_code]" id="tabby_account_country_code" class="form-control">
+                                        <option value="ksa" {{ tabby.account_country_code == 'ksa' ? 'selected' :'' }}>KSA</option>
+                                        <option value="uae" {{ tabby.account_country_code == 'uae' ? 'selected' :'' }}>UAE</option>
+                                    </select>
+                                    <span class="help-block"></span>
+                                </div>
+                                {# /Account Country Code  #}
+                        
+                                <!-- Geo Zone -->
+                                <div class="form-group col-md-6" id="tabby-group">
+                                    <label for="tabby_geo_zone" class="control-label">{{ lang('entry_geo_zone') }}</label>
+                                    <select name="tabby[geo_zone_id]" id="tabby_geo_zone_id" class="form-control">
+                                        <option value="0">{{ lang('text_all_zones') }}</option>
+                                        {% for geo_zone in geo_zones %}
+                                            <option value="{{ geo_zone['geo_zone_id'] }}" {% if tabby.geo_zone_id == geo_zone['geo_zone_id'] %} selected {% endif %}>
+                                                {{ geo_zone['name'] }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    <span class="help-block"></span>
+                                </div>
+                                <!-- /Geo Zone -->
+
+                                <!-- Complete Order Status -->
+                                <div class="form-group col-md-6">
+                                    <label for="tabby_complete_status_id" class="control-label">{{ lang('entry_complete_status') }}</label>
+                                    <select name="tabby[complete_status_id]" id="tabby_complete_status_id" class="form-control">
+                                        {% for order_status in order_statuses %}
+                                            <option value="{{ order_status['order_status_id'] }}" {% if tabby.complete_status_id == order_status['order_status_id'] %} selected {% endif %}>
+                                                {{ order_status['name'] }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    <span class="help-block"></span>
+                                </div>
+                                <!-- /Complete Order Status -->
+                                
+                                <!-- Capture Order Status -->
+                                <div class="form-group col-md-6">
+                                    <label for="tabby_capture_status_id" class="control-label">{{ lang('entry_capture_status') }}</label>
+                                    <select name="tabby[capture_status_id]" id="tabby_capture_status_id" class="form-control">
+                                        {% for order_status in order_statuses %}
+                                            <option value="{{ order_status['order_status_id'] }}" {% if tabby.capture_status_id == order_status['order_status_id'] %} selected {% endif %}>
+                                                {{ order_status['name'] }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    <span class="help-block">{{ langempty('entry_capture_status_help') }}</span>
+                                </div>
+                                <!-- /Capture Order Status -->
+                                
+                                <!-- close Order Status -->
+                                <div class="form-group col-md-6">
+                                    <label for="tabby_close_status_id" class="control-label">{{ lang('entry_close_status') }}</label>
+                                    <select name="tabby[close_status_id]" id="tabby_close_status_id" class="form-control">
+                                        {% for order_status in order_statuses %}
+                                            <option value="{{ order_status['order_status_id'] }}" {% if tabby.close_status_id == order_status['order_status_id'] %} selected {% endif %}>
+                                                {{ order_status['name'] }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    <span class="help-block">{{ langempty('entry_close_status_help') }}</span>
+                                </div>
+                                <!-- /close Order Status -->
+                                
+                                <!-- refund Order Status -->
+                                <div class="form-group col-md-6">
+                                    <label for="tabby_refund_status_id" class="control-label">{{ lang('entry_refund_status') }}</label>
+                                    <select name="tabby[refund_status_id]" id="tabby_refund_status_id" class="form-control">
+                                        {% for order_status in order_statuses %}
+                                            <option value="{{ order_status['order_status_id'] }}" {% if tabby.refund_status_id == order_status['order_status_id'] %} selected {% endif %}>
+                                                {{ order_status['name'] }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    <span class="help-block">{{ langempty('entry_refund_status_help') }}</span>
+                                </div>
+                                <!-- /refund Order Status -->
+                            </div>
+                        </div>
+                    </fieldset>
+                </div>
+            </div>
+        </div>
+
+        {# Status Mapping #}
+        <div class="col-md-9 pull-right">
+            <div class="panel panel-white">
+                <div class="panel-heading">
+                    <h6 class="panel-title"><span class="text-bold">{{ lang('tabby_statuses_mapping') }}</span></h6>
+                    <div class="heading-elements not-collapsible">
+                        <ul class="icons-list">
+                            <li><a data-action="collapse" class=""></a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="collapse in" id="fields-panel">
+
+                        <div style="margin-bottom: 15px;"><small>{{ lang('tabby_statuses_help_text')}}</small></div>
+
+                            <div class="form-group col-md-6">
+                                <label for="tamara_after_creation_status" class="control-label">{{ lang('entry_close_status') }}</label>
+                                <select name="tabby[tabby_close_status_id]" id="" class="form-control">
+                                    {% for order_status in order_statuses %}
+                                        <option value="{{ order_status['order_status_id'] }}" {% if tabby.tabby_close_status_id == order_status['order_status_id'] %} selected {% endif %}>
+                                            {{ order_status['name'] }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <span class="help-block"></span>
+                            </div>
+
+                            <div class="form-group col-md-6">
+                                <label for="tamara_after_creation_status" class="control-label">{{ lang('entry_authorized_status') }}</label>
+                                <select name="tabby[tabby_authorized_status_id]" id="" class="form-control">
+                                    {% for order_status in order_statuses %}
+                                        <option value="{{ order_status['order_status_id'] }}" {% if tabby.tabby_authorized_status_id == order_status['order_status_id'] %} selected {% endif %}>
+                                            {{ order_status['name'] }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <span class="help-block"></span>
+                            </div>
+
+                            <div class="form-group col-md-6">
+                                <label for="tamara_after_creation_status" class="control-label">{{ lang('entry_rejected_status') }}</label>
+                                <select name="tabby[tabby_rejected_status_id]" id="" class="form-control">
+                                    {% for order_status in order_statuses %}
+                                        <option value="{{ order_status['order_status_id'] }}" {% if tabby.tabby_rejected_status_id == order_status['order_status_id'] %} selected {% endif %}>
+                                            {{ order_status['name'] }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <span class="help-block"></span>
+                            </div>
+
+                            <div class="form-group col-md-6">
+                                <label for="tamara_after_creation_status" class="control-label">{{ lang('entry_expired_status') }}</label>
+                                <select name="tabby[tabby_expired_status_id]" id="" class="form-control">
+                                    {% for order_status in order_statuses %}
+                                        <option value="{{ order_status['order_status_id'] }}" {% if tabby.tabby_expired_status_id == order_status['order_status_id'] %} selected {% endif %}>
+                                            {{ order_status['name'] }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <span class="help-block"></span>
+                            </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        {# /Status Mapping #}
+    </div>
+</form>
+    <!-- End of Fields -->
+
+{% block scripts %}
+<script type="text/javascript">
+    function changeStatus(checkbox) {
+        var self = $(checkbox);
+        var switch_status = self.siblings('.switchery-status');
+
+        if (self.is(':checked')) {
+            switch_status.html("{{ lang('text_enabled') }}");
+        }
+        else {
+            switch_status.html("{{ lang('text_disabled') }}");
+        }
+    }
+    
+    $(document).ready(function() {
+        $('select').select2();      
+    });
+    
+    !(function() {
+        var btnNoAccount = document.querySelector('.no-have');
+        if (!btnNoAccount) return;
+        btnNoAccount.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.open("{{lang('text_signup_link')}}", '_blank').focus();
+        }, !1);
+    }());
+</script>
+{% endblock %}
+
+
+
+

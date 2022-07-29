@@ -1,0 +1,715 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% set dualMenuEnabled = true %}
+
+{% block title %}
+    {{ lang('ms_catalog_sellers_newseller') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block secondarymenu %}
+    {% include 'multiseller/menu.expand' with {'active': '#seller'} %}
+{% endblock secondarymenu %}
+
+{% block headelements %}
+    <a href="{{ link('multiseller/seller') }}" class="btn btn-default"> {{ lang('button_cancel') }}</a>
+    <a class="btn btn-primary" onclick="$('.form').submit();"><i
+                class="far fa-save fa-lg position-left"></i> {{ lang('button_save') }}</a>
+{% endblock headelements %}
+
+{% block scripts %}
+
+    <script>
+        $(document).ready(function () {
+            $('#seller_country').change(function (e) {
+                var $value = $(this).val();
+                if ($value >= 0) {
+                    $('#seller_zone').select2({
+                        ajax: {
+                            url: 'sale/customer/country',
+                            data: function (params) {
+                                return {
+                                    country_id: $value
+                                };
+                            },
+                            dataType: 'json',
+                            processResults: function (data) {
+                                return {
+                                    results: $.map(data.zone, function (item, index) {
+                                        return {
+                                            id: item.zone_id,
+                                            text: item.name
+                                        };
+                                    })
+                                };
+                            },
+                            cache: true
+                        }
+                    });
+                } else {
+                    $('#seller_zone').select2('destroy');
+                    $('#seller_zone').select2({
+                        minimumResultsForSearch: 10
+                    });
+                    $('#seller_zone').val(0).trigger('change');
+                    $('#seller_zone option:eq(1)').remove();
+                    $value = '-1';
+                    $(this).val('-1');
+                }
+            });
+
+            // Modal template
+            var modalTemplate = '<div class="modal-dialog modal-lg" role="document">\n' +
+                '  <div class="modal-content">\n' +
+                '    <div class="modal-header">\n' +
+                '      <div class="kv-zoom-actions btn-group">{toggleheader}{fullscreen}{borderless}{close}</div>\n' +
+                '      <h6 class="modal-title">{heading} <small><span class="kv-zoom-title"></span></small></h6>\n' +
+                '    </div>\n' +
+                '    <div class="modal-body">\n' +
+                '      <div class="floating-buttons btn-group"></div>\n' +
+                '      <div class="kv-zoom-body file-zoom-content"></div>\n' + '{prev} {next}\n' +
+                '    </div>\n' +
+                '  </div>\n' +
+                '</div>\n';
+
+            // Buttons inside zoom modal
+            var previewZoomButtonClasses = {
+                toggleheader: 'btn btn-default btn-icon btn-xs btn-header-toggle',
+                fullscreen: 'btn btn-default btn-icon btn-xs',
+                borderless: 'btn btn-default btn-icon btn-xs',
+                close: 'btn btn-default btn-icon btn-xs'
+            };
+
+            // Icons inside zoom modal classes
+            var previewZoomButtonIcons = {
+                prev: '<i class="icon-arrow-left32"></i>',
+                next: '<i class="icon-arrow-right32"></i>',
+                toggleheader: '<i class="icon-menu-open"></i>',
+                fullscreen: '<i class="icon-screen-full"></i>',
+                borderless: '<i class="icon-alignment-unalign"></i>',
+                close: '<i class="icon-cross3"></i>'
+            };
+
+            // File actions
+            var fileActionSettings = {
+                zoomClass: 'btn btn-link btn-xs btn-icon',
+                zoomIcon: '<i class="icon-zoomin3"></i>',
+                dragClass: 'btn btn-link btn-xs btn-icon',
+                dragIcon: '<i class="icon-three-bars"></i>',
+                removeClass: 'btn btn-link btn-icon btn-xs',
+                removeIcon: '<i class="icon-trash"></i>',
+                indicatorNew: '<i class="icon-file-plus text-slate"></i>',
+                indicatorSuccess: '<i class="icon-checkmark3 file-icon-large text-success"></i>',
+                indicatorError: '<i class="icon-cross2 text-danger"></i>',
+                indicatorLoading: '<i class="icon-spinner2 spinner text-muted"></i>'
+            };
+
+
+            var fileInput = {
+                previewFileType: 'image',
+                browseLabel: 'Select',
+                browseClass: 'btn bg-slate-700',
+                browseIcon: '<i class="icon-image2 position-left"></i> ',
+                removeLabel: 'Remove',
+                removeClass: 'btn btn-danger',
+                removeIcon: '<i class="icon-cancel-square position-left"></i> ',
+                uploadClass: 'btn bg-teal-400',
+                uploadIcon: '<i class="icon-file-upload position-left"></i> ',
+                layoutTemplates: {
+                    icon: '<i class="icon-file-check"></i>',
+                    modal: modalTemplate
+                },
+                initialPreview: [
+                    "{{ seller['avatar']['thumb'] }}"
+                ],
+                initialPreviewConfig: [
+                    {
+                        caption: "{{ seller['avatar']['thumb'] }}",
+                        size: 930321,
+                        key: 1,
+                        url: "{{ seller['avatar']['thumb'] }}",
+                        showDrag: false
+                    },
+                ],
+                initialPreviewAsData: true,
+                initialCaption: "Please select image",
+                mainClass: 'input-group',
+                previewZoomButtonClasses: previewZoomButtonClasses,
+                previewZoomButtonIcons: previewZoomButtonIcons,
+                fileActionSettings: fileActionSettings
+            };
+
+            $('.file-input-image').fileinput(fileInput).on('fileimageloaded', function (event, previewId) {
+                var serializedImage = $('#' + previewId + ' img').attr('src');
+                $('#image').val(serializedImage);
+            });
+
+            $('input[name^="customer"]').parents('tr').hide();
+            $('[name="seller[notify]"], [name="seller[message]"]').parents('tr').show();
+            $('#customer_id').val(0).trigger('change');
+            $('select[name="customer[customer_id]"]').bind('change', function () {
+                if (this.value == '0') {
+                    $('.customerInfo').removeClass('hide');
+                } else {
+                    $('.customerInfo').addClass('hide');
+                }
+            }).change();
+
+            $('input[name="seller[notify]"]').change(function () {
+                if ($(this).val() == 0) {
+                    $('textarea[name="seller[message]"]').val('').attr('disabled', 'disabled');
+                } else {
+                    $('textarea[name="seller[message]"]').removeAttr('disabled');
+                }
+            });
+
+            $('#form').submit(function (e) {
+                e.preventDefault();
+
+                var $data = $('#form').serialize();
+
+                $.ajax({
+                    type: "POST",
+                    dataType: "json",
+                    url: '{{ link('multiseller/seller/jxsavesellerinfo') }}',
+                    data: $data,
+                    beforeSend: function () {
+//                        button.hide().before('<span class="wait">&nbsp;<img src="view/image/loading.gif" alt="" /></span>');
+                        $('p.error').remove();
+                        $('.warning').text('').hide();
+                    },
+                    complete: function (jqXHR, textStatus) {
+//                        button.show().prev('span.wait').remove();
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        $('.warning').text(textStatus).show();
+                    },
+                    success: function (jsonData) {
+                        if (!jQuery.isEmptyObject(jsonData.errors)) {
+                            $('#error_' + id).text('');
+                            for (error in jsonData.errors) {
+                                $('[name="' + error + '"]').after('<p class="error">' + jsonData.errors[error] + '</p>');
+                            }
+                            window.scrollTo(0, 0);
+                        } else {
+                            window.location = '{{ link('multiseller/seller') }}';
+                        }
+                    }
+                });
+            });
+
+            $('select').select2({
+                minimumResultsForSearch: 10
+            });
+        });
+    </script>
+
+{% endblock scripts %}
+
+{% block content %}
+
+    <form class="form" action="{{ link('multiseller/seller/jxsavesellerinfo') }}" method="POST">
+        <div class="col-md-3">
+            <div class="panel">
+                <div class="panel-heading">
+                    <legend class="text-semibold">
+                        <i class="fas fa-check-circle fa-lg position-left"></i>
+                        {{ lang('ms_catalog_sellerinfo_customer_data') }}
+                    </legend>
+                </div>
+
+                <div class="panel-body">
+                    {% if seller['seller_id'] is not defined %}
+                        <div class="form-group" id="customer_id-group">
+                            <label for="customer_id" class="control-label text-semibold">
+                                {{ lang('ms_catalog_sellerinfo_customer') }}
+                            </label>
+
+                            <select name="customer[customer_id]" class="form-control" id="customer_id">
+                                <optgroup label="{{ lang('ms_catalog_sellerinfo_customer_new') }}">
+                                    <option value="0">{{ lang('ms_catalog_sellerinfo_customer_create_new') }}</option>
+                                </optgroup>
+                                {% if customers is defined %}
+                                    <optgroup label="{{ lang('ms_catalog_sellerinfo_customer_existing') }}">
+                                        {% for c in customers %}
+                                            <option value="{{ c['c.customer_id'] }}">{{ c['c.name'] }}</option>
+                                        {% endfor %}
+                                    </optgroup>
+                                {% endif %}
+                            </select>
+
+                            <span class="help-block"></span>
+                            <span class="text-muted">{{ langempty('ms_config_notification_email_note') }}</span>
+                        </div>
+                    {% else %}
+                        <div class="form-group">
+                            <a href="{{ link('sale/customer/update?customer_id=' ~ seller['seller_id']) }}">
+                                {{ seller['name'] }}
+                            </a>
+                        </div>
+                    {% endif %}
+
+                    <div class="customerInfo hide">
+                        <div class="form-group" id="customer_firstname-group">
+                            <label for="customer_firstname" class="control-label text-semibold">
+                                {{ lang('ms_catalog_sellerinfo_customer_firstname') }}
+                            </label>
+
+                            <input type="text" class="form-control" name="customer[firstname]"
+                                   id="customer_firstname"/>
+
+                            <span class="help-block"></span>
+                            <span class="text-muted"></span>
+                        </div>
+
+                        <div class="form-group" id="customer_lastname-group">
+                            <label for="customer_lastname" class="control-label text-semibold">
+                                {{ lang('ms_catalog_sellerinfo_customer_lastname') }}
+                            </label>
+
+                            <input type="text" class="form-control" name="customer[lastname]"
+                                   id="customer_lastname"/>
+
+                            <span class="help-block"></span>
+                            <span class="text-muted"></span>
+                        </div>
+
+                        <div class="form-group" id="customer_email-group">
+                            <label for="customer_email" class="control-label text-semibold">
+                                {{ lang('ms_catalog_sellerinfo_customer_email') }}
+                            </label>
+
+                            <input type="text" class="form-control" name="customer[email]"
+                                   id="customer_email"/>
+
+                            <span class="help-block"></span>
+                            <span class="text-muted"></span>
+                        </div>
+
+                        <div class="form-group" id="customer_password-group">
+                            <label for="customer_password" class="control-label text-semibold">
+                                {{ lang('ms_catalog_sellerinfo_customer_password') }}
+                            </label>
+
+                            <input type="text" class="form-control" name="customer[password]"
+                                   id="customer_password"/>
+
+                            <span class="help-block"></span>
+                            <span class="text-muted"></span>
+                        </div>
+
+                        <div class="form-group" id="customer_password_confirm-group">
+                            <label for="customer_password_confirm" class="control-label text-semibold">
+                                {{ lang('ms_catalog_sellerinfo_customer_password_confirm') }}
+                            </label>
+
+                            <input type="text" class="form-control" name="customer[password_confirm]"
+                                   id="customer_password_confirm"/>
+
+                            <span class="help-block"></span>
+                            <span class="text-muted"></span>
+                        </div>
+
+                        <div class="form-group" id="seller_notify-group">
+                            <label for="seller_notify" class="display-block text-semibold">
+                                {{ lang('ms_catalog_sellerinfo_notify') }}
+                            </label>
+
+                            <label class="radio-inline">
+                                <input type="radio" name="seller[notify]" class="styled" id="seller_notify" value="1">
+                                {{ lang('text_yes') }}
+                            </label>
+
+                            <label class="radio-inline">
+                                <input type="radio" name="seller[notify]" class="styled" value="0">
+                                {{ lang('text_no') }}
+                            </label>
+
+                            <span class="help-block"></span>
+                            <span class="text-muted">{{ langempty('ms_catalog_sellerinfo_notify_note') }}</span>
+                        </div>
+
+                        <div class="form-group" id="seller_message-group">
+                            <label for="seller_message" class="control-label text-semibold">
+                                {{ lang('ms_catalog_sellerinfo_message') }}
+                            </label>
+
+                            <textarea class="form-control" id="seller_message" disabled="disabled"
+                                      name="seller[message]"></textarea>
+
+                            <span class="help-block"></span>
+                            <span class="text-muted">{{ langempty('ms_catalog_sellerinfo_message_note') }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-9">
+            <div class="panel">
+                <div class="panel-heading">
+                    <legend class="text-semibold">
+                        <i class="fas fa-check-circle fa-lg position-left"></i>
+                        {{ lang('ms_catalog_sellerinfo_seller_data') }}
+                    </legend>
+                </div>
+
+                <div class="panel-body">
+                    <div class="form-group" id="seller_nickname-group">
+                        <label for="seller_nickname" class="control-label text-semibold">
+                            {{ lang('ms_catalog_sellerinfo_nickname') }}
+                        </label>
+
+                        {% if seller['ms.nickname'] is defined %}
+                            <div class="form-group">
+                                {{ seller['ms.nickname'] }}
+                            </div>
+                        {% else %}
+                            <input type="text" class="form-control" id="seller_nickname" name="seller[nickname]"
+                                   value="{{ seller['ms.nickname'] }}">
+                        {% endif %}
+
+                        <span class="help-block"></span>
+                        <span class="text-muted">{{ langempty('ms_catalog_sellerinfo_nickname_note') }}</span>
+                    </div>
+
+                    <div class="form-group" id="seller_keyword-group">
+                        <label for="seller_keyword" class="control-label text-semibold">
+                            {{ lang('ms_catalog_sellerinfo_keyword') }}
+                        </label>
+
+                        <input type="text" class="form-control" id="seller_keyword" name="seller[keyword]"
+                               value="{{ seller['keyword'] }}">
+
+                        <span class="help-block"></span>
+                        <span class="text-muted">{{ langempty('ms_catalog_sellerinfo_keyword_note') }}</span>
+                    </div>
+
+                    <div class="form-group" id="seller_group-group">
+                        <label for="seller_group" class="control-label text-semibold">
+                            {{ lang('ms_catalog_sellerinfo_sellergroup') }}
+                        </label>
+
+                        <select name="seller[seller_group]" class="form-control" id="seller_group">
+                            {% for g in seller_groups %}
+                                <option {{ g['seller_group_id'] == seller['ms.seller_group'] ? 'selected' : '' }}
+                                        value="{{ g['seller_group_id'] }}">{{ g['name'] }}</option>
+                            {% endfor %}
+                        </select>
+
+                        <span class="help-block"></span>
+                        <span class="text-muted">{{ langempty('ms_catalog_sellerinfo_sellergroup_note') }}</span>
+                    </div>
+
+                    <div class="form-group" id="seller_group-group">
+                        <label for="seller_group" class="control-label text-semibold">
+                            {{ lang('ms_catalog_sellerinfo_sellergroup') }}
+                        </label>
+
+                        <select name="seller[product_validation]" class="form-control" id="seller_product_validation">
+                            <option {{ seller['ms.product_validation'] == 1 ? 'selected' : '' }}
+                                    value="1">{{ lang('ms_config_product_validation_none') }}</option>
+                            <option {{ seller['ms.product_validation'] == 2 ? 'selected' : '' }}
+                                    value="2">{{ lang('ms_config_product_validation_approval') }}</option>
+                        </select>
+
+                        <span class="help-block"></span>
+                        <span class="text-muted">{{ langempty('ms_catalog_sellerinfo_sellergroup_note') }}</span>
+                    </div>
+
+                    <div class="form-group" id="seller_description-group">
+                        <label for="seller_description" class="control-label text-semibold">
+                            {{ lang('ms_catalog_sellerinfo_description') }}
+                        </label>
+
+                        <textarea class="form-control" id="seller_description"
+                                  name="seller[description]">{{ seller['ms.description'] }}</textarea>
+
+                        <span class="help-block"></span>
+                        <span class="text-muted">{{ langempty('ms_catalog_sellerinfo_description_note') }}</span>
+                    </div>
+
+                    <div class="form-group" id="seller_company-group">
+                        <label for="seller_company" class="control-label text-semibold">
+                            {{ lang('ms_catalog_sellerinfo_company') }}
+                        </label>
+
+                        <input type="text" class="form-control" id="seller_company" name="seller[company]"
+                               value="{{ seller['ms.company'] }}">
+
+                        <span class="help-block"></span>
+                        <span class="text-muted">{{ langempty('ms_catalog_sellerinfo_company_note') }}</span>
+                    </div>
+
+                    <div class="form-group" id="seller_country-group">
+                        <label for="seller_country" class="control-label text-semibold">
+                            {{ lang('ms_catalog_sellerinfo_country') }}
+                        </label>
+
+                        <select name="seller[country]" class="form-control" id="seller_country">
+                            <option value="-1">{{ lang('ms_catalog_sellerinfo_country_dont_display') }}</option>
+                            {% for c in countries %}
+                                <option {{ c['country_id'] == seller['ms.country_id'] ? 'selected' : '' }}
+                                        value="{{ c['country_id'] }}">{{ c['name'] }}</option>
+                            {% endfor %}
+                        </select>
+
+                        <span class="help-block"></span>
+                        <span class="text-muted">{{ langempty('ms_catalog_sellerinfo_country_note') }}</span>
+                    </div>
+
+                    <div class="form-group" id="seller_zone-group">
+                        <label for="seller_zone" class="control-label text-semibold">
+                            {{ lang('ms_catalog_sellerinfo_zone') }}
+                        </label>
+
+                        <select class="form-control" name="seller[zone]" id="seller_zone">
+                            <option value="0">{{ lang('ms_catalog_sellerinfo_zone_not_selected') }}</option>
+                        </select>
+
+                        <span class="help-block"></span>
+                        <span class="text-muted">{{ langempty('ms_catalog_sellerinfo_zone_note') }}</span>
+                    </div>
+
+                    <div class="form-group" id="seller_paypal-group">
+                        <label for="seller_paypal" class="control-label text-semibold">
+                            {{ lang('ms_catalog_sellerinfo_paypal') }}
+                        </label>
+
+                        <input type="text" class="form-control" id="seller_paypal" name="seller[paypal]"
+                               value="{{ seller['ms.paypal'] }}">
+
+                        <span class="help-block"></span>
+                        <span class="text-muted">{{ langempty('ms_catalog_sellerinfo_paypal_note') }}</span>
+                    </div>
+
+                    <div class="form-group" id="image-group">
+                        <label for="image" class="control-label text-semibold">
+                            {{ lang('ms_catalog_sellerinfo_avatar') }}
+                        </label>
+
+                        <input type="file" class="form-control file-input-image" data-show-caption="true"
+                               data-show-upload="false" accept="image/*">
+                        <input type="hidden" value="" name="seller[tmp_avatar_name]" id="image">
+
+                        <span class="help-block"></span>
+                        <span class="text-muted">{{ langempty('ms_catalog_sellerinfo_avatar_note') }}</span>
+                    </div>
+
+                    <div class="form-group" id="seller_status-group">
+                        <label for="seller_status" class="control-label text-semibold">
+                            {{ lang('ms_status') }}
+                        </label>
+
+                        <select class="form-control" name="seller[status]" id="seller_status">
+                            {% for name,value in customerStatuses %}
+                                <option {{ seller['ms.seller_status'] == value ? 'selected' : '' }}
+                                        value="{{ value }}">
+                                    {{ lang('ms_seller_status_' ~ value) }}
+                                </option>
+                            {% endfor %}
+                        </select>
+
+                        <span class="help-block"></span>
+                        <span class="text-muted">{{ langempty('ms_catalog_sellerinfo_avatar_note') }}</span>
+                    </div>
+
+                    <div class="form-group" id="minimum_order-group">
+                        <label for="minimum_order" class="control-label text-semibold">
+                            {{ lang('ms_catalog_minimum_order') }}
+                        </label>
+
+                        <input type="text" class="form-control" id="minimum_order" name="seller[minimum_order]"
+                               value="{{ seller['ms.minimum_order'] }}">
+
+                        <span class="help-block"></span>
+                        <span class="text-muted">{{ langempty('ms_catalog_minimum_order_note') }}</span>
+                    </div>
+
+                    <div class="form-group" id="view_minimum_alert-group">
+                        <label for="view_minimum_alert" class="control-label text-semibold">
+                            {{ lang('ms_catalog_view_minimum_alert') }}
+                        </label>
+
+                        <select name="seller[view_minimum_alert]" class="form-control"
+                                id="view_minimum_alert">
+                            <option value="1" {{ seller['ms.view_minimum_alert'] == 1 ? 'selected' : '' }}>
+                                {{ lang('text_enabled') }}
+                            </option>
+                            <option value="0" {{ seller['ms.view_minimum_alert'] == 0 ? 'selected' : '' }}>
+                                {{ lang('text_disabled') }}
+                            </option>
+                        </select>
+
+                        <span class="help-block"></span>
+                        <span class="text-muted">{{ langempty('ms_catalog_view_minimum_alert_note') }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-heading">
+                    <legend class="text-semibold">
+                        <i class="fas fa-check-circle fa-lg position-left"></i>
+                        {{ lang('head_global_settings') }}
+                    </legend>
+                </div>
+
+                <input type="hidden" name="seller[commission_id]" value="{{ seller['commission_id'] }}"/>
+
+                <div class="panel-body">
+                    {% if seller['actual_fees'] is defined %}
+                        <div class="form-group" id="notification_email-group">
+                            <label for="notification_email" class="control-label text-semibold">
+                                {{ lang('ms_commission_actual') }}
+                            </label>
+
+                            {{ seller['actual_fees'] }}
+
+                            <span class="help-block"></span>
+                            <span class="text-muted">{{ langempty('ms_commission_actual_note') }}</span>
+                        </div>
+                    {% endif %}
+
+                    <div class="form-group" id="rate_sale-group">
+                        <label for="seller_commision" class="control-label text-semibold">
+                            {{ lang('ms_commission_' ~ rateSale) }}
+                        </label>
+
+                        <input type="hidden" name="seller[commission][{{ rateSale }}][rate_id]"
+                               value="{{ seller['commission_rates'][rateSale]['rate_id'] is defined ? seller['commission_rates'][rateSale]['rate_id'] : '' }}"
+                        />
+                        <input type="hidden" name="seller[commission][{{ rateSale }}][rate_type]"
+                               value="{{ rateSale }}"
+                        />
+
+                        <div>
+                            <div class="col-md-4">
+                                <div class="input-group">
+                                    <span class="input-group-addon">{{ leftCurrencySymbol }}</span>
+                                    <input type="text" name="seller[commission][{{ rateSale }}][flat]"
+                                           value="{{ commission_sale['flat'] }}" class="form-control"
+                                    />
+                                    <span class="input-group-addon">{{ rightCurrencySymbol }}</span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="input-group">
+                                    <span class="input-group-addon">+</span>
+                                    <input type="text" name="seller[commission][{{ rateSale }}][percent]"
+                                           value="{{ commission_sale['percent'] }}" class="form-control"/>
+                                    <span class="input-group-addon">%</span>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <span class="help-block"></span>
+                        <span class="text-muted"></span>
+                    </div>
+
+                    <div class="clearfix"></div>
+
+                    <div class="form-group" id="rate_sale-group">
+                        <label for="seller_commision" class="control-label text-semibold">
+                            {{ lang('ms_commission_' ~ rateListing) }}
+                        </label>
+
+                        <input type="hidden" name="seller[commission][{{ rateListing }}][rate_id]"
+                               value="{{ seller['commission_rates'][rateListing]['rate_id'] is defined ? seller['commission_rates'][rateListing]['rate_id'] : '' }}"
+                        />
+                        <input type="hidden" name="seller[commission][{{ rateListing }}][rate_type]"
+                               value="{{ rateListing }}"
+                        />
+
+                        <div>
+                            <div class="col-md-4">
+                                <div class="input-group">
+                                    <span class="input-group-addon">{{ leftCurrencySymbol }}</span>
+                                    <input type="text" name="seller[commission][{{ rateListing }}][flat]"
+                                           value="{{ commission_listing['flat'] }}" class="form-control"
+                                    />
+                                    <span class="input-group-addon">{{ rightCurrencySymbol }}</span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="input-group">
+                                    <span class="input-group-addon">+</span>
+                                    <input type="text" name="seller[commission][{{ rateListing }}][percent]"
+                                           value="{{ commission_listing['percent'] }}" class="form-control"/>
+                                    <span class="input-group-addon">%</span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <select name="seller[commission][{{ rateListing }}][payment_method]"
+                                        class="form-control">
+                                    <optgroup label="{{ lang('ms_payment_method') }}">
+                                        <option {{ payment_method == 0 ? 'selected' : '' }}
+                                                value="0">{{ lang('ms_payment_method_inherit') }}</option>
+                                        <option {{ payment_method == method_balance ? 'selected' : '' }}
+                                                value="{{ method_balance }}">{{ lang('ms_payment_method_balance') }}</option>
+                                        <option {{ payment_method == method_paypal ? 'selected' : '' }}
+                                                value="{{ method_paypal }}">{{ lang('ms_payment_method_paypal') }}</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                        </div>
+
+
+                        <span class="help-block"></span>
+                        <span class="text-muted"></span>
+                    </div>
+                </div>
+            </div>
+
+            {% if subscription_system_status == 1 %}
+            <div class="panel">
+                <div class="panel-heading">
+                    <legend class="text-semibold">
+                        <i class="fas fa-check-circle fa-lg position-left"></i>
+                        {{ lang('ms_subscription_list') }}
+                    </legend>
+                </div>
+                <div class="panel-body">
+                    <table class="plansList table table-hover" id="plans_list">
+                        <thead>
+                        <tr>
+                            <th>{{ lang('ms_plan_title') }}</th>
+                            <th>{{ lang('created_at') }}</th>
+                            <th>{{ lang('availble_up') }}</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for plan in subscriptions_plans %}
+                        <tr>
+                            <td>{{ plan['title']  }}</td>
+                            <td>{{ plan['created_at']|date('Y-m-d') }}</td>
+                            <td>{{ plan['period'] ~ ' ' ~ formats[plan['format']] }}</td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+
+        <input type="hidden" id="seller_id" name="seller[seller_id]" value="{{ seller['seller_id'] }}" />
+    </form>
+
+    <div class="row">
+        <div class="col-md-12 text-right">
+            <hr/>
+            <a href="{{ link('multiseller/seller') }}" class="btn btn-default"> {{ lang('button_cancel') }}</a>
+            <a class="btn btn-primary" onclick="$('.form').submit();"><i
+                        class="far fa-save fa-lg position-left"></i> {{ lang('button_save') }}</a>
+        </div>
+    </div>
+{% endblock %}

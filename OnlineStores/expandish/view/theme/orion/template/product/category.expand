@@ -1,0 +1,382 @@
+{{ script('js/jquery/jquery.total-storage.min.js') }}
+{% set mfSettings = config(mega_filter_settings) %}
+{% if mfSettings %}
+    {% if mfilter_json %}
+    <div id="mfilter-json" style="display:none">{{ mfilter_json|base64_encode }}</div>
+    {% endif %}
+    <div id="mfilter-content-container">
+{% endif %}
+
+
+{# Start :: Breadcrumbs #}
+<div class="detail-bread-crumb">
+    <div class="container">
+        <p class="desc bread-crumb">
+            {% for breadcrumb in breadcrumbs %}
+                {% if loop.last %}
+                    <span>{{ breadcrumb['text'] }}</span>
+                {% else %}
+                    <a href="{{ breadcrumb['href'] }}">{{ breadcrumb['text'] }}</a>
+                {% endif %}
+            {% endfor %}
+        </p>
+    </div>
+</div>
+{# End :: Breadcrumbs #}
+
+{# ========= Start :: Category Page Content ======================================================================== #}
+
+{# Category Info #}
+{% if image %}
+    <img src="{{ image(image, 1200, 400) }}" class="img-responsive" alt="{{ category_name }}">
+{% endif %}
+
+<h3 class="page-title">{{ category_name }}</h3>
+
+{% if description %}
+    <p>{{ description }}</p>
+{% endif %}
+
+{% if categories %}
+<ul class="list-none list-inline-block">
+    {% if categories %}
+        {% for category in categories %}
+            <li><a class="shop-button" href="{{ category.href }}">{{ category.name }}</a></li>
+        {% endfor %}
+    {% endif %}
+</ul>
+{% endif %}
+
+<br><br>
+
+{# Category Products #}
+{% if products %}
+    {# Sort Filter #}
+    <div class="sort-order-bar">
+        <div class="row">
+            <div class="col-md-7 col-sm-7 col-xs-12">
+                <ul class="list-inline-block pull-left">
+                    <li>
+                        <div class="view-type">
+                            <a href="" class="view-as-grid active" onclick="$('.products-grid').show(); $('.products-list').hide(); $('.view-as-list').removeClass('active'); $('.view-as-grid').addClass('active'); return false;"><i class="fa fa-th" aria-hidden="true"></i></a>
+                            <a href="" class="view-as-list" onclick="$('.products-list').show(); $('.products-grid').hide(); $('.view-as-grid').removeClass('active'); $('.view-as-list').addClass('active'); return false;"><i class="fa fa-th-list" aria-hidden="true"></i></a>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="sort-by-index dropdown-box">
+                            <span class="text-uppercase">{{ lang('text_sort') }}</span>
+                            <a href="#" class="dropdown-link silver"></a>
+                            <ul class="list-none dropdown-list">
+                                {% for sortst in sorts %}
+                                    {% if sortst.value == sort ~ '-' ~ order %}
+                                        <li class="active"><a href="{{ sortst.href }}" id="selected-sort">{{ sortst.text }}</a></li>
+                                    {% else %}
+                                        <li><a href="{{ sortst.href }}">{{ sortst.text }}</a></li>
+                                    {% endif %}
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="product-per-page dropdown-box">
+                            <span class="text-uppercase">{{ lang('text_limit') }}</span>
+                            <a href="#" class="dropdown-link silver"></a>
+                            <ul class="list-none dropdown-list">
+                                {% for limitst in limits %}
+                                    {% if limitst.value == limit %}
+                                        <li class="active"><a href="{{ limitst.href }}" id="selected-show">{{ limitst.text }}</a></li>
+                                    {% else %}
+                                        <li><a href="{{ limitst.href }}">{{ limitst.text }}</a></li>
+                                    {% endif %}
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            <div class="col-md-5 col-sm-5 col-xs-12">
+                <ul class="list-inline-block pull-right">
+                    <li>
+                        <div class="pagi-nav">
+                            {{ pagination }}
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    {# Grid View#}
+    <div class="list-product-grid products-grid">
+        <div class="row">
+
+            {% for product in products %}
+                <div class="col-md-4 col-sm-6 col-xs-6">
+                    <div class="item-product text-center item-product-grid">
+                        <div class="product-thumb">
+                            <a href="{{ product.href }}" class="product-thumb-link zoom-thumb">
+                                <img src="{{ image(product.image, 500, 500) }}" alt="{{ product.name }}">
+                            </a>
+                            <div class="product-extra-link style2">
+                                <a href="#" class="wishlist-link" onclick="addToWishList({{ product.product_id }}); return false;"><i class="fa fa-heart-o" aria-hidden="true"></i><span>Wishlist</span></a>
+                                <a href="#" class="compare-link" onclick="addToCompare({{ product.product_id }}); return false;"><i class="fa fa-exchange" aria-hidden="true"></i><span>Compare</span></a>
+                                <a href="{{ product.href }}" class="quickview-link"><i class="fa fa-eye" aria-hidden="true"></i><span>Quick View</span></a>
+                            </div>
+                            <div class="product-label2">
+                                {% if product.saving < 100 %}
+                                <span class="new-label2">-{{ product.saving }}%</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="product-info">
+                            {% if config('show_brands') %}
+                                <h3 class="product-title title12"><a href="{{ product.manufacturer_href }}">{{ product.manufacturer }}</a></h3>
+                            {% endif %}
+                            <h3 class="product-title title14"><a href="{{ product.href }}">{{ product.name }}</a></h3>
+                            <div class="product-price rale-font">
+                                {% if ('-1' in product.price) or ('-1' in product.special) %}
+                                    <ins class="color title24 font-bold clickable" onclick="contact_us('{{ product.product_id }}');"><span>{{ lang('button_req_quote') }}</span></ins>
+                                <div id="enquiry-{{ product.product_id }}"  style="display:none">{{ product.name }}:</div>
+                                {% elseif product.special %}
+                                    <ins class="color title24 font-bold"><span>{{ product.special }}</span></ins>
+                                    <del class="silver"><span>{{ product.price }}</span></del>
+                                {% else %}
+                                    <ins class="color title24 font-bold"><span>{{ product.price }}</span></ins>
+                                {% endif %}
+                            </div>
+                            <div class="product-rate">
+                                <div class="product-rating" style="width:100%"></div>
+                            </div>
+                            <div class="order-num">
+                                {% if product.rating == 0 %}
+                                <i class="fa fa-star-o"></i>
+                                <i class="fa fa-star-o"></i>
+                                <i class="fa fa-star-o"></i>
+                                <i class="fa fa-star-o"></i>
+                                <i class="fa fa-star-o"></i>
+                                {% elseif product.rating == 1 %}
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star-o"></i>
+                                <i class="fa fa-star-o"></i>
+                                <i class="fa fa-star-o"></i>
+                                <i class="fa fa-star-o"></i>
+                                {% elseif product.rating == 2 %}
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star-o"></i>
+                                <i class="fa fa-star-o"></i>
+                                <i class="fa fa-star-o"></i>
+                                {% elseif product.rating == 3 %}
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star-o"></i>
+                                <i class="fa fa-star-o"></i>
+                                {% elseif product.rating == 4 %}
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star-o"></i>
+                                {% else %}
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                <i class="fa fa-star"></i>
+                                {% endif %}
+                            </div>
+                            <div class="wrap-cart-social">
+                                <div class="table link-addcart-detail">
+                                  {% if customer.isCustomerAllowedToAdd_cart and ( config('config_hide_add_to_cart') != 1 or product.quantity >0 )  %}
+                                    <div class="text-center">
+                                            <a href="" class="link-btn link-arrow addcart-link" onclick="addToCart({{ product.product_id }}); return false;">{{ lang('button_cart') }}</a>
+                                        </div>
+                                         {% endif %}
+                                        <div class="text-center">
+                                            <a href="{{ product.href }}" class="link-btn link-arrow detail-link">{{ lang('Text_Detail') }}</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+
+        </div>
+    </div>
+
+    {# List View #}
+    <div class="content-list-view products-list" style="display:none;">
+
+        {% for product in products %}
+            <div class="item-product-list border">
+                <div class="row">
+                    <div class="col-md-4 col-sm-4 col-xs-4">
+                        <div class="product-thumb">
+                            <a href="{{ product.href }}" class="product-thumb-link zoom-thumb">
+                                <img src="{{ image(product.image, 500, 500) }}" alt="{{ product.name }}">
+                            </a>
+                            <div class="product-label2">
+                                {% if product.saving < 100 %}
+                                    <span class="new-label2">-{{ product.saving }}%</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-8 col-sm-8 col-xs-8">
+                        <div class="product-info">
+                            {% if config('show_brands') %}
+                                <h3 class="product-title title12"><a href="{{ product.manufacturer_href }}">{{ product.manufacturer }}</a></h3>
+                            {% endif %}
+                            <h3 class="product-title title18 font-bold"><a href="{{ product.href }}">{{ product.name }}</a></h3>
+                            <div class="product-price rale-font">
+                                {% if ('-1' in product.price) or ('-1' in product.special) %}
+                                    <ins class="color title24 font-bold clickable" onclick="contact_us('{{ product.product_id }}');"><span>{{ lang('button_req_quote') }}</span></ins>
+                                <div id="enquiry-{{ product.product_id }}"  style="display:none">{{ product.name }}:</div>
+                                {% elseif product.special %}
+                                    <ins class="color title24 font-bold"><span>{{ product.special }}</span></ins>
+                                    <del class="silver"><span>{{ product.price }}</span></del>
+                                {% else %}
+                                    <ins class="color title24 font-bold"><span>{{ product.price }}</span></ins>
+                                {% endif %}
+                            </div>
+                            <div class="product-rate">
+                                <div class="product-rating" style="width:120%">
+                                    {% if product.rating == 0 %}
+                                    <i class="fa fa-star-o"></i>
+                                    <i class="fa fa-star-o"></i>
+                                    <i class="fa fa-star-o"></i>
+                                    <i class="fa fa-star-o"></i>
+                                    <i class="fa fa-star-o"></i>
+                                    {% elseif product.rating == 1 %}
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star-o"></i>
+                                    <i class="fa fa-star-o"></i>
+                                    <i class="fa fa-star-o"></i>
+                                    <i class="fa fa-star-o"></i>
+                                    {% elseif product.rating == 2 %}
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star-o"></i>
+                                    <i class="fa fa-star-o"></i>
+                                    <i class="fa fa-star-o"></i>
+                                    {% elseif product.rating == 3 %}
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star-o"></i>
+                                    <i class="fa fa-star-o"></i>
+                                    {% elseif product.rating == 4 %}
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star-o"></i>
+                                    {% else %}
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="product-extra-link style2">
+                                <a href="" class="wishlist-link" onclick="addToWishList({{ product.product_id }}); return false;"><i class="fa fa-heart-o" aria-hidden="true"></i><span>{{ lang('button_wishlist') }}</span></a>
+                                <a href="" class="compare-link" onclick="addToCompare({{ product.product_id }}); return false;"><i class="fa fa-exchange" aria-hidden="true"></i><span>{{ lang('button_compare') }}</span></a>
+                                <a href="{{ product.href }}" class="quickview-link fancybox fancybox.iframe"><i class="fa fa-eye" aria-hidden="true"></i></a>
+                            </div>
+                            <p class="desc">{{ product.description|slice(0, 199) }}</p>
+                            <div class="link-cart-detail">
+                            {% if customer.isCustomerAllowedToAdd_cart and ( config('config_hide_add_to_cart') != 1 or product.quantity >0 )  %}
+                                <a href="" class="link-btn link-arrow border addcart-link" onclick="addToCart({{ product.product_id }}); return false;">{{ lang('button_cart') }}</a>
+                                {% endif %}
+                                <a href="{{ product.href }}" class="link-btn link-arrow border">{{ lang('Text_Detail') }}</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+        
+    </div>
+
+    {# Sort Filter #}
+    <div class="sort-order-bar">
+            <div class="row">
+                <div class="col-md-7 col-sm-7 col-xs-12">
+                    <ul class="list-inline-block pull-left">
+                        <li>
+                            <div class="view-type">
+                                <a href="" class="view-as-grid active" onclick="$('.products-grid').show(); $('.products-list').hide(); $('.view-as-list').removeClass('active'); $('.view-as-grid').addClass('active'); return false;"><i class="fa fa-th" aria-hidden="true"></i></a>
+                                <a href="" class="view-as-list" onclick="$('.products-list').show(); $('.products-grid').hide(); $('.view-as-grid').removeClass('active'); $('.view-as-list').addClass('active'); return false;"><i class="fa fa-th-list" aria-hidden="true"></i></a>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="sort-by-index dropdown-box">
+                                <span class="text-uppercase">{{ lang('text_sort') }}</span>
+                                <a href="#" class="dropdown-link silver"></a>
+                                <ul class="list-none dropdown-list">
+                                    {% for sortst in sorts %}
+                                        {% if sortst.value == sort ~ '-' ~ order %}
+                                            <li class="active"><a href="{{ sortst.href }}" id="selected-sort">{{ sortst.text }}</a></li>
+                                        {% else %}
+                                            <li><a href="{{ sortst.href }}">{{ sortst.text }}</a></li>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="product-per-page dropdown-box">
+                                <span class="text-uppercase">{{ lang('text_limit') }}</span>
+                                <a href="#" class="dropdown-link silver"></a>
+                                <ul class="list-none dropdown-list">
+                                    {% for limitst in limits %}
+                                        {% if limitst.value == limit %}
+                                            <li class="active"><a href="{{ limitst.href }}" id="selected-show">{{ limitst.text }}</a></li>
+                                        {% else %}
+                                            <li><a href="{{ limitst.href }}">{{ limitst.text }}</a></li>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="col-md-5 col-sm-5 col-xs-12">
+                    <ul class="list-inline-block pull-right">
+                        <li>
+                            <div class="pagi-nav">
+                                {{ pagination }}
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+    </div>
+{% else %}
+    <h3 class="text-center">{{ lang('text_empty') }}</h3>
+{% endif %}
+
+{# ========= End :: Product Page Content ======================================================================== #}
+
+{% if mfSettings %}
+</div>
+{% endif %}
+
+{# Script To Get Filter Titles #}
+<script>
+    $( document ).ready(function() {
+        var x = $('#selected-sort').text();
+        $('.sort-by-index .dropdown-link').text(x);
+
+        var y = $('#selected-show').text();
+        $('.product-per-page .dropdown-link').text(y);
+    });
+</script>
+
+{% if integration_settings['mn_criteo_status'] %}
+    {{ include('manymore/template/module/criteo/criteo_category.expand') }}
+{% endif %}

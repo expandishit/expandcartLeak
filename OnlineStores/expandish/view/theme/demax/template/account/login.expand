@@ -1,0 +1,125 @@
+{% if success %}
+<br>
+<div class="alert alert-success alert-dismissible" role="alert">
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+    {{ success }}
+</div>
+{% endif %}
+
+{% if error_warning %}
+<br>
+<div class="alert alert-warning alert-dismissible" role="alert">
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+    {{ error_warning }}
+</div>
+{% endif %}
+<div class="container">
+<div id="row">
+    <!-- Breadcrumbs -->
+    <div class="breadcrumbs">
+        <div class="container">
+            <div class="row">
+                <div class="col-xs-12">
+                    <ul>
+                        {% for breadcrumb in breadcrumbs %} {% if loop.last %}
+                        <li>
+                            <strong>{{ breadcrumb['text'] }}</strong>
+                        </li>
+                        {% else %}
+                        <li class="home">
+                            <a title="Go to Home Page" href="{{ breadcrumb['href'] }}">{{ breadcrumb['text'] }}</a>
+                            <span>&raquo;</span>
+                        </li>
+                        {% endif %} {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Breadcrumbs End -->
+
+    <!-- Main Container -->
+  <section class="main-container col1-layout">
+    <div class="main container">
+      <div class="page-content">
+        <div class="account-login">
+
+
+          <div class="box-authentication">
+            <h4>{{ lang('SignIn_Title') }}</h4>
+            <p class="before-login-text"{{ lang('SignIn_Desc') }}</p>
+                <form action="{{ link('account/login', '', 'SSL') }}" method="post" enctype="multipart/form-data" id="login">
+            <label for="emmail_login">{{ register_login_by_phone_number ? lang('Input_Telephone') : lang('Input_Email') }}<span class="required">*</span></label>
+            {% if country_phone_code_login and login_register_phonenumber_enabled %}
+                <div class="form-inline">
+                    <input type="hidden" name="telephoneCode" id="telephoneCodeInputHidden" value="">
+                    <div class="btn-group">
+                        <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <span id='phoneCodeSpan'></span>
+                        <img  id='flagImage' src="">
+                        </button>
+                        <input type="hidden" name="def_phone_country_code" id="def_phone_country_code" value="{{country_id}}">
+                        <ul class="dropdown-menu pre-scrollable" id="countriesPhonesCodesList"></ul>
+                        <input type="text" name="telephone" class="form-control" id="telephone" placeholder="{{ register_login_by_phone_number ? lang('Input_Telephone') : lang('Input_Email') }}" />
+                    </div> 
+                </div>    
+            {% else %}
+                <input id="emmail_login" type="text" name="email" class="form-control" placeholder="{{ register_login_by_phone_number ? lang('Input_Telephone') : lang('Input_Email') }}" value="{{ email }}">
+            {% endif %}
+            <label for="password_login">{{ lang('entry_password') }}<span class="required">*</span></label>
+            <input id="password_login" type="password" name="password" class="form-control" placeholder="{{ lang('Input_Password') }}">
+            <p class="forgot-pass"><a href="{{ link('account/forgotten', '', 'SSL') }}">{{ lang('text_forgotten') }}</a></p>
+
+                    {% if (recaptcha['status'] == 1 and recaptcha['page_enabled_status'] == 1 )%}
+                        <script src="https://www.google.com/recaptcha/api.js?render={{ recaptcha['site-key']  }}" type="text/javascript"></script>
+                        <script>
+                            grecaptcha.ready(function () {
+                                grecaptcha.execute("{{ recaptcha['site-key'] }}", { action: '{{ recaptchaAction }}' }, { score: '0' }).then(function (token) {
+                                    var recaptchaResponse = document.getElementById('recaptchaResponse');
+                                    recaptchaResponse.value = token;
+                                });
+
+                            });
+                        </script>
+                        <button onclick="onSubmit()" type="submit" class="g-recaptcha " data-callback='onSubmit'
+                                data-sitekey="{{ recaptcha['site-key'] }}"
+                        ><i class="icon-lock icons"></i>&nbsp; {{ lang('button_login') }}</button>
+                    {% else %}
+                        <button type="submit" ><i class="icon-lock icons"></i>&nbsp; {{ lang('button_login') }}</button>
+                    {% endif %}
+
+                    <label class="inline" for="rememberme">
+                    {% if redirect %}
+                    <input type="hidden" name="redirect" value="{{ redirect }}" />
+                {% endif %}
+            </form>
+          </div>
+
+
+          <div class="box-authentication">
+            <h4>{{ lang('SignUp_Title') }}</h4>
+            <div class="register-benefits">
+                <h5>{{ lang('SignUp_Benefits_Title') }}:</h5>
+                <p>{{ lang('SignUp_Benefits_Desc') }}</p>
+            </div>
+            <button onclick="location.href='{{ link('account/register', '', 'SSL') }}'" type="button" class="button"><i class="icon-user icons"></i>&nbsp; <span>{{ lang('SignUp_Register') }}</span></button>
+            <br>
+            {% if d_social_login_enabled %}{{ d_social_login }}{% endif %}
+          </div>
+
+
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- Main Container End --> 
+</div>
+</div>
+
+<script type="text/javascript">
+    $('#login input').keydown(function(e) {
+	    if (e.keyCode == 13) {
+		    $('#login').submit();
+	    }
+    });
+</script>

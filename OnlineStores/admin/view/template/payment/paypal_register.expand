@@ -1,0 +1,183 @@
+<style>
+
+    .modalTitle {
+        font-size: 16px;
+        font-weight: bold;
+        color: #2C2C35;
+    }
+
+    .prod-mode-modal .modal-content .modes .mode .info {
+        padding: 40px 18px 18px;
+        text-align: center;
+        border-radius: 2px;
+        border: solid 1px #e0ddef;
+        position: relative;
+        cursor: pointer;
+        transition: .3s;
+        height: 94px;
+
+    }
+
+    .prod-mode-modal .modal-content .modes .mode .info .mode-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #2C2C35;
+        margin-bottom: 9px;
+    }
+
+
+
+</style>
+
+<div class="modal fade prod-mode-modal in" id="PaypalRegisterModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <form class="mode-form modal-content">
+            <div class="head">
+                <p class="modalTitle">
+                    {{ lang('paypal_products') }}
+                </p>
+                <button type="button" class="close-modal" data-dismiss="modal" aria-label="Close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="modes">
+                <label class="mode">
+                    <input type="radio" name="paypal_product" value="EXPRESS_CHECKOUT"  class="paypalProduct hide" checked>
+                    <div class="info">
+                        <i class="fas fa-check"></i>
+                        <p class="mode-title">
+                            {{ lang('paypal_express_checkout') }}
+                        </p>
+                    </div>
+                </label>
+                <label class="mode">
+                    <input type="radio" name="paypal_product" value="PPPLUS" class="paypalProduct hide">
+                    <div class="info">
+                        <i class="fas fa-check"></i>
+                        <p class="mode-title">
+                            {{ lang('paypal_plus') }}
+                        </p>
+                    </div>
+                </label>
+                <label class="mode">
+                    <input type="radio" name="paypal_product" value="WEBSITE_PAYMENT_PRO" class="paypalProduct hide">
+                    <div class="info">
+                        <i class="fas fa-check"></i>
+                        <p class="mode-title">
+                            {{ lang('paypal_professional') }}
+                        </p>
+                    </div>
+                </label>
+                <label class="mode">
+                    <input type="radio" name="paypal_product" value="PPCP" class="paypalProduct hide">
+                    <div class="info">
+                        <i class="fas fa-check"></i>
+                        <p class="mode-title">
+                            {{ lang('paypal_complete_payments') }}
+                        </p>
+                    </div>
+                </label>
+            </div>
+            <button type="button" class="btn btn-primary pull-right" id="callPayPal">{{ lang('button_next') }}</button>
+            <a style="display: none" id="PayPalActionLink" data-paypal-button="true" target="PPFrame"><button type="button" id="PayPalActionButton" class="btn btn-primary pull-right" ><i class="fa fa-paypal"></i>
+                    {{ lang('entry_sign_in_up') }}
+                </button></a>
+            <div trbidi="on">
+                <script>
+                    (function (d, s, id) {
+                        var js, ref = d.getElementsByTagName(s)[0];
+                        if (!d.getElementById(id)) {
+                            js = d.createElement(s);
+                            js.id = id;
+                            js.async = true;
+                            js.src = "https://www.paypal.com/webapps/merchantboarding/js/lib/lightbox/partner.js";
+                            ref.parentNode.insertBefore(js, ref);
+                        }
+                    }(document, "script", "paypal-js"));
+
+                </script>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<script>
+    let is_paypal_approved;
+    $(function () {
+
+        function ajaxHandler(ajaxObject)
+        {
+            return $.ajax(ajaxObject);
+        }
+
+        // check if account is approved or not
+        let checkApprovmentObject = {//object that we using to send to data to backend to check if account registered or not
+            url: '{{ link("payment/paypal/checkIfRegistered") }}',
+            dataType: 'json',
+            type: 'POST'
+        };
+
+        let checkApprovment = ajaxHandler(checkApprovmentObject); //register request    
+
+        checkApprovment.done((json) => {
+            if (typeof (json.IsApproved) !== 'undefined') {
+                is_paypal_approved = json.IsApproved;
+            } else {
+                is_paypal_approved = false;
+            }
+        });
+
+        checkApprovment.fail((xhr, ajaxOptions, thrownError) => {
+            alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+        });
+
+        /*--------------------------------------------------------------------*/
+        let callPayPal = $('#callPayPal'),
+                PayPalActionButton = $('#PayPalActionButton');
+
+
+
+        function callPayPalForm()
+        {
+
+            let _this = $(this),
+                    createAuthLinkObject = {//object that we using to send to data to backend to check if account registered or not
+                        url: '{{ link("payment/paypal/createAuthLink") }}',
+                        dataType: 'JSON',
+                        type: 'POST',
+                        data: {paypal_product: $('.paypalProduct:checked').val()}
+                    };
+
+            _this.prop('disabled', true).append("<i class='fa fa-refresh fa-spin'></i>");
+
+            let createAuthLinkRequest = ajaxHandler(createAuthLinkObject),
+                    PayPalActionLink = $('#PayPalActionLink');
+
+            createAuthLinkRequest.done((response) => {
+
+                let PayPalActionUrl = `${response.actionUrl}&displayMode=minibrowser`;
+
+                PayPalActionLink.attr('href', PayPalActionUrl);
+
+                _this.fadeOut('slow');
+                PayPalActionLink.fadeIn('slow');
+
+            });
+        }
+
+        callPayPal.on('click', callPayPalForm);
+
+        function resetPayPalModal()
+        {
+            callPayPal.show().prop('disabled', false);
+            $('.fa-refresh').remove();
+            $('#PayPalActionLink').hide();
+            $('#PaypalRegisterModal').modal('toggle');
+        }
+
+        PayPalActionButton.on('click', resetPayPalModal);
+    });
+
+</script>

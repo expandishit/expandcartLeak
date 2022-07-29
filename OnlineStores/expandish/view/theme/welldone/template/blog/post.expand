@@ -1,0 +1,172 @@
+
+{% if success %}
+    <br>
+    <div class="alert alert-success alert-dismissible" role="alert">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        {{ success }}
+    </div>
+{% endif %}
+
+{% if error_warning %}
+    <br>
+    <div class="alert alert-warning alert-dismissible" role="alert">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        {{ error_warning }}
+    </div>
+{% endif %}
+<style>
+    .postContents {
+        border-bottom: 1px solid #ccc;
+        margin: 10px 0px 30px 0px;
+    }
+
+    .postContents {
+        border:0;
+    }
+
+    {% if lang('direction') == 'rtl' %}
+    .commentForm .title-base,
+    .commentForm button{
+        margin-right: 16px;
+    }
+    {% else %}
+    .commentForm .title-base,
+    .commentForm button{
+        margin-left: 16px;
+    }
+    {% endif %}
+
+    #comments-content{
+        margin-top: 20px;
+        padding: 0px;
+    }
+
+    header, .repo {
+        border: 1px solid #eee;
+        padding: 1em;
+        border-radius: 3px;
+      }
+      header :first-child, .repo :first-child {
+        margin-top: 0;
+      }
+      header :last-child, .repo :last-child {
+        margin-bottom: 0;
+      }
+
+    .repo {
+        margin-bottom: 1em;
+      }
+      .repo h3 {
+        margin-bottom: 5px;
+      }
+
+      .stats, .last-updated {
+        font-size: .7em;
+        color: #666;
+        margin-bottom: 5px;
+      }
+
+      .stats {
+        text-transform: uppercase;
+        font-weight: bold;
+      }
+
+      .last-updated {
+        font-style: italic;
+      }
+      img.note-float-left {
+          margin: 30px;
+     }
+  
+</style>
+<div id="content row" class="container blog-health">
+    <!--========= Breadcrumb ===========================-->
+    <div class="breadcrumb-page">
+        <ol class="breadcrumb">
+            {% for breadcrumb in breadcrumbs %}
+                {% if loop.last %}
+                    <li class="active">{{ breadcrumb['text'] }}</li>
+                {% else %}
+                    <li><a href="{{ breadcrumb['href'] }}">{{ breadcrumb['text'] }}</a></li>
+                {% endif %}
+            {% endfor %}
+        </ol>
+    </div>
+    <div class="blog col-md-12">
+        <!--========= Post Content ===========================-->
+        <h2 class="title-base">{{ post['name'] }}</h2>
+        <div class="post-img">
+            <img class="img-responsive" src="{{ image(post['post_image']) }}" />
+        </div>        
+       <div class="postContents">{{ post['content'] }}</div> 
+
+
+        <!--========= Post :: Related Posts ===========================-->
+            {% if relatedPosts %}
+            <hr>
+            <h3 class="related-heading">{{ lang('blog_related_posts') }}</h3>
+            <div class="row post-related">
+                {# Get Related Posts / All Posts #}
+                {% for post in relatedPosts %}
+                <div class="col-sm-6 col-md-4 box-blog">
+                        <div class="thumbnail">
+                            <div class="img-post">
+                                <a href="{{ link('blog/post', '&post_id=' ~ post['post_id'], 'SSL') }}">
+                                    <img src="{{ image(post['post_image']) }}" alt="{{ post['name'] }}" class="img-responsive">
+                                </a>
+                                <h4>
+                                    <span class="label label-date">{{ post['created_at']|date("m/d/Y") }}</span>
+                                    <span><a class="label label-default" href="{{ link('blog/category', '&category_id=' ~ post['category_id'], 'SSL') }}">{{ post['category_name'] }}</a></span>
+                                </h4>
+                            </div>                            
+                            <div class="caption">
+                                <a href="{{ link('blog/post', '&post_id=' ~ post['post_id'], 'SSL') }}">
+                                    <h3>{{ post['name'] }}</h3>
+                                    <p>{{ htmlEntityDecode(post['description'])|slice(0, 110) }}</p>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+        <!--========= Post :: Add Comment ===========================-->
+        {% if enableCommenting %}
+        <div class="commentForm col-md-12 center border">
+            <h3 class="title-base">{{ lang('blog_add_comment') }}</h3>
+            <form action="{{ link('blog/comment/submit', '&post_id=' ~ post['post_id'], 'SSL') }}" method="post">
+                <div class="form-group col-md-6">
+                    <input type="text" name="comment[email]" class="form-control"
+                           placeholder="{{ lang('entry_email') }}" value="{{ email }}" />
+                </div>
+                <div class="form-group col-md-6">
+                    <input type="text" name="comment[name]" class="form-control"
+                           placeholder="{{ lang('entry_name') }}" value="{{ name }}" />
+                </div>
+                <div class="form-group col-md-12">
+                    <textarea rows ="5" placeholder="{{ lang('entry_comment') }}" name="comment[comment]" class="form-control"></textarea>
+                </div>
+                <button type="submit" class="btn btn-success col-md-2">{{ lang('button_send') }}</button>
+
+                <input type="hidden" name="comment[customer_id]" value="{{ customer_id }}" />
+            </form>
+        </div>
+        {% endif %}
+
+        <!--========= Post :: Comments ===========================-->
+        {% if showComments %}
+        <div class="comments col-md-12" id="comments-content">
+            {% for comment in comments %}
+                <div class="repo">
+                        <h3>{{ comment['name'] }}</h3>
+                        <div class="stats">{{ comment['email'] }}</div>
+                        <p>{{ comment['comment']|nl2br }}</p>
+                        <p class='last-updated'>{{ comment['created_at'] }}</p>
+                </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+    </div>
+</div>

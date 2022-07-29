@@ -1,0 +1,166 @@
+<div id="content row">
+	<!-- breadcrumb -->
+	<div class="breadcrumb-page">
+		<div class="container">
+            <div class="row">
+                <div class="col-xs-12">
+                    <ol class="breadcrumb">
+                        {% for breadcrumb in breadcrumbs %}
+                            {% if loop.last %}
+                                <li class="active">{{ breadcrumb['text'] }}</li>
+                            {% else %}
+                                <li>
+                                    <a href="{{ breadcrumb['href'] }}">{{ breadcrumb['text'] }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                    </ol>
+                </div>
+            </div>
+        </div>
+	</div>
+	<!-- breadcrumb -->
+    
+  <section class="search"><!--Start search-->
+            <div class="container"><!--Start container-->
+                <section class="trip-details">
+                    <div class="row "><!--Start row-->
+                     <div id="notification"></div>
+                        <div class="col-md-5">
+                          {% if order_data['cancelStatus']==true %}
+                           <span class="onsale-section"><span class="onsale"> {{lang('canceled')}}</span></span>
+                           {% endif %}
+                            <div class="trips--info">
+                                <a href=" {{ order_data['href'] }}"> <h1 class="trips--heading"> {{ order_data['name'] }}</h1> </a>
+                            
+                                <h2 class="trip--header">
+                                    <span>
+                                        <img src="expandish/view/theme/default/image/trips/maps-and-flags.svg" alt="">
+                                       {{ order_data['area'] }}
+                                    </span>
+                                    <span>{{order_data['price']}}</span>
+                                </h2>
+
+                                <ul class="trip-details-dating list-unstyled list-inline">
+                                    <li>
+                                        <img src="expandish/view/theme/default/image/trips/calendar.png" alt="">
+                                        <span>{{ order_data['from_date'] }} to  {{ order_data['to_date'] }}</span>
+                                    </li>
+                                </ul>
+
+                                <h4 class="trips--label">{{lang('reservation_details')}}</h4>
+                                <ul class="trips--information list-unstyled">
+                                    <li><span> {{lang('driver_name')}} : </span>  {{ order_data['driver_name'] }}</li>
+                                    <li><span> {{lang('driver_phone')}} :  </span> {{ order_data['driver_phone'] }}</li>
+                                    <li><span>{{lang('city')}}  : </span>  {{ order_data['area'] }}</li>
+                                    <li><span> {{lang('pickup_point')}} :</span>  {{ order_data['pickup_point'] }}  </li>
+                                    <li><span>{{lang('destination_point')}} :</span>  {{ order_data['destination_point'] }}  </li>
+                                    <li><span> {{lang('duration')}}:  </span>  {{ order_data['duration'] }} Days</li>
+                                    <li><span>{{lang('reserved_seats')}}:  </span>  {{ order_data['reservation'] }} Seats </li>
+                                    <li><span>{{lang('total')}} :  </span>  {{ order_data['total'] }}  </li>
+                                </ul>
+                                <input hidden="" id="product_id" value="{{ order_data['product_id'] }}" />
+                                <h4 class="trips--label">{{lang('description')}} </h4>
+                                <p class="trips--paragraph">
+                                  {{ order_data['description'] }}
+                                </p>
+                                {%if order_data['questionare'] %}
+                                 <h4 class="trips--label"> {{lang('questionare')}}</h4>
+                                 
+                                <div class="questionare">
+                                   {% for question in order_data['questionare'] %}
+                                    <div class="questionare--block">
+                                        <h4 class="questionare--block-question">{{ question['name'] }}: {{ question['value']}}</h4>
+                                    </div>
+                                        {% endfor %}
+                                </div>
+                                
+                                {% endif %}
+                                  {% if order_data['trip_type']=="upcoming" and order_data['cancelStatus']==false %}
+                        <div class="btn-group">
+                <a href="tel:{{ order_data['driver_phone'] }}" ><span>{{lang('call_driver')}} <i class="fa fa-phone"></i></span></a>
+                {% if order_data['cancelTripFlag']==true and order_data['cancelStatus']==false %}
+                <a  class="cancel_trip btn-danger" data-id="{{order_data['order_id']}}>"><span>{{lang('cancel_trip')}} <i class="fa fa-times"></i></span> </a>
+                     {% endif %}
+                     </div>
+                              
+                            {% endif %}
+                            </div>
+                       
+
+                            </div>
+                           <div class="col-md-7">
+                            <div class="trips--slider">
+                                <div id="myCarousel" class="carousel slide" data-ride="carousel">
+                                    <!-- Indicators -->
+                                    <ol class="carousel-indicators">
+                                    <li data-target="#myCarousel" data-slide-to="0" class="active"></li>
+                                 
+                                    </ol>
+                                  
+                                    <!-- Wrapper for slides -->
+                                    <div class="carousel-inner">
+                                     <div class="item active">
+                                            <img src="{{order_data['image']}}" alt="">
+                                        </div>
+                                   
+                                    </div>
+                                </div>
+                               
+                            </div>
+                             
+                       
+                        </div>
+                         
+                        
+                        </div>
+                         
+                    </div><!--End row-->
+                </section>
+
+            </div><!--End container-->
+        </section><!--End search-->
+<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){
+ // Delete 
+ $('.cancel_trip').click(function(){
+   var el = this;
+  
+   var order_id = $(this).data('id');
+   var product_id = $("#product_id").val();
+ swal({
+        title: '{{ lang('cancel_trip') }}',
+        text: '{{ lang('cancel_trip_text') }}',
+        icon: 'warning',
+        buttons: ["{{ lang('cancel_trip_cancel') }}", "{{ lang('cancel_trip_confirm') }}"],
+    }).then((result) => {
+   if (result == true) {
+      // AJAX Request
+      $.ajax({
+        url: 'index.php?route=module/trips/cancel_trip',
+        type: 'POST',
+        data: { order_id:order_id,product_id:product_id },
+        success: function(response){
+          if(response){
+	   $('#notification').html('<br><div class="alert alert-success alert-dismissible" style="display: ' +
+                        'none;' +
+                        '"' +
+                           ' role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>{{ lang('canceled_success') }}</div>');
+                    $('.alert-success').fadeIn('slow');
+                    $('.alert-success').delay(3000).fadeOut('slow');
+                    location.reload();
+	    }
+        else{
+	    alert('Invalid ID.');
+          }
+
+        }
+      });
+   } });
+
+ });
+
+});
+
+</script>

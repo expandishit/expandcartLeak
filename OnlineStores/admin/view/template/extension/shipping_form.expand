@@ -1,0 +1,358 @@
+{% extends "base.expand" %}
+{% import "controls/forms.expand" as forms %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+
+{% block title %}
+    {{ lang('heading_title', 'extension/shipping') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block secondarymenu %}
+{% endblock secondarymenu %}
+
+{% block content %}
+
+
+    <style>
+    .content-wrapper {
+        background-color: #fff;
+    }
+    </style>
+
+{# {% if request.get['from_merge'] == 'yes' %}
+    <div class="alert alert-info">
+        {{ lang('redirected_from_merge_message') }}
+    </div>
+{% endif %}  #}
+    <div class="modal fade" id="modal-deactivate-ps">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger">
+                    <button type="button" class="close" data-dismiss="modal">×</button>
+                    <h4 class="modal-title">{{ lang('entry_deactivate_payment_method') }} <span id="ps-title"></span></h4>
+                </div>
+                <div class="modal-body">
+                    <p>{{ lang('entry_deactivate_message') }}</p>
+        
+                    <p>{{ lang('entry_deactivate_message_conf') }}</p>
+                </div>
+                <div class="modal-footer">
+                    <span class="server-loading" style="display:none;"><i class="fa fa-refresh fa-spin"></i></span>
+                    <button type="button" class="btn btn-danger" psid="" id="deactivate-ps">{{ lang('entry_remove_app') }}</button>
+                    <button type="button" class="btn btn-link" onclick="$('#modal-deactivate-ps').modal('toggle');">
+                        {{ lang('entry_cancel') }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+<div class="alert alert-danger" style="display: none;" id="errors-fallback"></div>
+<!-- shipping activation tabs -->
+<div class="shipping-activation-tabs">
+    <ul class="ship-active-list">
+        <li class="active">
+            <span><i class="fa fa-exclamation" aria-hidden="true"></i></span>
+        </li>
+        {% if shipping_method_data.type == "delivery_companies" %}
+            {% if shipping_method_data.company_requirements or shipping_method_data.company_requirements %}
+            <li class="{{activated == 1 ? 'active' : ''}}">
+                <span><i class="fa fa-list-ol" aria-hidden="true"></i></span>
+            </li>
+            {% endif %}
+            <li class="{{activated == 1 ? 'active' : ''}}">
+                <span><i class="fa fa-user" aria-hidden="true"></i></span>
+            </li>
+        {% endif %}
+        <li class="{{activated == 1 ? 'active' : ''}}">
+            <span><i class="fa fa-rocket" aria-hidden="true"></i></span>
+        </li>
+    </ul>
+    {# <pre>
+        {{ dump(shipping_method_data) }}
+    </pre> #}
+    <div class="ship-steps-content">
+        <div class="step {{activated == 0 ? 'active' : ''}}">
+            {% if shipping_method_data.description %}
+            <p class="font-16 bold mb-30">
+                {{ lang_printf("text_about",shipping_method_data.title) }}
+            </p>
+            {% if shipping_method_data.special_rate %}
+            <div class=" mb-10">
+                <p class="rate-label">
+                    {{ lang('text_steps_special_btn') }}
+                </p>
+            </div>
+            {% endif %}
+            <div class="gray-color mb-30 weight-500">
+                {{shipping_method_data.description }}
+            </div>
+            {% endif %}
+            {% if shipping_method_data.type == "delivery_companies" %}
+                <p class="font-13 bold mb-10">
+                    {{ lang('text_supported_countries') }}
+                </p>
+                <div class="gray-color mb-30 weight-500">
+                    {% for countrie in shipping_method_data.supported_countries %}
+                        {{countrie.name}} {% if loop.index < shipping_method_data.supported_countries|length %},{% elseif loop.index >= shipping_method_data.supported_countries|length %}{% endif %}
+                    {% endfor %}
+                    {% if shipping_method_data.supported_countries|length == 0 %}{{lang('text_global')}}{% endif %}
+                </div>
+            {% else %}
+                <p class="font-15 bold mb-10">
+                    {{ lang('text_price') }}
+                </p>
+                <div class="font-16 gray-color mb-30 weight-500">
+                    {% if shipping_method_data.price %}
+                        {{shipping_method_data.price}}
+                    {% else %}
+                        {{ lang('text_free') }}
+                    {% endif %}
+                </div>
+            {% endif %}
+            {% if shipping_method_data.contact_info %}
+            <p class="font-13 bold mb-10">
+                {{ lang_printf('text_have_inquiry', shipping_method_data.title) }}
+            </p>
+            <div class="gray-color mb-30 weight-500">
+                {{shipping_method_data.contact_info }}
+            </div>
+            {% endif %}
+
+            <div class="next-row">
+                <button class="next ship-next-btn">
+                    {{ lang('text_get_started') }}
+                    <i class="fa fa-angle-right" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+        {% if shipping_method_data.type == "delivery_companies" %}
+            {% if shipping_method_data.company_requirements or shipping_method_data.company_requirements %}
+            <div class="step">
+                <p class="font-16 bold mb-20">
+                    {{ lang_printf('text_integrate', shipping_method_data.title) }}
+                </p>
+                <div class="ship-terms-row">
+                    {% if shipping_method_data.company_requirements %}
+                    <div class="setting-step-box">
+                        <div class="img">
+                            <img src="view/assets/images/icons/companies-icon.svg" alt="">
+                        </div>
+                        <div class="info">
+                            <div class="up">
+                                <p class="font-14 box-title mb-10">
+                                    {{ lang('text_as_companies') }}
+                                </p>
+                                <p class="list-title">
+                                    {{ lang('text_should_have') }}
+                                </p>
+                                <ul>
+                                    <li>
+                                        {{shipping_method_data.company_requirements}}
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if shipping_method_data.individual_requirements %}
+                    <div class="setting-step-box">
+                        <div class="img">
+                            <img src="view/assets/images/icons/individuals-icon.svg" alt="">
+                        </div>
+                        <div class="info">
+                            <div class="up">
+                                <p class="font-14 box-title mb-10">
+                                    {{ lang('text_as_individuals') }}
+                                </p>
+                                <p class="list-title">
+                                    {{ lang('text_should_have') }}
+                                </p>
+                                <ul>
+                                    <li>
+                                        {{shipping_method_data.individual_requirements}}
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% if shipping_method_data.contact_info %}
+                <p class="font-14 bold mb-10">
+                    {{ lang_printf('text_have_inquiry', shipping_method_data.title) }}
+                </p>
+                <div class="font-16 gray-color mb-30">
+                    {{shipping_method_data.contact_info }}
+                </div>
+                {% endif %}
+                <div class="next-row">
+                    <p class="info-content">
+                        {{ lang('text_match_requirements') }}
+                    </p>
+                    <button class="next ship-next-btn">
+                        {{ lang('btn_proceed') }}
+                        <i class="fa fa-angle-right" aria-hidden="true"></i>
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+            <div class="step">
+                <p class="font-14 bold mb-15 text-center" style="">
+                    {{ lang_printf('text_should_have_acc', shipping_method_data.title) }}
+                </p>
+                <p class="font-14 bold mb-20 text-center" style="">
+                    {{ lang_printf('text_have_acc', shipping_method_data.title) }}
+                </p>
+                <div class="shipping-acc-btns">
+                    <button class="acc-btn no-have">
+                        {{lang('text_no_havnt')}}
+                    </button>
+                    <button class="acc-btn have next">
+                        <span>
+                            {{lang('text_yes_have')}}
+                        </span>
+{#                        <i class="fa fa-chevron-left" aria-hidden="true"></i>#}
+                    </button>
+                </div>
+                <div class="ship-create-cover">
+                    <div class="ship-acc-create">
+                        <img src="view/assets/images/icons/lightbulb.svg" alt="">
+                        <div class="info blue-box">
+                            <p class="bold mb-30">
+                                {{ lang('account_creation_title') }}
+                            </p>
+                            <p class="font-14 bold mb-10"></p>
+                            <ul>
+                                <li>
+                                    {{ shipping_method_data.account_creation_steps }}
+                                </li>
+                            </ul>
+                                <br>
+                            {% if shipping_method_data.contact_info %}
+                            <p class="gray-color font-13">
+                                {{ lang_printf('text_need_help', shipping_method_data.title) }}
+                            </p>
+                            <p class="gray-color font-13">
+                                {{shipping_method_data.contact_info }}
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+        <div class="step {{activated == 1 ? 'active' : ''}}">
+            <p class="font-16 bold mb-30">
+                {{lang("text_installation")}}
+            </p>
+            <div>
+                {{ shipping_form_inputs }}
+            </div>
+            <hr/>
+            <div class="row">
+                <div class="col-md-12 text-right">
+{#                    <a  href="{{ cancel }}" class="btn btn-default bottom-cancel-button"> {{ lang('button_cancel') }}</a>#}
+{#                    <button type="button" class="btn btn-primary btn-ladda btn-ladda-spinner bottom-save-button" data-style="zoom-in" onclick="$('.form').submit();"><i class="far fa-save fa-lg position-left"></i> {{ lang('button_save') }}</button>#}
+                </div>
+            </div>
+            <div class="d-flex j-content-between activate-controls">
+                <div class="">
+                    {% if activated == 1 %}
+                    <a class="btn btn-default bottom-cancel-button md-trigger" 
+                    data-target="#modal-deactivate-ps"
+                    data-toggle="modal"
+                    ps-title="{{ shipping_method_data['title'] }}"
+                    psid="{{ shipping_method_data['code'] }}"
+                    href="#"> {{ lang('entry_remove_app') }}</a>
+                    {% endif %}
+                </div>
+                <input type="hidden" name="app_status" id="app_status" value="{{ activated }}">
+                <div class="text-right">
+                    <a  href="{{ link('extension/shipping') }}" class="btn btn-default bottom-cancel-button">
+                        {{ activated == 0 ? lang('button_cancel') : lang('button_cancel_changes') }}</a>
+
+                    <button type="button" class="btn btn-primary btn-ladda btn-ladda-spinner bottom-save-button" data-style="zoom-in" onclick="$('.form').submit();">
+                        <i class="fas fa-download"></i>
+                        {{ activated == 0 ? lang('button_install_app') : lang('button_save_changes') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- /shipping activation tabs -->
+
+
+<script>
+    var deactivateURL = '/admin/extension/shipping/deactivate?psid=';
+    $(document).on('click', '.md-trigger', function () {
+        $('#modal-deactivate-ps').find('#deactivate-ps').attr('psid', $(this).attr('psid'));
+        $('#modal-deactivate-ps').find('#ps-title').html($(this).attr('ps-title'));
+    });
+    $("#deactivate-ps").click(function () {
+        $('#deactivate-ps').parent().find('.server-loading').show();
+        window.location.replace(deactivateURL + $("#deactivate-ps").attr('psid'));
+    });
+
+    $(document).ready(function() {
+        let tabsActivation = function(el) {
+            el.prevAll().addClass('active');
+            el.addClass('active');
+            el.nextAll().removeClass('active');
+
+            $('.ship-steps-content .step').removeClass('active')
+            $('.ship-steps-content .step').eq(el.index()).addClass('active')
+
+            let liWidth = $('.ship-active-list li').width();
+            let liActiveLength = $('.ship-active-list li.active').length - 1;
+            let liLength = $('.ship-active-list li').length - 1;
+            let containerWidth = $('.ship-active-list').width();
+            let lineWidth = ((liActiveLength / (liLength)) * containerWidth) - 35;
+            $('head').append(`<style>
+                .shipping-activation-tabs .ship-active-list::after{width:${lineWidth < 0 ? 0 : lineWidth + 'px'};}
+            </style>`);
+            console.log(liActiveLength, liLength, containerWidth, ((liActiveLength / (liLength)) * containerWidth), lineWidth < 0 ? 0 : lineWidth);
+        }
+        if($('.ship-active-list li:last-child').hasClass('active')) {
+            tabsActivation($('.ship-active-list li:last-child'))
+        }
+        $('.ship-active-list li').click(function() {
+            tabsActivation($(this));
+        });
+        $('.next').click(function() {
+            let el = $('.ship-active-list li').eq($(this).parents('.step').index() + 1)
+            console.log(el)
+            tabsActivation(el);
+        });
+        $(".acc-btn.no-have").click(function() {
+            $('.ship-create-cover').slideDown()
+        })
+    });
+</script>
+{# 
+    <script>
+
+        function changeStatus(checkbox)
+        {
+            var self = $(checkbox);
+            var switch_status = self.siblings('.switchery-status');
+
+            if ( self.is(':checked') )
+            {
+                switch_status.html("{{ lang('text_enabled') }}");
+            }
+            else
+            {
+                switch_status.html("{{ lang('text_disabled') }}");
+            }
+        }
+    </script>
+
+    <script>
+    </script>
+
+    <script src="view/javascript/pages/extension/shipping_form.js?bn={{ BuildNumber }}"></script> #}
+
+{% endblock content %}

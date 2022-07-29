@@ -1,0 +1,196 @@
+{% extends "base.expand" %}
+{% import "controls/forms.expand" as forms %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+
+{% block title %}
+    {{ lang('heading_title', 'extension/payment') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block secondarymenu %}
+{% endblock secondarymenu %}
+
+{% block content %}
+
+<style>
+    .content-wrapper {
+        background-color: #fff;
+    }
+</style>
+
+{% if request.get['from_merge'] == 'yes' %}
+    <div class="alert alert-info">
+        {{ lang('redirected_from_merge_message') }}
+    </div>
+{% endif %}
+
+{% if code == 'my_fatoorah' %}
+    {% include "payment/my_fatoorah_register.expand" %}
+{% endif %}
+
+<div class="alert alert-danger" style="display: none;" id="errors-fallback"></div>
+
+<div class="alert alert-danger" style="display: none;" id="errors-fallback"></div>
+
+    <div class="modal fade" id="modal-deactivate-ps">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger">
+                    <button type="button" class="close" data-dismiss="modal">×</button>
+                    <h4 class="modal-title">{{ lang('entry_deactivate_payment_method') }} <span id="ps-title"></span></h4>
+                </div>
+                <div class="modal-body">
+                    <p>{{ lang('entry_deactivate_message') }}</p>
+        
+                    <p>{{ lang('entry_deactivate_message_conf') }}</p>
+                </div>
+                <div class="modal-footer">
+                    <span class="server-loading" style="display:none;"><i class="fa fa-refresh fa-spin"></i></span>
+                    <button type="button" class="btn btn-danger" psid="" id="deactivate-ps">{{ lang('entry_remove_app') }}</button>
+                    <button type="button" class="btn btn-link" onclick="$('#modal-deactivate-ps').modal('toggle');">{{ lang('entry_cancel') }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- expandpay Configure Fawaterak -->
+<form class="form">
+    <div class="panel panel-white center-holder">
+        <div class="panel-body">
+            <div class="row">
+                <div class="form-group col-md-12">
+                    <h6 class="bold">Configure ExpandPay settings</h6>
+                </div>
+                <div class="col-md-4">
+                    <!-- Status -->
+                    <div class="form-group" id="pp_standard_status-group">
+                        <label class="control-label">{{ lang('entry_status')|trim(':') }}</label>
+                        <div class="checkbox checkbox-switchery">
+                            <label>
+                                <input type="checkbox" onchange="changeStatus(this);" name="expandpay_status"
+                                    class="switchery"
+                                    {{ pp_standard_status not in ['0', 0, 'off'] or pp_standard_status is null ? 'checked' }}>
+                                <span
+                                    class="switchery-status">{{ pp_standard_status not in ['0', 0, 'off'] or pp_standard_status is null ? lang('status_view') : lang('status_hide') }}</span>
+                            </label>
+                        </div>
+                        <span class="help-block"></span>
+                    </div>
+                    <!-- /Status -->
+                </div>
+                <div class="col-md-8">
+                    <div class="form-group col-md-6">
+                        <label class="control-label">Order status</label>
+                        <input type="text" class="form-control" value="" placeholder="">
+                        <span class="help-block"></span>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label class="control-label">Failure order status</label>
+                        <input type="text" class="form-control" value="" placeholder="">
+                        <span class="help-block"></span>
+                    </div>
+                    <div class="form-group col-md-12">
+                        <h6 class="bold">Bank account info to - use for withdraw </h6>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="Bank" class="control-label">Bank name</label>
+                        <select name="Bank" id="Bank" class="form-control">
+                            <option>{{ lang('entry_please_select') }}</option>
+                        </select>
+                        <span class="help-block"></span>
+                        <span class="text-muted"></span>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label class="control-label">{{ lang('entry_account_holder_name') }}</label>
+                        <input type="text" class="form-control" value="" placeholder="">
+                        <span class="help-block"></span>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label class="control-label">{{ lang('entry_iban') }}</label>
+                        <input type="text" class="form-control" value="" placeholder="">
+                        <span class="help-block"></span>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label class="control-label">{{ lang('entry_bank_account') }}</label>
+                        <input type="text" class="form-control" value="" placeholder="">
+                        <span class="help-block"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex j-content-between activate-controls">
+                <div class="">
+                    {% if activated == 0 %}
+                    <a class="btn btn-default bottom-cancel-button md-trigger" data-target="#modal-deactivate-ps"
+                        data-toggle="modal" ps-title="{{ payment_method_data['title'] }}"
+                        psid="{{ payment_method_data['code'] }}" href="#"> {{ lang('entry_remove_app') }}</a>
+                    {% endif %}
+                </div>
+                <div class="text-right">
+                    <a href="{{ link('extension/payment') }}" class="btn btn-default bottom-cancel-button">
+                        {{ activated == 0 ? lang('button_cancel') : lang('button_cancel_changes') }}</a>
+                    <button type="button" class="btn btn-primary btn-ladda btn-ladda-spinner bottom-save-button"
+                        data-style="zoom-in" onclick="$('.form').submit();"><i
+                            class="far fa-save fa-lg position-left"></i>
+                        {{ lang('button_save_changes') }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+<!-- /expandpay Configure Fawaterak -->
+
+
+<script>
+    var payment_code = '{{code}}';
+    var deactivateURL = '{{link('extension/expandpay/expandpay_uninstall')}}';
+    $(document).on('click', '.md-trigger', function () {
+        $('#modal-deactivate-ps').find('#deactivate-ps').attr('psid', $(this).attr('psid'));
+        $('#modal-deactivate-ps').find('#ps-title').html($(this).attr('ps-title'));
+    });
+    $("#deactivate-ps").click(function () {
+        $('#deactivate-ps').parent().find('.server-loading').show();
+        window.location.replace(deactivateURL);
+        console.log(deactivateURL + $("#deactivate-ps").attr('psid'))
+    });
+
+    $(document).ready(function() {
+        $(".acc-btn.no-have").click(function() {
+            if('undefined' !== typeof is_my_fatoorah_approved && is_my_fatoorah_approved == false && payment_code == 'my_fatoorah')
+                $('#MyFatoorahRegisterModal').modal('toggle');
+            else
+                $('.ship-create-cover').slideDown()
+        })
+
+        $('select').select2();
+        $('.touchspinney').TouchSpin({
+            'postfix': '{{ current_currency_code }}',
+            'decimals': 2,
+            'min': 0,
+            'max': Infinity
+        });
+        $('.touchy').TouchSpin({
+            min: 1,
+            max: 99,
+        });
+    });
+
+    function changeStatus(checkbox)
+        {
+            var self = $(checkbox);
+            var switch_status = self.siblings('.switchery-status');
+
+            if ( self.is(':checked') )
+            {
+                switch_status.html("{{ lang('status_view') }}");
+            }
+            else
+            {
+                switch_status.html("{{ lang('status_hide') }}");
+            }
+        }
+</script>
+
+{% endblock content %}

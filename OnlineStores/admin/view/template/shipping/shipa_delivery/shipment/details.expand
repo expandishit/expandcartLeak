@@ -1,0 +1,210 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block title %}
+    {{ lang('heading_title_shipa_delivery') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+
+     <a href="{{ link('sale/order/info?order_id=')~order_id }}"  class="button btn btn-success">{{ lang('button_return') }}</a>
+     <a onclick="trackShipment();" target="_blank" class="button btn btn-success">{{ lang('button_track_shipment') }}</a>
+     <a onclick="getLastStatus();" target="_blank" class="button btn btn-primary">{{ lang('button_get_last_status') }}</a>
+     <a href="{{ link('shipping/shipa_delivery/printSticker?order_id=')~order_id }}"  target="_blank" class="button btn btn-success">{{ lang('button_print_label') }}</a>
+
+{% endblock headelements %}
+
+
+{% block content %}
+    <!-- Fieldset legend -->
+ <div class="row">
+ <div class="alert alert-info" id="infoDialog" style="display: none;">
+    <i class="fa fa-exclamation-circle"></i> <span id="infoDialogText">{{ lang('please_wait') }}</span>
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+ </div>
+    <form method="post" class="form">
+       <div class="col-md-12">
+          <!-- Advanced legend -->
+          <div class="panel panel-white">
+             <div class="panel-heading">
+                <h6 class="panel-title"><span class="text-bold"><i class="fa fa-cog fa-lg"></i> {{ lang('text_shipment_details') }}</span></h6>
+                <div class="heading-elements not-collapsible">
+                   <ul class="icons-list">
+                      <li><a data-action="collapse" class=""></a></li>
+                   </ul>
+                </div>
+             </div>
+             <div class="panel-body">
+                <div class="collapse in" id="panel1">
+                 <div class="form-group col-md-6">
+                        <label class="control-label">{{ lang('entry_shipa_reference') }}</label>
+                        <input type="text" readonly name="shipa_delivery_entry_referance" id="shipa_delivery_entry_referance" class="form-control"
+                               value="{{ shipa_delivery_entry_reference}}" />
+                    </div>
+                     <div class="form-group col-md-6">
+                        <label class="control-label">{{ lang('entry_shipa_status') }}</label> 
+                        <input type="text" readonly name="shipa_delivery_entry_referance" id="shipa_delivery_entry_referance" class="form-control"
+                               value="{{ shipa_delivery_entry_code_status}}" />
+                    </div>
+                   <div class="form-group col-md-6">
+                      <label class="control-label">
+                      {{ lang('entry_name') }} 
+                      </label>
+                      <input type="text" readonly name="shipa_deleviry_entry_recipient_name" id="shipa_delivery_entry_recipient_name" class="form-control"
+                         value="{{ shipa_delivery_entry_name }}"/>
+                   </div>
+                   <div class="form-group col-md-6">
+                      <label class="control-label">
+                      {{ lang('entry_mobile') }} 
+                      </label>
+                      <input type="text" readonly name="shipa_deleviry_entry_recipient_phone" id="shipa_deleviry_entry_recipient_phone" class="form-control"
+                         value="{{ shipa_delivery_entry_mobile }}"/>
+                   </div>
+                   <div class="form-group col-md-6">
+                      <label class="control-label">
+                      {{ lang('entry_address') }} 
+                      </label>
+                      <input type="text" readonly name="shipa_deleviry_entry_recipient_address" id="shipa_deleviry_entry_recipient_address" class="form-control"
+                         value="{{ shipa_delivery_entry_address }}"/>
+                   </div>
+                   <div class="form-group col-md-6">
+                      <label class="control-label">{{ lang('entry_city') }}</label> 
+                      <input type="text" readonly name="shipa_deleviry_entry_recipient_city" id="shipa_deleviry_entry_recipient_address" class="form-control"
+                           value="{{ shipa_delivery_city }}"/>
+                   </div>
+                   {% if shipa_delivery_version==2 %}
+                    <div class="form-group col-md-6">
+                      <label class="control-label">{{ lang('entry_country') }}</label> <span class="text-danger">*</span>
+                       <input type="text" readonly name="shipa_deleviry_entry_recipient_country" id="shipa_deleviry_entry_recipient_address" class="form-control"
+                           value="{{ shipa_delivery_country }}"/>
+                    </div>
+                   <div class="form-group col-md-6">
+                     <label class="control-label">{{ lang('entry_type') }}</label> <span class="text-danger">*</span>
+                      <input type="text" readonly name="shipa_delivery_entry_type" id="shipa_deleviry_entry_recipient_address" class="form-control"
+                           value="{{ shipa_delivery_entry_type }}"/>
+                    </div>
+                     <div class="form-group col-md-6">
+                     <label class="control-label">{{ lang('entry_category') }}</label> <span class="text-danger">*</span>
+                    <input type="text" readonly name="shipa_delivery_entry_category" id="shipa_deleviry_entry_recipient_address" class="form-control"
+                           value="{{ shipa_delivery_entry_category }}"/>
+                    </div>
+                     <div class="form-group col-md-6">
+                      <label class="control-label">
+                      {{ lang('entry_amountToCollect') }} 
+                      </label>
+                      <input type="number" readonly name="shipa_delivery_entry_amountToCollect" id="shipa_delivery_entry_amountToCollect" class="form-control"
+                         value="{{ shipa_delivery_entry_amount }}" />
+                   </div>
+                    <div class="form-group col-md-12">
+                    <label class="control-label">
+                        {{ lang('shipa_delivery_specialInstructions') }} 
+                     </label>
+                       <textarea readonly type="text" class="form-control" rows="3" id="shipa_delivery_entry_specialInstructions" name="shipa_delivery_entry_specialInstructions">{{ shipa_delivery_entry_description }}</textarea>
+                       <span class="help-block"> {{ lang('shipa_delivery_entry_specialInstructions') }}</span>
+                   </div>
+                   {% endif %}
+                   {% if shipa_delivery_version==1 %}
+                   <div class="form-group col-md-6">
+                      <label>{{ lang('entry_payment_method') }}</label> 
+                      <input type="text" readonly name="shipa_delivery_entry_payment_method" id="shipa_delivery_entry_payment_method" class="form-control"
+                          value="{{ shipa_delivery_entry_payment_method }}"/>
+                   </div>
+                   <div class="form-group col-md-6">
+                      <label class="control-label">
+                      {{ lang('entry_amount') }} 
+                      </label>
+                      <input type="text" readonly name="shipa_delivery_entry_amount" id="shipa_delivery_entry_amount" class="form-control"
+                         value="{{ shipa_delivery_entry_amount}}" />
+                      <span class="help-block"> {{ lang('entry_amount_note') }}</span>
+                   </div>
+                   <div class="form-group col-md-6">
+                     <label>{{ lang('entry_delivery_type') }}</label> 
+                     <input type="text" readonly name="shipa_delivery_entry_type_delivery" id="shipa_delivery_entry_type_delivery" class="form-control"
+                         value="{{ shipa_delivery_entry_type_delivery}}" />
+                     <span class="help-block"> {{ lang('entry_delivery_type_note') }}</span>
+                  </div>
+                   <div class="form-group col-md-6">
+                      <label class="control-label">
+                      {{ lang('entry_goods_value') }}
+                      </label>
+                      <input type="number" readonly name="shipa_deleviry_entry_goods_value" class="form-control"
+                         value="{{ shipa_delivery_entry_goods_value }}" min="0" />
+                      <span class="help-block"> {{ lang('entry_goods_value_note') }}</span>
+                   </div>
+                   
+                   <div class="form-group col-md-12">
+                    <label class="control-label">
+                        {{ lang('shipa_delivery_entry_description') }} 
+                     </label>
+                       <textarea type="text" readonly class="form-control" rows="3" id="shipa_delivery_entry_description" name="shipa_delivery_entry_description">{{ shipa_delivery_entry_description }}</textarea>
+                       <span class="help-block"> {{ lang('shipa_delivery_entry_description') }}</span>
+                   </div>
+                   <div class="clearfix"></div>
+                </div>
+                {% endif %}
+             </div>
+          </div>
+          <!-- /a legend -->
+       </div>
+    </form>
+
+    <form action="{{ link('shipping/shipa_delivery/cancelShipment') }}" method="post" id="cancel_shipment">
+        <input type="hidden" name="order_id" value="{{ order_id }}">
+    </form>
+ </div>
+
+    <script>
+        // Default initialization
+        $('.select').select2({
+            minimumResultsForSearch: Infinity
+        });
+
+        $('.form').on("submit",function(){
+         $("#infoDialog").fadeIn(300);
+         setTimeout(function(){
+             $("#infoDialog").fadeOut(300);
+         },4000);
+        });
+
+
+         function trackShipment() {
+                        $("#infoDialog").fadeIn(300);
+                        $.ajax({
+                            url: '{{ link('shipping/shipa_delivery/trackShipment?order_id=')~order_id }}',
+                            dataType: 'json',
+                            success: function (response) {
+                                $("#infoDialogText").text(response.success_msg);
+                            },
+                            error:function(){
+                             $("#infoDialogText").text(" {{ lang('error_shipa_delivery_tracking') }} ");
+                                setTimeout(function(){
+                                 $("#infoDialog").fadeOut(300);
+                             },3000);
+                            }
+                        });
+                    }
+
+        function getLastStatus() {
+            $("#infoDialog").fadeIn(300);
+            $.ajax({
+                url: '{{ link('shipping/shipa_delivery/getLastStatus?order_id=')~order_id }}',
+                dataType: 'json',
+                success: function (response) {
+                    $("#infoDialogText").text(response.success_msg);
+                },
+                error:function(){
+                    $("#infoDialogText").text(" {{ lang('error_shipa_delivery_tracking') }} ");
+                    setTimeout(function(){
+                        $("#infoDialog").fadeOut(300);
+                    },3000);
+                }
+            });
+        }
+    </script>
+
+{% endblock %}

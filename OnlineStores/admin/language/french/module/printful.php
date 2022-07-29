@@ -1,0 +1,26 @@
+<?php
+
+$_  = [ 
+    'printful_heading_title'  => 'Imprimante', 
+    'printful_status'  => 'Statut', 
+    'variant_id'  => "Variant ID", 
+    'printful_image'  => 'Image de design', 
+    'heading_title_printful'  => 'Imprimante', 
+    'heading_title'  => 'Imprimante', 
+    'text_import'  => 'Importer', 
+    'text_settings'  => 'Paramètres', 
+    'api_key'  => 'Key API', 
+    'text_module'  => 'Apps', 
+    'mn_setting_menu_register'  => 'Vous devez vous inscrire d\'abord dans Printful de ce lien', 
+    'register_now'  => 'Inscrivez-vous maintenant', 
+    'job_started_message'  => 'Le processus d\'importation a été démarré avec succès, veuillez noter qu\'il s\'agit d\'un processus de consommation d\'heure et de ressources et il faut quelque temps. Essayez de rafraîchir cette page après quelques minutes pour voir le nombre de produits importés ou vérifier la section de vos produits. ', 
+    'total_products'  => 'Total produits dans votre compte imprimable:', 
+    'total_products_imported'  => 'Produits importés totaux:', 
+    'import_all_products'  => 'Importer tous les produits', 
+    'no_apikey'  => 'Veuillez ajouter une touche API imprimante dans les paramètres.', 
+    'printful_title'  => 'Import Products de Printful', 
+    'printful_rand'  => 'Un échantillon aléatoire de produits importés', 
+    'col_image'  => 'Image', 
+    'col_name'  => 'Nom', 
+    'no_imported_alert'  => 'Vous n\'avez pas importé aucun produit', 
+];

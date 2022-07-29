@@ -1,0 +1,273 @@
+<style>
+  form {
+    display:block;
+    direction: ltr;
+  }
+  
+  .wpwl-apple-pay-button{
+      -webkit-appearance: -apple-pay-button !important;
+  }
+  {% if formStyle == 'plain' %}
+  .cnpBillingCheckoutWrapper {position:relative;}
+  .cnpBillingCheckoutHeader {width:100%;border-bottom: 1px solid #c0c0c0;margin-bottom:10px;}
+  .cnpBillingCheckoutLeft {width:240px;margin-left: 5px;margin-bottom: 10px;border: 1px solid #c0c0c0;display:inline-block;vertical-align: top;padding:10px;}
+  .cnpBillingCheckoutRight {width:50%;margin-left: 5px;border: 1px solid #c0c0c0;display:inline-block;vertical-align: top;padding:10px;}
+  .cnpBillingCheckoutOrange {font-size:110%;color: rgb(255, 60, 22);font-weight:bold;}
+  div.wpwl-wrapper, div.wpwl-label, div.wpwl-sup-wrapper { width: 100% }
+  div.wpwl-group-expiry, div.wpwl-group-brand { width: 30%; float:left }
+  div.wpwl-group-cvv { width: 68%; float:left; margin-left:2% }
+  div.wpwl-group-cardHolder, div.wpwl-sup-wrapper-street1, div.wpwl-group-expiry { clear:both }
+  div.wpwl-sup-wrapper-street1 { padding-top: 1px }
+  div.wpwl-wrapper-brand { width: auto }
+  div.wpwl-sup-wrapper-state, div.wpwl-sup-wrapper-city { width:32%;float:left;margin-right:2% }
+  div.wpwl-sup-wrapper-postcode { width:32%;float:left }
+  div.wpwl-sup-wrapper-country { width: 66% }
+  div.wpwl-wrapper-brand, div.wpwl-label-brand, div.wpwl-brand { display: none;}
+  div.wpwl-group-cardNumber { width:60%; float:left; font-size: 20px;  }
+  div.wpwl-group-brand { width:35%; float:left; margin-top:28px }
+  div.wpwl-brand-card  { width: 65px }
+  div.wpwl-brand-custom  { margin: 0px 5px; background-image: url("https://oppwa.com/v1/paymentWidgets/img/brand.png") }
+  div.wpwl-brand-MASTER {width: 50px;}
+  div.wpwl-brand-VISA {width: 65px;}
+  div.wpwl-brand-MADA{width: 60px;}
+  {% endif %}
+
+  .wpwl-wrapper-radio-mobile, .wpwl-wrapper-radio-qrcode {
+    display: block;
+  }
+</style>
+
+<style>
+
+.wpwl-form-card
+{
+min-height: 0px !important;
+}
+
+.wpwl-label-brand{
+display: none !important;
+}
+.wpwl-control-brand{
+display: none !important;
+}
+
+.wpwl-brand-card
+{
+    display: block;
+    visibility: visible;
+    position: absolute;
+    right: 178px;
+    top: 40px;
+    width: 67px;
+    z-index: 10;
+}
+
+.wpwl-brand-MASTER
+{
+margin-top: -10;
+margin-right: -10;
+}
+
+</style>
+
+<script>
+  var lang = $("html").attr("lang");
+
+  {% if formStyle == 'plain' %}
+  var wpwlOptions = {
+    style: "plain",
+    locale: lang,
+    showCVVHint: true,
+    brandDetection: true,
+    paymentTarget:"_top",
+    onReady: function(){
+      $(".wpwl-group-cardNumber").after($(".wpwl-group-brand").detach());
+      $(".wpwl-group-cvv").after( $(".wpwl-group-cardHolder").detach());
+      var visa = $(".wpwl-brand:first").clone().removeAttr("class").attr("class", "wpwl-brand-card wpwl-brand-custom wpwl-brand-VISA");
+      var master = $(visa).clone().removeClass("wpwl-brand-VISA").addClass("wpwl-brand-MASTER");
+      var mada = $(visa).clone().removeClass("wpwl-brand-VISA").addClass("wpwl-brand-MADA");
+      $(".wpwl-brand:first").after($(master)).after($(visa)).after($(mada));
+    },
+    onChangeBrand: function(e){
+      $(".wpwl-brand-custom").css("opacity", "0.3");
+      $(".wpwl-brand-" + e).css("opacity", "1");
+    }
+  }
+  {% else %}
+  var wpwlOptions = {
+    style: "{{formStyle}}",
+    locale: "ar",
+  }
+  {% endif %}
+</script>
+
+<script>
+    $.ajaxSetup({
+        // Disable caching of AJAX responses
+        cache: true
+    });
+</script>
+
+<script src="{{ scriptURL }}"></script>
+
+<div id="pay_content" style="display: none;">
+  <div>
+    <form action="{{ postbackURL }}" class="paymentWidgets" id="g2p_payment" data-brands="{% for gateway in payment_brands %} {{ gateway['name']|upper }} {% endfor %}"></form>
+  </div>
+  <div class="buttons">
+    <div class="right">
+      <input type="button" class="btn-inline" value="{{ lang('button_confirm') }}" onclick="$('#g2p_payment').submit();">
+      <a id="button-confirm-gate2play" class="btn btn-inline">{{ lang('button_confirm') }}</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  $('#qc_confirm_order').fadeOut();
+    $('#button-confirm-gate2play').click(function () {
+        $('#qc_confirm_order').fadeOut();
+        $('#pay_content').fadeIn();
+
+        $('div.buttons').fadeOut();
+    });
+</script>
+
+
+<script>
+  var lang = $("html").attr("lang");
+
+   function applyMadaStyles() {
+      if (wpwlOptions.locale == "ar") {
+        console.log('AR');
+            $(".wpwl-group").css('direction', 'ltr');
+            $(".wpwl-control-cardNumber").css({'direction': 'ltr' , "text-align":"right"});
+            $(".wpwl-brand-card").css('right', '200px');
+          }
+
+          // apply css - MADA ONLY
+           $(".wpwl-group").css('min-height', '0px !important');
+           $(".wpwl-label-brand").css('display', 'none !important');
+           $(".wpwl-control-brand").css('display', 'none !important');
+           $(".wpwl-brand-MASTER").css({'margin-top': '-10' , "margin-right":"-10"});
+    }
+
+  var wpwlOptions = {
+    locale: lang,
+    style: "card",
+    paymentTarget:"_top",
+
+    onReady: function(){
+{#      {% if mada_is_selected %}#}   
+
+      if ($('.wpwl-control-brand').val() === 'MADA') {
+        applyMadaStyles();
+      }
+
+      $('.wpwl-control-brand').on('change', function () {
+        if (!$(this).has(':focus')) {
+          return;
+        }
+        var isMada = 0;
+        if ($(this).val() === 'MADA') {
+          isMada = 1;
+          applyMadaStyles();
+        }
+        $.ajax({
+          method: 'POST',
+          url: '{{ set_is_mada_session_url }}',
+          data: {
+            "isMada": isMada,
+            "choosenBrand" : $(this).val()
+          },
+          success: function() {
+            refreshStepView(7, function() {
+              $('#qc_confirm_order').fadeOut();
+              $('#pay_content').fadeIn();
+              $('div.buttons').fadeOut();
+            });
+          }
+        });
+      });
+      
+      $('.wpwl-apple-pay-button').on('click',function(){
+         $.ajax({
+          method: 'POST',
+          url: '{{ set_is_mada_session_url }}',
+          data: {
+            "choosenBrand" : 'APPLEPAY'
+          },
+          success: function() {
+              console.log('apple pay button clicked');
+          }
+         });
+        });
+      
+      
+{#      {% endif %}#}
+      $(".wpwl-label-mobilePhone").hide();
+      $(".wpwl-wrapper-mobilePhone").hide();
+      if(wpwlOptions.locale == "ar" ){
+        $(".wpwl-form-virtualAccount-STC_PAY")[0].css("direction", 'rtl');
+        var myFormular= `<p>الرجاء اختيار طريقة الدفع :</p>
+                <div>
+                  <label for='contactChoice1'>رقم الهاتف</label>
+                  <input type='radio' id='mobile_method'
+                  name='customParameters[SHOPPER_payment_mode]' value='mobile'> <br>
+                  <input type='radio' id='qr_method'"+
+                  name='customParameters[SHOPPER_payment_mode]' value='qr_code'>
+                  <label class="label" for='contactChoice2'>رمز QR</label> <br>"+
+                  <input type='hidden' name='customParameters[branch_id]' value='1'>  
+                  <input type='hidden' name='customParameters[teller_id]' value='1'>  
+                  <input type='hidden' name='customParameters[device_id]' value='1'>  
+                  <input type='hidden' name='customParameters[bill_number]' value='{{ order_id }}'>  
+                  <br>
+                </div>
+                `;
+      }else{
+        var myFormular= "<p>Please select your preferred payment method:</p>"+
+                "<div>"+
+                "<input type='radio' id='mobile_method'"+
+                "name='customParameters[SHOPPER_payment_mode]' value='mobile'>"+
+                "<label for='contactChoice1'>Mobile Phone</label>&nbsp;&nbsp;"+
+                "<input type='radio' id='qr_method'"+
+                "name='customParameters[SHOPPER_payment_mode]' value='qr_code'>"+
+                "<label for='contactChoice2'>QR code</label>"+
+                "<input type='hidden' name='customParameters[branch_id]' value='1'>  "+
+                "<input type='hidden' name='customParameters[teller_id]' value='1'>  "+
+                "<input type='hidden' name='customParameters[device_id]' value='1'>  "+
+                "<input type='hidden' name='customParameters[bill_number]' value='{{ order_id }}'>  "+
+                "<br></div>";
+      }
+
+      $(".wpwl-group-mobilePhone").before(myFormular);
+      $( "#mobile_method" ).on("click", function() {
+        $(".wpwl-wrapper-mobilePhone").show();
+        $("#wpwl-noselection-error")[0].innerHTML = "";
+      });
+      $( "#qr_method" ).on("click", function() {
+        $(".wpwl-wrapper-mobilePhone").hide();
+        $("#wpwl-noselection-error")[0].innerHTML = "";
+      });
+      $(".wpwl-group-mobilePhone").after("<div id='wpwl-noselection-error'></div>");
+    },
+    onBeforeSubmitVirtualAccount: function(event){
+      if(event.target.classList.contains("wpwl-form-virtualAccount-STC_PAY")){
+        if(wpwlOptions.locale == "ar" ){
+          var errorMessage = "الرجاء اختيار احد الخيارات.";
+          var errorMessagePhone = "رقم الهاتف مطلوب";
+        }else{
+          var errorMessage = "select one of the two options.";
+          var errorMessagePhone = "phone number is required.";
+        }
+        if($( "#mobile_method" ).is(':checked') && !$(".wpwl-control-mobilePhone").val()){
+          var someinner = $("#wpwl-noselection-error")[0].innerHTML = errorMessagePhone.fontcolor("red");
+          return false;
+        }
+        if ( !$( "#mobile_method" ).is(':checked') && !$( "#qr_method" ).is(':checked') ){
+          var someinner = $("#wpwl-noselection-error")[0].innerHTML = errorMessage.fontcolor("red");
+          return false;
+        }
+      }
+    }
+  }
+</script>

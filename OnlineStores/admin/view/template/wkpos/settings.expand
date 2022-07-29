@@ -1,0 +1,1164 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block title %}
+    {{ lang('heading_title') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+<span class="headLinksEffect">
+    <a href="{{ cancel }}" data-toggle="tooltip" title="{{ button_cancel }}" class="btn btn-default">{{ button_cancel }}</a> 
+    <button type="button" onclick="$('.form').submit();" data-style="zoom-in" class="btn btn-primary btn-ladda btn-ladda-spinner top-save-button"><i class="fa fa-save"></i> Save</button>
+
+</span>
+{% endblock headelements %}
+
+
+{% block content %}
+<div class="alert alert-info alert-styled-left alert-bordered" id="wkpos_init_alert" style="display: none">
+    <button type="button" class="close" data-dismiss="alert"><span>×</span><span class="sr-only">Close</span></button>
+    {{ init_alert }}
+</div>
+<div class="panel panel-default">
+    <ul class="nav nav-tabs nav-tabs-highlight nav-justified nav-tabs-top top-divided" style="margin-bottom: 0">
+        <li class="active"><a data-toggle="tab" href="#tab-general">{{ tab_general }}</a></li>
+        <li><a data-toggle="tab" href="#tab-customer">{{ tab_customer }}</a></li>
+        <li><a data-toggle="tab" href="#tab-payment">{{ tab_payment }}</a></li>
+        <li><a data-toggle="tab" href="#tab-shipping">{{ tab_shipping }}</a></li>
+        <li><a data-toggle="tab" href="#tab-receipt">{{ tab_receipt }}</a></li>
+        <li><a data-toggle="tab" href="#tab-barcode">{{ tab_barcode }}</a></li>
+    </ul>
+</div>
+<form action="{{ action }}" method="post" enctype="multipart/form-data" id="form-wkpos" class="form">
+  <input type='hidden' name='wkpos_init' value='1'/>
+  <div class="tab-content">
+    <!-- General TAB -->
+    <div class="tab-pane active" id="tab-general">
+      <div class="col-md-3">
+        <div class="panel panel-white">
+          <div class="panel-heading">
+                  <h6 class="panel-title"><span class="text-bold">{{ text_status }}</span><a class="heading-elements-toggle"><i class="icon-more"></i></a></h6>
+              <div class="heading-elements not-collapsible">
+                  <ul class="icons-list">
+                      <li><a data-action="collapse" class=""></a></li>
+                  </ul>
+              </div>
+          </div>
+          <div class="panel-body">
+            <div class="form-group col-md-12">
+                <label class="control-label text-semibold" for="input-status">{{ entry_status }}</label>
+                <div class="checkbox checkbox-switchery no-margin">
+                  <label>
+                        <input type="checkbox" onchange="changeStatus(this);" name="wkpos_status" class="switchery" {{ wkpos_status == '1' or not wkpos_init  ? 'checked' }}>
+                        <span class="switchery-status">
+                          {% if wkpos_status == '1' or not wkpos_init  %} {{ text_enabled }} {% else %} {{ text_disabled }} {% endif %}
+                        </span>
+                  </label>
+                </div>
+              </div>
+              <!--<div class="form-group col-md-12">
+                <label class="control-label text-semibold" for="input-status">{{ entry_show_whole }}</label>
+                <div class="checkbox checkbox-switchery no-margin">
+                  <label>
+                        <input type="checkbox" onchange="changeStatus2(this);" name="wkpos_show_whole" class="switchery" {{ wkpos_show_whole == '1'  or not wkpos_init  ? 'checked' }}>
+                        <span class="switchery-status">
+                          {% if wkpos_show_whole == '1' or not wkpos_init %} {{ text_yes }} {% else %} {{ text_no }} {% endif %}
+                        </span>
+                  </label>
+                </div>
+              </div>-->
+
+              
+              <div class="form-group col-md-12">
+                <label class="control-label text-semibold" for="input-status">{{ entry_show_lowstock_prod }}</label>
+                <div class="checkbox checkbox-switchery no-margin">
+                  <label>
+                        <input type="checkbox" onchange="changeStatus2(this);" name="wkpos_show_lowstock_prod" class="switchery" {{ wkpos_show_lowstock_prod == '1'  or not wkpos_init  ? 'checked' }}>
+                        <span class="switchery-status">
+                          {% if wkpos_show_lowstock_prod == '1' or not wkpos_init  %} {{ text_yes }} {% else %} {{ text_no }} {% endif %}
+                        </span>
+                  </label>
+                </div>
+              </div>
+              <div class="form-group  col-md-12">
+                <label class="control-label text-semibold" for="input-status">{{ entry_email_agent }}</label>
+                <div class="checkbox checkbox-switchery no-margin">
+                  <label>
+                        <input type="checkbox" onchange="changeStatus2(this);" name="wkpos_email_agent" class="switchery" {{ wkpos_email_agent == '1'   ? 'checked' }}>
+                        <span class="switchery-status">
+                          {% if wkpos_email_agent == '1' %} {{ text_yes }} {% else %} {{ text_no }} {% endif %}
+                        </span>
+                  </label>
+                </div>
+              </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-9">
+        <div class="panel panel-white">
+          <div class="panel-heading">
+                  <h6 class="panel-title"><span class="text-bold">{{ text_settings }}</span><a class="heading-elements-toggle"><i class="icon-more"></i></a></h6>
+              <div class="heading-elements not-collapsible">
+                  <ul class="icons-list">
+                      <li><a data-action="collapse" class=""></a></li>
+                  </ul>
+              </div>
+          </div>
+          <div class="panel-body">
+            <div class="row">
+              <div class="form-group col-md-6">
+                <label class="control-label text-semibold" for="input-store-country">{{ entry_store_country }}</label>
+                  <select name="wkpos_store_country_id" id="input-store-country" class="form-control select">
+                    {# <option value="">{{ text_select }}</option>#}
+                    {% for country in countries %}
+                      {% if country['country_id'] == wkpos_store_country_id %}
+                      <option value="{{ country['country_id'] }}" selected="selected">{{ country['name'] }}</option>
+                      {% else %}
+                      <option value="{{ country['country_id'] }}">{{ country['name'] }}</option>
+                      {% endif %}
+                    {% endfor %}
+                  </select>
+              </div>
+              <div class="form-group col-md-6">
+                <label class="control-label text-semibold" for="input-store-zone">{{ entry_store_zone }}</label>
+                  <select name="wkpos_store_zone_id" id="input-store-zone" class="form-control select">
+                  </select>
+              </div>
+              {#<div class="form-group col-md-12">
+                <label class="control-label text-semibold" for="input-heading1"><span data-toggle="tooltip" title="{{ help_heading1 }}">{{ entry_heading1 }}</span></label>
+                  <input type="text" name="wkpos_heading1" value="{{ wkpos_heading1 }}" placeholder="{{ entry_heading1 }}" id="input-heading1" class="form-control" />
+              </div>
+              <div class="form-group col-md-12">
+                <label class="control-label text-semibold" for="input-heading2"><span data-toggle="tooltip" title="{{ help_heading2 }}">{{ entry_heading2 }}</span></label>
+                  <input type="text" name="wkpos_heading2" value="{{ wkpos_heading2 }}" placeholder="{{ entry_heading2 }}" id="input-heading2" class="form-control" />
+              </div>
+              <div class="form-group col-md-12">
+                <label class="control-label text-semibold" for="input-logcontent"><span data-toggle="tooltip" title="{{ help_logcontent }}">{{ entry_logcontent }}</span></label>
+                  <textarea name="wkpos_logcontent" placeholder="{{ entry_logcontent }}" id="input-logcontent" class="form-control" rows="6">{{ wkpos_logcontent }}</textarea>
+              </div>#}
+              <div class="form-group col-md-6">
+                <label class="control-label text-semibold" for="input-populars"><span data-toggle="tooltip" title="{{ help_populars }}">{{ entry_populars }}</span></label>
+                  <input type="number" name="wkpos_populars" value="{{ wkpos_populars }}" min="0" placeholder="{{ entry_populars }}" id="input-populars" class="form-control" onkeypress="return validate(event, this);"/>
+              </div>
+              <div class="form-group col-md-6">
+                <label class="control-label text-semibold" for="input-low-stock"><span data-toggle="tooltip" title="{{ help_low_stock }}">{{ entry_low_stock }}</span></label>
+                  <input type="number" name="wkpos_low_stock" min="0" value="{{ wkpos_low_stock }}" placeholder="{{ entry_low_stock }}" id="input-low-stock" class="form-control" onkeypress="return validate(event, this);"/>
+              </div>
+              {% if price_list_status %}
+              <div class="form-group col-md-6">
+                <label class="control-label text-semibold" for="input-price-list"><span data-toggle="tooltip" title="{{ help_price_list }}">{{ entry_price_list_status }}</span></label>
+                  <select class="form-control select" name="wkpos_price_list_status">
+                    <option {% if wkpos_price_list_status %}selected{% endif %} value="1">{{ text_enabled }}</option>
+                    <option {% if wkpos_price_list_status == 0 %}selected{% endif %} value="0">{{ text_disabled }}</option>
+                  </select>
+              </div>
+              {% endif %}
+              <div class="form-group col-md-12">
+                <label class="control-label text-semibold" for="input-store-detail"><span data-toggle="tooltip" title="{{ help_store_detail }}">{{ entry_store_detail }}</span></label>
+                  <textarea name="wkpos_store_detail" id="input-store-detail" class="form-control" rows="3">{{ wkpos_store_detail }}</textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- /General TAB -->
+
+    <!-- Customer TAB -->
+    <div class="tab-pane" id="tab-customer">
+      <div class="col-md-3">
+        <div class="panel panel-white">
+          <div class="panel-heading">
+                  <h6 class="panel-title"><span class="text-bold">{{ text_status }}</span><a class="heading-elements-toggle"><i class="icon-more"></i></a></h6>
+              <div class="heading-elements not-collapsible">
+                  <ul class="icons-list">
+                      <li><a data-action="collapse" class=""></a></li>
+                  </ul>
+              </div>
+          </div>
+          <div class="panel-body">
+            <div class="form-group col-md-2">
+              <label class="control-label text-semibold" for="input-status">{{ entry_newsletter }}</label>
+              <div class="checkbox checkbox-switchery no-margin">
+                <label>
+                      <input type="checkbox" onchange="changeStatus(this);" name="wkpos_newsletter" class="switchery" {{ wkpos_newsletter == '1'   ? 'checked' }}>
+                      <span class="switchery-status">
+                        {% if wkpos_newsletter == '1' %} {{ text_enabled }} {% else %} {{ text_disabled }} {% endif %}
+                      </span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-9">
+          <div class="panel panel-white">
+            <div class="panel-heading">
+                    <h6 class="panel-title"><span class="text-bold">{{ text_settings }}</span><a class="heading-elements-toggle"><i class="icon-more"></i></a></h6>
+                <div class="heading-elements not-collapsible">
+                    <ul class="icons-list">
+                        <li><a data-action="collapse" class=""></a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel-body">
+              <legend>{{ text_new_customer }}</legend>
+                
+                <div class="form-group col-md-6">
+                  <label class="control-label text-semibold" for="input-new-customer-group"><span data-toggle="tooltip" title="{{ help_new_group }}">{{ entry_customer_group }}</label>
+                    <select name="wkpos_new_customer_group_id" id="input-new-customer-group" class="form-control select">
+                      {% for customer_group in customer_groups %}
+                        {% if customer_group['customer_group_id'] == wkpos_new_customer_group_id %}
+                      <option value="{{ customer_group['customer_group_id'] }}" selected="selected">{{ customer_group['name'] }}</option>
+                      {% else %}
+                      <option value="{{ customer_group['customer_group_id'] }}">{{ customer_group['name'] }}</option>
+                      {% endif %}
+                      {% endfor %}
+                    </select>
+                </div>
+                
+
+                <div class="form-group  col-md-6">
+                  <label class="control-label text-semibold" for="input-password"><span data-toggle="tooltip" title="{{ help_password }}">{{ entry_password }}</span></label>
+                    <input type="text" name="wkpos_customer_password" value="{{ wkpos_customer_password }}" placeholder="{{ entry_password }}" id="input-password" class="form-control" />
+                </div>
+
+                <legend>{{ text_default_customer }}</legend>
+                <div class="form-group col-sm-6">
+                  <label class="control-label text-semibold" for="input-customer-group">{{ entry_customer_group }}</label>
+                    <select name="wkpos_customer_group_id" id="input-customer-group" class="form-control select">
+                      {% for customer_group in customer_groups %}
+                        {% if customer_group['customer_group_id'] == wkpos_new_customer_group_id %}
+                      <option value="{{ customer_group['customer_group_id'] }}" selected="selected">{{ customer_group['name'] }}</option>
+                      {% else %}
+                      <option value="{{ customer_group['customer_group_id'] }}">{{ customer_group['name'] }}</option>
+                      {% endif %}
+                      {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group col-sm-6">
+                  <label class="control-label text-semibold" for="input-firstname">{{ entry_firstname }}</label>
+                    <input type="text" name="wkpos_firstname" value="{{ wkpos_firstname ? wkpos_firstname : (not wkpos_init ? accountuser['fname'] : '') }}" placeholder="{{ entry_firstname }}" id="input-firstname" class="form-control" />
+                </div>
+                <div class="form-group col-sm-6">
+                  <label class="control-label text-semibold" for="input-lastname">{{ entry_lastname }}</label>
+                    <input type="text" name="wkpos_lastname" value="{{ wkpos_lastname ? wkpos_lastname : (not wkpos_init ? accountuser['lname'] : '') }}" placeholder="{{ entry_lastname }}" id="input-lastname" class="form-control" />
+                </div>
+                <div class="form-group col-sm-6">
+                  <label class="control-label text-semibold" for="input-email">{{ entry_email }}</label>
+                    <input type="text" name="wkpos_email" value="{{ wkpos_email ? wkpos_email : (not wkpos_init ? accountuser['email'] : '') }}" placeholder="{{ entry_email }}" id="input-email" class="form-control" />
+                </div>
+                <div class="form-group col-sm-6">
+                  <label class="control-label text-semibold" for="input-telephone">{{ entry_telephone }}</label>
+                    <input type="text" name="wkpos_telephone" value="{{ wkpos_telephone ? wkpos_telephone : '00000' }}" placeholder="{{ entry_telephone }}" id="input-telephone" class="form-control" />
+                </div>
+                <div class="form-group col-sm-6">
+                  <label class="control-label text-semibold" for="input-fax">{{ entry_fax }}</label>
+                    <input type="text" name="wkpos_fax" value="{{ wkpos_fax }}" placeholder="{{ entry_fax }}" id="input-fax" class="form-control" />
+                </div>
+                <legend>{{ text_default_address }}</legend>
+                <div class="form-group col-sm-6">
+                  <label class="control-label text-semibold" for="input-company">{{ entry_company }}</label>
+                    <input type="text" name="wkpos_company" value="{{ wkpos_company }}" placeholder="{{ entry_company }}" id="input-company" class="form-control" />
+                </div>
+                <div class="form-group col-sm-6">
+                  <label class="control-label text-semibold" for="input-address-1">{{ entry_address_1 }}</label>
+                    <input type="text" name="wkpos_address_1" value="{{ wkpos_address_1 ? wkpos_address_1 : '----' }}" placeholder="{{ entry_address_1 }}" id="input-address-1" class="form-control" />
+                </div>
+                <div class="form-group col-sm-6">
+                  <label class="control-label text-semibold" for="input-address-2">{{ entry_address_2 }}</label>
+                    <input type="text" name="wkpos_address_2" value="{{ wkpos_address_2 }}" placeholder="{{ entry_address_2 }}" id="input-address-2" class="form-control" />
+                </div>
+                <div class="form-group col-sm-6">
+                  <label class="control-label text-semibold" for="input-city">{{ entry_city }}</label>
+                    <input type="text" name="wkpos_city" value="{{ wkpos_city ? wkpos_city : '----'  }}" placeholder="{{ entry_city }}" id="input-city" class="form-control" />
+                </div>
+                <div class="form-group col-sm-6">
+                  <label class="control-label text-semibold" for="input-postcode">{{ entry_postcode }}</label>
+                    <input type="text" name="wkpos_postcode" value="{{ wkpos_postcode }}" placeholder="{{ entry_postcode }}" id="input-postcode" class="form-control" />
+                </div>
+                <div class="form-group col-sm-6">
+                  <label class="control-label text-semibold" for="input-country">{{ entry_country }}</label>
+                    <select name="wkpos_country_id" id="input-country" class="form-control select">
+                      {#<option value="">{{ text_select }}</option>#}
+                      {% for country in countries %}
+                        {% if country['country_id'] == wkpos_country_id %}
+                      <option value="{{ country['country_id'] }}" selected="selected">{{ country['name'] }}</option>
+                      {% else %}
+                      <option value="{{ country['country_id'] }}">{{ country['name'] }}</option>
+                       {% endif %}
+                      {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group col-sm-6">
+                  <label class="control-label text-semibold" for="input-zone">{{ entry_zone }}</label>
+                    <select name="wkpos_zone_id" id="input-zone" class="form-control select">
+                    </select>
+                </div>
+            </div>
+          </div>
+        </div>
+    </div>
+    <!-- /Customer TAB -->
+
+    <!-- Payment TAB -->
+    <div class="tab-pane" id="tab-payment">
+      <div class="col-md-3">
+        <div class="panel panel-white">
+          <div class="panel-heading">
+                  <h6 class="panel-title"><span class="text-bold">{{ text_status }}</span><a class="heading-elements-toggle"><i class="icon-more"></i></a></h6>
+              <div class="heading-elements not-collapsible">
+                  <ul class="icons-list">
+                      <li><a data-action="collapse" class=""></a></li>
+                  </ul>
+              </div>
+          </div>
+          <div class="panel-body">
+            <div class="form-group col-md-12">
+              <label class="control-label text-semibold" for="input-status">{{ entry_cash_status }}</label>
+              <div class="checkbox checkbox-switchery no-margin">
+                <label>
+                      <input type="checkbox" onchange="changeStatus(this);" name="wkpos_cash_status" class="switchery" {{ wkpos_cash_status == '1' or not wkpos_init  ? 'checked' }}>
+                      <span class="switchery-status">
+                        {% if wkpos_cash_status == '1' or not wkpos_init %} {{ text_enabled }} {% else %} {{ text_disabled }} {% endif %}
+                      </span>
+                </label>
+              </div>
+            </div>
+            <div class="form-group col-md-12">
+              <label class="control-label text-semibold" for="input-status">{{ entry_card_status }}</label>
+              <div class="checkbox checkbox-switchery no-margin">
+                <label>
+                      <input type="checkbox" onchange="changeStatus(this);" name="wkpos_card_status" class="switchery" {{ wkpos_card_status == '1'   ? 'checked' }}>
+                      <span class="switchery-status">
+                        {% if wkpos_card_status == '1' %} {{ text_enabled }} {% else %} {{ text_disabled }} {% endif %}
+                      </span>
+                </label>
+              </div>
+            </div>
+            <div class="form-group col-md-12">
+              <label class="control-label text-semibold" for="input-status">{{ entry_credit_status }}</label>
+              <div class="checkbox checkbox-switchery no-margin">
+                <label>
+                      <input type="checkbox" onchange="changeStatus(this);" name="wkpos_credit_status" class="switchery" {{ wkpos_credit_status == '1'   ? 'checked' }}>
+                      <span class="switchery-status">
+                        {% if wkpos_credit_status == '1' %} {{ text_enabled }} {% else %} {{ text_disabled }} {% endif %}
+                      </span>
+                </label>
+              </div>
+            </div>
+            <div class="form-group col-md-12">
+              <label class="control-label text-semibold" for="input-status">{{ entry_discount_status }}</label>
+              <div class="checkbox checkbox-switchery no-margin">
+                <label>
+                      <input type="checkbox" onchange="changeStatus(this);" name="wkpos_discount_status" class="switchery" {{ wkpos_discount_status == '1'  or not wkpos_init ? 'checked' }}>
+                      <span class="switchery-status">
+                        {% if wkpos_discount_status == '1' or not wkpos_init %} {{ text_enabled }} {% else %} {{ text_disabled }} {% endif %}
+                      </span>
+                </label>
+              </div>
+            </div>
+            <div class="form-group col-md-12">
+              <label class="control-label text-semibold" for="input-status">{{ entry_coupon_status }}</label>
+              <div class="checkbox checkbox-switchery no-margin">
+                <label>
+                      <input type="checkbox" onchange="changeStatus(this);" name="wkpos_coupon_status" class="switchery" {{ wkpos_coupon_status == '1' or not wkpos_init  ? 'checked' }}>
+                      <span class="switchery-status">
+                        {% if wkpos_coupon_status == '1'  or not wkpos_init %} {{ text_enabled }} {% else %} {{ text_disabled }} {% endif %}
+                      </span>
+                </label>
+              </div>
+            </div>
+            <div class="form-group col-md-12">
+              <label class="control-label text-semibold" for="input-status">{{ entry_tax_status }}</label>
+              <div class="checkbox checkbox-switchery no-margin">
+                <label>
+                      <input type="checkbox" onchange="changeStatus(this);" name="wkpos_tax_status" class="switchery" {{ wkpos_tax_status == '1'  or not wkpos_init ? 'checked' }}>
+                      <span class="switchery-status">
+                        {% if wkpos_tax_status == '1' or not wkpos_init %} {{ text_enabled }} {% else %} {{ text_disabled }} {% endif %}
+                      </span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-9">
+        <div class="panel panel-white">
+          <div class="panel-heading">
+                  <h6 class="panel-title"><span class="text-bold">{{ text_settings }}</span><a class="heading-elements-toggle"><i class="icon-more"></i></a></h6>
+              <div class="heading-elements not-collapsible">
+                  <ul class="icons-list">
+                      <li><a data-action="collapse" class=""></a></li>
+                  </ul>
+              </div>
+          </div>
+          <div class="panel-body">
+            <div class="payment-tap">
+                  <div class="form-group col-md-8">
+                     <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                          <div class="tab-content">
+                              {% for language in languages %}
+                                  <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}" id="langTab1{{ language['code'] }}">
+                                      <div class="form-group" id="cash-group[{{ language['code'] }}]">
+                                          <label class="control-label text-semibold">{{ lang('entry_cash_title') }}<span class="text-danger">*</span></label>
+                                          <input type="text" class="form-control" id="wkpos_cash_title{{ language['language_id'] }}" name="wkpos_cash_title{{ language['language_id'] }}" value="{{ wkpos_cash_title[language['language_id']] ? wkpos_cash_title[language['language_id']] : 'Cash' }}" placeholder="{{ entry_cash_title }}">
+                                          <span class="help-block"></span>
+                                          <span class="text-muted">{{ langempty('cash_help') }}</span>
+                                      </div>
+                                  </div>
+                              {% endfor %}
+                          </div>
+                          <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                              {% for language in languages %}
+                                  <li class="{{ loop.first ? 'active' : '' }}">
+                                      <a href="#langTab1{{ language['code'] }}" data-toggle="tab" aria-expanded="false">
+                                          <img src="view/image/flags/{{ language['image'] }}" title="{{ language['name'] }}" class="pull-right">
+                                          <div> {{ language['name'] }}</div>
+                                      </a>
+                                  </li>
+                              {% endfor %}
+                          </ul>
+                      </div>
+                  </div>
+                  <div class="form-group col-md-4">
+                      <label class="control-label text-semibold" for="input-cash-order-status">
+                          <span data-toggle="tooltip" title="{{ help_cash_status }}">{{ entry_cash_order_status }}</span></label>
+                      <select name="wkpos_cash_order_status_id" id="input-cash-order-status" class="form-control select">
+                          {% for order_status in order_statuses %}
+                              {% if order_status['order_status_id'] == wkpos_cash_order_status_id %}
+                                  <option value="{{ order_status['order_status_id'] }}" selected="selected">{{ order_status['name'] }}</option>
+                              {% else %}
+                                  <option value="{{ order_status['order_status_id'] }}">{{ order_status['name'] }}</option>
+                              {% endif %}
+                          {% endfor %}
+                      </select>
+                  </div>
+                  <div style="clear: both;"></div>
+                  <div class="form-group col-md-8">
+                      <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                          <div class="tab-content">
+                              {% for language in languages %}
+                                  <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}" id="langTab2{{ language['code'] }}">
+                                      <div class="form-group" id="card-group[{{ language['code'] }}]">
+                                          <label class="control-label text-semibold">{{ lang('entry_card_title') }}<span class="text-danger">*</span></label>
+                                          <input type="text" class="form-control" id="wkpos_card_title{{ language['language_id'] }}"
+                                                 name="wkpos_card_title{{ language['language_id'] }}"
+                                                 value="{{ wkpos_card_title[language['language_id']] ?
+                                                 wkpos_card_title[language['language_id']] : 'Card' }}" placeholder="{{ entry_card_title }}">
+                                          <span class="help-block"></span>
+                                          <span class="text-muted">{{ langempty('card_help') }}</span>
+                                      </div>
+                                  </div>
+                              {% endfor %}
+                          </div>
+
+                          <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                              {% for language in languages %}
+                                  <li class="{{ loop.first ? 'active' : '' }}">
+                                      <a href="#langTab2{{ language['code'] }}" data-toggle="tab" aria-expanded="false">
+                                          <img src="view/image/flags/{{ language['image'] }}" title="{{ language['name'] }}" class="pull-right">
+                                          <div> {{ language['name'] }}</div>
+                                      </a>
+                                  </li>
+                              {% endfor %}
+                          </ul>
+                      </div>
+                  </div>
+                  <div class="form-group  col-md-4">
+                      <label class="control-label text-semibold" for="input-card-order-status"><span data-toggle="tooltip" title="{{ help_card_status }}">{{ entry_card_order_status }}</span></label>
+                      <select name="wkpos_card_order_status_id" id="input-card-order-status" class="form-control select">
+                          {% for order_status in order_statuses %}
+                              {% if order_status['order_status_id'] == wkpos_card_order_status_id %}
+                                  <option value="{{ order_status['order_status_id'] }}"
+                                          selected="selected">{{ order_status['name'] }}</option>
+                              {% else %}
+                                  <option value="{{ order_status['order_status_id'] }}">{{ order_status['name'] }}</option>
+                              {% endif %}
+                          {% endfor %}
+                      </select>
+                  </div>
+                  <div style="clear: both;"></div>
+                  <div class="form-group col-md-8">
+                      <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                          <div class="tab-content">
+                              {% for language in languages %}
+                                  <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}" id="langTab3{{ language['code'] }}">
+                                      <div class="form-group" id="credit-group[{{ language['code'] }}]">
+                                          <label class="control-label text-semibold">
+                                              {{ lang('entry_credit_title') }}<span class="text-danger">*</span></label>
+                                          <input type="text" class="form-control"
+                                                 id="wkpos_card_title{{ language['language_id'] }}"
+                                                 name="wkpos_credit_title{{ language['language_id'] }}"
+                                                 value="{{ wkpos_credit_title[language['language_id']] ?
+                                                 wkpos_credit_title[language['language_id']]  : 'Credit' }}"
+                                                 placeholder="{{ entry_credit_title }}">
+                                          <span class="help-block"></span>
+                                          <span class="text-muted">{{ langempty('credit_help') }}</span>
+                                      </div>
+                                  </div>
+                              {% endfor %}
+                          </div>
+
+                          <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                              {% for language in languages %}
+                                  <li class="{{ loop.first ? 'active' : '' }}">
+                                      <a href="#langTab3{{ language['code'] }}" data-toggle="tab" aria-expanded="false">
+                                          <img src="view/image/flags/{{ language['image'] }}" title="{{ language['name'] }}" class="pull-right">
+                                          <div> {{ language['name'] }}</div>
+                                      </a>
+                                  </li>
+                              {% endfor %}
+                          </ul>
+                      </div>
+                  </div>
+                  <div class="form-group col-md-4">
+                      <label class="control-label text-semibold"><span data-toggle="tooltip" title="{{ help_credit_order }}">{{ entry_credit_order_status }}</span></label>
+                      <select class="form-control select" name="wkpos_credit_order_status">
+                          {% for order_status in order_statuses %}
+                              <option {% if wkpos_credit_order_status == order_status['order_status_id'] %}selected{% endif %}value="{{ order_status['order_status_id'] }}">{{ order_status['name'] }}</option>
+                          {% endfor %}
+                      </select>
+                  </div>
+
+                  {% set i = 0 %}
+                  {% set j = 4 %}
+                  {% if wkpos_custom_title %}
+                      {% for k in 1..count %}
+                      <div style="clear: both;"></div>
+                      <div class="form-group col-md-8">
+                          <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                              <div class="tab-content">
+                                  {% for language in languages %}
+                                      <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}"
+                                           id="langTab{{ j }}{{ language['code'] }}">
+                                          <div class="form-group" id="credit-group[{{ language['code'] }}]">
+                                              <label class="control-label text-semibold">
+                                                  {{ lang('entry_custom_title') }}
+                                                  <span class="text-danger">*</span></label>
+                                              <input type="text" class="form-control"
+                                                     id="wkpos_custom_title{{ language['language_id'] }}"
+                                                     name="wkpos_custom_title{{ language['language_id'] }}[]"
+                                                     value="{{ wkpos_custom_title[language['language_id']] ?
+                                                     wkpos_custom_title[language['language_id']][i] : '' }}"
+                                                     placeholder="{{ entry_credit_title }}">
+                                              <span class="help-block"></span>
+                                              <span class="text-muted">{{ langempty('credit_help') }}</span>
+                                          </div>
+                                      </div>
+                                  {% endfor %}
+                              </div>
+
+                              <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                                  {% for language in languages %}
+                                      <li class="{{ loop.first ? 'active' : '' }}">
+                                          <a href="#langTab{{ j }}{{ language['code'] }}" data-toggle="tab" aria-expanded="false">
+                                              <img src="view/image/flags/{{ language['image'] }}" title="{{ language['name'] }}"
+                                                   class="pull-right">
+                                              <div> {{ language['name'] }}</div>
+                                          </a>
+                                      </li>
+                                  {% endfor %}
+                              </ul>
+                          </div>
+                      </div>
+                      <div class="form-group col-md-4 wkpos_custom_order_status" id="wkpos_custom_order_status" >
+                          <label class="control-label text-semibold">
+                              <span data-toggle="tooltip" title="{{ help_credit_order }}">{{ lang('entry_custom_order_status') }}</span></label>
+                          <select class="form-control select" name="wkpos_custom_order_status_id[]" id="wkpos_credit_order_status0">
+                              {% for order_status in order_statuses %}
+                                  <option {% if wkpos_custom_order_status_id[i] == order_status['order_status_id'] %}selected{% endif %}
+                                          value="{{ order_status['order_status_id'] }}">{{ order_status['name'] }}</option>
+                              {% endfor %}
+                          </select>
+                      </div>
+                          {%  set i= i+1 %}
+                          {%  set j= j+1 %}
+                      {% endfor %}
+
+                  {% endif %}
+                  <div id="tool-placeholder"></div>
+              </div>
+            <div class="form-group col-md-4 custom_order_status_select_div" id="wkpos_custom_order_status" style="display: none">
+                  <label class="control-label text-semibold">
+                      <span data-toggle="tooltip" title="Custom payment option"></span>{{ lang('entry_custom_order_status') }}</label>
+                  <select class="variable_priority form-control select toollist custom_order_status_select"
+                          id="wkpos_custom_order_status0">
+                      {% for order_status in order_statuses %}
+                          <option value="{{ order_status['order_status_id'] }}">{{ order_status['name'] }}</option>
+                      {% endfor %}
+                  </select>
+              </div>
+
+              <div class="form-group col-sm-6">
+                  <i onclick="addNewPaymentOption();" id="add_new_payment_option"
+                     class="btn btn-success btn-labeled btn-xs">
+                      <b><i class="icon-plus3"></i></b>
+                      {{ lang('new_custom_payment') }}
+                  </i>
+              </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- /Payment TAB -->
+
+    <!-- Shipping TAB -->
+    <div class="tab-pane" id="tab-shipping">
+      <div class="col-md-3">
+        <div class="panel panel-white">
+          <div class="panel-heading">
+                  <h6 class="panel-title"><span class="text-bold">{{ text_status }}</span><a class="heading-elements-toggle"><i class="icon-more"></i></a></h6>
+              <div class="heading-elements not-collapsible">
+                  <ul class="icons-list">
+                      <li><a data-action="collapse" class=""></a></li>
+                  </ul>
+              </div>
+          </div>
+          <div class="panel-body">
+            <div class="form-group col-md-12">
+              <label class="control-label text-semibold" for="input-status">{{ entry_home_delivery_staus }}</label>
+              <div class="checkbox checkbox-switchery no-margin">
+                <label>
+                      <input type="checkbox" onchange="changeStatus(this);" name="wkpos_home_delivery_status" class="switchery" {{ wkpos_home_delivery_status == '1'   ? 'checked' }}>
+                      <span class="switchery-status">
+                        {% if wkpos_home_delivery_status == '1' %} {{ text_enabled }} {% else %} {{ text_disabled }} {% endif %}
+                      </span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-9">
+        <div class="panel panel-white">
+          <div class="panel-heading">
+                  <h6 class="panel-title"><span class="text-bold">{{ text_settings }}</span><a class="heading-elements-toggle"><i class="icon-more"></i></a></h6>
+              <div class="heading-elements not-collapsible">
+                  <ul class="icons-list">
+                      <li><a data-action="collapse" class=""></a></li>
+                  </ul>
+              </div>
+          </div>
+          <div class="panel-body">
+              <div class="form-group col-md-8">
+
+                <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                  <div class="tab-content">
+                      {% for language in languages %}
+                          <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}" id="langTab{{ j }}{{ language['code'] }}">
+                              <div class="form-group" id="home_delivery-group[{{ language['code'] }}]">
+                                  <label class="control-label text-semibold">{{ lang('entry_home_delivery_title') }}<span class="text-danger">*</span></label>
+                                  <input type="text" class="form-control" id="wkpos_cash_title{{ language['language_id'] }}" name="wkpos_home_delivery_title{{ language['language_id'] }}" value="{{ wkpos_home_delivery_title[language['language_id']] ? wkpos_home_delivery_title[language['language_id']] : 'Home Delivery' }}">
+                                  <span class="help-block"></span>
+                                  <span class="text-muted">{{ langempty('home_delivery_help') }}</span>
+                              </div>
+                          </div>
+                      {% endfor %}
+                  </div>
+
+                  <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                      {% for language in languages %}
+                          <li class="{{ loop.first ? 'active' : '' }}">
+                              <a href="#langTab{{ j }}{{ language['code'] }}" data-toggle="tab" aria-expanded="false">
+                                  <img src="view/image/flags/{{ language['image'] }}" title="{{ language['name'] }}" class="pull-right">
+                                  <div> {{ language['name'] }}</div>
+                              </a>
+                          </li>
+                      {% endfor %}
+                  </ul>
+              </div>
+              </div>
+              <div class="form-group col-md-4">
+                <label class="control-label text-semibold" for="input-max-charge"><span data-toggle="tooltip" title="{{ help_max_charge }}">{{ entry_home_delivery_max }}</span></label>
+                  <div class="input-group">
+                    <span class="input-group-addon">{{ currency }}</span>
+                    <input type="number" name="wkpos_home_delivery_max" class="form-control" id="input-max-charge" value="{{ wkpos_home_delivery_max }}" min="0" onkeypress="return validate(event, this)">
+                  </div>
+              </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- /Shipping TAB -->
+
+    <!-- Reciept TAB -->
+    <div class="tab-pane" id="tab-receipt">
+      <div class="col-md-3">
+        <div class="panel panel-white">
+          <div class="panel-heading">
+                  <h6 class="panel-title"><span class="text-bold">{{ text_status }}</span><a class="heading-elements-toggle"><i class="icon-more"></i></a></h6>
+              <div class="heading-elements not-collapsible">
+                  <ul class="icons-list">
+                      <li><a data-action="collapse" class=""></a></li>
+                  </ul>
+              </div>
+          </div>
+          <div class="panel-body">
+            <div class="form-group col-md-12">
+              <label class="control-label text-semibold" for="input-status">{{ entry_store_logo }}</label>
+              <div class="checkbox checkbox-switchery no-margin">
+                <label>
+                      <input type="checkbox" onchange="changeStatus2(this);" name="wkpos_store_logo" class="switchery" {{ wkpos_store_logo == '1' or not wkpos_init  ? 'checked' }}>
+                      <span class="switchery-status">
+                        {% if wkpos_store_logo == '1' or not wkpos_init %} {{ text_yes}} {% else %} {{ text_no }} {% endif %}
+                      </span>
+                </label>
+              </div>
+            </div>
+            <div class="form-group col-md-12">
+              <label class="control-label text-semibold" for="input-status">{{ entry_store_name }}</label>
+              <div class="checkbox checkbox-switchery no-margin">
+                <label>
+                      <input type="checkbox" onchange="changeStatus2(this);" name="wkpos_store_name" class="switchery" {{ wkpos_store_name == '1' or not wkpos_init  ? 'checked' }}>
+                      <span class="switchery-status">
+                        {% if wkpos_store_name == '1' or not wkpos_init %} {{ text_yes}} {% else %} {{ text_no }} {% endif %}
+                      </span>
+                </label>
+              </div>
+            </div>
+            <div class="form-group col-md-12">
+              <label class="control-label text-semibold" for="input-status">{{ entry_store_address }}</label>
+              <div class="checkbox checkbox-switchery no-margin">
+                <label>
+                      <input type="checkbox" onchange="changeStatus2(this);" name="wkpos_store_address" class="switchery" {{ wkpos_store_address == '1'   ? 'checked' }}>
+                      <span class="switchery-status">
+                        {% if wkpos_store_address == '1' %} {{ text_yes}} {% else %} {{ text_no }} {% endif %}
+                      </span>
+                </label>
+              </div>
+            </div>
+            <div class="form-group col-md-12">
+              <label class="control-label text-semibold" for="input-status">{{ entry_order_date }}</label>
+              <div class="checkbox checkbox-switchery no-margin">
+                <label>
+                      <input type="checkbox" onchange="changeStatus2(this);" name="wkpos_order_date" class="switchery" {{ wkpos_order_date == '1'  or not wkpos_init ? 'checked' }}>
+                      <span class="switchery-status">
+                        {% if wkpos_order_date == '1' or not wkpos_init %} {{ text_yes}} {% else %} {{ text_no }} {% endif %}
+                      </span>
+                </label>
+              </div>
+            </div>
+            <div class="form-group col-md-12">
+              <label class="control-label text-semibold" for="input-status">{{ entry_order_time }}</label>
+              <div class="checkbox checkbox-switchery no-margin">
+                <label>
+                      <input type="checkbox" onchange="changeStatus2(this);" name="wkpos_order_time" class="switchery" {{ wkpos_order_time == '1'  or not wkpos_init ? 'checked' }}>
+                      <span class="switchery-status">
+                        {% if wkpos_order_time == '1' or not wkpos_init %} {{ text_yes}} {% else %} {{ text_no }} {% endif %}
+                      </span>
+                </label>
+              </div>
+            </div>
+            <div class="form-group col-md-12">
+              <label class="control-label text-semibold" for="input-status">{{ entry_order_id }}</label>
+              <div class="checkbox checkbox-switchery no-margin">
+                <label>
+                      <input type="checkbox" onchange="changeStatus2(this);" name="wkpos_order_id" class="switchery" {{ wkpos_order_id == '1'  or not wkpos_init ? 'checked' }}>
+                      <span class="switchery-status">
+                        {% if wkpos_order_id == '1' or not wkpos_init %} {{ text_yes}} {% else %} {{ text_no }} {% endif %}
+                      </span>
+                </label>
+              </div>
+            </div>
+            <div class="form-group col-md-12">
+              <label class="control-label text-semibold" for="input-status">{{ entry_cashier_name }}</label>
+              <div class="checkbox checkbox-switchery no-margin">
+                <label>
+                      <input type="checkbox" onchange="changeStatus2(this);" name="wkpos_cashier_name" class="switchery" {{ wkpos_cashier_name == '1'   ? 'checked' }}>
+                      <span class="switchery-status">
+                        {% if wkpos_cashier_name == '1' %} {{ text_yes}} {% else %} {{ text_no }} {% endif %}
+                      </span>
+                </label>
+              </div>
+            </div>
+            <div class="form-group col-md-12">
+              <label class="control-label text-semibold" for="input-status">{{ entry_customer_name }}</label>
+              <div class="checkbox checkbox-switchery no-margin">
+                <label>
+                      <input type="checkbox" onchange="changeStatus2(this);" name="wkpos_customer_name" class="switchery" {{ wkpos_customer_name == '1'   ? 'checked' }}>
+                      <span class="switchery-status">
+                        {% if wkpos_customer_name == '1' %} {{ text_yes}} {% else %} {{ text_no }} {% endif %}
+                      </span>
+                </label>
+              </div>
+            </div>
+            <div class="form-group col-md-12">
+              <label class="control-label text-semibold" for="input-status">{{ entry_shipping_mode }}</label>
+              <div class="checkbox checkbox-switchery no-margin">
+                <label>
+                      <input type="checkbox" onchange="changeStatus2(this);" name="wkpos_shipping_mode" class="switchery" {{ wkpos_shipping_mode == '1'  or not wkpos_init ? 'checked' }}>
+                      <span class="switchery-status">
+                        {% if wkpos_shipping_mode == '1' or not wkpos_init %} {{ text_yes}} {% else %} {{ text_no }} {% endif %}
+                      </span>
+                </label>
+              </div>
+            </div>
+            <div class="form-group col-md-12">
+              <label class="control-label text-semibold" for="input-status">{{ entry_payment_mode }}</label>
+              <div class="checkbox checkbox-switchery no-margin">
+                <label>
+                      <input type="checkbox" onchange="changeStatus2(this);" name="wkpos_payment_mode" class="switchery" {{ wkpos_payment_mode == '1' or not wkpos_init  ? 'checked' }}>
+                      <span class="switchery-status">
+                        {% if wkpos_payment_mode == '1' or not wkpos_init %} {{ text_yes}} {% else %} {{ text_no }} {% endif %}
+                      </span>
+                </label>
+              </div>
+            </div>
+            <div class="form-group col-md-12">
+              <label class="control-label text-semibold" for="input-status">{{ entry_show_note }}</label>
+              <div class="checkbox checkbox-switchery no-margin">
+                <label>
+                      <input type="checkbox" onchange="changeStatus2(this);" name="wkpos_show_note" class="switchery" {{ wkpos_show_note == '1' or not wkpos_init  ? 'checked' }}>
+                      <span class="switchery-status">
+                        {% if wkpos_show_note == '1' or not wkpos_init %} {{ text_yes}} {% else %} {{ text_no }} {% endif %}
+                      </span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-9">
+        <div class="panel panel-white">
+          <div class="panel-heading">
+                  <h6 class="panel-title"><span class="text-bold">{{ text_settings }}</span><a class="heading-elements-toggle"><i class="icon-more"></i></a></h6>
+              <div class="heading-elements not-collapsible">
+                  <ul class="icons-list">
+                      <li><a data-action="collapse" class=""></a></li>
+                  </ul>
+              </div>
+          </div>
+          <div class="panel-body">
+            <div class="form-group col-md-6">
+              <label class="control-label text-semibold" for="input-print-size"><span data-toggle="tooltip" title="{{ help_print_size }}">{{ entry_paper_size }}</span></label>
+                <select class="form-control select" name="wkpos_print_size" id="input-print-size">
+                  <option {% if wkpos_print_size == '595px' %} selected {% endif %} value="595px">{{ text_a4 }}</option>
+                  <option {% if wkpos_print_size == '80mm' or not wkpos_init %} selected {% endif %} value="80mm">{{ text_thermal }}</option>
+                  <option {% if wkpos_print_size == '58mm' %} selected {% endif %} value="58mm">{{ text_mini_thermal }}</option>
+                </select>
+            </div>
+            <div class="form-group col-md-6">
+              <label for="input-font-weight" class="control-label text-semibold">{{ entry_font_weight }}</label>
+                <select class="form-control select" name="wkpos_print_font_weight">
+                  <option {% if wkpos_print_font_weight == 'normal' %} selected {% endif %} value="normal">{{ text_normal }}</option>
+                  <option {% if wkpos_print_font_weight == 'bold' %} selected {% endif %} value="bold">{{ text_bold }}</option>
+                </select>
+            </div>
+            
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- /Reciept TAB -->
+
+    <!-- Barcode TAB -->
+    <div class="tab-pane" id="tab-barcode">
+      <div class="col-md-3">
+        <div class="panel panel-white">
+          <div class="panel-heading">
+                  <h6 class="panel-title"><span class="text-bold">{{ text_status }}</span><a class="heading-elements-toggle"><i class="icon-more"></i></a></h6>
+              <div class="heading-elements not-collapsible">
+                  <ul class="icons-list">
+                      <li><a data-action="collapse" class=""></a></li>
+                  </ul>
+              </div>
+          </div>
+          <div class="panel-body">
+              <div class="form-group col-md-12">
+                  <label class="control-label text-semibold" for="input-status">{{ entry_barcode_name }}</label>
+                  <div class="checkbox checkbox-switchery no-margin">
+                      <label>
+                          <input type="checkbox" onchange="changeStatus2(this);" name="wkpos_barcode_name" class="switchery" {{ wkpos_barcode_name == '1'   ? 'checked' }}>
+                          <span class="switchery-status">
+                        {% if wkpos_barcode_name == '1' %} {{ text_yes }} {% else %} {{ text_no }} {% endif %}
+                      </span>
+                      </label>
+                  </div>
+              </div>
+              <div class="form-group col-md-12">
+                  <label class="control-label text-semibold" for="input-status">{{ entry_barcode_number }}</label>
+                  <div class="checkbox checkbox-switchery no-margin">
+                      <label>
+                          <input type="checkbox" onchange="changeStatus2(this);" name="wkpos_barcode_number" class="switchery"
+                                  {{ wkpos_barcode_number == '1'   ? 'checked' }}>
+                          <span class="switchery-status">
+                        {% if wkpos_barcode_number == '1' %} {{ text_yes }} {% else %} {{ text_no }} {% endif %}
+                      </span>
+                      </label>
+                  </div>
+              </div>
+
+              <div class="form-group col-md-12">
+                  <label class="control-label text-semibold" for="input-status">{{ entry_barcode_price }}</label>
+                  <div class="checkbox checkbox-switchery no-margin">
+                      <label>
+                          <input type="checkbox" onchange="changeStatus2(this);" name="wkpos_barcode_price" class="switchery" {{ wkpos_barcode_price == '1'   ? 'checked' }}>
+                          <span class="switchery-status">
+                        {% if wkpos_barcode_price == '1' %} {{ text_yes }} {% else %} {{ text_no }} {% endif %}
+                      </span>
+                      </label>
+                  </div>
+              </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-9">
+        <div class="panel panel-white">
+          <div class="panel-heading">
+                  <h6 class="panel-title"><span class="text-bold">{{ text_settings }}</span><a class="heading-elements-toggle"><i class="icon-more"></i></a></h6>
+              <div class="heading-elements not-collapsible">
+                  <ul class="icons-list">
+                      <li><a data-action="collapse" class=""></a></li>
+                  </ul>
+              </div>
+          </div>
+          <div class="panel-body">
+            <div class="form-group col-sm-4">
+              <label class="control-label text-semibold" for="input-barcode-width"><span data-toggle="tooltip" title="{{ help_barcode_width }}">{{ entry_barcode_width }}</span></label>
+                <input type="number" name="wkpos_barcode_width" value="{{ wkpos_barcode_width }}" placeholder="{{ entry_barcode_width }}" min="0" id="input-barcode-width" class="form-control" onkeypress="return validate(event, this);"/>
+            </div>
+            <div class="form-group  col-sm-4">
+              <label class="control-label text-semibold" for="select-barcode-generate"><span data-toggle="tooltip" title="{{ help_generate_with }}">{{ entry_generate_with }}</span></label>
+                <select class="form-control select" name="wkpos_generate_barcode" id="select-barcode-generate">
+                  <option {% if wkpos_generate_barcode == 'barcode' %} selected {% endif %} value="barcode">{{ text_barcode }}</option>
+                  <option {% if wkpos_generate_barcode == 'id' %} selected {% endif %} value="id">{{ text_id }}</option>
+                  <option {% if wkpos_generate_barcode == 'upc'  %} selected {% endif %} value="upc">{{ text_upc }}</option>
+                  <option {% if wkpos_generate_barcode == 'sku' %} selected {% endif %} value="sku">{{ text_sku }}</option>
+                  <option {% if wkpos_generate_barcode == 'ean' %} selected {% endif %} value="ean">{{ text_ean }}</option>
+                </select>
+            </div>
+            <div class="form-group col-md-4">
+              <label class="control-label text-semibold" for="input-slot-number"><span data-toggle="tooltip" title="{{ help_number_slot }}">{{ entry_number_slot }}</span></label>
+                <input type="number" id="input-slot-number" name="wkpos_barcode_slot" value="{{ wkpos_barcode_slot ? wkpos_barcode_slot : 1 }}" class="form-control"  min="5" placeholder="{{ entry_number_slot }}" onkeypress="return validate(event, this, true)"/>
+            </div>
+            <div class="form-group col-md-12">
+              <label class="control-label text-semibold" for="input-barcode-image">{{ entry_barcode_type }}</label>
+            </div>
+            {% if wkpos_barcode_type == 'vertical' %}
+            <div>
+              <input type="radio" name="wkpos_barcode_type" value="horizontal">{{ text_horizontal }}<img src="../image/wkpos/horizontal.png"/>
+            </div>
+            <div>
+              <input type="radio" name="wkpos_barcode_type" value="vertical" checked="checked" >{{ text_vertical }}<img style="margin-left: 31px;" src="../image/wkpos/vertical.png"/>
+            </div>
+            {% else %}
+            <div>
+             <input type="radio" name="wkpos_barcode_type" value="horizontal"checked="checked" >{{ text_horizontal }} <img src="../image/wkpos/horizontal.png"/>
+            </div>
+            <div>
+              <input type="radio" name="wkpos_barcode_type" value="vertical">{{ text_vertical }}<img style="margin-left: 31px;" src="../image/wkpos/vertical.png"/>
+            </div>
+            {% endif %}
+            
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- /Barcode TAB -->
+  </div>
+</form>
+<script type="text/javascript"><!--
+
+{% if not wkpos_init %}
+    $(document).ready(function(){
+        $('#wkpos_init_alert').fadeIn();
+        setTimeout(function(){
+            $('.form').submit();
+        }, 2000);
+    });
+{% endif %}
+
+$('select[name=\'wkpos_country_id\']').on('change', function() {
+  $.ajax({
+    url: 'sale/customer/country?country_id=' + this.value,
+    dataType: 'json',
+    beforeSend: function() {
+      $('select[name=\'wkpos_country_id\']').after(' <i class="fa fa-circle-o-notch fa-spin"></i>');
+    },
+    complete: function() {
+      $('.fa-spin').remove();
+    },
+    success: function(json) {
+      if (json['postcode_required'] == '1') {
+        $('input[name=\'wkpos_postcode\']').parent().parent().addClass('required');
+      } else {
+        $('input[name=\'wkpos_postcode\']').parent().parent().removeClass('required');
+      }
+
+      html = '<option value="">{{ text_select }}</option>';
+
+      if (json['zone'] && json['zone'] != '') {
+        for (i = 0; i < json['zone'].length; i++) {
+          html += '<option value="' + json['zone'][i]['zone_id'] + '"';
+
+          if (json['zone'][i]['zone_id'] == '{{ wkpos_zone_id }}') {
+            html += ' selected="selected"';
+          }
+
+          html += '>' + json['zone'][i]['name'] + '</option>';
+        }
+      } else {
+        html += '<option value="0" selected="selected">{{ text_none }}</option>';
+      }
+
+      $('select[name=\'wkpos_zone_id\']').html(html);
+    },
+    error: function(xhr, ajaxOptions, thrownError) {
+      alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+    }
+  });
+});
+
+$('select[name=\'wkpos_country_id\']').trigger('change');
+$('select[name=\'wkpos_store_country_id\']').on('change', function() {
+  $.ajax({
+    url: 'sale/customer/country?country_id=' + this.value,
+    dataType: 'json',
+    beforeSend: function() {
+      $('select[name=\'wkpos_store_country_id\']').after(' <i class="fa fa-circle-o-notch fa-spin"></i>');
+    },
+    complete: function() {
+      $('.fa-spin').remove();
+    },
+    success: function(json) {
+      html = '<option value="">{{ text_select }}</option>';
+
+      if (json['zone'] && json['zone'] != '') {
+        for (i = 0; i < json['zone'].length; i++) {
+          html += '<option value="' + json['zone'][i]['zone_id'] + '"';
+
+          if (json['zone'][i]['zone_id'] == '{{ wkpos_store_zone_id }}') {
+            html += ' selected="selected"';
+          }
+
+          html += '>' + json['zone'][i]['name'] + '</option>';
+        }
+      } else {
+        html += '<option value="0" selected="selected">{{ text_none }}</option>';
+      }
+
+      $('select[name=\'wkpos_store_zone_id\']').html(html);
+    },
+    error: function(xhr, ajaxOptions, thrownError) {
+      alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+    }
+  });
+});
+function validate(key, thisthis, nodot) {
+  //getting key code of pressed key
+  var keycode = (key.which) ? key.which : key.keyCode;
+
+  if (keycode == 46) {
+    if (nodot) {
+      return false;
+    }
+
+    var val = $(thisthis).val();
+    if (val == val.replace('.', '')) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  //comparing pressed keycodes
+  if (!(keycode == 8 || keycode == 9 || keycode == 46 || keycode == 116) && (keycode < 48 || keycode > 57)) {
+    return false;
+  } else {
+    return true;
+  }
+}
+
+function changeStatus(checkbox)
+{
+    var self = $(checkbox);
+    var switch_status = self.siblings('.switchery-status');
+
+    if ( self.is(':checked') )
+    {
+        switch_status.html("{{ lang('text_enabled') }}");
+    }
+    else
+    {
+        switch_status.html("{{ lang('text_disabled') }}");
+    }
+}
+
+function addNewPaymentOption()
+{
+    html = `
+    <div style="clear: both;"></div>
+    <div class="form-group col-md-8">
+        <div class="tabbable nav-tabs-vertical nav-tabs-right">
+              <div class="tab-content">
+                 {% for language in languages %}
+                      <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}" id="langTab{{ j }}{{ language['code'] }}">
+                          <div class="form-group" id="custom-group[{{ language['code'] }}]">
+                              <label class="control-label text-semibold">
+                                  {{ lang('entry_custom_title') }}<span class="text-danger">*</span></label>
+                              <input type="text" class="form-control"
+                                     id="wkpos_custom_title{{ language['language_id'] }}"
+                                     name="wkpos_custom_title{{ language['language_id'] }}[]"
+                                     value=""
+                                     placeholder="{{ lang('entry_custom_title') }}">
+                              <span class="help-block"></span>
+                              <span class="text-muted"></span>
+                          </div>
+                      </div>
+                  {% endfor %}
+              </div>
+
+              <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                {% for language in languages %}
+                          <li class="{{ loop.first ? 'active' : '' }}">
+                              <a href="#langTab{{ j }}{{ language['code'] }}" data-toggle="tab" aria-expanded="true">
+                                  <img src="view/image/flags/{{ language['image'] }}" title="{{ language['name'] }}" class="pull-right">
+                                  <div> {{ language['name'] }}</div>
+                              </a>
+                          </li>
+                {% endfor %}
+                   </ul>
+                </div>
+            </div>
+    `;
+
+    $('.payment-tap').append(html);
+    $('.custom_order_status_select').select2("destroy");
+    var clonedDiv = $('.custom_order_status_select_div').first().clone();
+    clonedDiv.removeAttr("style");
+    clonedDiv.insertAfter(".payment-tap");
+    $('.custom_order_status_select').attr('name', 'wkpos_custom_order_status_id[]');
+    $('.custom_order_status_select').select2({ //apply select2 to my element
+        placeholder: "Select Custom payment Order Status",
+        allowClear: true,
+    });
+    $("#add_new_payment_option").prop('onclick', null); // Removes 'onclick' property if found
+}
+
+$(document).on('change', '.variable_priority', function() {
+    $(".variable_priority").val(this.value );
+});
+function changeStatus2(checkbox)
+{
+    var self = $(checkbox);
+    var switch_status = self.siblings('.switchery-status');
+
+    if ( self.is(':checked') )
+    {
+        switch_status.html("{{ lang('text_yes') }}");
+    }
+    else
+    {
+        switch_status.html("{{ lang('text_no') }}");
+    }
+}
+
+$('select[name=\'wkpos_store_country_id\']').trigger('change');
+//--></script>
+{% endblock %}

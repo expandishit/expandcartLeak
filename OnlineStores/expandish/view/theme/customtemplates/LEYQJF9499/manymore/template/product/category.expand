@@ -1,0 +1,343 @@
+{{ script('js/jquery/jquery.total-storage.min.js') }}
+<script src="https://use.fontawesome.com/52e183519a.js"></script>
+{#<link rel="stylesheet" href="view/assets/js/plugins/editors/summernote/summernote-emoji/tam-emoji/css/emoji.css">#}
+{#<script src="view/assets/js/plugins/editors/summernote/summernote-emoji/tam-emoji/js/config.js"></script>#}
+{#<script src="view/assets/js/plugins/editors/summernote/summernote-emoji/tam-emoji/js/tam-emoji.min.js"></script>#}
+<style>
+    .product-title {
+        text-align: center;
+        text-align: -webkit-center;
+    }
+</style>
+{% set mfSettings = config(mega_filter_settings) %}
+{% if mfSettings %}
+{% if mfilter_json %}
+<div id="mfilter-json" style="display:none">{{ mfilter_json|base64_encode }}</div>
+{% endif %}
+<div id="mfilter-content-container">
+    {% endif %}
+
+    <!-- breadcrumb -->
+    <div class="breadcrumb-page">
+        <ol class="breadcrumb">
+            {% for breadcrumb in breadcrumbs %}
+            {% if loop.last %}
+            <li class="active">{{ breadcrumb['text'] }}</li>
+            {% else %}
+            <li><a href="{{ breadcrumb['href'] }}">{{ breadcrumb['text'] }}</a></li>
+            {% endif %}
+            {% endfor %}
+        </ol>
+    </div> <!-- breadcrumb -->
+
+    <div class="boxed-slider radius">
+        <h2 class="categoryTitle">{{ category_name }}</h2>
+        <div class="wrap-item" data-itemscustom="[[0,1]]" data-pagination="false" data-navigation="false">
+            <div class="banner-shop">
+                {% if image %}
+                <div class="banner-shop-thumb">
+                    <a href="#"><img alt="" src="{{ image(image, 1200, 400) }}" alt="{{ category_name }}"></a>
+                </div>
+                {% endif %}
+
+                <div class="banner-shop-info text-left" style="color:#333333;">
+
+                    {% if description %}<p>{{ description }}</p>{% endif %}
+                    {% if categories %}
+                    {% if category_count == category_with_icon_count and category_parent_id == 0 %}
+                    <div class="row">
+                        {% for category in categories %}
+                        <div class="col-xs-6 col-md-3" style="padding: 0px;">
+                            <a href="{{ category['href'] }}">
+                                <img style="padding: 20px;" class="img-responsive"
+                                    src="{{ category['icon_src'] is not empty ? category['icon_src'] }}">
+                            </a>
+                        </div>
+                        <!-- /.col-xs-6 col-md-3 -->
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <ul class="category-links list-inline">
+                        {% for category in categories %}
+                        <li><a href="{{ category['href'] }}">{{ category['name'] }}</a></li>
+                        {% endfor %}
+                    </ul><!-- category links -->
+                    {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if products %}
+    <div class="content-grid-boxed">
+        <div class="sort-pagi-bar clearfix">
+            <div class="view-type pull-left">
+                <a onclick="$('.grid-pro-color').toggle(); $('.list-pro-color').toggle(); $('.grid-view').toggleClass('active'); $('.list-view').toggleClass('active'); return false;"
+                    href="#" class="grid-view active"></a>
+                <a onclick="$('.grid-pro-color').toggle(); $('.list-pro-color').toggle(); $('.grid-view').toggleClass('active'); $('.list-view').toggleClass('active'); return false;"
+                    href="#" class="list-view"></a>
+            </div>
+            <div class="sort-paginav pull-right">
+                <div class="sort-bar select-box">
+                    <label>{{ lang('text_sort') }}</label>
+                    <select onchange="location = this.value;" class="sorter-options ">
+                        {% for sortst in sorts %}
+                        {% if sortst.value == sort ~ '-' ~ order %}
+                        <option value="{{ sortst.href }}" selected="selected">{{ sortst.text }}</option>
+                        {% else %}
+                        <option value="{{ sortst.href }}">{{ sortst.text }}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="show-bar select-box">
+                    <label>{{ lang('text_limit') }} </label>
+                    <select class="limiter-options " onchange="location = this.value;">
+                        {% for limitst in limits %}
+                        {% if limitst.value == limit %}
+                        <option value="{{ limitst.href }}" selected="selected">{{ limitst.text }}</option>
+                        {% else %}
+                        <option value="{{ limitst.href }}">{{ limitst.text }}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+                {{ pagination }}
+            </div>
+        </div>
+        <!-- End Sort PagiBar -->
+        <div class="grid-pro-color">
+            <div class="row">
+                {% for product in products %}
+                <div class="col-lg-3 col-md-4 col-sm-6 col-xs-6">
+                    <div class="item-pro-color">
+                        <div class="product-thumb">
+                            {% set statuses = config("config_stock_status_display_badge") %}
+                            {% if product.quantity <= 0 and product.stock_status_id in statuses %}
+                            <div class="product-info-stock-sku">
+                                <div class="stock available">
+                                    <span class="label label-danger label-status">{{ lang('text_outstock') }}</span>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% if product.special != '' %}
+                            <span class="saleoff label label-danger">-{{ product.saving }}%</span>
+                            {% else %}
+                            <span class="saleoff invisible">0%</span>
+                            {% endif %}
+
+                            <a href="{{ product.href }}" class="product-thumb-link">
+                                <img data-color="black" class="active" src="{{ image(product.image, 270, 270) }}"
+                                    alt="{{ product.name }}">
+                            </a>
+                        </div>
+                        <div class="product-info {{ config('show_brands') ? 'fix-height' : '' }}">
+                            <h3 class="product-title"><a href="{{ product.href }}">{{ product.name }}</a></h3>
+                            {% set statuses = config("config_stock_status_display_badge") %}
+                            {% if product.quantity <= 0 and product.stock_status_id in statuses %}
+                            <span class="badge">{{ product.stock_status }}</span>
+                            {% endif %}
+                            {% if config('show_brands') and product.manufacturer %}
+                            <h5 class="product-title"><a href="{{ product.manufacturer_href }}" id="brand_sections"
+                                    alt"{{ product.manufacturer }}">{{ product.manufacturer }}</a></h5>
+                            {% endif %}
+                            <div class="product-price">
+                                {% if ('-1' in product.price) or ('-1' in product.special) %}
+                                <ins><span class="clickable"
+                                        onclick="contact_us('{{ product.product_id }}');">{{ lang('button_req_quote') }}</span></ins>
+                                <div id="enquiry-{{ product.product_id }}" style="display:none">{{ product.name }}:
+                                </div>
+                                {% elseif product.special %}
+                                <ins><span>{{ product.special }}</span></ins>
+                                <del><span>{{ product.price }}</span></del>
+                                {% else %}
+                                <ins><span>{{ product.price }}</span></ins>
+                                {% endif %}
+                                {#                                {% set statuses = config("config_stock_status_display_badge") %}#}
+                                {#                                {% if product.quantity <= 0 and product.stock_status_id in statuses %}#}
+                                {#                                    <div class="product-info-stock-sku">#}
+                                {#                                        <div class="stock available">#}
+                                {#                                            <span class="label label-danger">{{ product.stock_status }}</span>#}
+                                {#                                        </div>#}
+                                {#                                    </div>#}
+                                {#                                {% endif %}#}
+                            </div>
+                            <div class="product-extra-link">
+                            {% if customer.isCustomerAllowedToAdd_cart and ( config('config_hide_add_to_cart') != 1 or product.quantity >0 )  %}
+                                  {% if config('show_quantity') %}
+                                <a class="addcart-link" title="Add to Cart" href="javascript://"
+                                    onclick="addToCartQty({{ product.product_id }}, 'cat_{{ section_id }}'); return false;">
+                                    <i class="fa fa-shopping-basket" aria-hidden="true"></i>
+                                </a>
+                                {% else %}
+                                <a href="#"
+                                    onclick="event.preventDefault(); addToCart({{ product.product_id }},1, {{ ('-1' in product.price) or ('-1' in product.special) ? 'true' : 'false' }}); return false;"
+                                    class="addcart-link"><i class="fa fa-shopping-basket" aria-hidden="true"></i></a>
+                                {% endif %}
+                                {% endif %}
+                                <div id="enquiry-{{ product.product_id }}" style="display:none">{{ product.name }}:
+                                </div>
+                                <a href="#"
+                                    onclick="event.preventDefault(); addToWishList('{{ product.product_id }}',1); return false;"
+                                    class="wishlist-link"><i class="fa fa-heart" aria-hidden="true"></i></a>
+                                <a href="#"
+                                    onclick="event.preventDefault(); addToCompare('{{ product.product_id }}',1); return false;"
+                                    class="compare-link"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                            </div>
+                            {% if config('show_quantity') %}
+                            <div class="row quantity-show">
+                                <div class="col-md-8">
+                                    <!-- Show Quantity box -->
+                                    <div class="block-product-info" style="margin-top: 0">
+                                        <table class="variations-table">
+                                            <tr>
+                                                {#<td class="table-label">{{ lang('text_Quantity') }}:</td>#}
+                                                <td class="table-value">
+                                                    <div class="box-qty">
+                                                        <a class="quantity-minus"
+                                                            onclick="$('#qty_cat_{{ section_id }}{{ product.product_id }}').val(
+                                                                                            parseInt($('#qty_cat_{{ section_id }}{{ product.product_id }}').val()) > 0 ? parseInt($('#qty_cat_{{ section_id }}{{ product.product_id }}').val())- 1 : 0)"><i
+                                                                class="fa fa-minus fa-fw" aria-hidden="true"></i></a>
+                                                        <input type="text" class="form-control qty qty-val input-qty quantity" name="quantity"
+                                                            id="qty_cat_{{ section_id }}{{ product.product_id }}" name="qty{{ product.product_id }}"
+                                                            value="1" maxlength="12" minlength="1" min="1">
+                                                        <a class="quantity-plus"
+                                                            onclick="$('#qty_cat_{{ section_id }}{{ product.product_id }}').val(
+                                                                                         parseInt($('#qty_cat_{{ section_id }}{{ product.product_id }}').val()) + 1 )"><i
+                                                                class="fa fa-plus fa-fw" aria-hidden="true"></i></a>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                    <!-- /Show Quantity box -->
+                                </div>
+                                <div class="col-md-4">
+                             {% if customer.isCustomerAllowedToAdd_cart and ( config('config_hide_add_to_cart') != 1 or product.quantity >0 )  %}
+                                    <a class="addcart-link btn btn-card-custom btn-sm btn-block" title="Add to Cart" href="javascript://"
+                                        onclick="addToCartQty({{ product.product_id }}, 'cat_{{ section_id }}'); return false;">
+                                        <i class="fa fa-shopping-basket fa-fw" aria-hidden="true"></i>
+                                    </a>
+                                     {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                <!-- End All -->
+            </div>
+        </div>
+        <!-- End List Pro color -->
+
+        <div class="list-pro-color " style="display: none">
+            {% for product in products %}
+            <div class="item-product-list">
+                <div class="row">
+                    <div class="col-md-3 col-sm-4 col-xs-12">
+                        <div class="item-pro-color">
+                            <div class="product-thumb">
+
+                                {% if product.special != '' %}
+                                <span class="saleoff">-{{ product.saving }}%</span>
+                                {% endif %}
+
+                                <a href="{{ product.href }}" class="product-thumb-link">
+                                    <img data-color="black" class="active" src="{{ image(product.image, 600, 600) }}"
+                                        alt="{{ product.name }}">
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-9 col-sm-8 col-xs-12">
+                        <div class="product-info {{ config('show_brands') ? 'fix-height2' : '' }}">
+                            <h3 class="product-title"><a href="{{ product.href }}">{{ product.name }}</a></h3>
+                            {% set statuses = config("config_stock_status_display_badge") %}
+                            {% if product.quantity <= 0 and product.stock_status_id in statuses %}
+                            <span class="badge">{{ product.stock_status }}</span>
+                            {% endif %}
+                            {% if config('show_brands') and product.manufacturer %}
+                            <h5 class="product-title"><a href="{{ product.manufacturer_href }}" id="brand_sections"
+                                    alt"{{ product.manufacturer }}">{{ product.manufacturer }}</a></h5>
+                            {% endif %}
+                            <div class="product-price">
+                                {% if ('-1' in product.price) or ('-1' in product.special) %}
+                                <ins><span class="clickable"
+                                        onclick="contact_us('{{ product.product_id }}');">{{ lang('button_req_quote') }}</span></ins>
+                                <div id="enquiry-{{ product.product_id }}" style="display:none">{{ product.name }}:
+                                </div>
+                                {% elseif product.special %}
+                                <ins><span>{{ product.special }}</span></ins>
+                                <del><span>{{ product.price }}</span></del>
+                                {% else %}
+                                <ins><span>{{ product.price }}</span></ins>
+                                {% endif %}
+                            </div>
+                            <p class="desc">{{ product.description }}</p>
+
+                            <div class="product-extra-link2">
+                              {% if customer.isCustomerAllowedToAdd_cart and ( config('config_hide_add_to_cart') != 1 or product.quantity >0 )  %}
+                                <a onclick="event.preventDefault(); addToCart({{ product.product_id }},1, {{ ('-1' in product.price) or ('-1' in product.special) ? 'true' : 'false' }}); return false;"
+                                    href="#" class="addcart-link"
+                                    style="line-height: 20px;">{{ ('-1' in product.price) or ('-1' in product.special) ? lang('button_req_quote') : lang('button_cart') }}</a>
+                                  {% endif %}   
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="sort-pagi-bar clearfix" style="border-bottom:none;">
+            <div class="view-type pull-left">
+                <a onclick="$('.grid-pro-color').toggle(); $('.list-pro-color').toggle(); $('.grid-view').toggleClass('active'); $('.list-view').toggleClass('active'); return false;"
+                    href="#" class="grid-view active"></a>
+                <a onclick="$('.grid-pro-color').toggle(); $('.list-pro-color').toggle(); $('.grid-view').toggleClass('active'); $('.list-view').toggleClass('active'); return false;"
+                    href="#" class="list-view"></a>
+            </div>
+            <div class="sort-paginav pull-right">
+                <div class="sort-bar select-box">
+                    <label>{{ lang('text_sort') }}</label>
+                    <select onchange="location = this.value;" class="sorter-options ">
+                        {% for sortst in sorts %}
+                        {% if sortst.value == sort ~ '-' ~ order %}
+                        <option value="{{ sortst.href }}" selected="selected">{{ sortst.text }}</option>
+                        {% else %}
+                        <option value="{{ sortst.href }}">{{ sortst.text }}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="show-bar select-box">
+                    <label>{{ lang('text_limit') }} </label>
+                    <select class="limiter-options " onchange="location = this.value;">
+                        {% for limitst in limits %}
+                        {% if limitst.value == limit %}
+                        <option value="{{ limitst.href }}" selected="selected">{{ limitst.text }}</option>
+                        {% else %}
+                        <option value="{{ limitst.href }}">{{ limitst.text }}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+                {{ pagination }}
+            </div>
+        </div>
+
+    </div>
+    {% else %}
+    <div class="col-md-12 text-center">
+        <h4 class="title30 center">{{lang('text_empty')}}</h4>
+        <hr>
+    </div>
+    {% endif %}
+    {% if mfSettings %}
+</div>
+{% endif %}
+
+{% if integration_settings['mn_criteo_status'] %}
+{{ include('manymore/template/module/criteo/criteo_category.expand') }}
+{% endif %}

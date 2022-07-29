@@ -1,0 +1,72 @@
+<script type="text/javascript" src="https://www.foloosi.com/js/foloosipay.v2.js"></script>
+<script>
+    var reference_token;
+    var options = {
+        "reference_token" : reference_token,
+        "merchant_key" : '{{key_id}}'
+    }
+    var data = {
+        redirect_url : "",
+        transaction_amount : '{{total}}',
+        currency : '{{currency_code}}',
+        customer_name:'{{name}}',
+        source:'opencart',
+        customer_email:'{{email}}',
+        customer_mobile:'{{phone}}',
+        optional1: "Order # {{merchant_order_id}}",
+        customer_address:'{{address}}',
+        customer_city:'{{city}}',
+        billing_country:'{{country}}',
+        billing_state:'{{state}}',
+        billing_postal_code:'{{postcode}}',
+        description:'{{comment}}'
+    }
+    function foloosipaySubmit(el){
+        var fp1 = new Foloosipay(options);
+        document.getElementById("foloosi_close").addEventListener("click", foloosiSubmit);
+        $.ajax({
+            url: 'https://foloosi.com/api/v1/api/initialize-setup',
+            headers: { 
+                'merchant_key': options.merchant_key
+            },
+            type: 'post',
+            data: data,
+            success: function(data){
+            reference_token  = data.data.reference_token;
+                fp1.open();
+                foloosiHandler(response, function (e) {
+                    if(e.data.status == 'success'){
+                        setTimeout(() => {                            
+                            document.getElementById('foloosipay_payment_id').value = e.data.data.transaction_no;
+                            document.getElementById('foloosipay-form').submit();
+                            fp1.close();
+                        }, 1000);
+                    }
+                    if(e.data.status == 'error'){
+                        setTimeout(() => {
+                            document.getElementById('foloosipay_payment_id').value = e.data.data.transaction_no;
+                            document.getElementById('merchant_order_id').value = "{{merchant_order_id}}";
+                            document.getElementById('foloosipay-form').submit();
+                            fp1.close();
+                        }, 1000);
+                    }
+                });
+            }
+        });
+    }    
+    function foloosiSubmit() {
+        document.getElementById('foloosipay-form').submit();
+    }
+    $("#confirm-payment").click(function(event){
+        foloosipaySubmit();
+    });
+</script>
+<form name="foloosipay-form" id="foloosipay-form" action="{{return_url}}" method="POST">
+    <input type="hidden" name="foloosipay_payment_id" id="foloosipay_payment_id" />
+    <input type="hidden" name="merchant_order_id" id="merchant_order_id" value="{{merchant_order_id}}"/>
+</form>
+<div class="buttons">
+    <div class="pull-right">
+        <button  value="{{button_confirm}}" id="confirm-payment" style="display:none;" class="btn btn-primary" ></button>
+    </div>
+</div>

@@ -1,0 +1,191 @@
+<?php
+
+class ControllerFlashBlogComment extends Controller
+{
+    private $comment;
+
+    private function init($models)
+    {
+        foreach ($models as $model) {
+            $this->load->model($model);
+            $object = explode('/', $model);
+            $object = end($object);
+            $model = str_replace('/', '_', $model);
+            $this->$object = $this->{"model_" . $model};
+        }
+
+        if (isset($this->session->data['errors'])) {
+            $this->data['error_warning'] = implode('</br >', $this->session->data['errors']);
+
+            unset($this->session->data['errors']);
+        }
+
+        if (isset($this->session->data['success'])) {
+            $this->data['success'] = $this->session->data['success'];
+
+            unset($this->session->data['success']);
+        }
+
+        $this->language->load('flash_blog/flash_blog');
+    }
+
+    public function index()
+    {
+        $categoryId = (isset($this->request->get['category_id']) ? $this->request->get['category_id'] : null);
+
+        if (!$categoryId) {
+            $this->session->data['errors'] = [$this->language->get('error_invalid_category_id')];
+
+            $this->redirect(
+                $this->url->link(
+                    'flash_blog/category',
+                    'token=' . $this->session->data['token'], 'SSL'
+                )
+            );
+        }
+
+        $this->init([
+            'flash_blog/comment'
+        ]);
+
+        $this->document->setTitle(
+            $this->language->get('flash_blog_heading_title') .
+            ' :: ' .
+            $this->language->get('heading_list_post_comments')
+        );
+
+        $this->data['breadcrumbs'] = array();
+
+        $this->data['breadcrumbs'][] = array(
+            'text' => $this->language->get('text_home'),
+            'href' => $this->url->link('common/home', 'token=' . $this->session->data['token'], 'SSL'),
+            'separator' => false
+        );
+
+        $this->data['breadcrumbs'][] = array(
+            'text' => $this->language->get('flash_blog_heading_title'),
+            'href' => $this->url->link('flash_blog/home', 'token=' . $this->session->data['token'], 'SSL'),
+            'separator' => ' :: '
+        );
+
+        $this->data['links'] = [
+            'home' => $this->url->link(
+                'flash_blog/home', 'token=' . $this->session->data['token'], 'SSL'
+            ),
+        ];
+
+        $this->template = 'flash_blog/post/create.tpl';
+        $this->children = array(
+            'common/header',
+            'common/footer'
+        );
+
+        $this->response->setOutput($this->render());
+    }
+
+    public function show()
+    {
+
+    }
+
+    public function update()
+    {
+        $commentId = (isset($this->request->get['comment_id']) ? $this->request->get['comment_id'] : null);
+        $postId = (isset($this->request->get['post_id']) ? $this->request->get['post_id'] : null);
+        $categoryId = (isset($this->request->get['category_id']) ? $this->request->get['category_id'] : null);
+        $updateType = (isset($this->request->get['type']) ? $this->request->get['type'] : null);
+
+        if (!$commentId || !$postId || !$categoryId || !$updateType) {
+            $this->session->data['errors'] = [$this->language->get('error_not_set_id')];
+
+            $this->redirect(
+                $this->url->link(
+                    'flash_blog/category',
+                    'token=' . $this->session->data['token'], 'SSL'
+                )
+            );
+        }
+
+        $this->init([
+            'flash_blog/comment'
+        ]);
+
+        $comment = $this->comment->getCommentById($commentId);
+
+        if (!$comment) {
+            $this->session->data['errors'] = [$this->language->get('error_not_set_id')];
+
+            $this->redirect(
+                $this->url->link(
+                    'flash_blog/post/show',
+                    'token=' . $this->session->data['token'] . '&post_id=' . $postId . '&category_id=' . $categoryId,
+                    'SSL'
+                )
+            );
+        }
+
+        $this->comment->updateCommentStatus(
+            $commentId,
+            ($updateType == 'd' ? 0 : 1)
+        );
+
+        $this->session->data['success'] = $this->language->get('message_comment_status_edited_successfully');
+
+        $this->redirect(
+            $this->url->link(
+                'flash_blog/post/show',
+                'token=' . $this->session->data['token'] . '&post_id=' . $postId . '&category_id=' . $categoryId,
+                'SSL'
+            )
+        );
+    }
+
+    public function delete()
+    {
+        $commentId = (isset($this->request->get['comment_id']) ? $this->request->get['comment_id'] : null);
+        $postId = (isset($this->request->get['post_id']) ? $this->request->get['post_id'] : null);
+        $categoryId = (isset($this->request->get['category_id']) ? $this->request->get['category_id'] : null);
+
+        if (!$commentId || !$postId || !$categoryId) {
+            $this->session->data['errors'] = [$this->language->get('error_not_set_id')];
+
+            $this->redirect(
+                $this->url->link(
+                    'flash_blog/category',
+                    'token=' . $this->session->data['token'], 'SSL'
+                )
+            );
+        }
+
+        $this->init([
+            'flash_blog/comment'
+        ]);
+
+        $comment = $this->comment->getCommentById($commentId);
+
+        if (!$comment) {
+            $this->session->data['errors'] = [$this->language->get('error_not_set_id')];
+
+            $this->redirect(
+                $this->url->link(
+                    'flash_blog/post/show',
+                    'token=' . $this->session->data['token'] . '&post_id=' . $postId . '&category_id=' . $categoryId,
+                    'SSL'
+                )
+            );
+        }
+
+        $this->comment->deleteCommentById($commentId);
+
+        $this->session->data['success'] = $this->language->get('message_comment_deleted_successfully');
+
+        $this->redirect(
+            $this->url->link(
+                'flash_blog/post/show',
+                'token=' . $this->session->data['token'] . '&post_id=' . $postId . '&category_id=' . $categoryId,
+                'SSL'
+            )
+        );
+
+    }
+}

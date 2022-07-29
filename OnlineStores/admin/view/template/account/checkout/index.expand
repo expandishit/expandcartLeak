@@ -1,0 +1,566 @@
+{% extends "base.expand" %}
+
+{% set hideHeader = true %}
+
+{% block content %}
+	
+	<div class="list-wrapper checkout-page">
+		<div class="checkout-content">
+			<div class="row">
+				<div class="col-12 col-md-8">
+					<div class="form-side">
+						<p class="main-title">
+							{% if plan_id %}
+								{{lang('upgrade_to')~' '~lang(plan_name~'_title')}}
+							{% else %}
+								{{ name }}
+							{% endif %}
+						</p>
+						{% if not hide_montthly and not hide_annually %}
+						<p class="block-title">
+							{{lang('billed_title')}}
+						</p>
+						{% endif %}
+						<div class="inner-block amount-block plan-type">
+							{% if not hide_annually %}
+							<label class="radio-btn">
+								{% if plan_id %}
+								<input type="radio" name="date" class="input d-none" value="annually" data-amount="{{ pricingJSON.yearly.final }}" {{ cycle == 'annually' ? 'checked' : '' }}>
+								{% else %}
+								<input type="radio" name="date" class="input d-none" value="annually" data-amount="{{ price.annually }}" {{ cycle == 'annually' ? 'checked' : '' }}>
+								{% endif %}
+								<div class="radio-label">
+									<i class="fas fa-check"></i>
+									<div class="info">
+										<div class="left">
+											<p class="date">
+												{{lang('yearly')}}
+											</p>
+											{% if pricingJSON['yearly']['percentage'] %}
+												<p class="offer">
+													{{lang('yearly_offer')}} {{ pricingJSON['yearly']['percentage']}}%
+												</p>
+											{% endif %}
+										</div>
+										<div class="right">
+											<p class="price">
+											{% if plan_id %}
+												{% if pricingJSON['yearly']['after']  %}
+													{{ pricingJSON['yearly']['after'] }}<span class="currency">{{ lang(pricingJSON['strings']['currency']) }}/<span class="build-key">{{lang("hint_monthly")}}</span></span>
+												{% else %}
+													{{ pricingJSON['yearly']['before'] }}<span class="currency">{{ lang(pricingJSON['strings']['currency']) }}/<span class="build-key">{{lang("hint_monthly")}}</span></span>
+												{% endif %}
+											{% else %}
+												{{ price.annually }}<span class="currency">{{ lang('USD') }}/<span class="build-key">{{lang("hint_monthly")}}</span></span>
+											{% endif %}
+											</p>
+											<p class="build">
+												{{lang('billed_yearly')}}
+											</p>
+										</div>
+									</div>
+								</div>
+							</label>
+							{% endif %}
+							{% if not hide_monthly %}
+							<label class="radio-btn">
+								{% if plan_id %}
+								<input type="radio" name="date" class="input hide" value="monthly" data-amount="{{ pricingJSON.monthly.after ? pricingJSON.monthly.after : pricingJSON.monthly.before }}" {{ cycle == 'monthly' ? 'checked' : '' }}>
+								{% else %}
+								<input type="radio" name="date" class="input hide" value="monthly" data-amount="{{ price.monthly }}" {{ cycle == 'monthly' ? 'checked' : '' }}>
+								{% endif %}
+								<div class="radio-label">
+									<i class="fas fa-check"></i>
+									<div class="info">
+										<div class="left">
+											<p class="date">
+												{{lang('monthly')}}
+											</p>
+										</div>
+										<div class="right">
+											<p class="price">
+											{% if plan_id %}
+												{% if pricingJSON['monthly']['after']  %}
+													{{ pricingJSON['monthly']['after'] }}<span class="currency">{{ lang(pricingJSON['strings']['currency']) }}/<span class="build-key">{{lang("hint_monthly")}}</span></span>
+												{% else %}
+													{{ pricingJSON['monthly']['before'] }}<span class="currency">{{ lang(pricingJSON['strings']['currency']) }}/<span class="build-key">{{lang("hint_monthly")}}</span></span>
+												{% endif %}
+											{% else %}
+												{{ price.monthly }}<span class="currency">{{ lang('USD') }}/<span class="build-key">{{lang("hint_monthly")}}</span></span>
+											{% endif %}
+											</p>
+										</div>
+									</div>
+								</div>
+							</label>
+							{% endif %}
+							{% if show_one_time %}
+							<label class="radio-btn">
+								<div class="radio-label">
+									<div class="info">
+										<div class="left">
+											<p class="date">
+												{{lang('billed_once')}}
+											</p>
+										</div>
+										<div class="right">
+											<p class="price">
+												{{ one_time_price }}<span class="currency">{{ lang('USD') }}</span>
+											</p>
+											<p class="build">
+												{{lang('billed_once')}}
+											</p>
+										</div>
+									</div>
+								</div>
+							</label>
+							{% endif %}
+						</div>
+                        {% if bundling_groups and bundling_groups|length > 0 %}
+                        <p class="block-title bundling-section" {% if cycle == 'monthly' %} style="display:none;" {% endif %}>{{lang('bundling_title')}}</p>
+                        <div class="inner-block bundling-block plan-type bundling-section" {% if cycle == 'monthly' %} style="display:none;" {% endif %}>
+                            {% for bundle in bundling_groups %}
+                                <label class="radio-btn" data-bundle="{{bundle.bundle}}">
+                                            <input type="checkbox" name="bundling_groups[]" class="input d-none check-toggler" value="{{bundle.id}}" data-amount="{{ bundle.price }}">
+                                
+                                    <div class="radio-label">
+                                        <div class="custom-check" style="flex:1">
+                                            <i class="fas fa-check"></i>
+                                            <div class="info">
+                                                <div class="left">
+                                                    <p class="date">{{ bundle.name }}</p>
+                                                </div>
+                                                <div class="right">
+                                                    <p class="price">
+                                                        <span class="before">
+                                                            {{ bundle.price_before }}<span class="currency">{{ bundle.price_prefix }}</span>
+                                                        </span>
+                                                        {{ bundle.price }}<span class="currency">{{ bundle.price_prefix }}</span>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </label>
+                            {% endfor %}
+						</div>
+                        {% endif %}
+                        
+						<div class="moneyback-container">
+							<div class="moneyback">
+								<img src="view/assets/images/account/charge/refund.svg" alt="" class="pay-img">
+								{{lang('money_back')}}
+							</div>
+						</div>
+						<p class="block-title">
+							{{lang('pay_title')}}
+						</p>
+						<form method="POST" id="charges-form">
+
+							<input type="hidden" id="amount-field" name="amount" value="" />
+							<input type="hidden" id="customer-field" name="customer" value="{{ customer }}" />
+							<input type="hidden" id="currency-field" name="currency" value="{{ plan_id ? currency : 'USD' }}" />
+							<input type="hidden" id="plan-id-field" name="plan_id" value="{{ plan_id }}" />
+							<input type="hidden" id="app-service-id-field" name="app_service_id" value="{{ app_service_id }}" />
+							<input type="hidden" id="plan-type-field" name="plan_type" value="{{ cycle }}" />
+							<input type="hidden" name="method" value="stripe" />
+							
+							<div class="inner-block pay-forms">
+								<div class="radio-btn">
+
+									<p class="form-errors alert alert-danger" style="display: none"></p>
+									<p class="form-success alert alert-success" style="display: none"></p>
+									<div class="stripe-err-alert">
+										<i class="fas fa-exclamation-triangle"></i>
+										{{lang('stripe_err_alert')}}
+									</div>
+
+									<label class="radio-label active">
+										<input type="radio" name="payment_method" value="stripe" class="input hide" checked>
+										<i class="fas fa-check"></i>
+										<div class="info master-tab">
+											<div class="left">
+												<p class="title">
+													{{lang('credit_title')}}
+												</p>
+											</div>
+											<div class="right">
+												{% if base.direction == "ltr" %}
+													<img src="view/assets/images/account/charge/pay-safe.png" alt="">
+												{% else %}
+													<img src="view/assets/images/account/charge/pay-safe-ar.png" alt="">
+												{% endif %}
+											</div>
+										</div>
+									</label>
+									<div class="pay-form">
+										<div class="card-js">
+											<input class="card-number my-custom-class" name="card_number" placeholder="{{ lang('cc_number') }}" autocomplete="off">
+											<input class="expiry-month" name="month" autocomplete="off">
+											<input class="expiry-year" name="year" autocomplete="off">
+											<input class="cvc" name="cvc" placeholder="{{ lang('cc_number_ph') }}" autocomplete="off">
+										</div>
+										<div class="apply-row hide">
+											<input type="text" class="discount-code-input" placeholder="AbCdEfGh123" name="discount_code" autocomplete="off">
+											<button type="button" class="apply_discount_code">
+												{{lang("btn_apply")}}
+											</button>
+										</div>
+										<div class="check-row">
+											<img src="view/assets/images/account/charge/master-card.png" alt="" class="pay-img">
+											<span class="apply-discount">
+												{{lang("have_discount_code")}}
+											</span>
+										</div>
+										<button class="pay submit submit-form theme-btn">
+											{% if plan_id %}
+												{{lang("btn_pay")}} <span class="pay-currency">{{ lang(pricingJSON['strings']['currency']) }}</span> <span class="pay-amount">{{ cycle == 'monthly' ? (pricingJSON.monthly.after ? pricingJSON.monthly.after : pricingJSON.monthly.before) : pricingJSON.yearly.final }}</span>
+											{% elseif show_one_time %}
+												{{lang("btn_pay")}} <span class="pay-currency">{{ lang('USD') }}</span> <span class="pay-amount">{{ one_time_price }}</span>
+											{% else %}
+												{{lang("btn_pay")}} <span class="pay-currency">{{ lang('USD') }}</span> <span class="pay-amount">{{ cycle == 'monthly' ? price.monthly : price.annually }}</span>
+											{% endif %}
+										</button>
+
+										<label class="terms">
+											{{lang("read_terms")}} <a href="{{lang('terms_link')}}">{{lang("terms_of_services")}}</a>
+										</label>
+									</div>
+								</div>
+								<div class="radio-btn">
+									<label class="radio-label">
+										<input type="radio" name="payment_method" value="paypal" class="input d-none">
+										<i class="fas fa-check"></i>
+										<div class="info">
+											<div class="left">
+												<img src="view/assets/images/account/charge/paypal.png" alt="">
+											</div>
+										</div>
+									</label>
+									<div class="pay-form div-button">
+										<div class="apply-row hide">
+											<input type="text" class="discount-code-input" placeholder="AbCdEfGh123" name="discount_code" autocomplete="off">
+											<button type="button" class="apply_discount_code">
+												{{lang("btn_apply")}}
+											</button>
+										</div>
+										<div class="check-row mt-0">
+											<span></span>
+											<span class="apply-discount">
+												{{lang("have_discount_code")}}
+											</span>
+										</div>
+
+										<button class="pay submit submit-form paypal_pay_button theme-btn" id="input-button">
+											{% if plan_id %}
+												{{lang("btn_pay")}} <span class="pay-currency">{{ lang(pricingJSON['strings']['currency']) }}</span> <span class="pay-amount">{{ cycle == 'monthly' ? (pricingJSON.monthly.after ? pricingJSON.monthly.after : pricingJSON.monthly.before) : pricingJSON.yearly.final }}</span>
+											{% elseif show_one_time %}
+												{{lang("btn_pay")}} <span class="pay-currency">{{ lang('USD') }}</span> <span class="pay-amount">{{ one_time_price }}</span>
+											{% else %}
+												{{lang("btn_pay")}} <span class="pay-currency">{{ lang('USD') }}</span> <span class="pay-amount">{{ cycle == 'monthly' ? price.monthly : price.annually }}</span>
+											{% endif %}
+										</button>
+
+										<label class="terms">
+											{{lang("read_terms")}} <a href="{{lang('terms_link')}}">{{lang("terms_of_services")}}</a>
+										</label>
+										
+										<div class="continue-paypal">
+											<div class="paypal-guide hide">
+												{{ lang('click_to_continue') }}
+												<i class="fas fa-angle-right"></i>
+											</div>
+											<div class="btns-row"></div>
+										</div>
+									</div>
+								</div>
+							</div>
+
+						</form>
+					</div>
+				</div>
+				<div class="col-12 col-md-4">
+					<div class="plan-info">
+						{# <p class="offer">
+							{{ lang('money_back_guarantee') }}
+						</p> #}
+						{# <img src="view/assets/images/account/charge/money-back.webp" alt=""> #}
+						<p class="title">
+						{% if plan_id %}
+							{{ lang(plan_name~'_title') }} {{ lang('details') }}
+						{% else %}
+							{{ name }}
+						{% endif %}
+						</p>
+						{% if plan_id %}
+						<ul class="features">
+							{% for feature in features %}
+								<li>
+									{{lang('key_' ~ feature)}}
+								</li>
+							{% endfor %}
+						</ul>
+						{% endif %}
+						<p class="text">
+						{% if plan_id %}
+							{{ lang('you_will_charged') }} <span class="pay-amount">{{ cycle == 'monthly' ? (pricingJSON.monthly.after ? pricingJSON.monthly.after : pricingJSON.monthly.before) : pricingJSON.yearly.final }}</span>{{ lang(pricingJSON['strings']['currency']) }} {{ lang('starting_from') }} {{ date()|date('Y-M-d') }} {{ lang('to') }} <span class="due-date">{{ cycle == 'monthly' ? date('+1month')|date('Y-M-d') : date('+1year')|date('Y-M-d') }}</span>
+						{% elseif show_one_time %}
+							{{ lang('you_will_charged') }} <span class="pay-amount">{{ one_time_price }}</span>{{ lang('USD') }}
+						{% else %}
+							{{ lang('you_will_charged') }} <span class="pay-amount">{{ cycle == 'monthly' ? price.monthly : price.annually }}</span>{{ lang('USD') }} {{ lang('starting_from') }} {{ date()|date('Y-M-d') }} {{ lang('to') }} <span class="due-date">{{ cycle == 'monthly' ? date('+1month')|date('Y-M-d') : date('+1year')|date('Y-M-d') }}</span>
+						{% endif %}
+						</p>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	{# You requested {{ plan }} plan - billing {{ cycle }} #}
+{% endblock content %}
+
+{% block endScripts %}
+	<script type="text/javascript" src="view/javascript/pages/account/charge/js/card-js.min.js" defer></script>
+	<script defer>
+
+		var submitForm = $('.submit-form');
+		{# change payment method form #}
+		$('.pay-forms .radio-label > input').change(function() {
+			let v = $(this).val();
+
+            $('#charges-form').attr('action', urls[v]);
+            $('input[name="method"]').val(v)
+			$('.pay-forms .radio-label').next().slideUp()
+			$(this).parent().next().slideDown();
+		});
+
+		function add_year() 
+		{
+			let dt = new Date();
+		 	return new Date(dt.setFullYear(dt.getFullYear() + 1));      
+		}
+
+		function add_month() 
+		{
+			let dt = new Date();
+		 	return new Date(dt.setMonth(dt.getMonth() + 1));      
+		}
+        
+        function calculateBundling() {
+            let b = $('.bundling-block .radio-btn > input:checked'), i,a=0;
+            for(i=0;i<b.length;i++) {
+                a+=parseInt(b[i].dataset.amount);
+            }
+            return a;
+        }
+
+		{# change pay amount #}
+		$('.amount-block .radio-btn > input').change(function() {
+			let cycle = $(this).val();
+			$('.pay-amount').html($(this).data('amount')+calculateBundling());
+			$('#plan-type-field').val(cycle);
+            cycle == 'monthly' && $('.bundling-section').length ? $('.bundling-section').fadeOut('fast') : $('.bundling-section').fadeIn('fast');
+			let date = cycle == 'monthly' ? add_month() : add_year();
+			let ye = new Intl.DateTimeFormat('en', { year: 'numeric' }).format(date);
+			let mo = new Intl.DateTimeFormat('en', { month: 'short' }).format(date);
+			let da = new Intl.DateTimeFormat('en', { day: '2-digit' }).format(date);
+			$('.due-date').text(`${ye}-${mo}-${da}`);
+
+			$( ".paypal_pay_button" ).fadeIn(0);
+            $( ".continue-paypal .btns-row" ).empty();
+            $( ".terms-check" ).prop("checked",false);
+            $( ".paypal-guide" ).addClass('hide');
+
+			apply_coupon();
+		});
+
+		{# change pay amount #}
+		$('.bundling-block .radio-btn > input').change(function() {
+            let pAmount = parseInt($('.pay-amount').html()),
+                bAmount = parseInt(this.dataset.amount);
+            if (isNaN(pAmount) || pAmount <= 0 || isNaN(bAmount) || bAmount <= 0) return;
+            if (this.checked) {
+                pAmount+=bAmount;
+            } else {
+                pAmount-=bAmount;
+            }
+            $('.pay-amount').html(pAmount);
+            return;
+		});
+        
+		{# apply discount #}
+		$('.checkout-page .pay-form .check-row .apply-discount').click(function() {
+			$('.checkout-page .pay-form .apply-row').removeClass('hide');
+			$('.checkout-page .pay-form .check-row .apply-discount').remove();
+		});
+
+
+
+		$('input[name="cvc"]').attr('maxlength', '4');
+
+		let urls = {
+		    'paypal': "{{ link('account/checkout/paypal_button','','',withStoreCodeUrl) }}",
+		    'stripe': "{{ link('account/checkout/stripeCharge','','',withStoreCodeUrl) }}",
+		    'apply_discount_code': "{{ link('account/checkout/apply_discount_code','','',withStoreCodeUrl) }}",
+		};
+
+		$('#charges-form').attr('action', urls['stripe']);
+
+		var submitForm = $('.submit-form');
+		submitForm.click(function (evt) {
+            evt.preventDefault();
+            
+		    submitForm.attr('disabled', true);
+
+		    switchSpinner();
+
+		    let pm = $('[name="method"]').val();
+
+		    if (pm != 'stripe' && pm != 'paypal') {
+		    	return;
+		    }
+
+		    let action = $('#charges-form').attr('action');
+
+		    if (typeof urls[pm] == 'undefined' || urls[pm] != action) {
+		    	return;
+		    }
+
+		    if (pm == 'stripe') {
+		        let me = $('.form-errors');
+		        me.html('');
+		        $('#stripe .stripe-err-alert').removeClass('show');
+		        $(".empty-err").removeClass('empty-err')
+		        $(".wrong-err").removeClass('wrong-err')
+		        $.ajax({
+		            url: action,
+		            method: 'POST',
+		            dataType: 'JSON',
+		            data: $('#charges-form,[name="bundling_groups[]"]').serialize(),
+		            success: (r) => {
+		                if (typeof r.status != 'undefined' && r.status == 'OK') {
+		                    $.ajax({
+		                        type:'GET',
+		                        url: r.location,
+		                        success: function(data){
+		                            if (data.status == 'redirect') {
+					                    window.location = data.location
+					                } else {		                                
+		                                $('#stripe .stripe-err-alert').addClass('show');
+		                                switchSpinner();
+		                            }
+		                        }
+		                    });
+		                } else if (r.status == 'redirect') {
+		                    window.location = r.location
+		                } else {
+		                    {# $('#stripe .stripe-err-alert').addClass('show'); #}
+		                    for (i in r.errors) {
+		                        {# let e = r.errors[i];
+		                        me.append(`<div class="alert alert-danger">${e}</div>`); #}
+		                        if(i == "card-number") {
+		                            $(".card-number-wrapper").addClass(r.errors[i] + '-err')
+		                            $(".card-number-wrapper").attr({
+		                                "data-empty-err": "{{lang('error_field_cant_be_empty')}}",
+		                                "data-wrong-err": "{{lang('checkout_number_wrong_err')}}"
+		                            })
+		                        } else if(i == "expiry") {
+		                            $(".expiry-wrapper > div").addClass(r.errors[i] + '-err')
+		                            $(".expiry-wrapper > div").attr({
+		                                "data-empty-err": "{{lang('error_field_cant_be_empty')}}",
+		                                "data-wrong-err": "{{lang('checkout_expiry_wrong_err')}}"
+		                            })
+		                        } else if(i == "cvc") {
+		                            $(".cvc-wrapper").addClass(r.errors[i] + '-err')
+		                            $(".cvc-wrapper").attr({
+		                                "data-empty-err": "{{lang('error_field_cant_be_empty')}}",
+		                                "data-wrong-err": "{{lang('checkout_cvc_wrong_err')}}"
+		                            })
+		                        } else {
+		                            let e = r.errors[i];
+		                            me.append(`<p>${e}</p>`).show();
+		                        }
+		                    }
+		                    switchSpinner();
+
+		                    submitForm.attr('disabled', false);
+		                }
+		            }
+		        });
+		    } else if (pm == 'paypal') {
+		        $.ajax({
+		            url: action,
+		            method: 'POST',
+		            // dataType: 'JSON',
+		            data: $('#charges-form,[name="bundling_groups[]"]').serialize(),
+		            success: (r) => {
+	                    switchSpinner();
+	                    $( ".paypal-guide" ).removeClass('hide');
+	                    $( ".paypal_pay_button" ).fadeOut(0);
+	                    $( ".continue-paypal .btns-row" ).empty();
+	                    $( ".continue-paypal .btns-row" ).append(r);
+		            }
+		        });
+		    }
+		});
+
+		function switchSpinner() {
+		    if ($('.submit-form').hasClass("load-btn")) {
+		        $('.submit-form').removeClass('load-btn');
+		    } else {
+		        $('.submit-form').addClass('load-btn');
+		    }
+		}
+
+		$('.discount-code-input').on('keyup', function(){
+		    let code = $(this).val();
+		    $('.discount-code-input').val(code.trim());
+		})
+
+		$('.apply_discount_code').on('click', function(){
+		    apply_coupon();
+		})
+
+		function apply_coupon(){
+			$('.form-errors').text('').hide();
+			$('.form-success').text('').hide();
+			let code = $('input[name="discount_code"]').val();
+			if(code && code.length){
+			    $('.apply_discount_code').addClass('load-btn').attr('disabled', true);
+			    $('.checkout-page .submit-form').addClass('disabled').attr('disabled', true);
+			    $.ajax({
+			        url: urls.apply_discount_code,
+			        method: 'POST',
+			        dataType: 'JSON',
+			        data: {
+			            code: code,
+			            currency: $('#currency-field').val(), 
+			            product_id: $('#plan-id-field').val() ? $('#plan-id-field').val() : $('#app-service-id-field').val(),
+			            period: $('#plan-type-field').val(),
+                        bundling_groups: $('[name="bundling_groups[]"]').serializeArray().map((i) => i.value),
+			        },
+			        success: (r) => {
+			            $('.apply_discount_code').removeClass('load-btn').attr('disabled', false);
+			            $('.checkout-page .submit-form').removeClass('disabled').attr('disabled', false);
+			            if(r.success == true) {
+			                $('.form-success').text(r.message).show();
+			                $('.pay-amount').text(r.discount_price);
+			            } else {
+			                $('.form-errors').text(r.message).show();
+			            }
+			        }
+			    })
+			}
+		}
+        
+        $(function() {
+           if ($('.bundling-block').length) {
+               $('.pay .pay-currency').hide();
+               $('.pay .pay-amount').hide();
+               let cycle = $('#plan-type-field').val();
+                cycle == 'monthly' && $('.bundling-section').length ? $('.bundling-section').fadeOut('fast') : $('.bundling-section').fadeIn('fast');
+           }
+        });
+
+	</script>
+{% endblock %}

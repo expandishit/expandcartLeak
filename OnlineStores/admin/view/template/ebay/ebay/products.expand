@@ -1,0 +1,183 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+
+{% block title %}
+    {{ lang('heading_title') }}
+{% endblock title %}
+
+{% set dualMenuEnabled = true %}
+{% block secondarymenu %}
+    {% include 'ebay/menu.expand' with {'active': '#tab-ebay-product'} %}
+{% endblock secondarymenu %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+
+{% endblock headelements %}
+
+{% block content %}
+
+{% if error_warning %}
+<div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i>
+    {{ error_warning }}
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+</div>
+{% endif %}
+{% if success %}
+<div class="alert alert-success"><i class="fa fa-check-circle"></i>
+    {{ success }}
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+</div>
+{% endif %}
+
+<form id="products-form" action="{{ link('ebay/ebay_product/pushToStore') }}" method="POST">
+<div class="row">
+    <div class="col-md-12">
+        <div class="panel panel-white">
+            <div class="panel-heading">
+                <h6 class="panel-title">
+                    <span class="text-bold">
+                        <i class="fa fa-cog"></i>
+                        <span>{{ lang('heading_title') }}</span>
+                    </span>
+                </h6>
+
+                <div class="heading-elements not-collapsible">
+                    <ul class="icons-list">
+                        <li>
+                            <button type="button" id="delete-form" class="btn btn-danger" data-toggle="tooltip"
+                                    title="{{ lang('button_delete') }}">
+                                <i class="fa fa-trash"></i> {{ lang('button_delete') }}
+                            </button>
+                            <button type="button" id="submit-form" class="btn btn-primary" data-toggle="tooltip"
+                                    title="{{ lang('button_push') }}">
+                                <i class="fa fa-arrow-right"></i> {{ lang('button_push') }}
+                            </button>
+                        </li>
+                        <li>
+                            <a data-action="collapse" class=""></a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="panel-body">
+
+                <div class="row">
+
+                    <table class="table table-bordered table-hover" id="datatables">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <td class="text-center">{{ lang('column_image') }}</td>
+                                <td class="text-left">{{ lang('column_name') }}</td>
+                                <td class="text-left">{{ lang('column_ebay_product_id') }}</td>
+                                <td class="text-center">{{ lang('column_status') }}</td>
+                                <td class="text-center">{{ lang('column_date') }}</td>
+                                <td class="text-center">{{ lang('column_ebay_product_update') }}</td>
+                                <td class="text-center">{{ lang('column_action') }}</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {#{% if (products) %}
+                            {% for product in products %}
+                            <tr>
+                                <td class="text-center">
+                                    <input type="checkbox" name="selected[]" value="{{ product['product_id'] }}" />
+                                </td>
+                                <td class="text-left">
+                                    <img src="{{ product['image'] }}" class="img-thumbnail" alt="{{ product['name'] }}" />
+                                </td>
+                                <td class="text-left">
+                                    <a href="{{ product['product_url'] }}" target="_blank">{{ product['name'] }}</a>
+                                </td>
+                                <td class="text-left">
+                                    {{ product['ali_product_id'] }}
+                                </td>
+                                {% if (product['status']) %}
+                                <td class="text-center text-success">
+                                    <b>{{ lang('text_enabled') }}</b>
+                                </td>
+                                {% else %}
+                                <td class="text-center text-danger">
+                                    <b>{{ lang('text_disabled') }}</b>
+                                </td>
+                                {% endif %}
+
+                                <td class="text-center">
+                                    <b>{{ product['date_added'] }}</b>
+
+                                </td>
+                                <td class="text-center">
+                                    <a href="{{ product['update_url'] }}" class="btn btn-primary" target="_blank"
+                                        data-toggle="tooltip" title="{{ help_button_update }}">
+                                        {{ lang('button_update') }}
+                                    </a>
+                                </td>
+                                <td class="text-center">
+                                    <a href="{{ product['edit'] }}" class="btn btn-primary" target="_blank">
+                                        <i class="fa fa-edit"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% else %}
+                            <tr>
+                                <td class="text-center" colspan="6">
+                                    {{ lang('text_no_results') }}
+                                </td>
+                            </tr>
+                            {% endif %}#}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6">{{ pagination }} </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</form>
+
+<script type="text/javascript">
+
+/*$('#delete-form').on('click', function() {
+    confirmation = confirm("{{ lang('action_confirm') }}");
+    if(confirmation) {
+        $('#products-form').attr('action', 'ebay/ebay_product/delete');
+        // $('#products-form').submit();
+        var selectedRows = dt.rows('.selected').data();
+        var selectedIds = [];
+        selectedRows.each(function (item) {
+            selectedIds.push(item.category_id);
+        });
+        if (selectedIds.length > 0) {
+            console.log(selectedIds);
+        }
+    }
+})*/
+</script>
+{% endblock %}
+
+{% block scripts %}
+    {{ parent() }}
+
+    <script>
+        var links = {};
+
+        locales['text_enabled'] = "{{ lang('text_enabled') }}";
+        locales['text_disabled'] = "{{ lang('text_disabled') }}";
+        locales['button_update'] = "{{ lang('button_update') }}";
+        locales['action_confirm'] = "{{ lang('action_confirm') }}";
+
+        links['dtHandler'] = '{{ link("ebay/ebay_product/list") }}';
+        links['dtUpdateStatus'] = '{{ link("ebay/ebay_product/dtUpdateStatus") }}';
+        links['dtDelete'] = '{{ link("ebay/ebay_product/dtDelete") }}';
+    </script>
+
+    <script src="view/javascript/pages/module/ebay/products.js?bn={{ BuildNumber }}"></script>
+{% endblock scripts %}

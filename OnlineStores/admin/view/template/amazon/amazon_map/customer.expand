@@ -1,0 +1,150 @@
+<div class="col-md-12">
+    <!-- Advanced legend -->
+    <div class="features-table-container">
+        <div class="collapse in" id="feed-panel">
+            <table id="dt_customer" class="table table-hover datatable-highlight">
+                <thead>
+                <tr>
+                    <th>{{ lang('column_map_id') }}</th>
+                    <th>{{ lang('column_oc_customer_id') }}</th>
+                    <th>{{ lang('column_buyer_name') }}</th>
+                    <th>{{ lang('column_buyer_email') }}</th>
+                    <th>{{ lang('column_city') }}</th>
+                    <th>{{ lang('column_country') }}</th>
+                    <th>{{ lang('column_action') }}</th>
+                </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
+</div> <!-- col-md-12 -->
+
+
+{% block scripts %}
+<script>
+    var dt;
+    $(document).ready(function() {
+        $.extend($.fn.dataTable.defaults, {
+            autoWidth: false,
+            dom: '<"datatable-header"fB><"datatable-scroll-wrap"t><"datatable-footer"lip>',
+            language: locales['dt_language'],
+            lengthMenu: [[10, 25, 50, 100, 200], [10, 25, 50, 100, 200]]
+        });
+        dt = $('#dt_customer').DataTable({
+            processing: true,
+            serverSide: true,
+            stateSave: false,
+            language: {
+                ...locales['dt_language'],
+                search: ''
+            },
+            autoWidth: false,
+            select: {
+                style: 'multi',
+                selector: 'td:first-child'
+            },
+            lengthMenu: [[10, 25, 50, 100, 200], [10, 25, 50, 100, 200]],
+            ajax: {
+                url: "{{ link('amazon/amazon_map/customer/dtHandler') }}",
+                type: 'POST',
+            },
+            buttons: [
+                {
+                    extend: 'collection',
+                    text: '<i class="icon-drawer-out"></i>',
+                    className: 'btn btn-default btn-export',
+                    buttons: [
+                        {
+                            extend: 'copyHtml5',
+                            text: locales['buttons']['copy'],
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        },
+                        {
+                            extend: 'csvHtml5',
+                            text: locales['buttons']['export2csv'],
+                            fieldSeparator: ',',
+                            extension: '.csv',
+                            bom: "true",
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        },
+                        {
+                            extend: 'excelHtml5',
+                            text: locales['buttons']['export2excel'],
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        },
+                        {
+                            extend: 'pdfHtml5',
+                            text: locales['buttons']['export2pdf'],
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        }
+                    ]
+                },
+                {
+                    extend: 'colvis',
+                    text: '<i class="icon-grid3"></i>',
+                    className: 'btn btn-default btn-colvis',
+                    columns: [0,1, 2, 3,4,5]
+                },
+            ],
+            columnDefs:[
+              {
+                targets: 6,
+                orderable: false,
+                render: function (data, type, row) {
+                    return `<ul class="icons-list pull-right">
+                            <li class="dropdown">
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                    <i class="icon-menu9"></i>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-right">
+                                    <li><a href='{{ link('customer/customer/edit') }}?customer_id=${row['oc_customer_id']}'><i class='fa fa-eye fa-lg valign-middle'></i> ${locales['button_view']}</a></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    `;
+                }
+            }],
+            columns: [
+                {data: "map_id"},
+                {data: "oc_customer_id"},
+                {data: "customer_name"},
+                {data: "customer_email"},
+                {data: "city"},
+                {   
+                   data: "country"
+                },
+                {data: "oc_customer_id"},
+            ],
+        });
+        $('[data-popup="tooltip"]').tooltip();
+        
+        $(".bulk-delete").attr({
+            "data-popup": "tooltip",
+            "title": locales['button_delete']
+        });
+        
+        $(".btn-export").attr({
+            "data-popup": "tooltip",
+            "title": locales['button_export']
+        });
+        
+        $(".btn-colvis").attr({
+            "data-popup": "tooltip",
+            "title": locales['button_colvis']
+        });
+        
+       
+
+    });
+    
+
+</script>
+{% endblock %}

@@ -1,0 +1,86 @@
+<!-- Modal -->
+
+
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+    $('#paymentMethodsModal').remove();
+
+    let paymentModal = `<div class="modal" id="paymentMethodsModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+            {% include 'default/template/payment/my_fatoorah/payment_methods_modal_body.expand'%}
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="btn-myfatoorah-pay-btn" class="btn btn-primary pull-right">
+        {{ lang('text_pay') }}
+        </button>
+
+      </div>
+    </div>
+  </div>
+</div>`;
+    $('body').append(paymentModal);
+    $('input.PaymentGatewayId').on('click', e => e.stopImmediatePropagation() );
+    $('.btn#btn-myfatoorah-pay-btn').on('click', function(e, wasTriggeredByCode){
+        e.stopImmediatePropagation();
+        //prevent call this event after click confirm button
+        if (wasTriggeredByCode) return;
+
+        let selected_payment_method_id = $('input[name=PaymentGatewayId]:checked').val();
+        let is_direct_payment_method   = $('input[name=PaymentGatewayId]:checked').data("is-direct-payment");
+        let payment_method_image       = $('input[name=PaymentGatewayId]:checked').data("payment-method-image");
+        
+        //get payment url , then redirect user to it..
+        $.ajax({
+          url: "{{link('payment/my_fatoorah/executePayment')}}",
+          data: { payment_method_id: selected_payment_method_id },
+          type: 'POST',
+          dataType: 'json',       
+        }).done(function(response){
+
+            if(response.success == '1' && ! is_direct_payment_method){
+                window.location = response.payment_url;
+            }
+            if(response.success == '1' && is_direct_payment_method){
+                let direct_payment_url = response.payment_url;
+                
+                //hide this modal
+                $('#paymentMethodsModal').modal('hide');
+
+                //Set modal data
+                $('#cardInfoModal img.visa').attr('src', payment_method_image);
+                $('#cardInfoModal input[name="payment_url"]').val(direct_payment_url);
+
+                //Open Card info modal              
+                $('#cardInfoModal').modal('show');
+            }
+            if(response.success == '0')
+            {
+               window.location.href=response.direct_url;
+            }
+        });
+
+
+
+    });
+
+    $('#paymentMethodsModal .close').on('click', function () {
+      $('#paymentMethodsModal').removeClass('fade', 'in')
+    });
+    
+    $('#paymentMethodsModal').modal({
+        // backdrop: false,
+        keyboard: false,
+        show: false,
+    });
+});
+
+</script>

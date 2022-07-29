@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{title}}</title>
+    {% if store_icon != '' %}
+    <link href="{{ store_icon }}" rel="icon" /> {% endif %}
+    {# Main Color #}
+    <style>
+        :root {
+            --bgColor : {{main_color}}bf;
+            --MainColor: {{main_color}};
+        }
+    </style>
+    <link rel="stylesheet" type="text/css" href="/expandish/view/theme/{{template_prefix}}/content/css/vendor/jquery-ui-1.8.16.custom.css"/>
+    <link rel="stylesheet" type="text/css" href="/expandish/view/javascript/iti/css/intlTelInput.min.css"/>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    {% if lang('direction') == 'rtl'  %}
+    <link rel="stylesheet"
+        href="/expandish/view/theme/{{template_prefix}}/content/css/minifiedStyles/rtlMinStyle.min.css?version={{version}}">
+    {% else %}
+    <link rel="stylesheet"
+        href="/expandish/view/theme/{{template_prefix}}/content/css/minifiedStyles/ltrMinStyle.min.css?version={{version}}">
+    {% endif %}
+    <script src="/expandish/view/theme/{{template_prefix}}/content/scripts/vendor/jquery-3.6.0.min.js"></script>
+    <script src="/expandish/view/theme/{{template_prefix}}/content/scripts/vendor/jquery-ui.min.js"></script>
+</head>
+
+<body dir="{{ lang('direction') == 'rtl' ? 'rtl' : 'ltr' }}">
+    <noscript><style>body *:not(noscript, noscript *){display:none;}</style><font face=arial>JavaScript must be enabled in order for you to use Expand Cart Checkout in standard view. However, it seems JavaScript is either disabled or not supported by your browser.</font></noscript>
+    
+    <div id="loading" style="display: block;"></div>
+    
+    {{ include('/' ~ template_prefix ~ '/_navbar.expand') }}
+    
+    <!-- start checkout page -->
+    <div class="main-checkout">
+        <div class="container-fluid">
+            <div class="main-checkout__container">
+                <div class="row">
+                    <div class="col-lg-7">
+
+                                       
+                  
+                        <div class="checkout-step">
+                            <nav class="main-nav">
+                                    <div class="main-nav__container">
+                                        <div class="row align-items-center">
+                                            <div class="col">
+                                                <div class="main-nav__logo">
+                                                    {% if store_logo != '' %} <img src="{{ store_logo }}" title="{{ store_name }}"
+                                                        alt="{{ store_name }}" /> {% endif %}
+                                                    <h1 style="{{store_logo != '' ? 'display:none;' : ''}}">{{ store_name }}</h1>
+                            
+                                                    <button class="btn-summary">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="13.877" height="13.061"
+                                                            viewBox="0 0 13.877 13.061">
+                                                            <g id="shopping-cart-empty-side-view" transform="translate(0 -13.148)">
+                                                                <path id="Path_12202" data-name="Path 12202"
+                                                                    d="M13.8,15.639a.445.445,0,0,0-.346-.19l-8.608-.371a.445.445,0,0,0-.038.89l8.025.346-1.578,4.923H4.23L2.961,14.329A.445.445,0,0,0,2.686,14L.608,13.179a.445.445,0,1,0-.326.829l1.848.726,1.291,7.029a.445.445,0,0,0,.438.365h.214l-.489,1.358a.371.371,0,0,0,.349.5h.343a1.336,1.336,0,1,0,1.986,0H9.174a1.336,1.336,0,1,0,1.986,0h.417a.371.371,0,1,0,0-.742H4.461l.4-1.113h6.715A.445.445,0,0,0,12,21.818l1.855-5.788A.444.444,0,0,0,13.8,15.639ZM5.269,25.467a.594.594,0,1,1,.594-.594A.594.594,0,0,1,5.269,25.467Zm4.9,0a.594.594,0,1,1,.594-.594A.594.594,0,0,1,10.167,25.467Z"
+                                                                    transform="translate(0)" fill="#155ebc"></path>
+                                                            </g>
+                                                        </svg>
+                                                        <span class="btn-summary__title">{{lang('text_order_summary_head', 'checkout/checkoutv2', true)}}</span>
+                                                        <span class="btn-summary__price" id="mobile_summery_holder">
+                                                            {% for total in totals %}
+                                                                {% if total['code'] == 'total' %}
+                                                                    {{ total['text'] }}
+                                                                {% endif %}
+                                                            {% endfor %}
+                                                        </span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                    </div>
+                                </div>
+                            </nav>
+                            {% if checkout_mode == '3' %}
+                                <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+                                    <ol class="breadcrumb">
+                                    
+                                        <li class="step breadcrumb-item step--cart" data-redirect-step data-return-label="{{lang('text_return_to_cart', 'checkout/checkoutv2', true)}}">
+                                            <a href="{{ link('checkout/cart') }}">{{lang('text_cart', 'checkout/checkoutv2', true)}}</a>
+                                            <input type="hidden" name="redirect_to" value="{{ link('checkout/cart') }}" >
+                                        </li>
+                                        
+                                        {% if hide_section_address == false %}
+                                        <li class="step breadcrumb-item {{current_step == 'information' ? 'active' : '' }}" 
+                                            data-information-step
+                                            data-return-label="{{lang('text_return_to_information', 'checkout/checkoutv2', true)}}"
+                                            data-continue-label="{{lang(cart_has_shipping ? 'text_continue_to_shipping' : 'text_continue_to_payment', 'checkout/checkoutv2', true)}}"
+                                            data-step="information-step"
+                                            onclick="checkout.goToStep(event.target.dataset.step);">{{lang('text_information', 'checkout/checkoutv2', true)}}</li>
+                                        {% endif %}
+                                        
+                                        {% if cart_has_shipping %}
+                                        <li class="step breadcrumb-item {{current_step == 'shipping' ? 'active' : '' }}" 
+                                            data-shipping-step 
+                                            data-return-label="{{lang('text_return_to_shipping', 'checkout/checkoutv2', true)}}"
+                                            data-continue-label="{{lang('text_continue_to_payment', 'checkout/checkoutv2', true)}}"
+                                            data-step="shipping-step"
+                                            onclick="checkout.goToStep(event.target.dataset.step);">{{lang('text_shipping', 'checkout/checkoutv2', true)}}</li>
+                                        {% endif %}
+                                        
+                                        <li class="step  breadcrumb-item {{current_step == 'payment' ? 'active' : '' }}" 
+                                            data-payment-step 
+                                            data-return-label="{{lang('text_return_to_payment', 'checkout/checkoutv2', true)}}"
+                                            data-continue-label="{{lang('text_confirm_order', 'checkout/checkoutv2', true)}}"
+                                            data-step="payment-step"
+                                            onclick="checkout.goToStep(event.target.dataset.step);">{{lang('text_payments', 'checkout/checkoutv2', true)}}</li>
+
+
+                                
+                                    </ol>
+                                </nav>
+                            {% endif %}
+
+                            <div class="taps-container {{checkout_mode == '3' ? '' : 'taps--one-page'}}">
+                                {% if hide_section_address == false %}
+                                    {{ include('/' ~ template_prefix ~ '/_information.expand') }}
+                                {% endif %}
+                                
+                                {% if cart_has_shipping %}
+                                <div id="shipping" class="tap {{current_step == 'shipping' ? 'active' : '' }}" data-tap="shipping-step">
+                                    {% if checkout_mode == '3' %}
+                                        {{ include('/' ~ template_prefix ~ '/_contact_info.expand') }}
+                                    {% endif %}
+                                    <div class="tap__shipping tap--shipping-info">
+                                        <h2 class="tap--shipping-info__title">{{lang('text_shipping_methods', 'checkout/checkoutv2', true)}}</h2>
+                                        {{ include('/' ~ template_prefix ~ '/_shipping.expand') }}
+                                    </div>
+                                </div>
+                                {% endif %}
+                                
+                                <div id="payment" class="tap {{current_step == 'payment' ? 'active' : '' }}" data-tap="payment-step">
+                                    {% if checkout_mode == '3' %}
+                                        {{ include('/' ~ template_prefix ~ '/_contact_info.expand') }}
+                                    {% endif %}
+                                    <div class="tap__shipping tap--shipping-info">
+                                        <h2 class="tap--shipping-info__title">{{lang('text_payment_methods', 'checkout/checkoutv2', true)}}</h2>
+                                        {{ include('/' ~ template_prefix ~ '/_payment.expand') }}
+                                    </div>
+                                    
+                                    {{ include('/' ~ template_prefix ~ '/_arguments.expand') }}
+                                    
+                                </div>
+                                
+                            </div>
+
+                            <button type="button" class="js-spinner taps__next{{checkout_mode == '3' ? '' : ' taps--one-page'}}"
+                                onclick="{{checkout_mode == '3' ? 'checkout.goToStepNext()' : 
+                                'checkout.validateAllSteps()'}};">
+                                <span class="taps__next__btn spinner-text">{{ lang('text_confirm_order', 'checkout/checkoutv2', true) }}</span>
+                                <span class="spinner-load" role="status">
+                                    <div style="position: absolute;width: 0px;z-index: auto;left: auto;top: auto;">
+                                        <span class="spinner-border" role="status"><span class="visually-hidden">Loading..</span></span>
+                                    </div>
+                                </span>
+                            </button>
+                            {% if checkout_mode == '3' %}
+                                <a href="#" class="step__return hide"
+                                   onclick="checkout.handleOnClickReturnTo(event);">{{ lang('text_return_to_cart', 'checkout/checkoutv2', true) }}</a>
+                            {% else %}
+                                <a href="{{ link('checkout/cart') }}" class="step__return hide">{{ lang('text_return_to_cart', 'checkout/checkoutv2', true) }}</a>
+                            {% endif %}
+
+                        </div>
+                        <nav class="main-nav">
+                            <div class="container">
+                                <div class="main-nav__container">
+                                    <div class="row align-items-center">
+                                        <div class="col">
+                                            <form class="main-nav__controls justify-content-start" id="user_acts" method="post" enctype="multipart/form-data">
+                                                {% if currencies|length > 1 %}
+                                                <div class="dropdown">
+                                                    <button class="btn dropdown-toggle" type="button" id="dropdownMenuButton1"
+                                                        data-toggle="dropdown" aria-expanded="false">
+                                                        {{ current_currency.symbol }} - {{ current_currency.title }}
+                                                    </button>
+                                                    <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                                                        {% for currency in currencies %}<li><a
+                                                                class="dropdown-item {{current_currency.code == currency.code ? 'active' : '' }}"
+                                                                href="#"
+                                                                onclick="var input = document.querySelector('input[name=currency_code]');input.value != event.target.dataset.currencyCode && (input.value = event.target.dataset.currencyCode, document.forms.user_acts.submit());"
+                                                                data-currency-code="{{currency.code}}"
+                                                                title="{{ currency.symbol }}">{{ currency.symbol }}</a></li>{% endfor %}
+                                                    </ul>
+                                                    <input type="hidden" name="currency_code" value="{{ current_currency.code }}" autocomplete="off"/>
+                                                </div>
+                                                {% endif %}
+                                                {% if languages|length > 1 %}
+                                                <div class="dropdown">
+                                                    <button class="btn dropdown-toggle" type="button" id="dropdownMenuButton2"
+                                                        data-toggle="dropdown" aria-expanded="false">
+                                                        {{ current_language.name }}
+                                                    </button>
+                                                    <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton2">
+                                                        {% for language in languages %}<li><a
+                                                                class="dropdown-item {{current_language.code == language.code ? 'active' : '' }}"
+                                                                href="#"
+                                                                onclick="var input = document.querySelector('input[name=language_code]');input.value != event.target.dataset.languageCode && (input.value = event.target.dataset.languageCode, document.forms.user_acts.submit());"
+                                                                data-language-code="{{language.code}}"
+                                                                title="{{ language.name }}">{{ language.name }}</a></li>{% endfor %}
+                                                    </ul>
+                                                    <input type="hidden" name="language_code" value="{{ current_language.code }}" autocomplete="off"/>
+                                                </div>
+                                                {% endif %}
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </nav>
+                    </div>
+                    <div class="col-lg-5">
+                        <div class="main-checkout__order-summary">
+                            {{ include('/' ~ template_prefix ~ '/_summary.expand') }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- end checkout page -->
+
+    <!-- all libraries and files -->
+    {% if google_map is defined  and google_map.status == 1 %}
+        <script type="text/javascript" id="google-maps-sdk" 
+        src="https://maps.googleapis.com/maps/api/js?key={{google_map.api_key}}&libraries=places&language={{lang}}"></script>
+    {% endif %}
+    
+    <script src="/expandish/view/javascript/iti/js/intlTelInput.min.js"></script>
+    {# <script src="/expandish/view/theme/{{template_prefix}}/content/scripts/vendor/select2.min.js"></script> #}
+    <script src="/expandish/view/theme/{{template_prefix}}/content/scripts/MinifiedJs/scripts.min.js?version={{version}}" version="{{version}}" logged="{{logged}}" orderNo="{{order_id}}" hasShipping="{{cart_has_shipping}}" mode="{{checkout_mode}}" map='{{google_map|json_encode}}'></script>
+    <script src="/expandish/view/theme/{{template_prefix}}/content/scripts/vendor/bootstrap.bundle.min.4.5.2.js"></script>
+    {# Login.js #}
+    {% for script in inline_scripts %}{% if script['type'] == 'callable' %}{{ script['script']|base64_decode }}{% endif %}{% endfor %}    
+</body>
+
+</html>

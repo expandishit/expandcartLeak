@@ -1,0 +1,127 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% set dualMenuEnabled = true %}
+
+{% block title %}
+{{ lang('heading_title') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+{{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block secondarymenu %}
+    {% include 'promotions/reward_points/menu.expand' with {'expand': '#reward_points_pro', 'active': '#customerbehavior'} %}
+{% endblock secondarymenu %}
+
+
+{% block headelements %}
+    {% include "includes/buttons_top.expand" %}
+{% endblock headelements %}
+
+{% block content %}
+
+<!-- Start Form -->
+<form id="form" class="form" action="{{ action }}" method="post">
+    <div class="col-md-12">
+        <!-- Advanced legend -->
+        <div class="panel panel-flat">
+            <div class="panel-body">
+               <fieldset>
+                   <legend class="text-semibold">
+                       <i class="fas fa-check-circle fa-lg position-left"></i>
+                       {{ lang('tab_rule_infomation')|trim(':') }}
+                       <a class="control-arrow" data-toggle="collapse" data-target="#panel1">
+                           <i class="icon-circle-down2"></i>
+                       </a>
+                   </legend>
+                   <div class="collapse in" id="panel1" >
+                        <div class="form-group" id="rule_name-group">
+                            <label> {{ lang('column_rule_name') }} <span class="text-danger"> *</span></label>
+                            <input type="text" id="name" value="{{ name }}" name="name" class="form-control" />
+                            <span class="help-block"></span>
+                        </div>
+                        <!-- form-group -->
+                        <div class="form-group" id="reward_for-group">
+                            <label> {{ lang('column_reward_for') }}</label>
+                            <select id="reward_for" name="actions" >
+                                <option value="1" {{ actions == "1" ? 'selected="selected"' : '' }}>{{ lang('Signing Up') }}</option>
+                                <option value="2" {{ actions == "2" ? 'selected="selected"' : '' }}>{{ lang('Posting Product Review') }}</option>
+                                <option value="5" {{ actions == "5" ? 'selected="selected"' : '' }}>{{ lang('Signing Up Newsletter') }}</option>
+                            </select>
+                            <span class="help-block"></span>
+                        </div>
+                        <!-- form-group -->
+                        <div class="form-group id="status-group">
+                            <label for="status" class="control-label"> {{ lang('entry_status') }} </label>
+                            <!-- Switchery -->
+                            <div class="checkbox checkbox-switchery">
+                                <label>
+                                    <input type="checkbox" onchange="changeStatus(this);" name="status" class="switchery" {{ status in ['1', 1, 'on'] ? 'checked' }}>
+                                    <span class="switchery-status">{{ status in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                </label>
+                            </div>
+                            <!-- /Switchery -->
+                            <span class="help-block"></span>
+                        </div>
+                        <!-- form-group -->
+                        <div class="form-group" id="customer_group_ids-group">
+                            <label> {{ lang('column_customer_group') }} <span class="text-danger"> *</span></label>
+                            <select id="customer_group_ids" multiple="multiple" name="customer_group_ids[]" >
+                            <option value="99" {{ 99 in customer_group_ids and customer_group_ids|length > 0 ? 'selected="selected"' : '' }} >{{ lang('NOT LOGGED IN') }}</option>
+                            {% for group in customer_groups %}
+                                  <option value={{ group["customer_group_id"] }} {{ customer_group_ids|length > 0 and group["customer_group_id"] in customer_group_ids ? 'selected="selected"' : '' }}> {{ group["name"] }} </option>
+                            {% endfor %}
+                            </select>
+                            <span class="help-block"></span>
+                        </div>
+                        <!-- form-group -->
+                        <div class="form-group" id="reward_points-group">
+                            <label> {{ lang('Reward Points (X)') }} <span class="text-danger"> *</span></label>
+                            <input type="text" class="form-control" id="date_start" name="reward_point"  value="{{reward_point}}" >
+                            <span class="help-block"></span>
+                        </div>
+                      </div> <!-- collapse -->
+                      <input type="hidden" id="rule_id" name="rule_id" value="{{ rule_id }}"/>
+                 </fieldset>
+            </div>
+        </div>
+        <!-- /a legend -->
+    </div>
+</form>
+
+<!-- End Form -->
+
+<!-- Lower Buttons -->
+{% include "includes/buttons_bottom.expand" %}
+<!-- End Lower Buttons -->
+{% endblock content %}
+{% block scripts %}
+    {{ parent() }}
+    {% import _self as dtControls %}
+    <script>
+    $(document).ready(function() {
+        $('select').select2();
+        $('.touchspinney').TouchSpin({
+            'postfix': '{{ current_currency_code }}',
+            'decimals': 2,
+        });
+    });
+    function changeStatus(checkbox)
+    {
+        var self = $(checkbox);
+        var switch_status = self.siblings('.switchery-status');
+
+        if ( self.is(':checked') )
+        {
+            switch_status.html("{{ lang('text_enabled') }}");
+        }
+        else
+        {
+            switch_status.html("{{ lang('text_disabled') }}");
+        }
+    }
+</script>
+
+{% endblock scripts %}

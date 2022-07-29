@@ -1,0 +1,1508 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% import 'controls/uploader.expand' as uploader %}
+
+{# hide default second header #}
+{% set hideHeader = true %}
+{# show page head in main layout header #}
+{% set navbarForm = true %}
+{# page title in main layout head #}
+{% block headTitle %}
+    {{ private_reply_id ? lang('heading_title_update') : lang('heading_title_create') }}
+{% endblock headTitle %}
+{# form controle buttons in main layout head #}
+{% block headForm %}
+    <div class="head-form-btns">
+        {# cancel button #}
+        <a href="{{ cancel }}" class="btn btn-default top-cancel-button"> {{ lang('cancel') }}</a>
+        
+        {# submit button #}
+        <button type="button" class="btn btn-primary btn-ladda btn-ladda-spinner top-save-button" data-style="zoom-in" style="width: auto;padding-inline: 25px;">
+            <i class="fas fa-check position-left"></i>{{ lang('save') }}
+        </button>
+    </div>
+    <style>
+        @media(max-width: 768px) {
+            .navbar-header {
+
+                display: none !important;
+            }
+        }
+    </style>
+{% endblock headForm %}
+{% set inner_small_head = true %}
+
+
+{% block title %}
+     {{ lang('heading_title', 'module\messenger_chatbot') }}
+
+    <style>
+        .page-header-default {
+            background: transparent
+        }
+        .dz-image img {
+            width: 100%;
+            object-fit: cover;
+        }
+        body, .page-header-default .breadcrumb-line:not([class*=bg-]) {
+            background-color: #ffffff;
+        }
+        .page-header-content {
+            position: relative;
+            background-color: inherit;
+            padding: 0 10px;
+            max-width: 1200px;
+            margin: auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .page-header-content .heading-elements {
+            margin: 0 !important;
+            transform: translateY(-50%);
+        }
+        @media(max-width: 768px) {
+            .page-header-content .heading-elements {
+                transform: none;
+            }
+        }
+        html[dir="rtl"] .page-header-content .heading-elements {
+            left: 0;
+        }
+        html[dir="ltr"] .page-header-content .heading-elements {
+            right: 0;
+        }
+        .page-header-content .heading-elements .btn {
+            margin-bottom: 0;
+        }
+        .content {
+            {# padding: 0; #}
+        }
+        .page-header-default {
+            margin-bottom: 0;
+        }
+        .page-title {
+            padding-left: 0;
+            padding-right: 0;
+        }
+    </style>
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+    {% include "includes/buttons_top.expand" %}
+{% endblock headelements %}
+
+
+{% block content %}
+
+    <style type="text/css">
+        .page-head-title i {
+            display: none !important;
+        }
+    </style>
+
+    <form class="form" action="{{ links['submit'] }}">
+        <input type="hidden" name="private_reply_id" value="{{ private_reply_id }}">
+        <section class="list-wrapper">
+            <div class="content-inner-small">
+                <div class="row">
+
+                    <div class="col-md-8">
+
+                        <div class="panel">
+                            <div class="panel-body">
+                                <h6 class="panel-title m-bold mb-20">{{ lang('entry_name_reply') }}<span class="text-danger ml-5">*</span></h6>
+                                <div class="form-group">
+                                    <input type="text" class="form-control" id="name" name="name"
+                                   value="{{ name }}" maxlength="50">
+                                    <span class="help-block"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="panel">
+                            <div class="panel-body">
+                                <h6 class="panel-title m-bold mb-20">{{ lang('applied_on') }}</h6>
+                                <label class="custom-radio">
+                                    <input type="radio" name="applied_on" class="hide radio-toggler hasSubForm" value="page" {{ applied_on == 'page' ? 'checked' }}>
+                                    <i></i>
+                                    <span>{{ lang('all_posts') }}</span>
+                                </label>
+                                <label class="custom-radio">
+                                    <input type="radio" name="applied_on" class="hide radio-toggler hasSubForm" value="posts" {{ applied_on == 'posts' or not private_reply_id ? 'checked' }}>
+                                    <i></i>
+                                    <span>{{ lang('specific_posts') }}</span>
+                                </label>
+
+                                <div class="applied_on">
+                                    <div class="posts {{ applied_on == 'posts' ? '' : 'SubFormHidden' }}">
+                                        <div class="form-group ml-25 mt-15">
+                                            <label class="control-label">{{ lang('select_posts') }}</label>
+                                            <select name="posts[]" id="posts" class="form-control select" multiple>
+                                                {% for post in posts %}
+                                                    <option value="{{ post.id }}" {{ post.id in selected_posts ? 'selected' }}>{{ post.message }}</option>
+                                                {% endfor %}
+                                            </select>
+                                            <span class="help-block"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="panel">
+                            <div class="panel-body">
+                                <h6 class="panel-title m-bold mb-20">{{ lang('reply_type') }}</h6>
+
+
+                                <label class="custom-radio">
+                                    <input type="radio" name="type" class="hide radio-toggler hasSubForm" value="store_link" {{ type == 'store_link' ? 'checked' : '' }}>
+                                    <i></i>
+                                    <span>{{ lang('store_link') }}</span>
+                                </label>
+                                <div class="type" reply-type="store_link">
+                                    <div class="store_link {{ type == 'store_link' ? '' : 'SubFormHidden' }}">
+                                        <div class="tabbable langs-tabs-right  ml-25 mt-15">
+                                            <ul class="nav nav-tabs-lang">
+                                                {% for language in languages %}
+                                                    <li class="{{ loop.first ? 'active' : '' }} switch-lang-panel" lang="{{ language.code }}">
+                                                        <a href="#storelinklangTab{{ language['code'] }}" data-toggle="tab" aria-expanded="false">
+                                                            <img src="view/image/flags/{{ language['image'] }}" title="{{ language['name'] }}" class="pull-right">
+                                                            <div> {{ language['name'] }}</div>
+                                                        </a>
+                                                    </li>
+                                                {% endfor %}
+                                            </ul>
+                                            <div class="tab-content">
+                                                {% for language in languages %}
+                                                    <div class="tab-pane {{ loop.first ? 'active' : '' }}" id="storelinklangTab{{ language['code'] }}">
+                                                        
+                                                        <div class="form-group">
+                                                            <div>
+                                                                <div class="row row-buttons mr-0 ml-0">
+                                                                    <div class="col-sm-12 col-xs-12" style="display: none">
+                                                                        <label class="bold">{{ lang('entry_link_type') }}</label>
+                                                                        <select  name="{{ language['code'] }}[store_link][link_type]" class="form-control hasSubForm">
+                                                                            <option value="home" {{ attribute(_context, language.code).store_link.link_type == 'home' ? 'selected' }}>{{ lang('entry_home') }}</option>
+                                                                            <option value="product" {{ attribute(_context, language.code).store_link.link_type == 'product' ? 'selected' }}>{{ lang('entry_product') }}</option>
+                                                                            <option value="category" {{ attribute(_context, language.code).store_link.link_type == 'category' ? 'selected' }}>{{ lang('entry_category') }}</option>
+                                                                            <option value="web_page" {{ attribute(_context, language.code).store_link.link_type == 'web_page' ? 'selected' }}>{{ lang('entry_web_page') }}</option>
+                                                                            <option value="other_page" {{ attribute(_context, language.code).store_link.link_type == 'other_page' ? 'selected' }}>{{ lang('entry_other_page') }}</option>
+                                                                        </select>
+                                                                        <span class="help-block"></span>
+                                                                    </div>
+                                                                    <div class="{{ language['code'] }}_store_link_link_type col-sm-12 col-xs-12" style="display: none">
+                                                                        <div class="product {{ attribute(_context, language.code).store_link.link_type == 'product' ? '' : 'SubFormHidden' }}">
+                                                                            <label class="bold">{{ lang('entry_product') }}</label>
+                                                                            <select  name="{{ language['code'] }}[store_link][product]" id="store_link-{{ language['code'] }}-product" class="form-control product-select">
+                                                                                {% if attribute(_context, language.code).store_link.product.id %}
+                                                                                    <option value="{{ attribute(_context, language.code).store_link.product.id }}" selected>{{ attribute(_context, language.code).store_link.product.name }}</option>
+                                                                                {% endif%}
+                                                                            </select>
+                                                                            <span class="help-block"></span>
+                                                                        </div>
+
+                                                                        <div class="category {{ attribute(_context, language.code).store_link.link_type == 'category' ? '' : 'SubFormHidden' }}">
+                                                                            <label class="bold">{{ lang('entry_category') }}</label>
+                                                                            <select  name="{{ language['code'] }}[store_link][category]" id="store_link-{{ language['code'] }}-category" class="form-control category-select">
+                                                                                {% if attribute(_context, language.code).store_link.category.id %}
+                                                                                    <option value="{{ attribute(_context, language.code).store_link.category.id }}" selected>{{ attribute(_context, language.code).store_link.category.name }}</option>
+                                                                                {% endif%}
+                                                                            </select>
+                                                                            <span class="help-block"></span>
+                                                                        </div>
+
+                                                                        <div class="web_page {{ attribute(_context, language.code).store_link.link_type == 'web_page' ? '' : 'SubFormHidden' }}">
+                                                                            <label class="bold">{{ lang('entry_web_page') }}</label>
+                                                                            <select  name="{{ language['code'] }}[store_link][web_page]" id="store_link-{{ language['code'] }}-web-page" class="form-control">
+                                                                                {% for web_page in web_pages %}
+                                                                                    <option value="{{ web_page.id }}" {{ web_page.id == attribute(_context, language.code).store_link.web_page ? 'selected' : '' }}>{{ web_page.title }}</option>
+                                                                                {% endfor %}
+                                                                            </select>
+                                                                            <span class="help-block"></span>
+                                                                        </div>
+
+                                                                        <div class="other_page {{ attribute(_context, language.code).store_link.link_type == 'other_page' ? '' : 'SubFormHidden' }}">
+                                                                            <label class="bold">{{ lang('entry_other_page') }}</label>
+                                                                            <select  name="{{ language['code'] }}[store_link][other_page]" id="store_link-{{ language['code'] }}-other-page" class="form-control">
+                                                                                {% for other_page in other_pages %}
+                                                                                    <option value="{{ other_page.id }}" {{ other_page.id == attribute(_context, language.code).store_link.other_page ? 'selected' : '' }}>{{ other_page.title }}</option>
+                                                                                {% endfor %}
+                                                                            </select>
+                                                                            <span class="help-block"></span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="col-sm-12 col-xs-12">
+                                                                        <div class="form-group">
+                                                                            <label class="bold">{{ lang('entry_description') }}</label>
+                                                                            <input type="text" name="{{ language['code'] }}[store_link][subtitle]" class="form-control store-link-description-input" value="{{ attribute(_context, language.code).store_link.subtitle }}" placeholder="{{ lang('entry_description') }}" maxlength="50">
+                                                                            <span class="help-block"></span>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="form-group">
+                                                            <label class="bold">{{ lang('buttons') }}</label>
+                                                            <div class="reply-button-holder">
+                                                                {% if private_reply_id is empty %}
+                                                                    <div class="row row-buttons mb-20 mr-0 ml-0">
+                                                                        <div class="col-sm-6 col-xs-12">
+                                                                            <label class="bold">{{ lang('entry_link_type') }}</label>
+                                                                            <select  name="{{ language.code }}[store_link][buttons][0][link_type]" class="form-control hasSubForm">
+                                                                                <option value="home" selected>{{ lang('entry_home') }}</option>
+                                                                            </select>
+                                                                            <span class="help-block"></span>
+                                                                        </div>
+                                                                        <div class="col-sm-6 col-xs-12"> 
+                                                                            <label class="bold">{{ lang('entry_button_title') }}</label>
+                                                                            <input type="text" name="{{ language.code }}[store_link][buttons][0][title]" value="{{ lang('preview_first_button') }}" class="form-control button-title-input" placeholder="{{ lang('entry_button_title') }}" maxlength="50"> 
+                                                                            <span class="help-block"></span>
+                                                                        </div>
+                                                                    </div>
+                                                                {% endif %}
+                                                                {% if attribute(_context, language.code).store_link.buttons|length > 0 %}
+                                                                    {% for key, button in attribute(_context, language.code).store_link.buttons %}
+                                                                        {% if attribute(_context, language.code).store_link.buttons[key].link_type == 'home' %}
+                                                                        <div class="row row-buttons mr-0 ml-0 mb-20">
+                                                                            <div class="col-sm-6 col-xs-12">
+                                                                                <label class="bold">{{ lang('entry_link_type') }}</label>
+                                                                                <select  name="{{ language.code }}[store_link][buttons][{{ key }}][link_type]" class="form-control hasSubForm">
+                                                                                    <option value="home" selected>{{ lang('entry_home') }}</option>
+                                                                                </select>
+                                                                                <span class="help-block"></span>
+                                                                            </div>
+                                                                            <div class="col-sm-6 col-xs-12"> 
+                                                                                <label class="bold">{{ lang('entry_button_title') }}</label>
+                                                                                <input type="text" name="{{ language.code }}[store_link][buttons][{{ key }}][title]" value="{{ attribute(_context, language.code).store_link.buttons[key].title }}" class="form-control" placeholder="{{ lang('entry_button_title') }}"> 
+                                                                                <span class="help-block"></span>
+                                                                            </div>
+                                                                        </div>
+                                                                        {% else %}
+                                                                        <div class="row row-buttons mr-0 ml-0 mb-20">
+                                                                            <div class="col-sm-6 col-xs-12" style="display: none">
+                                                                                <label class="bold">{{ lang('entry_link_type') }}</label>
+                                                                                <select  name="{{ language.code }}[store_link][buttons][{{ key }}][link_type]" class="form-control hasSubForm">
+                                                                                    <option value="home" {{ attribute(_context, language.code).store_link.buttons[key].link_type == 'home' ? 'selected'}}>{{ lang('entry_home') }}</option>
+                                                                                    <option value="product" {{ attribute(_context, language.code).store_link.buttons[key].link_type == 'product' ? 'selected'}}>{{ lang('entry_product') }}</option>
+                                                                                    <option value="category" {{ attribute(_context, language.code).store_link.buttons[key].link_type == 'category' ? 'selected'}}>{{ lang('entry_category') }}</option>
+                                                                                    <option value="web_page" {{ attribute(_context, language.code).store_link.buttons[key].link_type == 'web_page' ? 'selected'}}>{{ lang('entry_web_page') }}</option>
+                                                                                    <option value="other_page" {{ attribute(_context, language.code).store_link.buttons[key].link_type == 'other_page' ? 'selected'}}>{{ lang('entry_other_page') }}</option>
+                                                                                </select>
+                                                                                <span class="help-block"></span>
+                                                                            </div>
+                                                                            <div class="{{ language.code }}_store_link_buttons_{{ key }}_link_type col-sm-6 col-xs-12"> 
+                                                                                <div class="product {{ attribute(_context, language.code).store_link.buttons[key].link_type == 'product' ? '' : 'SubFormHidden' }}"> 
+                                                                                    <label class="bold">{{ lang('entry_product') }}</label>
+                                                                                    <select  name="{{ language.code }}[store_link][buttons][{{ key }}][product]"class="form-control product-select"> 
+                                                                                        {% if attribute(_context, language.code).store_link.buttons[key].product.id %}
+                                                                                            <option value="{{ attribute(_context, language.code).store_link.buttons[key].product.id }}" selected>{{ attribute(_context, language.code).store_link.buttons[key].product.name }}</option>
+                                                                                        {% endif%}
+                                                                                    </select>
+                                                                                    <span class="help-block"></span>
+                                                                                </div>
+                                                                                <div class="category {{ attribute(_context, language.code).store_link.buttons[key].link_type == 'category' ? '' : 'SubFormHidden' }}"> 
+                                                                                    <label class="bold">{{ lang('entry_category') }}</label>
+                                                                                    <select  name="{{ language.code }}[store_link][buttons][{{ key }}][category]" class="form-control category-select"> 
+                                                                                        {% if attribute(_context, language.code).store_link.buttons[key].category.id %}
+                                                                                            <option value="{{ attribute(_context, language.code).store_link.buttons[key].category.id }}" selected>{{ attribute(_context, language.code).store_link.buttons[key].category.name }}</option>
+                                                                                        {% endif%}
+                                                                                    </select>
+                                                                                    <span class="help-block"></span>
+                                                                                </div>
+                                                                                <div class="web_page {{ attribute(_context, language.code).store_link.buttons[key].link_type == 'web_page' ? '' : 'SubFormHidden' }}"> 
+                                                                                    <label class="bold">{{ lang('entry_web_page') }}</label>
+                                                                                    <select  name="{{ language.code }}[store_link][buttons][{{ key }}][web_page]" class="form-control"> 
+                                                                                        {% for web_page in web_pages %} 
+                                                                                            <option value="{{ web_page.id }}" {{ web_page.id == attribute(_context, language.code).store_link.buttons[key].web_page ? "selected" : "" }}>{{ web_page.title }}</option>
+                                                                                        {% endfor %} 
+                                                                                    </select>
+                                                                                    <span class="help-block"></span>
+                                                                                </div>
+                                                                                <div class="other_page {{ attribute(_context, language.code).store_link.buttons[key].link_type == 'other_page' ? '' : 'SubFormHidden' }}"> 
+                                                                                    <label class="bold">{{ lang('entry_other_page') }}</label>
+                                                                                    <select  name="{{ language.code }}[store_link][buttons][{{ key }}][other_page]"class="form-control"> 
+                                                                                        {% for other_page in other_pages %} 
+                                                                                        <option value="{{ other_page.id }}" {{ other_page.id == attribute(_context, language.code).store_link.buttons[key].other_page ? "selected" : "" }}>{{ other_page.title }}</option>
+                                                                                        {% endfor %} 
+                                                                                    </select>
+                                                                                    <span class="help-block"></span>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div class="col-sm-5 col-xs-10"> 
+                                                                                <label class="bold">{{ lang('entry_button_title') }}</label>
+                                                                                <input type="text" name="{{ language.code }}[store_link][buttons][{{ key }}][title]" value="{{ attribute(_context, language.code).store_link.buttons[key].title }}" class="form-control button-title-input" placeholder="{{ lang('entry_button_title') }}" maxlength="50"> 
+                                                                                <span class="help-block"></span>
+                                                                            </div>
+                                                                            <div class="col-sm-1 col-xs-2 d-flex ai-center h-40" style="margin-top: 25px;"> 
+                                                                                <a class="btn-delete-fields font-color-light font-18">
+                                                                                    <i class="far fa-trash-alt"></i>
+                                                                                </a>
+                                                                            </div>
+                                                                        </div>
+                                                                        {% endif %}
+                                                                    {% endfor %}
+                                                                {% endif %}
+                                                            </div>
+                                                            <a class="btn-add-fields mt-10 font-14 m-bold" data-fields="web_page" reply-type="store_link" next-index="{{ attribute(_context, language.code).store_link.buttons|length ? attribute(_context, language.code).store_link.buttons|length : 1 }}" lang-code="{{ language['code'] }}">{{ lang('add_button') }}</a>
+                                                        </div>
+
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                                <label class="custom-radio">
+                                    <input type="radio" name="type" class="hide radio-toggler hasSubForm" value="free_text" {{ type == 'free_text' ? 'checked' : '' }}>
+                                    <i></i>
+                                    <span>{{ lang('free_text') }}</span>
+                                </label>
+                                <div class="type" reply-type="free_text">
+                                    <div class="free_text {{ type == 'free_text' ? '' : 'SubFormHidden' }}">
+                                        <div class="tabbable langs-tabs-right  ml-25 mt-15">
+                                            <ul class="nav nav-tabs-lang">
+                                                {% for language in languages %}
+                                                    <li class="{{ loop.first ? 'active' : '' }} switch-lang-panel" lang="{{ language.code }}">
+                                                        <a href="#freeTextlangTab{{ language['code'] }}" data-toggle="tab" aria-expanded="false">
+                                                            <img src="view/image/flags/{{ language['image'] }}" title="{{ language['name'] }}" class="pull-right">
+                                                            <div> {{ language['name'] }}</div>
+                                                        </a>
+                                                    </li>
+                                                {% endfor %}
+                                            </ul>
+                                            <div class="tab-content">
+                                                {% for language in languages %}
+                                                    <div class="tab-pane {{ loop.first ? 'active' : '' }}" id="freeTextlangTab{{ language['code'] }}">
+                                                        <div class="form-group">
+                                                            <label class="bold">{{ lang('entry_body') }}</label>
+                                                            <textarea name="{{ language['code'] }}[free_text][body]" class="form-control free-text-body-input" placeholder="{{ lang('entry_body') }}">{{ attribute(_context, language.code).free_text.body }}</textarea>
+                                                            <span>{{ lang('text_free_text') }}</span>
+                                                            <span class="help-block"></span>
+                                                        </div>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+
+                                <label class="custom-radio">
+                                    <input type="radio" name="type" class="hide radio-toggler hasSubForm" value="media_template" {{ type == 'media_template' ? 'checked' : '' }}>
+                                    <i></i>
+                                    <span>{{ lang('media_template') }}</span>
+                                </label>
+                                <div class="type" reply-type="media_template">
+                                    <div class="media_template  ml-25 mt-15 {{ type == 'media_template' ? '' : 'SubFormHidden' }}">
+
+                                        <div class="form-group">
+                                            <label class="control-label">{{ lang('column_type') }}</label>
+                                            <select  name="media_template[media_type]" class="form-control hasSubForm media_type">
+                                                <option value="image" {{ media_template.media_type == 'image' ? 'selected' }}>{{ lang('image') }}</option>
+                                                <option value="video" {{ media_template.media_type == 'video' ? 'selected' }}>{{ lang('video') }}</option>
+                                            </select>
+                                            <span class="help-block"></span>
+                                        </div>
+
+                                        <div class="form-group input-file-style">
+                                            <label class="bold" title="">{{ lang('entry_attachment') }}</label>
+                                            <label class="bold file-label" title=""></label>
+                                            <input class="file-style upload-attachment" class="form-control" type="file" name="media_template[file]" />
+                                            <input type="hidden" name="media_template[attachment_id]" class="attachment-id" value="{{ media_template.attachment_id }}">
+                                            <input type="hidden" name="media_template[attachment_url]" class="attachment-url" value="{{ media_template.attachment_url }}">
+                                            <span class="help-block"></span>
+                                        </div>
+
+                                        {% if media_template.attachment_url %}
+                                            {% if media_template.media_type == 'image' %}
+                                                <img style="width: 200px;" class="attachment-image" src="{{ media_template.attachment_url }}">
+                                            {% else %}
+                                                <video class="attachment-video" width="200" height="200" style="width: 100%" controls>
+                                                  <source src="{{ media_template.attachment_url }}">
+                                                </video>
+                                            {% endif %}
+                                        {% endif %}
+
+                                        <div class="tabbable langs-tabs-right">
+                                            <ul class="nav nav-tabs-lang">
+                                                {% for language in languages %}
+                                                    <li class="{{ loop.first ? 'active' : '' }} switch-lang-panel" lang="{{ language.code }}">
+                                                        <a href="#medialangTab{{ language['code'] }}" data-toggle="tab" aria-expanded="false">
+                                                            <img src="view/image/flags/{{ language['image'] }}" title="{{ language['name'] }}" class="pull-right">
+                                                            <div> {{ language['name'] }}</div>
+                                                        </a>
+                                                    </li>
+                                                {% endfor %}
+                                            </ul>
+                                            <div class="tab-content">
+                                                {% for language in languages %}
+                                                    <div class="tab-pane {{ loop.first ? 'active' : '' }}" id="medialangTab{{ language['code'] }}">
+
+                                                        <div class="form-group">
+                                                            <label class="bold">{{ lang('buttons') }}</label>
+                                                            <div class="reply-button-holder">
+                                                                {% if attribute(_context, language.code).media_template.buttons|length > 0 %}
+                                                                    {% for key, button in attribute(_context, language.code).media_template.buttons %}
+                                                                        <div class="row row-buttons mr-0 ml-0 mb-20">
+                                                                            <div class="col-sm-6 col-xs-12">
+                                                                                <label class="bold">{{ lang('entry_link_type') }}</label>
+                                                                                <select  name="{{ language.code }}[media_template][buttons][{{ key }}][link_type]" class="form-control hasSubForm">
+                                                                                    <option value="home" {{ attribute(_context, language.code).media_template.buttons[key].link_type == 'home' ? 'selected'}}>{{ lang('entry_home') }}</option>
+                                                                                    <option value="product" {{ attribute(_context, language.code).media_template.buttons[key].link_type == 'product' ? 'selected'}}>{{ lang('entry_product') }}</option>
+                                                                                    <option value="category" {{ attribute(_context, language.code).media_template.buttons[key].link_type == 'category' ? 'selected'}}>{{ lang('entry_category') }}</option>
+                                                                                    <option value="web_page" {{ attribute(_context, language.code).media_template.buttons[key].link_type == 'web_page' ? 'selected'}}>{{ lang('entry_web_page') }}</option>
+                                                                                    <option value="other_page" {{ attribute(_context, language.code).media_template.buttons[key].link_type == 'other_page' ? 'selected'}}>{{ lang('entry_other_page') }}</option>
+                                                                                </select>
+                                                                                <span class="help-block"></span>
+                                                                            </div>
+                                                                            <div class="{{ language.code }}_media_template_buttons_{{ key }}_link_type col-sm-6 col-xs-12"> 
+                                                                                <div class="product {{ attribute(_context, language.code).media_template.buttons[key].link_type == 'product' ? '' : 'SubFormHidden' }}"> 
+                                                                                    <label class="bold">{{ lang('entry_product') }}</label>
+                                                                                    <select  name="{{ language.code }}[media_template][buttons][{{ key }}][product]"class="form-control product-select"> 
+                                                                                        {% if attribute(_context, language.code).media_template.buttons[key].product.id %}
+                                                                                            <option value="{{ attribute(_context, language.code).media_template.buttons[key].product.id }}" selected>{{ attribute(_context, language.code).media_template.buttons[key].product.name }}</option>
+                                                                                        {% endif%}
+                                                                                    </select>
+                                                                                    <span class="help-block"></span>
+                                                                                </div>
+                                                                                <div class="category {{ attribute(_context, language.code).media_template.buttons[key].link_type == 'category' ? '' : 'SubFormHidden' }}"> 
+                                                                                    <label class="bold">{{ lang('entry_category') }}</label>
+                                                                                    <select  name="{{ language.code }}[media_template][buttons][{{ key }}][category]" class="form-control category-select"> 
+                                                                                        {% if attribute(_context, language.code).media_template.buttons[key].category.id %}
+                                                                                            <option value="{{ attribute(_context, language.code).media_template.buttons[key].category.id }}" selected>{{ attribute(_context, language.code).media_template.buttons[key].category.name }}</option>
+                                                                                        {% endif%}
+                                                                                    </select>
+                                                                                    <span class="help-block"></span>
+                                                                                </div>
+                                                                                <div class="web_page {{ attribute(_context, language.code).media_template.buttons[key].link_type == 'web_page' ? '' : 'SubFormHidden' }}"> 
+                                                                                    <label class="bold">{{ lang('entry_web_page') }}</label>
+                                                                                    <select  name="{{ language.code }}[media_template][buttons][{{ key }}][web_page]" class="form-control"> 
+                                                                                        {% for web_page in web_pages %} 
+                                                                                            <option value="{{ web_page.id }}" {{ web_page.id == attribute(_context, language.code).media_template.buttons[key].web_page ? "selected" : "" }}>{{ web_page.title }}</option>
+                                                                                        {% endfor %} 
+                                                                                    </select>
+                                                                                    <span class="help-block"></span>
+                                                                                </div>
+                                                                                <div class="other_page {{ attribute(_context, language.code).media_template.buttons[key].link_type == 'other_page' ? '' : 'SubFormHidden' }}"> 
+                                                                                    <label class="bold">{{ lang('entry_other_page') }}</label>
+                                                                                    <select  name="{{ language.code }}[media_template][buttons][{{ key }}][other_page]"class="form-control"> 
+                                                                                        {% for other_page in other_pages %} 
+                                                                                        <option value="{{ other_page.id }}" {{ other_page.id == attribute(_context, language.code).media_template.buttons[key].other_page ? "selected" : "" }}>{{ other_page.title }}</option>
+                                                                                        {% endfor %} 
+                                                                                    </select>
+                                                                                    <span class="help-block"></span>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div class="col-sm-11 col-xs-10"> 
+                                                                                <label class="bold">{{ lang('entry_button_title') }}</label>
+                                                                                <input type="text" name="{{ language.code }}[media_template][buttons][{{ key }}][title]" value="{{ attribute(_context, language.code).media_template.buttons[key].title }}" class="form-control button-title-input" placeholder="{{ lang('entry_button_title') }}" maxlength="50"> 
+                                                                                <span class="help-block"></span>
+                                                                            </div>
+                                                                            <div class="col-sm-1 col-xs-2 d-flex ai-center h-40" style="margin-top: 25px;"> 
+                                                                                <a class="btn-delete-fields font-color-light font-18">
+                                                                                    <i class="far fa-trash-alt"></i>
+                                                                                </a>
+                                                                            </div>
+                                                                        </div>
+
+                                                                    {% endfor %}
+                                                                {% endif %}
+                                                            </div>
+                                                            <a class="btn-add-fields mt-10 font-14 m-bold" reply-type="media_template" next-index="{{ attribute(_context, language.code).media_template.buttons|length }}" lang-code="{{ language['code'] }}">{{ lang('add_button') }}</a>
+                                                        </div>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+
+                                <label class="custom-radio">
+                                    <input type="radio" name="type" class="hide radio-toggler hasSubForm" value="direct_product" {{ type == 'direct_product' or not private_reply_id ? 'checked' : '' }}>
+                                    <i></i>
+                                    <span>{{ lang('direct_product') }}</span>
+                                </label>
+                                <div class="type  ml-25 mt-15" reply-type="direct_product">
+                                    <div class="direct_product {{ type == 'direct_product' ? '' : 'SubFormHidden' }}">
+                                        <div class="form-group">
+                                            <label class="control-label">{{ lang('entry_product') }}</label>
+                                            <select  name="direct_product[product]" id="" class="form-control product-select direct-product-input">
+                                                {% if direct_product.product.id %}
+                                                    <option value="{{ direct_product.product.id }}" selected>{{ direct_product.product.name }}</option>
+                                                {% endif%}
+                                            </select>
+                                            <span class="help-block"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+
+                                <label class="custom-radio">
+                                    <input type="radio" name="type" class="hide radio-toggler hasSubForm" value="specific_category" {{ type == 'specific_category' ? 'checked' : '' }}>
+                                    <i></i>
+                                    <span>{{ lang('specific_category') }}</span>
+                                </label>
+                                <div class="type  ml-25 mt-15" reply-type="specific_category">
+                                    <div class="specific_category {{ type == 'specific_category' ? '' : 'SubFormHidden' }}">
+                                            
+                                        <div class="form-group">
+                                            <label class="control-label">{{ lang('entry_category') }}</label>
+                                            <select  name="specific_category[category]" id="" class="form-control category-select reflect-products">
+                                                {% if specific_category.category.id %}
+                                                    <option value="{{ specific_category.category.id }}" selected>{{ specific_category.category.name }}</option>
+                                                {% endif%}
+                                            </select>
+                                            <span class="help-block"></span>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="control-label">{{ lang('entry_product') }}</label>
+                                            <select  name="specific_category[products][]" id="" class="form-control category-product-select" multiple="multiple" {{ specific_category.category.id ? 'category-id="'~specific_category.category.id~'"' : '' }}>
+                                                {% if specific_category.products|length > 0 %}
+                                                    {% for product in specific_category.products %}
+                                                        <option name="{{ product.name }}" image-url="{{ product.image }}" price="{{ product.price }}" value="{{ product.id }}" selected>{{ product.name }}</option>
+                                                    {% endfor %}
+                                                {% endif%}
+                                            </select>
+                                            <span class="help-block"></span>
+                                        </div>
+                                                    
+                                    </div>
+                                </div>
+
+
+
+                                <label class="custom-radio">
+                                    <input type="radio" name="type" class="hide radio-toggler hasSubForm" value="specific_manufacturer" {{ type == 'specific_manufacturer' ? 'checked' : '' }}>
+                                    <i></i>
+                                    <span>{{ lang('specific_manufacturer') }}</span>
+                                </label>
+                                <div class="type  ml-25 mt-15" reply-type="specific_manufacturer">
+                                    <div class="specific_manufacturer {{ type == 'specific_manufacturer' ? '' : 'SubFormHidden' }}">
+
+                                        <div class="form-group">
+                                            <label class="control-label">{{ lang('entry_manufacturer') }}</label>
+                                            <select  name="specific_manufacturer[manufacturer]" id="" class="form-control manufacturer-select reflect-products">
+                                                {% if specific_manufacturer.manufacturer.id %}
+                                                    <option value="{{ specific_manufacturer.manufacturer.id }}" selected>{{ specific_manufacturer.manufacturer.name }}</option>
+                                                {% endif%}
+                                            </select>
+                                            <span class="help-block"></span>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="control-label">{{ lang('entry_product') }}</label>
+                                            <select  name="specific_manufacturer[products][]" id="" class="form-control manufacturer-product-select" multiple="multiple" {{ specific_manufacturer.manufacturer.id ? 'manufacturer-id="'~specific_manufacturer.manufacturer.id~'"' : '' }}>
+                                                {% if specific_manufacturer.products|length > 0 %}
+                                                    {% for product in specific_manufacturer.products %}
+                                                        <option name="{{ product.name }}" image-url="{{ product.image }}" price="{{ product.price }}" value="{{ product.id }}" selected>{{ product.name }}</option>
+                                                    {% endfor %}
+                                                {% endif%}
+                                            </select>
+                                            <span class="help-block"></span>
+                                        </div>
+                                                   
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-4 sticky-100">
+                        <div class="panel">
+                            <div class="panel-body">
+                                <h6 class="panel-title m-bold mb-20">{{ lang('entry_status') }}</h6>
+                                <div class="switch-component switch-component-blue switch-component-fullwidth" id="status-group">
+                                    <div class="switch-inner">
+                                        <label class="switch-cover">
+                                            <input type="checkbox" class="hide" onchange="changeStatus(this);" name="status" {{ status in ['1', 1, 'on'] ? 'checked' }}>
+                                            <span class="switch-title switch-enabled">
+                                                {{lang('text_inactive')}}
+                                            </span>
+                                            <span class="switch-title switch-disabled">
+                                                {{lang('text_active')}}
+                                            </span>
+                                            <span class="switch-btn"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="panel">
+                            <div class="panel-body">
+                                <h6 class="panel-title m-bold mb-15">{{ lang('preview') }} </h6>
+                                <!-- <p class="mb-10 m-bold">{{ lang('reply_name') }}: <span class="preview-name break-word">{{ name }}</span></p>
+                                <ul style="padding: inherit; padding-block: 0;list-style: disc;">
+                                    <span class="applied_on">
+                                            <div class="page  SubFormHidden d-inline-block">
+                                                <li class="mb-5"> {{ lang('applied_on') }}: {{ lang('all_posts') }} </li>
+                                            </div>
+            
+                                            <div class="posts SubFormHidden d-inline-block">
+                                                <li class="mb-5"> {{ lang('applied_on') }}: {{ lang('specific_posts') }}</li>
+                                            </div>
+                                    </span>
+                                </ul>
+                                <p class="mb-10 mt-20 m-bold">{{ lang('reply_type') }}</p> -->
+                                <div class="type" id="reply-message-preview">
+
+                                    <!-- Button Template -->
+                                    <div class="store_link SubFormHidden">
+                                        <p>{{ lang('store_link') }}</p>
+                                        {% for language in languages %}
+                                            <div class="facebook-template-item {{ language.code }}" {{ language.code != 'en' ? 'style="display:none; direction: rtl"' }}>
+                                                <div class="facebook-template-img">
+                                                    <img src="{{ logo }}" alt="Store Logo">
+                                                </div>
+                                                <div class="info p-5 pr-10 pl-10">
+                                                    <p class="bold">{{ attribute(store_name, language.code) }}</p>
+                                                    <p class="gray-light-color description">{{ attribute(_context, language.code).store_link.subtitle ? attribute(_context, language.code).store_link.subtitle : lang('preview_subtitle') }}</p>
+                                                </div>
+                                                <ul class="facebook-template-links buttons">
+                                                    {% if attribute(_context, language.code).store_link.buttons|length %}
+                                                        {% for button in attribute(_context, language.code).store_link.buttons %}
+                                                            <li><a>{{ button.title }}</a></li>
+                                                        {% endfor %}
+                                                    {% else %}
+                                                        <li><a>{{ lang('preview_first_button') }}</a></li>
+                                                    {% endif %}
+                                                </ul>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+
+                                    <!-- Generic Template -->
+                                    <div class="free_text SubFormHidden">
+                                        <p>{{ lang('free_text') }}</p>
+                                        {% for language in languages %}
+                                            <div class="facebook-template-item {{ language.code }}" {{ language.code != 'en' ? 'style="display:none; direction: rtl"' }}>
+                                                <p class="btn-template-head body break-word">{{ attribute(_context, language.code).free_text.body ? attribute(_context, language.code).free_text.body : lang('preview_subtitle') }}</p>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+
+                                    <!-- Media Template -->
+                                    <div class="media_template SubFormHidden">
+                                        <p>{{ lang('media_template')}}</p>
+                                        {% for language in languages %}
+                                            <div class="facebook-template-item {{ language.code }}" {{ language.code != 'en' ? 'style="display:none; direction: rtl"' }}>
+                                                <div class="media-type">
+                                                    <div class="facebook-template-img facebook-template-photo image video media">
+                                                        {% if media_template.attachment_url and media_template.media_type == 'image' %}
+                                                            <img src="{{ media_template.attachment_url }}" alt="">
+                                                        {% elseif media_template.attachment_url and media_template.media_type == 'video' %}
+                                                            <video src="{{ media_template.attachment_url }}" alt="" style="width: 100%">
+                                                        {% else %}
+                                                            <img src="https://specials-images.forbesimg.com/imageserve/981484292/960x0.jpg?fit=scale" alt="">
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                                <ul class="facebook-template-links buttons">
+                                                    {% for button in attribute(_context, language.code).media_template.buttons %}
+                                                        <li><a>{{ button.title }}</a></li>
+                                                    {% endfor %}
+                                                </ul>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+
+
+                                    <!-- Generic Template -->
+                                    <div class="direct_product SubFormHidden">
+                                        <p>{{ lang('direct_product') }}</p>
+                                        <div class="facebook-template-item">
+                                            {% if direct_product.product %}
+                                                <div class="facebook-template-img">
+                                                    <img src="{{ direct_product.product.image }}?fit=scale" alt="">
+                                                </div>
+                                                <div class="info p-5 pr-10 pl-10">
+                                                    <p class="bold product-name">{{ direct_product.product.name }}</p>
+                                                    <p class="gray-light-color product-price">{{ direct_product.product.price }}</p>
+                                                </div>
+                                            {% else %}
+                                                <div class="facebook-template-img">
+                                                    <img src="https://specials-images.forbesimg.com/imageserve/981484292/960x0.jpg?fit=scale" alt="">
+                                                </div>
+                                                <div class="info p-5 pr-10 pl-10">
+                                                    <p class="bold product-name">{{ lang('preview_product_name') }}</p>
+                                                    <p class="gray-light-color product-price">{{ lang('preview_price') }}</p>
+                                                </div>
+                                            {% endif %}
+                                            <ul class="facebook-template-links buttons">
+                                                <li><a>{{ lang('shop_now') }}</a></li>
+                                                <li><a>{{ lang('view_details') }}</a></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                    <!-- Generic Template-->
+                                    <div class="specific_category SubFormHidden" style=" position: relative;">
+                                        <p>{{ lang('specific_category') }}</p>
+
+                                        <div id="specific-category-carousel" class="carousel slider-preview slide" data-ride="carousel" data-interval="false">                           
+                                            <!-- Wrapper for slides -->
+                                            <div class="carousel-inner">
+                                                {% if specific_category.products|length > 0 %}
+                                                    {% for key, product in specific_category.products %}
+                                                        <div class="item {{ key == 0 ? 'active' : '' }}">
+                                                            <div class="facebook-template-item">
+                                                                <div class="facebook-template-img">
+                                                                    <img src="{{ product.image }}" alt="">
+                                                                </div>
+                                                                <div class="info p-5 pr-10 pl-10">
+                                                                    <p class="bold">{{ product.name }}</p>
+                                                                    <p class="gray-light-color font-12">{{ product.price }}</p>
+                                                                </div>
+                                                                <ul class="facebook-template-links buttons">
+                                                                    <li><a>{{ lang('shop_now') }}</a></li>
+                                                                    <li><a>{{ lang('view_details') }}</a></li>
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                    {% endfor %}
+                                                {% else %}
+                                                    <div class="item active">
+                                                        <div class="facebook-template-item">
+                                                            <div class="facebook-template-img">
+                                                                <img src="https://specials-images.forbesimg.com/imageserve/981484292/960x0.jpg?fit=scale" alt="">
+                                                            </div>
+                                                            <div class="info p-5 pr-10 pl-10">
+                                                                <p class="bold">{{ lang('preview_product_name') }}</p>
+                                                                <p class="gray-light-color font-12">{{ lang('preview_price') }}</p>
+                                                            </div>
+                                                            <ul class="facebook-template-links buttons">
+                                                                <li><a>{{ lang('shop_now') }}</a></li>
+                                                                <li><a>{{ lang('view_details') }}</a></li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                    <div class="item">
+                                                        <div class="facebook-template-item">
+                                                            <div class="facebook-template-img">
+                                                                <img src="https://specials-images.forbesimg.com/imageserve/981484292/960x0.jpg?fit=scale" alt="">
+                                                            </div>
+                                                            <div class="info p-5 pr-10 pl-10">
+                                                                <p class="bold">{{ lang('preview_product_name') }}</p>
+                                                                <p class="gray-light-color font-12">{{ lang('preview_price') }}</p>
+                                                            </div>
+                                                            <ul class="facebook-template-links buttons">
+                                                                <li><a>{{ lang('shop_now') }}</a></li>
+                                                                <li><a>{{ lang('view_details') }}</a></li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                {% endif%}
+                                            </div>
+                                          
+                                        </div>
+                                        <!-- Left and right controls -->
+                                        <a class="left slider-preview-left" href="#specific-category-carousel" data-slide="prev">
+                                            <i class="fa fa-angle-left" aria-hidden="true"></i>
+                                          <span class="sr-only">Previous</span>
+                                        </a>
+                                        <a class="right slider-preview-right" href="#specific-category-carousel" data-slide="next">
+                                            <i class="fa fa-angle-right" aria-hidden="true"></i>
+                                          <span class="sr-only">Next</span>
+                                        </a>
+                                    </div>
+
+                                    <!-- Carousel of Generic Templates -->
+                                    <div class="specific_manufacturer SubFormHidden" style=" position: relative;">
+                                        <p>{{ lang('specific_manufacturer') }}</p>
+
+                                        <div id="specific-manufacturer-carousel" class="carousel slider-preview slide" data-ride="carousel" data-interval="false">                           
+                                            <!-- Wrapper for slides -->
+                                            <div class="carousel-inner">
+
+                                                {% if specific_manufacturer.products|length > 0 %}
+                                                    {% for key, product in specific_manufacturer.products %}
+                                                        <div class="item {{ key == 0 ? 'active' : '' }}">
+                                                            <div class="facebook-template-item">
+                                                                <div class="facebook-template-img">
+                                                                    <img src="{{ product.image }}" alt="">
+                                                                </div>
+                                                                <div class="info p-5 pr-10 pl-10">
+                                                                    <p class="bold">{{ product.name }}</p>
+                                                                    <p class="gray-light-color font-12">{{ product.price }}</p>
+                                                                </div>
+                                                                <ul class="facebook-template-links buttons">
+                                                                    <li><a>{{ lang('shop_now') }}</a></li>
+                                                                    <li><a>{{ lang('view_details') }}</a></li>
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                    {% endfor %}
+                                                {% else %}
+                                                    <div class="item active">
+                                                        <div class="facebook-template-item">
+                                                            <div class="facebook-template-img">
+                                                                <img src="https://specials-images.forbesimg.com/imageserve/981484292/960x0.jpg?fit=scale" alt="">
+                                                            </div>
+                                                            <div class="info p-5 pr-10 pl-10">
+                                                                <p class="bold">{{ lang('preview_product_name') }}</p>
+                                                                <p class="gray-light-color font-12">{{ lang('preview_price') }}</p>
+                                                            </div>
+                                                            <ul class="facebook-template-links buttons">
+                                                                <li><a>{{ lang('shop_now') }}</a></li>
+                                                                <li><a>{{ lang('view_details') }}</a></li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                    <div class="item">
+                                                        <div class="facebook-template-item">
+                                                            <div class="facebook-template-img">
+                                                                <img src="https://specials-images.forbesimg.com/imageserve/981484292/960x0.jpg?fit=scale" alt="">
+                                                            </div>
+                                                            <div class="info p-5 pr-10 pl-10">
+                                                                <p class="bold">{{ lang('preview_product_name') }}</p>
+                                                                <p class="gray-light-color font-12">{{ lang('preview_price') }}</p>
+                                                            </div>
+                                                            <ul class="facebook-template-links buttons">
+                                                                <li><a>{{ lang('shop_now') }}</a></li>
+                                                                <li><a>{{ lang('view_details') }}</a></li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                {% endif%}
+                                            </div>
+                                        </div>
+                                        <!-- Left and right controls -->
+                                        <a class="left slider-preview-left" href="#specific-manufacturer-carousel" data-slide="prev">
+                                            <i class="fa fa-angle-left" aria-hidden="true"></i>
+                                          <span class="sr-only">Previous</span>
+                                        </a>
+                                        <a class="right slider-preview-right" href="#specific-manufacturer-carousel" data-slide="next">
+                                            <i class="fa fa-angle-right" aria-hidden="true"></i>
+                                          <span class="sr-only">Next</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </form>
+
+    <div class="modal modal-center-page fade" id="assign-items" tabindex="-1" role="dialog"
+    aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h6 class="modal-title m-bold" id="myModalLabel"><i class="fa fa-exclamation-triangle text-danger" aria-hidden="true"></i>
+                        {{ lang('notice') }}</h6>
+                </div>
+                <div class="modal-body">
+                    <hr class="mt-0">
+                    <p class="mb-15 font-14 alert-message"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default cancel-form" data-dismiss="modal">{{ lang('cancel') }}</button>
+                    <button type="button" class="btn btn-danger btn-ladda btn-ladda-spinner danger-custom-color modal-submit-form" data-style="zoom-in"
+                        onclick=""><span class="ladda-label">
+                            {{ lang('confirm') }}
+                        </span><span class="ladda-spinner"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% set cancel = link('messenger_chatbot/private_reply') %}
+
+    <script type="text/javascript" src="view/assets/js/core/libraries/jquery_ui/widgets.min.js"></script>
+
+    <script>
+
+        function changeStatus(checkbox)
+        {
+            var self = $(checkbox);
+            var switch_status = self.siblings('.switchery-status');
+
+            if ( self.is(':checked') )
+            {
+                switch_status.html("{{ lang('text_enabled') }}");
+            }
+            else
+            {
+                switch_status.html("{{ lang('text_disabled') }}");
+            }
+        }
+
+        $('select').select2({
+            minimumResultsForSearch: 3
+        });
+
+        $(document).ready(function(){
+
+            $(".product-select").select2({
+                tokenSeparators: [','],
+                closeOnSelect: true,
+                ajax: {
+                    url: '{{ link("catalog/product/autocomplete") }}',
+                    dataType: 'json',
+                    type: 'GET',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            filter_name: params.term,
+                            filter_status: 1
+                        };
+                    },
+                    processResults: function (data) {
+                        console.log(data)
+                        return {
+                            results: $.map(data, function (item, index) {
+
+                                return {
+                                    id: item.product_id,
+                                    text: item.name,
+                                    name: item.name,
+                                    image_url: item.image,
+                                    price: item.price
+                                }
+                            }) 
+                        };
+                    },
+                    cache: true
+                }
+            }).on('select2:select', function (e) {
+                var data = e.params.data;   
+                if($(this).is('.direct-product-input')){
+                    $('#reply-message-preview .direct_product .facebook-template-item img').attr('src', data.image_url);
+                    $('#reply-message-preview .direct_product .facebook-template-item .product-name').text(data.name);
+                    $('#reply-message-preview .direct_product .facebook-template-item .product-price').text(data.price);
+                }
+            });
+
+
+            $('.category-select.reflect-products').on('change', function(){
+                let category_id = $(this).val();
+                $(this).parents('.type').find('.category-product-select').attr('category-id', category_id)
+            })
+
+            $(".category-product-select").select2({
+                tokenSeparators: [','],
+                closeOnSelect: true,
+                ajax: {
+                    url: '{{ link("catalog/product/autocomplete") }}',
+                    dataType: 'json',
+                    type: 'GET',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            filter_name: params.term,
+                            filter_status: 1,
+                            filter_category_id: $(this).attr('category-id') ? $(this).attr('category-id') : '-1'
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: $.map(data, function (item, index) {
+
+                                return {
+                                    id: item.product_id,
+                                    text: item.name,
+                                    name: item.name,
+                                    image_url: item.image,
+                                    price: item.price
+                                }
+                            })
+                        };
+                    },
+                    cache: true
+                }
+            }).on('select2:select', function (e) {
+                var data = e.params.data;   
+                $(this).children('[value="'+data['id']+'"]').attr(
+                    {
+                        'image-url': data.image_url,
+                        'name': data.name,
+                        'price': data.price,
+                    }
+                );
+
+                specific_item_preview('category');
+            }).on('select2:unselect', function (e) {
+                specific_item_preview('category');
+            });
+
+            function specific_item_preview(item){
+                $('#specific-' + item + '-carousel .carousel-inner').html('');
+                if($('.' + item + '-product-select option:selected').length){
+                    $('.' + item + '-product-select option:selected').each(function(){
+                        let image = $(this).attr('image-url');
+                        let name = $(this).attr('name');
+                        let price = $(this).attr('price');
+                        $('#specific-' + item + '-carousel .carousel-inner').append('<div class="item"> <div class="facebook-template-item"> <div class="facebook-template-img"> <img src="' + image + '" alt=""> </div> <div class="info p-5 pr-10 pl-10"> <p class="bold">' + name + '}</p> <p class="gray-light-color font-12">' + price + '</p> </div> <ul class="facebook-template-links buttons"> <li><a>{{ lang('shop_now') }}</a></li> <li><a>{{ lang('view_details') }}</a></li> </ul> </div> </div>')
+                    })
+                }
+                else{
+                    $('#specific-' + item + '-carousel .carousel-inner').append('<div class="item active"> <div class="facebook-template-item"> <div class="facebook-template-img"> <img src="https://specials-images.forbesimg.com/imageserve/981484292/960x0.jpg?fit=scale" alt=""> </div> <div class="info p-5 pr-10 pl-10"> <p class="bold">{{ lang('preview_product_name') }}</p> <p class="gray-light-color font-12">{{ lang('preview_price') }}</p> </div> <ul class="facebook-template-links buttons"> <li><a>{{ lang('shop_now') }}</a></li> <li><a>{{ lang('view_details') }}</a></li> </ul> </div> </div> <div class="item"> <div class="facebook-template-item"> <div class="facebook-template-img"> <img src="https://specials-images.forbesimg.com/imageserve/981484292/960x0.jpg?fit=scale" alt=""> </div> <div class="info p-5 pr-10 pl-10"> <p class="bold">{{ lang('preview_product_name') }}</p> <p class="gray-light-color font-12">{{ lang('preview_price') }}</p> </div> <ul class="facebook-template-links buttons"> <li><a>{{ lang('shop_now') }}</a></li> <li><a>{{ lang('view_details') }}</a></li> </ul> </div> </div>');
+                }
+                $('#specific-' + item + '-carousel').carousel(0);
+                $('#specific-' + item + '-carousel .item:first').addClass('active')
+            }
+
+            $('.manufacturer-select.reflect-products').on('change', function(){
+                let manufacturer_id = $(this).val();
+                $(this).parents('.type').find('.manufacturer-product-select').attr('manufacturer-id', manufacturer_id)
+            })
+
+            $(".manufacturer-product-select").select2({
+                tokenSeparators: [','],
+                closeOnSelect: true,
+                ajax: {
+                    url: '{{ link("catalog/product/autocomplete") }}',
+                    dataType: 'json',
+                    type: 'GET',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            filter_name: params.term,
+                            filter_status: 1,
+                            filter_manufacturer_id: $(this).attr('manufacturer-id') ? $(this).attr('manufacturer-id') : '-1'
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: $.map(data, function (item, index) {
+
+                                return {
+                                    id: item.product_id,
+                                    text: item.name,
+                                    name: item.name,
+                                    image_url: item.image,
+                                    price: item.price
+                                }
+                            })
+                        };
+                    },
+                    cache: true
+                }
+            }).on('select2:select', function (e) {
+                var data = e.params.data;   
+                $(this).children('[value="'+data['id']+'"]').attr(
+                    {
+                        'image-url': data.image_url,
+                        'name': data.name,
+                        'price': data.price,
+                    }
+                );
+
+                specific_item_preview('manufacturer');
+            }).on('select2:unselect', function (e) {
+                specific_item_preview('manufacturer');
+            });
+
+
+            $(".category-select").select2({
+                tokenSeparators: [','],
+                closeOnSelect: true,
+                ajax: {
+                    url: '{{ link("catalog/category/autocomplete") }}',
+                    dataType: 'json',
+                    type: 'GET',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            filter_name: params.term
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: $.map(data, function (item, index) {
+
+                                return {
+                                    id: item.category_id,
+                                    text: item.name
+                                }
+                            })
+                        };
+                    },
+                    cache: true
+                }
+            });
+
+            $(".manufacturer-select").select2({
+                tokenSeparators: [','],
+                closeOnSelect: true,
+                ajax: {
+                    url: '{{ link("catalog/manufacturer/autocomplete") }}',
+                    dataType: 'json',
+                    type: 'GET',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            filter_name: params.term
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: $.map(data, function (item, index) {
+
+                                return {
+                                    id: item.manufacturer_id,
+                                    text: item.name
+                                }
+                            })
+                        };
+                    },
+                    cache: true
+                }
+            });
+
+            /// radio select 
+        
+            $(document).on('change', '.hasSubForm', function() {
+                var selectedVal = $(this).val();
+                var holderName = $(this).attr("name").replace(/\]\[/g, '_').replace('[', '_').replace(']','');
+                $("." + holderName).find('> div').addClass('SubFormHidden');
+                $("." + holderName +' '+ "." + selectedVal).removeClass('SubFormHidden');
+            });
+
+            $( ".hasSubForm:checked" ).each(function() {
+                var selectedVal = $(this).val();
+                var holderName = $(this).attr("name").replace(/\]\[/g, '_').replace('[', '_').replace(']','');
+                $("." + holderName).find('> div').addClass('SubFormHidden');
+                $("." + holderName +' '+ "." + selectedVal).removeClass('SubFormHidden');
+            });
+
+             /// check media type
+
+            $(".hasSubForm.media_type").change(function(){
+                $(this).find("option:selected").each(function(){
+                    var optionValue = $(this).attr("value");
+                    if(optionValue){
+                        $(".media-type .facebook-template-img").not("." + optionValue).addClass('SubFormHidden');
+                        $("." + optionValue).removeClass('SubFormHidden');
+                    } else{
+                        $(".media-type .facebook-template-img").addClass('SubFormHidden');
+                    }
+                });
+            }).change();
+
+
+            /// add button
+            $(document).on('click', '.type .btn-add-fields', function(){ //on add input button click
+                let reply_type = $(this).attr('reply-type');
+                let index = $(this).attr('next-index');
+                let lang = $(this).attr('lang-code');
+                
+                let buttons_options = [];
+                buttons_options['home'] = '<option value="home">{{ lang('entry_home') }}</option>';
+                buttons_options['product'] = '<option value="product">{{ lang('entry_product') }}</option>';
+                buttons_options['category'] = '<option value="category">{{ lang('entry_category') }}</option>';
+                buttons_options['web_page'] = '<option value="web_page">{{ lang('entry_web_page') }}</option>';
+                buttons_options['other_page'] = '<option value="other_page">{{ lang('entry_other_page') }}</option>';
+               
+                let buttons_subforms = [];
+                buttons_subforms['home'] = '';
+                buttons_subforms['product'] = '<div class="product SubFormHidden"> <label class="bold">{{ lang('entry_product') }}</label> <select  name="' + lang + '[' + reply_type + '][buttons][' + index + '][product]"class="form-control product-select"> </select> <span class="help-block"></span> </div>';
+                buttons_subforms['category'] = '<div class="category SubFormHidden"> <label class="bold">{{ lang('entry_category') }}</label> <select  name="' + lang + '[' + reply_type + '][buttons][' + index + '][category]"class="form-control category-select"> </select> <span class="help-block"></span> </div>';
+                buttons_subforms['web_page'] = '<div class="web_page SubFormHidden"> <label class="bold">{{ lang('entry_web_page') }}</label> <select  name="' + lang + '[' + reply_type + '][buttons][' + index + '][web_page]" class="form-control"> {% for web_page in web_pages %} <option value="{{ web_page.id }}">{{ web_page.title }}</option> {% endfor %} </select> <span class="help-block"></span> </div>';
+                buttons_subforms['other_page'] = '<div class="other_page SubFormHidden"> <label class="bold">{{ lang('entry_other_page') }}</label> <select  name="' + lang + '[' + reply_type + '][buttons][' + index + '][other_page]"class="form-control"> {% for other_page in other_pages %} <option value="{{ other_page.id }}">{{ other_page.title }}</option> {% endfor %} </select> <span class="help-block"></span> </div>';
+
+                let fields = ['home', 'product', 'category', 'web_page', 'other_page'];
+                if($(this).attr('data-fields')){
+                    fields = $(this).attr('data-fields').split(',');
+                }
+
+
+                let selectHTML = '';
+                let subformHTML = '';
+                for(var i = 0; i<fields.length; i++){
+                    selectHTML += buttons_options[fields[i]];
+                    subformHTML += buttons_subforms[fields[i]];
+                }
+
+                console.log(fields.length);
+
+                $(this).siblings('.reply-button-holder').append('<div class="row row-buttons mb-20 mr-0 ml-0"> <div class="col-sm-6 col-xs-12"' + (fields.length == 1 ? ' style="display:none"' : '') + '> <label class="bold">{{ lang('entry_link_type') }}</label> <select  name="' + lang + '[' + reply_type + '][buttons][' + index + '][link_type]" class="form-control hasSubForm"> ' + selectHTML + ' </select> <span class="help-block"></span> </div> <div class="' + lang + '_' + reply_type + '_buttons_' + index + '_link_type col-sm-6 col-xs-12"> ' + subformHTML + ' </div> <div class="' + (fields.length == 1 ? 'col-sm-5' : 'col-sm-11') + ' col-xs-10"> <label class="bold">{{ lang('entry_button_title') }}</label> <input type="text" name="' + lang + '[' + reply_type + '][buttons][' + index +'][title]" class="form-control button-title-input" value="{{ lang('preview_first_button') }}" placeholder="{{ lang('entry_button_title') }}"> <span class="help-block"></span> </div> <div class="col-sm-1 col-xs-2 d-flex ai-center h-40" style="margin-top: 25px;"> <a class="btn-delete-fields font-color-light font-18"><i class="far fa-trash-alt"></i></a> </div> </div>'); //add input box
+
+                $('select').select2({
+                    minimumResultsForSearch: 3
+                });
+
+                $('select[name="' + lang + '[' + reply_type + '][buttons][' + index + '][link_type]"]').trigger('change');
+
+                // $( ".hasSubForm:selected" ).each(function() {
+                //     console.log($(this));
+                //     var selectedVal = $(this).val();
+                //     var holderName = $(this).attr("name").replace(/\]\[/g, '_').replace('[', '_').replace(']','');
+                //     $("." + holderName).find('> div').addClass('SubFormHidden');
+                //     $("." + holderName +' '+ "." + selectedVal).removeClass('SubFormHidden');
+                // });
+
+                $(".product-select").select2({
+                    tokenSeparators: [','],
+                    closeOnSelect: true,
+                    ajax: {
+                        url: '{{ link("catalog/product/autocomplete") }}',
+                        dataType: 'json',
+                        type: 'GET',
+                        delay: 250,
+                        data: function (params) {
+                            return {
+                                filter_name: params.term,
+                                filter_status: 1
+                            };
+                        },
+                        processResults: function (data) {
+                            return {
+                                results: $.map(data, function (item, index) {
+
+                                    return {
+                                        id: item.product_id,
+                                        text: item.name
+                                    }
+                                })
+                            };
+                        },
+                        cache: true
+                    }
+                });
+
+
+                $(".category-select").select2({
+                    tokenSeparators: [','],
+                    closeOnSelect: true,
+                    ajax: {
+                        url: '{{ link("catalog/category/autocomplete") }}',
+                        dataType: 'json',
+                        type: 'GET',
+                        delay: 250,
+                        data: function (params) {
+                            return {
+                                filter_name: params.term
+                            };
+                        },
+                        processResults: function (data) {
+                            return {
+                                results: $.map(data, function (item, index) {
+
+                                    return {
+                                        id: item.category_id,
+                                        text: item.name
+                                    }
+                                })
+                            };
+                        },
+                        cache: true
+                    }
+                });
+
+                $(".manufacturer-select").select2({
+                    tokenSeparators: [','],
+                    closeOnSelect: true,
+                    ajax: {
+                        url: '{{ link("catalog/manufacturer/autocomplete") }}',
+                        dataType: 'json',
+                        type: 'GET',
+                        delay: 250,
+                        data: function (params) {
+                            return {
+                                filter_name: params.term
+                            };
+                        },
+                        processResults: function (data) {
+                            return {
+                                results: $.map(data, function (item, index) {
+
+                                    return {
+                                        id: item.manufacturer_id,
+                                        text: item.name
+                                    }
+                                })
+                            };
+                        },
+                        cache: true
+                    }
+                });
+
+                $(this).attr('next-index', Number(index) + 1);
+
+                let buttons = '';
+                $(this).parents('.tab-pane').find('.button-title-input').each(function(){
+                    buttons += '<li><a>' + $(this).val() + '</a></li>';
+                })
+                $('#reply-message-preview .' + reply_type + ' .facebook-template-item.' + lang + ' .buttons').html(buttons);
+            });
+            
+            $('.reply-button-holder').on("click",".btn-delete-fields", function(){ //user click on remove text
+                let parent_tab = $(this).parents('.tab-pane');
+                let reply_type = parent_tab.find('.btn-add-fields').attr('reply-type');
+                let lang = parent_tab.find('.btn-add-fields').attr('lang-code');
+                $(this).closest('.row-buttons').remove();
+
+                let buttons = '';
+                parent_tab.find('.button-title-input').each(function(){
+                    buttons += '<li><a>' + $(this).val() + '</a></li>';
+                })
+                $('#reply-message-preview .' + reply_type + ' .facebook-template-item.' + lang + ' .buttons').html(buttons);
+            })
+
+            /// upload file
+            $('.file-label').on('click',function(){
+                $(this).next('input').click();
+            })
+
+            $('.input-file-style input').on('change',function(){
+                $(this).prev().attr('title',$(this).val().replace(/^.*[\\/]/, ''))
+            })
+
+            $(".upload-attachment").on("change", function() {
+                let el = $(this);
+                var type = $(this).parents('.media_template').find('.media_type').val();
+                var file_data = $(this).prop("files")[0];   
+                if(file_data){
+                    var form_data = new FormData();
+                    form_data.append("file", file_data);
+                    form_data.append("type", type);
+                    $.ajax({
+                        url: "messenger_chatbot/private_reply/upload_attachment",
+                        cache: false,
+                        data: form_data,                         
+                        type: 'post',
+                        processData: false,
+                        contentType: false,
+                        dataType: 'JSON',
+                        beforeSend: function(){
+                            Ladda.startAll();
+                        },
+                        success: function(res){
+                            Ladda.stopAll();
+                            if(res.attachment_id){
+                                el.siblings('input.attachment-id').val(res.attachment_id);
+                                el.siblings('input.attachment-url').val(res.attachment_url);
+                                if(type == 'image'){
+                                    $('.attachment-video').remove();
+                                    if(el.parents('.media_template').find('.attachment-image').length){
+                                        el.parents('.media_template').find('.attachment-image').attr('src', res.attachment_url);
+                                    }
+                                    else{
+                                        el.parents('.form-group').after('<img style="width: 200px;" class="attachment-image" src="' + res.attachment_url + '">');
+                                    }
+                                    $('#reply-message-preview .media_template .facebook-template-item .media').html('<img src="' + res.attachment_url + '">');
+                                }
+                                else if(type == 'video'){
+                                    $('.attachment-image').remove();
+                                    if(el.parents('.media_template').find('.attachment-video').length){
+                                        el.parents('.media_template').find('.attachment-video').html('<source src="' + res.attachment_url + '}">');
+                                    }
+                                    else{
+                                        el.parents('.form-group').after('<video class="attachment-video" width="200" height="200" controls style="width: 100%"> <source src="' + res.attachment_url + '"> </video>');
+                                    }
+                                    $('#reply-message-preview .media_template .facebook-template-item .media').html('<video src="' + res.attachment_url + '" style="width: 100%">');
+                                }
+                            }else{
+                                notify('{{ lang('error') }}', 'error', res.error);
+                            }
+                        }
+                    });
+                }
+            });
+
+
+
+            $('.top-save-button, .bottom-save-button').on('click', function(e){
+                e.preventDefault();
+                Ladda.startAll();
+                let applied_on = $('input[name="applied_on"]:checked').val();
+                let posts = $('select[name="posts[]"]').val();
+                if(applied_on == 'page' || (applied_on == 'posts' && posts && posts.length)){
+                    $.ajax({
+                        url: "messenger_chatbot/private_reply/check_assigned_items",
+                        cache: false,
+                        type: 'post',
+                        data: {
+                            applied_on: applied_on,
+                            posts: posts,
+                            reply_id: $('input[name="private_reply_id"]').val()
+                        },
+                        dataType: 'JSON',
+                        success: function(res){
+                            if(res.status == 0){
+                                $('#assign-items').modal('show');
+                                $('#assign-items .alert-message').text(res.message);
+                                Ladda.stopAll();
+                            }
+                            else{
+                                $('.form').submit();
+                            }
+                        }
+                    })
+                }
+                else{
+                    $('.form').submit();
+                }
+            })
+
+            $('.cancel-form').on('click', function(){
+                Ladda.stopAll();
+            })
+
+            $('.modal-submit-form').on('click', function(){
+                $('#assign-items').modal('hide');
+                Ladda.startAll();
+                $('.form').submit();
+            })
+
+            $(document).on('keyup', 'input.button-title-input', function(){
+                let reply_type = $(this).parents('.type').attr('reply-type');
+                let lang = $(this).attr('name').substr(0,2);
+                let buttons = '';
+                $(this).parents('.tab-pane').find('.button-title-input').each(function(){
+                    buttons += '<li><a>' + $(this).val() + '</a></li>';
+                })
+                $('#reply-message-preview .' + reply_type + ' .facebook-template-item.' + lang + ' .buttons').html(buttons);
+            })
+
+            $('.switch-lang-panel').on('click', function(){
+                let reply_type = $(this).parents('.type').attr('reply-type');
+                let lang = $(this).attr('lang');
+                $('#reply-message-preview .' + reply_type + ' .facebook-template-item.' + lang).siblings().css('display', 'none');
+                $('#reply-message-preview .' + reply_type + ' .facebook-template-item.' + lang).css('display', 'block');
+            })
+
+            $(document).on('keyup', 'input.store-link-description-input', function(){
+                let lang = $(this).attr('name').substr(0,2);
+                let val = $(this).val();
+                $('#reply-message-preview .store_link .facebook-template-item.' + lang + ' .description').text(val);
+            })
+
+            $(document).on('keyup', 'textarea.free-text-body-input', function(){
+                let lang = $(this).attr('name').substr(0,2);
+                let val = $(this).val();
+                console.log(val)
+                $('#reply-message-preview .free_text .facebook-template-item.' + lang + ' .body').text(val);
+            })
+
+            $('input[name="name"]').on('keyup', function(){
+                let val = $(this).val();
+                $('.preview-name').text(val);
+            })
+
+        });
+
+    </script>
+{% endblock %}

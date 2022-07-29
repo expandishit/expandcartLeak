@@ -1,0 +1,1173 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% import 'controls/uploader.expand' as uploader %}
+
+{# in case create product #}
+{% if not product_id %}
+    {# hide default second header #}
+    {% set hideHeader = true %}
+    {# show page head in main layout header #}
+    {% set navbarForm = true %}
+    {# page title in main layout head #}
+    {% block headTitle %}
+        {{ lang('heading_title_add', 'catalog/product') }}
+    {% endblock headTitle %}
+    {# form controle buttons in main layout head #}
+    {% block headForm %}
+        <div class="head-form-btns">
+            {# cancel button #}
+            <a href="{{ cancel }}" class="btn btn-default top-cancel-button"> {{ lang('button_cancel') }}</a>
+            
+            {% if request.get['product_id'] and allow_editor is defined %}
+            <a class="btn btn-primary" href="{{ link('catalog/product/editor', 'product_id=' ~ request.get['product_id']) }}">
+                <i class='fa fa-magic fa-lg position-left'></i>{{ lang('build_product_page') }}
+            </a>
+            {% endif %}
+            
+            {# submit button #}
+            <button type="button" class="btn btn-primary btn-ladda btn-ladda-spinner top-save-button" data-style="zoom-in" onclick="$('.combined_inputs_form').submit();">
+                {{ lang('button_save') }}
+            </button>
+        </div>
+        <style>
+            @media(max-width: 768px) {
+                .navbar-header {
+
+                    display: none !important;
+                }
+            }
+        </style>
+    {% endblock headForm %}
+{% endif %}
+{# in case create product #}
+
+
+{# in case create product #}
+{% block title %}
+    {{ lang('heading_title', 'catalog/product') }}
+
+    <style>
+        {# body {
+            background-color: #fff !important;
+        } #}
+        .page-header-default {
+            background: transparent
+        }
+        .dz-image img {
+            width: 100%;
+            object-fit: cover;
+        }
+        body, .page-header-default .breadcrumb-line:not([class*=bg-]) {
+            background-color: #ffffff;
+        }
+        .page-header-content {
+            position: relative;
+            background-color: inherit;
+            padding: 0 10px;
+            max-width: 1200px;
+            margin: auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .page-header-content .heading-elements {
+            margin: 0 !important;
+            transform: translateY(-50%);
+        }
+        html[dir="rtl"] .page-header-content .heading-elements {
+            left: 0;
+        }
+        html[dir="ltr"] .page-header-content .heading-elements {
+            right: 0;
+        }
+        .page-header-content .heading-elements .btn {
+            margin-bottom: 0;
+        }
+        @media(max-width: 768px) {
+            .page-header-content .heading-elements {
+                transform: none;
+            }
+            .page-header-content {
+                display: block;
+            }
+            .page-header-content .heading-elements .btn {
+                margin-bottom: 5px;
+            }
+        }
+        .content {
+            {# padding: 0; #}
+        }
+        .page-header-default {
+            margin-bottom: 0;
+        }
+        .page-title {
+            padding-left: 0;
+            padding-right: 0;
+        }
+    </style>
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+    <a href="{{ cancel }}" class="btn btn-default top-cancel-button"> {{ lang('button_cancel') }}</a>
+    
+    {% if request.get['product_id'] and allow_editor is defined %}
+    <a class="btn btn-primary" href="{{ link('catalog/product/editor', 'product_id=' ~ request.get['product_id']) }}">
+        <i class='fa fa-magic fa-lg position-left'></i>{{ lang('build_product_page') }}
+    </a>
+    {% endif %}
+    
+    <button type="button" class="btn btn-primary btn-ladda btn-ladda-spinner top-save-button" data-style="zoom-in" onclick="$('.combined_inputs_form').submit();">
+        {{ lang('button_save') }}
+    </button>
+{% endblock headelements %}
+
+{# second header for form mode switch and social links #}
+{% block secondHeader %}
+{% if request.get['product_id'] %}
+    <div class="list-wrapper switch-head-bar advanced-controller {{product_id ? 'with-normal-head' : ''}}">
+        <div class="content-inner">
+            <div class="switch-component">
+                {# social-links #}
+                <div>
+
+                    <ul class="social">
+                        <li>
+                            <a href="{{ getFrontLinkWithDomain('product/product', {'product_id': request.get['product_id']} ) }}" target="_blank">
+                                <i class='fa fa-eye fa-lg position-left'></i> {{ lang('text_preview') }}
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ link('marketplace/app', 'id=26') }}">
+                                <i class='fab fa-facebook fa-lg position-left'></i> {{ lang('text_promote') }}
+                            </a>
+                        </li>
+                        {% if online_courses['installed'] and online_courses['enabled'] %}
+                        <li>
+                            <a href="{{ link('module/online_courses/insert', 'product_id=' ~ request.get['product_id']) }}">
+                                <i class='fa fa-book fa-lg position-left'></i> {{ lang('text_online_courses') }}
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% if isDropna %}
+                        <li>
+                            <a href="{{ dropna_url }}" target="_blank">
+                                <i class='fa fa-eye fa-lg position-left'></i> {{ lang('text_view_on_dropna') }}
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#">
+                                <i class='fab fa-facebook fa-lg position-left'></i> {{ lang('text_fb_ad') }}
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock secondHeader %}
+{# second header for form mode switch and social links #}
+
+
+{% block content %}
+
+    {#
+        // in create and update product u can use "simble" and "advanced" classes
+        // simble: only shows in simble mode and hide in advanced mode
+        // advanced: only shows in advanced mode and hide in simble mode
+     #}
+
+    <div class="page-loader">
+        <div class="blocks">
+            <div class="block orange"></div>
+            <div class="block blue"></div>
+        </div>
+    </div>
+
+    {% include "catalog/product/modals/modals.expand" %}
+
+    {#  Notify me when available App  #}
+    {% if product_notify_me and request.get['product_id'] %}
+        <div id="product_notify_me" style="display: none" class="alert alert-info alert-styled-left alert-bordered">
+            <button type="button" class="close" data-dismiss="alert"><span>×</span><span class="sr-only">Close</span></button>
+            {{ lang('prdcut_notify_me_wait') }}
+        </div>
+    {% endif %}
+
+    <section class="list-wrapper create-product-page">
+        <div class="content-inner">
+            <form class="combined_inputs_form" action="{{ links['submit'] }}">
+                {# duplicate name and desc data hidden input #}
+                <input type="hidden" id="duplicate_hidden_input" name="duplicate" value="0">
+                {# simble and advansed hidden field #}
+                <input type="hidden" id="mode_hiddeen_input"  name="is_simple" value="{{is_simple ? 1 : 0}}">
+                {# simble and advansed hidden field #}
+
+                {# Store ID hideen field #}
+                <input type="hidden" name="product_store[]" value="{{ default_store_id }}">
+                {# /Store ID hideen field #}
+
+                {# start simple area #}
+                <div class="panel panel-flat simple-area pt-25">
+                    <div class="panel-body row">
+                     <!-- start trips  -->
+                            {% if isTrip %}
+                            {% include "catalog/product/forms/trip_details.expand" %}
+                            {% endif %}
+                            <!-- end trips -->
+                        <div class="col-12 col-md-6">
+                           
+                             {% if not isTrip %}
+                            <!-- Name and Description : start -->
+                            {% include "catalog/product/forms/description.expand" %}
+                            <!-- Name and Description : End -->
+                            {% endif %}
+
+                            <!-- Price : start -->
+                            {% include "catalog/product/forms/pricing.expand" %}
+                            <!-- Price : End -->
+
+                            <div class="advanced">
+                                <!-- product Availability : start -->
+                                {% include "catalog/product/forms/availability.expand" %}
+                                <!-- product Availability : End -->
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <!-- Images panel : Start -->
+                            {% if module_wk_dropship_status is defined and module_wk_dropship_status %}
+                            <input type="hidden" value="{{ warehouse_id }} " name="warehouse_id" />
+                            {% endif %}
+                            <!-- Images panel : Start -->
+
+                            <!-- Images panel : Start -->
+                            {% include "catalog/product/forms/images.expand" %}
+                            <!-- Images panel : End -->
+                        </div>
+                    </div>
+                </div>
+                {# end simple area #}
+
+                {# start advanced area #}
+                <div class="advanced">
+                  
+                    <!-- Video panel : Start -->
+                    {% if product_video_links_installed is defined and product_video_links_installed %}
+                    {% include "catalog/product/forms/video.expand" %}
+                    {% endif %}
+                    <!-- Video panel : End -->
+                    <!-- start fit and shop -->
+                    {% if is_installed_fit_and_shop %}
+                    {% include "catalog/product/forms/fit_and_shop.expand" %}
+                    {% endif %}
+                    <!-- end fit and shop -->
+                    <!-- Pricing Details panel : Start -->
+                    {% include "catalog/product/forms/pricing_details.expand" %}
+                    <!-- Pricing Details : End -->
+
+                    <!-- Inventory panel : Start -->
+                    {% include "catalog/product/forms/inventory.expand" %}
+                    <!-- Inventory panel : End -->
+
+                    <!-- linking : start -->
+                    {% include "catalog/product/forms/linking.expand" %}
+                    <!-- linking : End -->
+
+                    <!-- product_bundles : start -->
+                    {% if product_bundles_app_status %}
+                        {% include "catalog/product/forms/bundles.expand" %}
+                    {% endif %}
+                    <!-- product_bundles : End -->                    
+
+                    <!-- shipping info : Start -->
+                    {% include "catalog/product/forms/shipping.expand" %}
+                    <!-- shipping info : End -->
+
+                    <!-- Options panel : Start -->
+                    {% include "catalog/product/forms/options.expand" %}
+                    <!-- Options panel : End -->
+
+                    <!-- SKU App panel : Start -->
+                    {% if productsoptions_sku_status %}
+                        {% include "catalog/product/forms/apps/sku.expand" %}
+                    {% endif %}
+                    <!-- SKU App panel : End -->
+
+                    <!-- Preparation : start -->
+                    {% if preparation_period_app_status %}
+                    {% include "catalog/product/forms/preparation.expand" %}
+                    {% endif %}
+                    <!-- Preparation : End -->
+
+                    <!-- Attributes panel : Start -->
+                    {% if advanced_product_attributes_status == true %}
+                    {% include "catalog/product/forms/advanced_attributes.expand" %}
+                    {% endif %}
+                    <!-- Attributes panel : End -->
+
+                    <!-- Specials & Discount panel : Start -->
+                    {% include "catalog/product/forms/specials_discounts.expand" %}
+                    <!-- Specials & Discount panel : End -->
+
+                    <!-- reward : start -->
+                    {% if reward_points_app_status %}
+                    {% include "catalog/product/forms/reward.expand" %}
+                    {% endif %}
+                    <!-- reward : End -->
+
+                    <!-- Auction App panel : Start -->
+                    {% if auctionModuleEnabled %}
+                        {% include "catalog/product/forms/apps/auction.expand" %}
+                    {% endif %}
+                    <!-- Auction App panel : End -->
+
+                    <!-- SEO panel : Start -->
+                    {% include "catalog/product/forms/seo.expand" %}
+                    <!-- SEO panel : End -->
+
+                    {% if gold_pricing %}
+                        <!-- Gold App panel : Start -->
+                        {% include "catalog/product/forms/pricing_gold.expand" %}
+                        <!-- Gold App: End -->
+                    {% endif %}
+
+                    <!-- printing_document : Start -->
+                    {% if printing_document and printing_document == true %}
+                        {% include "catalog/product/forms/apps/printing_document.expand" %}
+                    {% endif %}
+                    <!-- printing_document : End -->
+
+                    {# Curtain Seller #}
+                    {% if curtain_seller is defined and curtain_seller['isEnabled'] == true %}
+                        {% include "catalog/product/forms/apps/curtain_seller.expand" %}
+                    {% endif %}
+                    {# /Curtain Seller #}
+
+                    <!-- Pricing/meter panel : Start -->
+                    {% if price_per_meter and price_per_meter == true %}
+                        {% include "catalog/product/forms/apps/pricing_meter.expand" %}
+                    {% endif %}
+                    <!-- Pricing/meter panel : End -->
+
+                    <!-- Data panel : Start -->
+                    {% include "catalog/product/forms/affilate.expand" %}
+                    <!-- Data panel : End -->
+
+                    <!-- Dedicated domains App panel : Start -->
+                    {% if dedicatedDomains['status'] == true %}
+                        {% include "catalog/product/forms/apps/dedicated_domains.expand" %}
+                    {% endif %}
+                    <!-- Dedicated domains App panel : End -->
+
+                    <!-- Product designer App panel : Start -->
+                    {% if pdModuleStatus %}
+                        {% include "catalog/product/forms/apps/product_designer.expand" %}
+                    {% endif %}
+                    <!-- Product designer App panel : End -->
+
+                    <!-- Printful integrations panel : Start -->
+                    {% if printful and printful['status'] == 1 %}
+                        {% include "catalog/product/forms/apps/printful.expand" %}
+                    {% endif %}
+                    <!-- Printful integrations panel : End -->
+
+                    <!-- Sales Booster : Start -->
+                    {% if sales_booster and sales_booster == true %}
+                        {% include "catalog/product/forms/apps/sales_booster.expand" %}
+                    {% endif %}
+                    <!-- Sales Booster : End -->
+
+                    <!-- Prize Draw panel : Start -->
+                    {% if prize_draw_status %}
+                        {% include "catalog/product/forms/apps/prize_draw.expand" %}
+                    {% endif %}
+                    <!-- Pricing/meter panel : End -->
+
+                    <!-- Product classification App panel : Start -->
+                    {% if pcModuleStatus %}
+                        {% include "catalog/product/forms/apps/product_classification.expand" %}
+                    {% endif %}
+                    <!-- Product classification App panel : End -->
+
+                    <!-- Product classification App panel : Start -->
+                    {% if is_cardless_app_installed %}
+                        {% include "catalog/product/forms/apps/cardless.expand" %}
+                    {% endif %}
+                    <!-- Product classification App panel : End -->
+
+                    {%
+                        if
+                        ( products_notes_app_status ) and
+                        ( config('products_notes')['internal_notes'] or config('products_notes')['general_use'] )
+                    %}
+                        <!-- notes panel : Start -->
+                        {% include "catalog/product/forms/notes.expand" %}
+                        <!-- notes panel : End -->
+                    {% endif %}
+
+                    <!-- Seller Notes : Start -->
+                    {% if multiseller_installed == TRUE %}
+                    {% include "catalog/product/forms/seller_notes.expand" %}
+                    {% endif %}
+                    <!-- Seller Notes : End -->
+
+
+                    {#  Check if Stock Forecasting App installed and enabled #}
+                    {% if stock_forecasting_installed %}
+                        {% include "catalog/product/forms/stock_forecasting.expand" %}
+                    {% endif %}
+                    
+                </div>
+                {# end simple area #}
+
+                <div class="advanced-controller">
+                    <div class="">
+                        {# switch component #}
+                        <label class="theme-btn secondary-btn no-margin">
+                            {% if product_id %}
+                            <input type="checkbox" class="hide advanced-guide" {{is_simple ? '' : 'checked'}}>
+                            {% else %}
+                            <input type="checkbox" class="hide advanced-guide" {{config('enable_advanced_mode') ? 'checked' : ''}}>
+                            {% endif %}
+                            
+                            <span class="switch-title switch-enabled">
+                                {{lang("simple_view")}}
+                            </span>
+                            <span class="switch-title switch-disabled">
+                                {{lang("advanced_view")}}
+                            </span>
+                            <i class="fas fa-chevron-down reverce"></i>
+                        </label>
+                    </div> 
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- Modal -->
+    <div class="modal fade prod-mode-modal" id="mode_modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <form class="mode-form modal-content">
+                <div class="head">
+                    <p class="title">
+                        {{lang('switch_mode_title')}}
+                    </p>
+                    <button type="button" class="close-modal" data-dismiss="modal" aria-label="Close">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <p class="sub-title">
+                    {{lang('switch_mode_subtitle')}}
+                </p>
+                <div class="modes">
+                    <label class="mode">
+                        <input type="radio" class="hide" name="enable_advanced_mode" value="0" checked>
+                        <div class="info">
+                            <i class="fas fa-check"></i>
+
+                            <img src="view/assets/images/gift.svg" alt="">
+                            <p class="mode-title">
+                                {{lang('simble_mode_title')}}
+                            </p>
+                            <p class="mode-content">
+                                {{lang('simble_mode_content')}}
+                            </p>
+                        </div>
+                    </label>
+                    <label class="mode">
+                        <input type="radio" class="hide" name="enable_advanced_mode" value="1">
+                        <div class="info">
+                            <i class="fas fa-check"></i>
+                        
+                            <img src="view/assets/images/connectivity.svg" alt="">
+                            <p class="mode-title">
+                                {{lang('advanced_mode_title')}}
+                            </p>
+                            <p class="mode-content">
+                                {{lang('advanced_mode_content')}}
+                            </p>
+                        </div>
+                    </label>
+                </div>
+                <div class="btns-row">
+                    <p class="mode-hint">
+                        {{lang('mode_hint')}}
+                        <a href="{{ link('setting/store_products') }}" target="_blank">
+                            {{lang('mode_status_link')}}
+                        </a>
+                    </p>
+                    <button class="button btn-primary">
+                        {{lang('confirm')}}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% include "catalog/product/forms/create_category.expand" %}
+{% include "catalog/product/forms/create_brand.expand" %}
+
+	<!-- downgrade Plan Modal -->
+	<div class="modal fade upgrade-plan-modal downgrade-plan-confirm center-modal" id="duplicate_confirm" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content text-start">
+				<p class="title font-16">
+					{{lang('duplicate_modal_title')}}
+				</p>
+				<p class="info-content font-14 s-bold mb-10">
+					{# {{lang('duplicate_modal_content')}} #}
+                    {{lang_printf('duplicate_modal_content', first_language_name)}}
+				</p>
+				<p class="info-content font-14 s-bold">
+					{# {{lang('duplicate_modal_content2')}} #}
+                    {{lang_printf('duplicate_modal_content2', first_language_name)}}
+				</p>
+                <div class="btns text-end">
+                    <button class="theme-btn gray-white-empty s-bold"  data-dismiss="modal">
+                        {{lang("button_cancel")}}
+                    </button>
+                    &nbsp;
+                    <button class="theme-btn primary-btn s-bold" data-target="">
+                        {{lang("duplicate_modal_btn")}}
+                    </button>
+                </div>
+			</div>
+		</div>
+	</div>
+
+{% endblock %}
+
+{# script end block use to put ur js at the end of base body #}
+{% block endScripts %}
+    <script>
+        $('.categories-autocomplete').on('change', function (e) {
+            $('.categories-autocomplete').val($(this).val()).trigger('change.select2')
+        });
+    </script>
+    <script>
+        // set the decimal number places from setting (used in form.js)
+        let currency_decimal_places = '{{ currency_decimal_places }}';
+
+        // toggle advance options function
+        let layoutStatus = function(el) {
+            if(el.is(':checked')) {
+                $("#mode_hiddeen_input").val(0)
+                el.addClass('active');
+                $('.advanced').fadeIn(0);
+                $('.simble').fadeOut(0);
+                $('.price-col').addClass('w-100');
+            } else {
+                $("#mode_hiddeen_input").val(1)
+                el.removeClass('active');
+                $('.advanced').fadeOut(0);
+                $('.simble').fadeIn(0);
+                $('.price-col').removeClass('w-100');
+            }
+        }
+        // toggle advance options function based on switch status in first render
+        layoutStatus($('.advanced-controller input'));
+        // toggle advance options  function on switch change
+        $('.advanced-controller input').change(function() {
+            layoutStatus($(this));
+        });
+
+        // remove validation error on change
+        $('input').on('keydown', function(e) {
+            $(this).parents('.has-error').removeClass('has-error').find('.help-block').html('');
+        });
+
+        /*
+            // advanced-guide
+            in first use to create product mode switcher button,
+            there's a guide modal shows after first 3 changes to learn user how to controle the default switch mode from settings.
+        */
+        let statusCount = "{{config('switch_mode_counter')}}";
+        $('.advanced-guide').change(function(event) {
+            if(statusCount <= 3) {
+                statusCount++;
+
+                $.ajax({
+                    url: '{{ link('catalog/product/updateSwitchModeCounter') }}',
+                    type: 'post',
+                    data: 'switch_mode_counter=' + statusCount,
+                });
+            };
+            if(statusCount == 3) {
+                $('#mode_modal').modal({
+                    backdrop: 'static',
+                    keyboard: false,
+                    show: true
+                });
+            }
+        });
+        // user can set default mode value from guide popup
+        $('.mode-form').submit(function(e) {
+            e.preventDefault()
+            $.ajax({
+                url: '{{ link('catalog/product/updateProductDefaultMode') }}',
+                type: 'post',
+                data: $('.mode-form').serialize(),
+                success: function (resp) {
+                    if($('.mode-form input[value="0"]').is(":checked")) {
+                        $('.advanced-controller input').prop('checked', false)
+                    } else {
+                        $('.advanced-controller input').prop('checked', true)
+                    }
+                    $('#mode_modal').modal('hide');
+                    layoutStatus($('.advanced-controller input'));
+                },
+                error: function(err) {
+                    alert('error')
+                }
+            });
+        });
+    </script>
+    
+    {# description component #}
+    <script>
+        $('.with-limit').bind('input propertychange', function() {
+            $($(this).data('length')).html($(this).val().length)
+        });
+        $('#duplicate_confirm .primary-btn').on('click', function() {
+            $(this).addClass('load-btn')
+            $('#duplicate_hidden_input').val('1');
+            $('.combined_inputs_form').submit();
+        })
+    </script>
+
+    {# availability component #}
+    <script>
+        // toggle availability date function
+        let toggleDate = function(element) {
+            if(element.is(':checked')) {
+                $('#date_available-group').fadeOut(0);
+            } else {
+                $('#date_available-group').fadeIn(0)
+            }
+        };
+        // toggle availability date in first render
+        toggleDate($('#status-group input'));
+        // toggle availability date when availability status change
+        $('#status-group input').change(function() {
+            toggleDate($(this));
+        });
+
+        // limit reached status
+        $(document).on('change', '.limit-reached-status', function() {
+            $('#upgrade_plan_modal').modal('show')
+            console.log($('#upgrade_plan_modal'))
+            $(this).prop('checked', false);
+        })
+    </script>
+
+    {# inventory component #}
+    <script>
+        // toggle quantity inputs function
+        let toggleQuantity = function(element) {
+            if(element.is(':checked')) {
+                $('.quantity-el, #stock_status-group, #subtract_group').fadeOut(0);
+                $('.unlimited-quantity-group input').prop('checked', true);
+            } else {
+                $('.quantity-el, #stock_status-group, #subtract_group').fadeIn(0);
+                $('.unlimited-quantity-group input').prop('checked', false);
+            }
+        };
+        // toggle quantity inputs in first render
+        toggleQuantity($('.unlimited-quantity-group input'));
+        // toggle quantity inputs when quantity status change
+        $('.unlimited-quantity-group input').change(function() {
+            toggleQuantity($(this));
+        });
+
+        // toggle quantity per order inputs function
+        let toggleOrderQuantity = function(element) {
+            if(element.is(':checked')) {
+                $('#maximum-group, #minimum-group').fadeIn(0)
+            } else {
+                $('#maximum-group, #minimum-group').fadeOut(0);
+            }
+        };
+        // toggle quantity per order inputs in first render
+        toggleOrderQuantity($('#order-quantity-group input'));
+        // toggle quantity per order inputs when quantity per order status change
+        $('#order-quantity-group input').change(function() {
+            toggleOrderQuantity($(this));
+        });
+
+        // reset quantitiy value when user check unlimited quantity checkbox
+        $('.unlimited-quantity-group input').change(function() {
+            if($(this).is(':checked')) {
+                $('.quantity-el input').val(1)
+            }
+        });
+
+        // reset quantitiy value when user change unlimited quantity checkbox
+        $('.quantity-el').on('change', function() {
+            $('.quantity-el input').val($(this).find('input').val());
+        });
+
+
+        $("#quantity-per-order-option").change(function () {
+            var ischecked = $(this).is(':checked');
+            if (!ischecked) {
+                $('.quantity-per-order-minimum-block #minimum').val(0);
+                $('.quantity-per-order-maximum-block #maximum').val(0);
+            }
+
+        });
+
+
+
+
+    </script>
+
+    {# pricing details component #}
+    <script>
+        // calc profit function
+        let calcProfit = function() {
+            let price = parseFloat($('#price').val());
+            let cost = parseFloat($('#cost_price').val());
+            if(price.length == 0 || cost.length == 0 || isNaN(price) || isNaN(cost)) {
+                $("#profit").val('')
+            } else {
+                $("#profit").val(price - cost)
+            }
+        }
+        // calc profit in render
+        calcProfit();
+        // calc profit on change
+        $('#price, #cost_price').on('input', function() {
+            calcProfit()
+        })
+    </script>
+
+    {# pricing component #}
+    {% if base.currentplan == 3 %}
+        <script>
+            $(document).on('click', "#add_discount", function() {
+                setQuickDiscount()
+            })
+        </script>
+    {% else %}
+        <script>
+            $("#add_discount").click(function() {
+                addSpecialOrDiscount(this)
+            })
+        </script>
+    {% endif %}
+    
+    <script>
+        var setQuickDiscount = function() {
+            if($('tr[data-type="quick_discount"]').length == 0) {
+                $("#add_discount").addClass('plan-lock-btn')
+                $("#discount_title").append(`<span class="locked-label"><i class="fas fa-lock"></i>{{lang('text_upgrade')}}</span>`)
+                addSpecialOrDiscount(_, "quick_discount");
+            }
+        }
+        $(document).ready(function() {
+            // add discount in discounts table on change in quick discount
+            $(document).on("change", '#discount_price', function() {
+                if($('tr[data-type="quick_discount"]').length == 0) {
+                    addSpecialOrDiscount(_, "quick_discount");
+                    $('tr[data-type="quick_discount"] input[name*="[price]"]').val($(this).val());
+                    $("#add_discount").addClass('plan-lock-btn')
+                    $("#discount_title").append(`<span class="locked-label"><i class="fas fa-lock"></i>{{lang('text_upgrade')}}</span>`)
+                } else {
+                    $('tr[data-type="quick_discount"] input[name*="[price]"]').val($(this).val());
+                }
+            });
+            // set quick discount input value on change in discout table price input
+            $(document).on('change', 'tr[data-type="quick_discount"] input[name*="[price]"]', function() {
+                $('#discount_price').val($(this).val())
+            });
+            // reset quick discount input value and uncheck quick discount checkbox when delete quick discout row in discounts table
+            $(document).on('click', 'tr[data-type="quick_discount"] .btn-danger', function() {
+                $('#discount_price').val("")
+                $("#add_discount").removeClass('plan-lock-btn')
+                $("#discount_title .locked-label").remove()
+            });
+        })
+
+    </script>
+
+    {# shipping component #}
+    <script>
+        // toggle shipping inputs function
+        let toggleShip = function(element) {
+            if(element.is(':checked')) {
+                $('.ship-inputs').fadeIn(0)
+            } else {
+                $('.ship-inputs').fadeOut(0);
+            }
+        };
+        // toggle shipping inputs in first render
+        toggleShip($('#add-dimension-group input'));
+        // toggle shipping inputs when shipping status change
+        $('#add-dimension-group input').change(function() {
+            toggleShip($(this));
+        });
+    </script>
+{% endblock %}
+
+{% block scripts %}
+
+    {{ parent() }}
+
+    <style>
+        #panel-options .optionsResults, #panel-options .select2 {
+            width: 80% !important;
+        }
+
+        #panel-options .select2 .select2-selection__choice {
+            display: none !important;
+        }
+
+        #panel-options .optionsResults .selection {
+            width: 100% !important;
+            display: block !important;
+            background-color: #455A64;
+            color: #fff;
+            border-radius: 3px;
+            cursor: default;
+            float: right;
+            margin-left: 2px;
+            margin-top: 2px;
+            padding: 7px 12px;
+        }
+
+        #panel-options .optionsResults .selection .selection-remove {
+            cursor: pointer;
+            float: left;
+            font-size: 14px;
+            margin-top: 3px;
+            line-height: 1;
+            margin-right: 7px;
+            opacity: 0.75;
+            filter: alpha(opacity=75);
+        }
+
+        #barcode_image {
+            width: 170px;
+            height: 120px;
+        }
+    </style>
+    <script src="view/javascript/pages/catalog/product/summernote-video-plugin/summernote-video-plugin.js"></script>
+    <script>
+
+        locales['options'] = {
+            'entry_required': '{{ lang('entry_required') }}',
+            'text_yes': '{{ lang('text_yes') }}',
+            'text_no': '{{ lang('text_no') }}',
+            'entry_option_value': '{{ lang('entry_option_value') }}',
+            'entry_quantity': '{{ lang('entry_quantity') }}',
+            'entry_subtract': '{{ lang('entry_subtract') }}',
+            'entry_price': '{{ lang('entry_price') }}',
+            'entry_price_diff': '{{ lang('entry_price_diff') }}',
+            'entry_option_points': '{{ lang('entry_option_points') }}',
+            'entry_weight': '{{ lang('entry_weight') }}',
+            'entry_weight_diff': '{{ lang('entry_weight_diff') }}',
+            'button_add_option_value': '{{ lang('button_add_option_value') }}',
+            'entry_image': '{{ lang('entry_image') }}',
+            'button_remove': '{{ lang('button_remove') }}',
+        };
+
+        locales['attributes'] = {};
+        locales['button_remove'] = '{{ lang('button_remove') }}';
+        locales['all_domains'] = '{{ lang('all_domains') }}';
+        locales['button_add_option_value'] = '{{ lang('button_add_option_value') }}';
+        locales['select_brand'] = '{{ lang('entry_select_brand') }}';
+        locales['select_model'] = '{{ lang('entry_select_model') }}';
+
+        var poip_installed = '{{ poip_installed }}';
+
+        var images = JSON.parse('{{ product_images|json_encode }}');
+
+        var rotate360Images = JSON.parse('{{ rotate360_images|json_encode }}');
+
+        /**
+        * check the type of the image which uploading.
+        *  VALUES : 'product_image' (default) |  'rotate360_image' (rotate360_module)
+        */
+        var imageType = "product_image";
+
+        var uploadedFiles = [];
+
+        var imagesCount = 0;
+
+        var languages = JSON.parse('{{ languages|json_encode|e('js') }}');
+
+        var dedicatedDomains = JSON.parse('{{ dedicatedDomains|json_encode|e('js') }}');
+
+        var dedicatedDomains = JSON.parse('{{ dedicatedDomains|json_encode|e('js') }}');
+
+        var customerGroups = JSON.parse('{{ customer_groups|json_encode|e('js') }}');
+
+        var pc_brands = JSON.parse('{{ pc_brands|json_encode|e('js') }}');
+
+        var optionValues = JSON.parse('{{ option_values|json_encode|e('js') }}');
+
+        var allOptions = JSON.parse('{{ all_options|json_encode|e('js') }}');
+
+        var languagesFlags = JSON.parse('{{ languageFlags|json_encode|e('js') }}');
+
+        var defaultCurrency = '{{ defaultCurrency }}';
+
+        var text_gram = '{{lang('text_gram')}}';
+
+        var optionKey = '{{ optionKey }}';
+        var optionKey = parseInt(optionKey) + 1;
+
+        var selectedOptionValues = {};
+        var unSelectedOptionValues = {};
+
+        var links = {};
+
+        links['autocomplete'] = '{{ link('catalog/product/lookup') }}';
+        links['categories_autocomplete'] = '{{ link('catalog/category/autocomplete') }}';
+        links['downloads_autocomplete'] = '{{ link('catalog/download/autocomplete') }}';
+        links['products_autocomplete'] = '{{ link('catalog/product/autocomplete') }}';
+        links['manufacturers_autocomplete'] = '{{ link('catalog/manufacturer/autocomplete') }}';
+        links['options_autocomplete'] = '{{ link('catalog/option/autocomplete') }}';
+        links['attributes_autocomplete'] = '{{ link('catalog/attribute/groupedAutocomplete') }}';
+        
+        links['advanced_attributes_autocomplete'] = "{{ link('module/advanced_product_attributes/groupedAutocomplete') }}";
+        links['get_advanced_attribute_values'] = "{{ link('module/advanced_product_attributes/getAttributeValues') }}";
+
+        links['get_brand_models'] = '{{ link('product_classification/brand/get_models_by_brand') }}';
+        links['get_model_years'] = '{{ link('product_classification/model/get_years_by_model') }}';
+
+        links['newOption'] = '{{ link('catalog/option/insert') }}';
+
+        locales['text_disabled'] = '{{ lang('text_disabled') }}';
+        locales['lbl_switch_yes'] = '{{ lang('lbl_switch_yes') }}';
+        locales['lbl_switch_no'] = '{{ lang('lbl_switch_no') }}';
+        locales['lbl_switch_required'] = '{{ lang('lbl_switch_required') }}';
+        locales['lbl_switch_optional'] = '{{ lang('lbl_switch_optional') }}';
+        locales['lbl_option_values_button_help'] = '{{ lang('lbl_option_values_button_help') }}';
+
+        function ngDoCheck(){
+            var x = $(document).find('.modal.show').length;
+            if(!x) {$('body').removeClass('modal-open')} else {return};
+          }
+
+        jQuery(function () {
+            var imageManagerButton = function (context) {
+                var ui = $.summernote.ui;
+
+                // create button
+                var button = ui.button({
+                    contents: '<i class="note-icon-picture"/>',
+                    tooltip: '{{ lang('text_image') }}',
+                    click: function (e) {
+                        // invoke insertText method with 'hello' on editor module.
+                        //context.invoke('editor.insertText', 'hello');
+                        var textareael = $(this).closest('.form-group').find('textarea.summernote-fixed-height').attr('name');
+                        $.startImageManager(textareael, null, "summernoteImageManagerCallback", 'callerName');
+                        $('body').removeClass('modal-open');
+                    }
+                });
+
+                return button.render();   // return button as jquery object
+            }
+
+              
+            // Default initialization
+            jQuery('.summernote-fixed-height').summernote({
+                height: 100,
+                callbacks: {
+                    onChange: function(contents, $editable) {
+                        $($editable).find("p").find("img").css("max-width", "100%")
+                        $($editable).find(".block-tabs").find("iframe").css("height", "100%")
+                        $(this).parents('.has-error').removeClass('has-error').find('.help-block').html('')
+                    }
+                },
+
+                {% if base.lang == 'ar' %}
+				lang: "ar-AR",
+			    {% endif %}
+
+                toolbar: [
+                    ['style', ['style']],
+                    ['font', ['bold', 'underline', 'clear']],
+                    ['fontname', ['fontname']],
+                    ['fontsize', ['fontsize']],
+                    ['color', ['color']],
+                    ['para', ['ul', 'ol', 'paragraph']],
+                    ['table', ['table']],
+                    // ['insert', ['link', 'imagemanager', 'video']],
+                    ['insert',['ltr','rtl']],
+                    ['insert', ['link', 'imagemanager', 'videoAttributes','emoji','codeview']],
+                    ['view', ['fullscreen']],
+                    //['mybutton', ['myVideo']]
+                    //['insert', ['emoji']],
+                    //['tool', ['undo', 'redo']]
+                ],
+                buttons: {
+                    imagemanager: imageManagerButton
+                    //myVideo: youtuvevideo
+                  },
+                popover: {
+                    image: [
+
+                        ['imagesize', ['imageSize100', 'imageSize50', 'imageSize25']],
+                        ['float', ['floatLeft', 'floatRight', 'floatNone']],
+                        ['remove', ['removeMedia']],
+                        ['custom', ['imageAttributes']],
+                    ],
+                },
+                imageAttributes:{
+                    icon:'<i class="note-icon-pencil"/>',
+                    removeEmpty:true, // true = remove attributes | false = leave empty if present
+                    disableUpload: true, // true = don't display Upload Options | Display Upload Options
+                    disableAttributes: true,
+                    disableLink: false,
+                    disableImage: false,
+                }
+            });
+
+            $(".touchspin-quantity-control").TouchSpin({
+                min: 0,
+                max: Infinity,
+                initval: 1
+            });
+
+            $(".touchspin-weight-control").TouchSpin({
+                'postfix': text_gram,
+                min: 0,
+                max: Infinity,
+                decimals: 3,
+                initval: 0.01,
+                step: 0.01
+            });
+
+            $(".touchspin-minus-control").TouchSpin({
+                min: -Infinity,
+                max: Infinity,
+                initval: 0
+            });
+
+            $(".touchspin-money-minus").TouchSpin({
+                'postfix': defaultCurrency,
+                min: -Infinity,
+                max: Infinity,
+                initval: 0,
+                decimals: 3,
+                step: 0.01
+            });
+			
+            $(".touchspin-money-nopostfix").TouchSpin({
+                min: -Infinity,
+                max: Infinity,
+                initval: 0,
+                decimals: 3,
+                step: 0.01
+            });
+
+            $('#barcode').change(function () {
+
+                var $barcode = $(this).val();
+
+                $.ajax({
+                    url: '{{ link('catalog/product/barcode') }}',
+                    method: 'POST',
+                    dataType: 'JSON',
+                    data: {barcode: $barcode},
+                    success: function (response) {
+                        if (response['status'] == 'success') {
+                            if (!response['barcode']) {
+                                $('#barcode_image').hide();
+                            } else {
+                                $('#barcode_image').show();
+                                $('#barcode_image').attr('src', 'data:image/png;base64,' + response['barcode']);
+                            }
+                        }
+                    }
+                });
+            });
+        });
+
+        
+
+    </script>
+
+
+    
+    <script src="view/javascript/pages/catalog/product/form.js?bn={{ BuildNumber }}"></script>
+    
+    {% if advanced_product_attributes_status == true %}
+    <script src="view/javascript/pages/catalog/product/advanced_product_attributes.js?bn={{ BuildNumber }}"></script>
+    {% endif %}
+
+    <script>
+        function changeStatus(checkbox) {
+            var self = $(checkbox);
+            var switch_status = self.siblings('.switchery-status');
+
+            if (self.is(':checked')) {
+                switch_status.html("{{ lang('text_enabled') }}");
+            }
+            else {
+                switch_status.html("{{ lang('text_disabled') }}");
+            }
+        }
+
+        function changeStatusYesNo(checkbox) {
+            var self = $(checkbox);
+            var switch_status = self.siblings('.switchery-status');
+
+            if (self.is(':checked')) {
+                switch_status.html("{{ lang('lbl_switch_yes') }}");
+            }
+            else {
+                switch_status.html("{{ lang('lbl_switch_no') }}");
+            }
+        }
+
+        function changeStatusRequired(checkbox) {
+            var self = $(checkbox);
+            var switch_status = self.siblings('.switchery-status');
+
+            if (self.is(':checked')) {
+                switch_status.html("{{ lang('lbl_switch_required') }}");
+            }
+            else {
+                switch_status.html("{{ lang('lbl_switch_optional') }}");
+            }
+        }
+    </script>
+
+    {#  Notify me when available App, auto notify customers if product became available  #}
+    {% if product_notify_me and request.get['product_id'] %}
+        <script type="text/javascript">
+            var product_id = "{{  request.get['product_id'] }}";
+            var firstAjax = true;
+
+            $( document ).ajaxComplete(function() {
+                if(parseInt($('#quantity').val()) > 0 && firstAjax){
+                    firstAjax = false;
+                    $('#product_notify_me').fadeIn();
+                    $.ajax({
+                        url: '{{ link('module/product_notify_me/dtSendNotify') }}',
+                        type: 'post',
+                        data: {pid: [product_id]},
+                        success: function(resp){
+                            $('#product_notify_me').fadeOut();
+                        }
+                    });
+                }
+            });
+        </script>
+    {% endif %}
+    {#  ############  #}
+
+    <script src="view/javascript/pages/catalog/product/options.js?bn={{ BuildNumber }}"></script>
+    <script src="view/javascript/pages/catalog/product/images.js?bn={{ BuildNumber }}"></script>
+    <script src="view/javascript/pages/catalog/product/rotate360.js?bn={{ BuildNumber }}"></script>
+
+{% endblock %}

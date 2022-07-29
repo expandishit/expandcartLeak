@@ -1,0 +1,511 @@
+<modification>
+	<id>Autocomplete Address Lookup</id>
+	<version>2</version>
+	<vqmver>2.3.2</vqmver>
+	<author>Welford Media</author>
+
+        <!--Add function to get coords -->
+	<file name="catalog/view/theme/*/template/common/header.tpl">
+		<operation>
+			<search position="before"><![CDATA[<?php foreach ($scripts as $script) { ?>]]></search>
+			<add><![CDATA[
+                            <?php if ($this->config->get('config_autocomplete_address_enable')) { ?>
+                                <script type="text/javascript" src="catalog/view/javascript/jquery/jquery.geocomplete.min.js"></script>
+                                <script src="//maps.googleapis.com/maps/api/js?key=AIzaSyAMHkjdQvUVxxzT27VvQ6wfjzhSm4Z3c_o&sensor=false&amp;libraries=places"></script>
+                            <?php } ?>
+                        ]]></add>
+		</operation>
+	</file>
+        <!-- Account Register -->
+	<file name="catalog/language/english/account/register.php">
+		<operation>
+			<search position="after"><![CDATA[<?php]]></search>
+			<add><![CDATA[
+                            $_['text_auto_fill']      = 'Auto Fill:';
+                            $_['text_type_address']   = 'Type an address:';
+                        ]]></add>
+		</operation>
+	</file>
+	<file name="catalog/language/arabic/account/register.php">
+		<operation>
+			<search position="after"><![CDATA[<?php]]></search>
+			<add><![CDATA[
+                            $_['text_auto_fill']      = 'العنوان من الخرائط:';
+                            $_['text_type_address']   = 'اكتب عنوان';
+                        ]]></add>
+		</operation>
+	</file>
+	<file name="catalog/controller/account/register.php">
+		<operation>
+			<search position="after"><![CDATA[$this->data['entry_firstname'] = $this->language->get('entry_firstname');]]></search>
+			<add><![CDATA[
+                            $this->data['text_auto_fill'] = $this->language->get('text_auto_fill');
+                            $this->data['text_type_address'] = $this->language->get('text_type_address');
+                        ]]></add>
+		</operation>
+	</file>
+	<file name="catalog/view/theme/*/template/account/register.tpl">
+		<operation>
+			<search position="before"><![CDATA[<?php echo $footer; ?>]]></search>
+			<add><![CDATA[
+                            <?php if ($this->config->get('config_autocomplete_address_enable')) { ?>
+                                <script type="text/javascript">
+                                var CurrentLocation = "";
+                                function getLocation() {
+                                    if (navigator.geolocation) {
+                                            navigator.geolocation.getCurrentPosition(function(position){
+                                                CurrentLocation = position.coords.latitude + "," + position.coords.longitude;
+                                                $("#geocomplete").geocomplete("find", position.coords.latitude + "," + position.coords.longitude)
+                                                $("#geocomplete").val(position.coords.latitude + "," + position.coords.longitude);
+                                            });
+                                        } else {
+                                            alert("Geolocation is not supported by this browser.");
+                                    }
+                                }
+                                $(function(){
+                                  $("#btnGetCurrentLocation").click(function(){
+                                      getLocation();
+                                  });
+
+                                    $("#geocomplete").geocomplete({
+                                      map: ".map_canvas",
+                                      details: "form",
+                                      detailsAttribute: "data-form",
+                                      mapOptions: {
+                                        zoom: 10,
+                                        scrollwheel: true
+                                      },
+                                      types: ["geocode", "establishment"]
+                                    }).bind("geocode:result", function(event, result) {
+                                        if (typeof result.address_components[6] != 'undefined' && (result.address_components[6]['long_name'] !== result.address_components[2]['long_name']) && result.address_components[6]['types']['0'] === 'postal_town') {
+                                            $('input[name=\'address_2\']').val(result.address_components[2]['long_name']);
+                                            $('input[name=\'city\']').val(result.address_components[6]['long_name']);
+                                        } else {
+                                            $('input[name=\'address_2\']').val('');
+
+                                            if (typeof result.address_components[2] != 'undefined') {
+                                                $('input[name=\'city\']').val(result.address_components[2]['long_name']);
+                                            } else {
+                                                $('input[name=\'city\']').val('');
+                                            }
+                                        }
+
+                                        if (typeof result.address_components[4] != 'undefined' && typeof result.address_components[5] != 'undefined' && $('input[name=\'postcode\']').val() == '') {
+                                            if (result.address_components[5]['types']['1'] == 'postal_code') {
+                                                $('input[name=\'postcode\']').val(result.address_components[5]['long_name']);
+                                            } else if (result.address_components[4]['types']['1'] == 'postal_code') {
+                                                $('input[name=\'postcode\']').val(result.address_components[4]['long_name']);
+                                            }
+                                        }
+                                        if(CurrentLocation != "")
+                                        {
+                                            $('input[name=\'address_2\']').val(CurrentLocation);
+                                            CurrentLocation = "";
+                                            $('input[name=\'address_2\']').prop("readonly", true);
+                                        }
+                                        else
+                                        {
+                                            $('input[name=\'address_2\']').prop("readonly", false);
+                                        }
+
+
+                                        var data = {
+                                            address: result.address_components
+                                        };
+
+                                        $.ajax({
+                                                url: 'index.php?route=module/autocomplete_address/address',
+                                                type: 'post',
+                                                dataType: 'json',
+                                                data: data,
+                                                beforeSend: function() {
+                                                    $('select[name=\'country_id\']').val('').change();
+
+                                                    setTimeout(function() {
+                                                        $('select[name=\'zone_id\']').val('').change();
+                                                    }, 800);
+                                                },
+                                                complete: function() {
+                                                },
+                                                success: function(data) {
+                                                    if (data.country) {
+                                                        $('select[name=\'country_id\']').val(data.country.country_id).change();
+
+                                                        if (data.zone) {
+                                                            setTimeout(function() {
+                                                                $('select[name=\'zone_id\']').val(data.zone.zone_id).change();
+                                                            }, 800);
+                                                        }
+                                                    }
+                                                }
+                                            });
+                                        });
+                                  });
+                                </script>
+                            <?php } ?>
+                        ]]></add>
+		</operation>
+		<operation>
+			<search position="before" offset="1"><![CDATA[<td><?php echo $entry_company; ?></td>]]></search>
+			<add><![CDATA[
+                            <?php if ($this->config->get('config_autocomplete_address_enable')) {
+                                if ($this->config->get('config_autocomplete_address_enable_ar')) {
+                                    if ($this->config->get('config_autocomplete_address_map_ar')) {
+                                        if ($this->config->get('config_autocomplete_address_map_width_ar') != '') {
+                                            $map_width = $this->config->get('config_autocomplete_address_map_width_ar') . 'px';
+                                        } else {
+                                            $map_width = '763px';
+                                        }
+
+                                        if ($this->config->get('config_autocomplete_address_map_height_ar') != '') {
+                                            $map_height = $this->config->get('config_autocomplete_address_map_height_ar') . 'px';
+                                        } else {
+                                            $map_height = '300px';
+                                        }
+
+                                        echo '<div style="height: ' . $map_height . '; width: ' . $map_width . ';" class="map_canvas"></div>';
+                                    } else {
+                                        echo '<div class="map_canvas"></div>';
+                                    }
+                                    echo '<button id="btnGetCurrentLocation" type="button">Get current location</button>';
+                                    echo '<br />';
+                                    echo '<tr>';
+                                    echo '<td>' . $text_auto_fill . '</td>';
+                                    echo '<td><input style="width:250px;" id="geocomplete" type="text" placeholder="' . $text_type_address . '" /></td>';
+                                    echo '</tr>';
+                               }
+                            } ?>
+                        ]]></add>
+		</operation>
+		<operation>
+			<search position="replace"><![CDATA[<input type="text" name="address_1" value="<?php echo $address_1; ?>" />]]></search>
+			<add><![CDATA[<input <?php if ($this->config->get('config_autocomplete_address_enable')) { ?> data-form="name" <?php } ?> type="text" name="address_1" value="<?php echo $address_1; ?>" />]]></add>
+		</operation>
+		<operation>
+			<search position="replace"><![CDATA[<input type="text" name="postcode"]]></search>
+			<add><![CDATA[<input <?php if ($this->config->get('config_autocomplete_address_enable')) { ?> data-form="postal_code" <?php } ?> type="text" name="postcode"]]></add>
+		</operation>
+	</file>
+        <!-- Checkout Register -->
+        <file name="catalog/language/english/checkout/checkout.php">
+		<operation>
+			<search position="after"><![CDATA[<?php]]></search>
+			<add><![CDATA[
+                            $_['text_auto_fill']      = 'Auto Fill:';
+                            $_['text_type_address']   = 'Type an address:';
+                        ]]></add>
+		</operation>
+	</file>
+	<file name="catalog/language/arabic/checkout/checkout.php">
+		<operation>
+			<search position="after"><![CDATA[<?php]]></search>
+			<add><![CDATA[
+                            $_['text_auto_fill']      = 'العنوان من الخرائط:';
+                            $_['text_type_address']   = 'اكتب عنوان';
+                        ]]></add>
+		</operation>
+	</file>
+	<file name="catalog/controller/checkout/register.php">
+		<operation>
+			<search position="after"><![CDATA[$this->data['entry_firstname'] = $this->language->get('entry_firstname');]]></search>
+			<add><![CDATA[
+                            $this->data['text_auto_fill'] = $this->language->get('text_auto_fill');
+                            $this->data['text_type_address'] = $this->language->get('text_type_address');
+                        ]]></add>
+		</operation>
+	</file>
+	<file name="catalog/view/theme/*/template/checkout/register.tpl">
+		<operation>
+			<search position="before" index="1"><![CDATA[<script type="text/javascript"><!--]]></search>
+			<add><![CDATA[
+                            <?php if ($this->config->get('config_autocomplete_address_enable')) { ?>
+                                <script type="text/javascript">
+                                var CurrentLocation = "";
+                                function getLocation() {
+                                    if (navigator.geolocation) {
+                                            navigator.geolocation.getCurrentPosition(function(position){
+                                                CurrentLocation = position.coords.latitude + "," + position.coords.longitude;
+                                                $("#geocomplete").geocomplete("find", position.coords.latitude + "," + position.coords.longitude)
+                                                $("#geocomplete").val(position.coords.latitude + "," + position.coords.longitude);
+                                            });
+                                        } else {
+                                            alert("Geolocation is not supported by this browser.");
+                                    }
+                                }
+                                $(function(){
+                                  $("#btnGetCurrentLocation").click(function(){
+                                      getLocation();
+                                  });
+                                    $("#geocomplete").geocomplete({
+                                      map: ".map_canvas",
+                                      details: ".right",
+                                      detailsAttribute: "data-form",
+                                      mapOptions: {
+                                        zoom: 10,
+                                        scrollwheel: true
+                                      },
+                                      types: ["geocode", "establishment"]
+                                    }).bind("geocode:result", function(event, result) {
+                                        if (typeof result.address_components[6] != 'undefined' && (result.address_components[6]['long_name'] !== result.address_components[2]['long_name']) && result.address_components[6]['types']['0'] === 'postal_town') {
+                                            $('input[name=\'address_2\']').val(result.address_components[2]['long_name']);
+                                            $('input[name=\'city\']').val(result.address_components[6]['long_name']);
+                                        } else {
+                                            $('input[name=\'address_2\']').val('');
+
+                                            if (typeof result.address_components[2] != 'undefined') {
+                                                $('input[name=\'city\']').val(result.address_components[2]['long_name']);
+                                            } else {
+                                                $('input[name=\'city\']').val('');
+                                            }
+                                        }
+
+                                        if (typeof result.address_components[4] != 'undefined' && typeof result.address_components[5] != 'undefined' && $('input[name=\'postcode\']').val() == '') {
+                                            if (result.address_components[5]['types']['1'] == 'postal_code') {
+                                                $('input[name=\'postcode\']').val(result.address_components[5]['long_name']);
+                                            } else if (result.address_components[4]['types']['1'] == 'postal_code') {
+                                                $('input[name=\'postcode\']').val(result.address_components[4]['long_name']);
+                                            }
+                                        }
+
+                console.log(result.address_components);
+                                        if(CurrentLocation != "")
+                                        {
+                                            $('input[name=\'address_2\']').val(CurrentLocation);
+                                            CurrentLocation = "";
+                                            $('input[name=\'address_2\']').prop("readonly", true);
+                                        }
+                                        else
+                                        {
+                                            $('input[name=\'address_2\']').prop("readonly", false);
+                                        }
+
+                                        var data = {
+                                            address: result.address_components
+                                        };
+
+                                        $.ajax({
+                                                url: 'index.php?route=module/autocomplete_address/address',
+                                                type: 'post',
+                                                dataType: 'json',
+                                                data: data,
+                                                beforeSend: function() {
+                                                    $('select[name=\'country_id\']').val('').change();
+
+                                                    setTimeout(function() {
+                                                        $('select[name=\'zone_id\']').val('').change();
+                                                    }, 800);
+                                                },
+                                                complete: function() {
+                                                },
+                                                success: function(data) {
+                                                    if (data.country) {
+                                                        $('select[name=\'country_id\']').val(data.country.country_id).change();
+
+                                                        if (data.zone) {
+                                                            setTimeout(function() {
+                                                                $('select[name=\'zone_id\']').val(data.zone.zone_id).change();
+                                                            }, 800);
+                                                        }
+                                                    }
+                                                }
+                                            });
+                                        });
+                                  });
+                                </script>
+                            <?php } ?>
+                        ]]></add>
+		</operation>
+		<operation>
+			<search position="before"><![CDATA[<?php echo $entry_company; ?><br />]]></search>
+			<add><![CDATA[
+                            <?php if ($this->config->get('config_autocomplete_address_enable')) {
+                                if ($this->config->get('config_autocomplete_address_enable_cr')) {
+                                    if ($this->config->get('config_autocomplete_address_map_cr')) {
+                                        if ($this->config->get('config_autocomplete_address_map_width_cr') != '') {
+                                            $map_width = $this->config->get('config_autocomplete_address_map_width_cr') . 'px';
+                                        } else {
+                                            $map_width = '470px';
+                                        }
+
+                                        if ($this->config->get('config_autocomplete_address_map_height_cr') != '') {
+                                            $map_height = $this->config->get('config_autocomplete_address_map_height_cr') . 'px';
+                                        } else {
+                                            $map_height = '250px';
+                                        }
+
+                                        echo '<div style="height: ' . $map_height . '; width: ' . $map_width . ';" class="map_canvas"></div><br />';
+                                    } else {
+                                        echo '<div class="map_canvas"></div>';
+                                    }
+                                    echo '<button id="btnGetCurrentLocation" type="button">Get current location</button>';
+                                    echo '<br />';
+                                    echo $text_auto_fill;
+                                    echo '<br />';
+                                    echo '<input class="large-field" id="geocomplete" type="text" placeholder="' . $text_type_address . '" />';
+                                    echo '<br /><br />';
+                               }
+                            } ?>
+                        ]]></add>
+		</operation>
+		<operation>
+			<search position="replace"><![CDATA[<input type="text" name="address_1" value="" class="large-field" />]]></search>
+			<add><![CDATA[<input <?php if ($this->config->get('config_autocomplete_address_enable')) { ?> data-form="name" <?php } ?> type="text" name="address_1" value="" class="large-field" />]]></add>
+		</operation>
+		<operation>
+			<search position="replace"><![CDATA[<input type="text" name="postcode"]]></search>
+			<add><![CDATA[<input <?php if ($this->config->get('config_autocomplete_address_enable')) { ?> data-form="postal_code" <?php } ?> type="text" name="postcode"]]></add>
+		</operation>
+	</file>
+        <!-- Checkout Guest -->
+        <file name="catalog/controller/checkout/guest.php">
+		<operation>
+			<search position="after"><![CDATA[$this->data['entry_firstname'] = $this->language->get('entry_firstname');]]></search>
+			<add><![CDATA[
+                            $this->data['text_auto_fill'] = $this->language->get('text_auto_fill');
+                            $this->data['text_type_address'] = $this->language->get('text_type_address');
+                        ]]></add>
+		</operation>
+	</file>
+	<file name="catalog/view/theme/*/template/checkout/guest.tpl">
+		<operation>
+			<search position="before" index="1"><![CDATA[<script type="text/javascript"><!--]]></search>
+			<add><![CDATA[
+                            <?php if ($this->config->get('config_autocomplete_address_enable')) { ?>
+                                <script type="text/javascript">
+                                var CurrentLocation = "";
+                                function getLocation() {
+                                    if (navigator.geolocation) {
+                                            navigator.geolocation.getCurrentPosition(function(position){
+                                                CurrentLocation = position.coords.latitude + "," + position.coords.longitude;
+                                                $("#geocomplete").geocomplete("find", position.coords.latitude + "," + position.coords.longitude)
+                                                $("#geocomplete").val(position.coords.latitude + "," + position.coords.longitude);
+                                            });
+                                        } else {
+                                            alert("Geolocation is not supported by this browser.");
+                                    }
+                                }
+                                  $(function(){
+                                  $("#btnGetCurrentLocation").click(function(){
+                                      getLocation();
+                                  });
+
+                                    $("#geocomplete").geocomplete({
+                                      map: ".map_canvas",
+                                      details: ".right",
+                                      detailsAttribute: "data-form",
+                                      mapOptions: {
+                                        zoom: 10,
+                                        scrollwheel: true
+                                      },
+                                      types: ["geocode", "establishment"]
+                                    }).bind("geocode:result", function(event, result) {
+                                    //debugger;
+                                        if (typeof result.address_components[6] != 'undefined' && (result.address_components[6]['long_name'] !== result.address_components[2]['long_name']) && result.address_components[6]['types']['0'] === 'postal_town') {
+                                            $('input[name=\'address_2\']').val(result.address_components[2]['long_name']);
+                                            $('input[name=\'city\']').val(result.address_components[6]['long_name']);
+                                        } else {
+                                            $('input[name=\'address_2\']').val('');
+
+                                            if (typeof result.address_components[2] != 'undefined') {
+                                                $('input[name=\'city\']').val(result.address_components[2]['long_name']);
+                                            } else {
+                                                $('input[name=\'city\']').val('');
+                                            }
+                                        }
+
+                                        if (typeof result.address_components[4] != 'undefined' && typeof result.address_components[5] != 'undefined' && $('input[name=\'postcode\']').val() == '') {
+                                            if (result.address_components[5]['types']['1'] == 'postal_code') {
+                                                $('input[name=\'postcode\']').val(result.address_components[5]['long_name']);
+                                            } else if (result.address_components[4]['types']['1'] == 'postal_code') {
+                                                $('input[name=\'postcode\']').val(result.address_components[4]['long_name']);
+                                            }
+                                        }
+                                        if(CurrentLocation != "")
+                                        {
+                                            $('input[name=\'address_2\']').val(CurrentLocation);
+                                            CurrentLocation = "";
+                                            $('input[name=\'address_2\']').prop("readonly", true);
+                                        }
+                                        else
+                                        {
+                                            $('input[name=\'address_2\']').prop("readonly", false);
+                                        }
+
+                                        var data = {
+                                            address: result.address_components
+                                        };
+                                        //debugger;
+                                        $.ajax({
+                                                url: 'index.php?route=module/autocomplete_address/address',
+                                                type: 'post',
+                                                dataType: 'json',
+                                                data: data,
+                                                beforeSend: function() {
+                                                    $('select[name=\'country_id\']').val('').change();
+
+                                                    setTimeout(function() {
+                                                        $('select[name=\'zone_id\']').val('').change();
+                                                    }, 800);
+                                                },
+                                                complete: function() {
+                                                },
+                                                success: function(data) {
+                                                    if (data.country) {
+                                                        $('select[name=\'country_id\']').val(data.country.country_id).change();
+
+                                                        if (data.zone) {
+                                                            setTimeout(function() {
+                                                                $('select[name=\'zone_id\']').val(data.zone.zone_id).change();
+                                                            }, 800);
+                                                        }
+                                                    }
+                                                }
+                                            });
+                                        });
+                                  });
+                                </script>
+                            <?php } ?>
+                        ]]></add>
+		</operation>
+		<operation>
+			<search position="before"><![CDATA[<?php echo $entry_company; ?><br />]]></search>
+			<add><![CDATA[
+                            <?php if ($this->config->get('config_autocomplete_address_enable')) {
+                                if ($this->config->get('config_autocomplete_address_enable_cg')) {
+                                    if ($this->config->get('config_autocomplete_address_map_cg')) {
+                                        if ($this->config->get('config_autocomplete_address_map_width_cg') != '') {
+                                            $map_width = $this->config->get('config_autocomplete_address_map_width_cg') . 'px';
+                                        } else {
+                                            $map_width = '470px';
+                                        }
+
+                                        if ($this->config->get('config_autocomplete_address_map_height_cg') != '') {
+                                            $map_height = $this->config->get('config_autocomplete_address_map_height_cg') . 'px';
+                                        } else {
+                                            $map_height = '250px';
+                                        }
+
+                                        echo '<div style="height: ' . $map_height . '; width: ' . $map_width . ';" class="map_canvas"></div><br />';
+                                    } else {
+                                        echo '<div class="map_canvas"></div>';
+                                    }
+                                    echo '<button id="btnGetCurrentLocation" type="button">Get current location</button>';
+                                    echo '<br />';
+                                    echo $text_auto_fill;
+                                    echo '<br />';
+                                    echo '<input class="large-field" id="geocomplete" type="text" placeholder="' . $text_type_address . '" />';
+                                    echo '<br /><br />';
+                               }
+                            } ?>
+                        ]]></add>
+		</operation>
+		<operation>
+			<search position="replace"><![CDATA[<input type="text" name="address_1" value="<?php echo $address_1; ?>" class="large-field" />]]></search>
+			<add><![CDATA[<input <?php if ($this->config->get('config_autocomplete_address_enable')) { ?> data-form="name" <?php } ?> type="text" name="address_1" value="<?php echo $address_1; ?>" class="large-field" />]]></add>
+		</operation>
+		<operation>
+			<search position="replace"><![CDATA[<input type="text" name="postcode"]]></search>
+			<add><![CDATA[<input <?php if ($this->config->get('config_autocomplete_address_enable')) { ?> data-form="postal_code" <?php } ?> type="text" name="postcode""]]></add>
+		</operation>
+	</file>
+</modification>

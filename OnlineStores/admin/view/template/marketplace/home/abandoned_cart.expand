@@ -1,0 +1,294 @@
+{% set app_category = category|split(",") %}
+<div class="list-wrapper empty-page">
+	<div class="content-inner-small d-block auto-h">
+		<div class="row  pb-40 mt-20">
+			<div class="col-12 col-md-6">
+                
+				<p class="large-title-font theme-color-dark">
+					{{name}}
+				</p>
+				<div class="desc-font font-color-dark mb-25">
+					{{minidesc}}
+				</div>
+
+				<div class="btns-row mb-20">
+                    {# 
+                        if not installed
+                            is free (purchased, free on all plans, is bundle"free in this plan")
+                                > install btn
+                            else
+                                > try btn (if try == 0)
+                                
+                                if is trial
+                                    > order btn
+                                else
+                                    > order btn
+
+                        else
+                            if try == 1
+                                > order btn
+                                > edit btn
+                                > end trial btn
+                            
+                            
+                            if try == 0
+                                > uninstall btn
+                                > edit btn
+                    #}
+                        
+                    {% if (not isinstalled) and (freeplan != '-1') %}
+
+                        {% if purchased or isfree or isbundle %}
+                            <button class="theme-btn primary-btn" id="install_app">
+                                {{lang("text_install")}}
+                                <i class="fas fa-chevron-right reverce" aria-hidden="true"></i>
+                            </button>
+                        {% else %}
+
+
+                            <a href="{{ buylink }}" class="theme-btn primary-btn" target="_blank">
+                                {{lang("text_buy")}}
+                                <i class="fas fa-chevron-right reverce" aria-hidden="true"></i>
+                            </a>
+                            {% if (app_isTrial == 0) and (moduleType == 1) %}
+                            <button class="theme-btn gray-white-empty" data-toggle="modal" data-target="#modal-trial">
+                                {{lang("text_try_trial")}}
+                            </button>
+                            {% endif %}
+
+                        {% endif %}
+
+                    {% elseif isinstalled and isapp %}
+
+                        {% if app_isTrial == 1 %}
+                            <a href="{{ link('module/') ~ extension }}" class="theme-btn primary-btn">
+                                <i class="fas fa-pencil-alt" aria-hidden="true"></i>
+                                {{lang("text_edit")}}
+                            </a>
+                            {% if extension != 'productsoptions_sku' or (extension == 'productsoptions_sku' and not isExtenionInstalled('knawat_dropshipping')) %}
+                                <button class="theme-btn red-empty" data-toggle="modal" data-target="#modal-disable-ps">
+                                    <i class="fas fa-times"></i>
+                                    {{lang("text_end_trial")}}
+                                </button>
+                            {% endif %}
+                        {% endif %}
+
+                        {% if app_isTrial == 0 %}
+                            <a href="{{ link('module/') ~ extension }}" class="theme-btn primary-btn">
+                                <i class="fas fa-pencil-alt" aria-hidden="true"></i>
+                                {{lang("text_edit")}}
+                            </a>
+                            <button class="theme-btn red-empty" data-toggle="modal" data-target="#modal-disable-ps">
+                                <i class="fas fa-times"></i>
+                                {{lang("text_uninstall")}}
+                            </button>
+                        {% endif %}
+
+                    {% endif %}
+
+
+				</div>
+				<p class="empty-hint">
+                    {% if freeplan == '-1' and not purchased %}
+                        <span class="text-danger-300 text-semibold">{{ lang('text_contactus') }}</span>
+                    {% else %}
+                        {% if price != '$0' %}
+                            <span class="orange text-semibold">{{ price }}</span>
+                            {% if recurring   %}  {{ lang('text_monthly')}}
+                            {% else %}
+                                {{ lang('text_for_one_time')}}
+                            {% endif %}
+                            -
+                        {% endif %}
+                    {% endif %}
+                    {% if freeplan == '3' %}
+                        {{ lang('text_free_all') }}
+                    {% elseif freeplan == '53' %}
+                        {{ lang('text_free_business') }}
+                    {% elseif freeplan == '6' %}
+                        {{ lang('text_free_ultimate') }}
+                    {% elseif freeplan == '8' %}
+                        {{ lang('text_free_enterprise') }}
+                    {% endif %}
+
+                    {% if moduleType == '2' %}
+                        {% if freepaymentterm == 'y' %}
+                            {{ lang('text_yearly_only') }}
+                        {% endif %}
+                    {% endif %}
+				</p>
+			</div>
+			<div class="col-12 col-md-6">
+				<img src="{{image}}" alt="" class="">
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- select plan modal -->
+    <div id="modal_default" class="modal fade center-modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h5 class="modal-title">{{ lang('text_choose_plans') }}</h5>
+                </div>
+
+                <div class="modal-body">
+                    <span>{{ lang('text_choose_plans_text') }}</span>
+                </div>
+
+                <div class="modal-footer">
+                    <a href="{{ htmlEntityDecode(packageslink) }}" type="button" class="btn btn-primary">
+						{{ lang('text_explore_plans') }}
+					</a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <!-- /select plan modal -->
+
+    <!-- try trial modal -->
+    <div class="modal fade center-modal" id="modal-trial">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <div class="modal-header bg-primary">
+                    <button type="button" class="close" data-dismiss="modal">×</button>
+                    <h4 class="modal-title">{{ lang('text_modal_trial_title') }} <span id="ps-title"></span></h4>
+                </div>
+
+                <div class="modal-body">
+                    <p>{{ lang('text_modal_trial_body') }}</p>
+                </div>
+
+                <div class="modal-footer">
+					<a href="{{ link('marketplace/home/trial?extension=') ~ extension }}" class="btn btn-primary">
+						{{ lang('text_modal_trial_confirm') }}
+					</a>
+                    <button type="button" class="btn btn-link" onclick="$('#modal-trial').modal('toggle');">
+						{{ lang('text_modal_trial_cancel') }}
+					</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+	<!-- /try trial modal -->
+
+	<!-- unInstall modal -->
+    <div class="modal fade center-modal" id="modal-disable-ps">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger">
+                    <button type="button" class="close" data-dismiss="modal">×</button>
+                    <h4 class="modal-title">{{ lang('text_uninstall') }} <span id="ps-title"></span></h4>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        {% if extension != 'reward_points_pro' and extension != 'product_attachments' %}
+                            {{ lang('confirm_uninstallation') }}
+                        {% else %}
+                            {# custom uninstalling warning message for ext. #}
+                            {{ lang('confirm_uninstallation_' ~ extension) }}
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <span class="server-loading" style="display:none;"><i class="fa fa-refresh fa-spin"></i></span>
+                    <button type="button" class="btn btn-danger" extension = "" psid=""id="uninstall_app">{{ lang('text_uninstall') }}</button>
+                    <button type="button" class="btn btn-link" data-dismiss="modal">{{ lang('button_cancel') }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+	<!-- /unInstall modal -->
+
+
+
+<script>
+	// install app function
+	$('#install_app').click(function() {
+		let thisBtn = $(this);
+		thisBtn.addClass('.load');
+
+		$.ajax({
+			type: 'get',
+			url: "{{link('marketplace/home/install')}}?extension={{extension}}",
+			dataType: 'json',
+			data: {extension:$('#enable-ps').attr('extension')},
+			async: true,
+			success: function(json) {
+			    if(json.success == "true" && typeof  json.init_install_url !== "undefined" && json.init_install_url){
+                    window.location =json.init_install_url;
+                    return ;
+                }
+
+				if (json.success == "true") {
+					window.location = "{{link('module/') ~ extension}}"
+				}
+				else {
+					notify("err", "error", "textSuccess");
+					thisBtn.removeClass('.load');
+					$('#modal-enable-ps').modal('toggle');
+				}
+			}
+		});
+	})
+
+	// uninstall app function
+	$('#uninstall_app').click(function() {
+        console.log(uninstall_app)
+		var disableURL = '/admin/marketplace/home/uninstall';
+
+        $.ajax({
+            type: 'get',
+            url: disableURL,
+            dataType: 'json',
+            data: {extension: '{{extension}}'},
+            async: true,
+            success: function(json) {
+                if (json.success == "true") {
+                    location.reload();
+                }
+                else {
+                    displayErrors(json.error);
+
+                    $('#disable-ps').parent().find('.server-loading').hide();
+
+                    $('#modal-disable-ps').modal('toggle');
+                }
+            }
+        });
+	})
+
+    $(document).ready(function() {
+        $('#quantity').on('change', function() {
+            var buylink = $('#btnbuy').data('buylink');
+            var quantity = $(this).val();
+            $('#btnbuy').attr('href', buylink + '%26configoption[1]%3D' + quantity)
+        });
+        // $('#btnbuy').on('click', function(e) {
+        //     e.preventDefault();
+        //     //debugger;
+        //     var $this = $(this);
+        //     if($this.data('isservice') && $this.data('isquantity')) {
+        //         var quantity = $('#quantity').val();
+        //         if(quantity <= 0 || quantity=="") {
+        //             quantity = 1;
+        //         }
+        //
+        //         openInNewTab($this.data('buylink') + '%26configoption[1]%3D' + quantity);
+        //     } else {
+        //         openInNewTab($this.data('buylink'));
+        //     }
+        // });
+    });
+
+    function openInNewTab(url) {
+        var win = window.open(url, '_blank');
+        win.focus();
+    }
+</script>

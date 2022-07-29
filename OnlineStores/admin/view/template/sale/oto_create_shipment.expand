@@ -1,0 +1,224 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block title %}
+    {{ lang('oto_create_shipment') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+
+    {% if oto_id %}
+        <a onclick="$('#oto-cancel-order').submit()" class="button btn btn-danger">{{ lang('oto_cancel_shipment') }}</a>
+        <a onclick="$('#oto-track-order').submit()" class="button btn btn-primary">{{ lang('oto_track_shipment') }}</a>
+    {% else %}
+        <a onclick="$('#oto-shipment').submit()" class="button btn btn-primary">{{ lang('oto_create_shipment') }}</a>
+    {% endif %}
+
+{% endblock headelements %}
+
+{% block content %}
+    <form enctype="multipart/form-data" method="post" class="form" id="oto-shipment" novalidate="novalidate">
+
+        <div class="row">
+            <!-- Customer Details -->
+            <div class="col-md-6">
+                <div class="panel panel-white">
+                    <div class="panel-heading">
+                        <h6 class="panel-title"><span class="text-bold">{{ lang('oto_customer_details') }}</span></h6>
+                        <div class="heading-elements not-collapsible">
+                            <ul class="icons-list">
+                                <li><a data-action="collapse" class=""></a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="collapse in" id="fields-panel">
+                            
+                            <!-- Name -->
+                            <div class="form-group col-md-6">
+                                <label for="oto_customer_name" class="control-label">{{ lang('oto_customer_name') }}</label>
+                                <input type="text" class="form-control" id="oto_customer_name" name="oto_customer_name" value="{{ order_info['firstname'] }} {{ order_info['lastname'] }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- Name -->
+                        
+                            <!-- Email -->
+                            <div class="form-group col-md-6">
+                                <label for="oto_customer_email" class="control-label">{{ lang('oto_customer_email') }}</label>
+                                <input type="text" class="form-control" id="oto_customer_email" name="oto_customer_email" value="{{ order_info['email'] }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- Email -->
+
+                            <!-- Phone -->
+                            <div class="form-group col-md-6">
+                                <label for="oto_customer_phone" class="control-label">{{ lang('oto_customer_phone') }}</label>
+                                <input type="text" class="form-control" id="oto_customer_phone" name="oto_customer_phone" value="{{ order_info['telephone'] }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- Phone -->
+
+                            <!-- Address -->
+                            <div class="form-group col-md-6">
+                                <label for="oto_customer_phone" class="control-label">{{ lang('oto_customer_address') }}</label>
+                                <input type="text" class="form-control" id="oto_customer_address" name="oto_customer_address" value="{{ order_info['shipping_address_1'] }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- Address -->
+                            
+                            <!-- Country -->
+                            <div class="form-group col-md-6">
+                                <label for="oto_customer_country" class="control-label">{{ lang('oto_customer_country') }}</label>
+                                <select name="oto_customer_country" id="oto_customer_country" class="form-control valid validate-select">
+                                    {% for country in countries %}
+                                        <option value="{{ country['iso_code_2'] }}" {{ country['iso_code_2'] ==  order_info['shipping_iso_code_2'] ? "selected"}}>{{ country['name'] }}</option>
+                                    {% endfor %}
+                                </select>
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- Country -->
+
+                            <!-- Address -->
+                            <div class="form-group col-md-6">
+                                <label for="oto_customer_city" class="control-label">{{ lang('oto_customer_city') }}</label>
+                                <input type="text" class="form-control" id="oto_customer_city" name="oto_customer_city" value="{{ order_info['shipping_city'] }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- Address -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Customer Details -->
+
+            <!-- Products Details -->
+            <div class="col-md-6">
+                <div class="panel panel-white">
+                    <div class="panel-heading">
+                        <h6 class="panel-title"><span class="text-bold">{{ lang('oto_products_details') }}</span></h6>
+                        <div class="heading-elements not-collapsible">
+                            <ul class="icons-list">
+                                <li><a data-action="collapse" class=""></a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="collapse in" id="fields-panel">
+                            <table class="table table-bordered table-striped">
+                                <thead>
+                                    <th>{{ lang('oto_product_name') }}</th>
+                                    <th>{{ lang('oto_product_quantity') }}</th>
+                                </thead>
+                                <tbody>
+                            
+                                    {% set qty = 0 %}
+
+                                    {% for product in products %}
+                                    
+                                        <tr id="item{{ product['order_product_id'] }}" style="width: 100%;">
+
+                                            <td>
+                                                <span title="{{ product['name'] }}">{{ product['name'] }}</span>
+                                                <input type="hidden" value="{{ product['quantity'] }}" name="product[{{ product['order_product_id'] }}]">
+                                            </td>
+
+                                            <td>
+                                            
+                                                <label class="label label-success" style="padding: 10px 20px;"> {{ product['quantity'] }} </label>
+
+                                                <input type="hidden" value="{{ product['quantity'] }}" name="{{ op['order_product_id'] }}" class="valid" readonly>
+
+                                                <input type="hidden" value="{{ product['price'] }}" name="oto_items_base_price_{{ op['order_product_id'] }}">
+                                                <input type="hidden" value="{{ product['weight'] }}" name="oto_items_base_weight_{{ op['order_product_id'] }}">
+                                                <input type="hidden" value="{{ product['quantity'] }}" name="oto_items_total_{{ op['order_product_id'] }}">
+                                            </td>
+                                        </tr>
+
+                                        {% set qty = qty + product['quantity'] %}
+
+                                    {% endfor %}
+                                
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Products Details -->
+        </div>
+
+        <div class="row">
+            <!-- Payment Details -->
+            <div class="col-md-6">
+                <div class="panel panel-white">
+                    <div class="panel-heading">
+                        <h6 class="panel-title"><span class="text-bold">{{ lang('oto_payment_method_details') }}</span></h6>
+                        <div class="heading-elements not-collapsible">
+                            <ul class="icons-list">
+                                <li><a data-action="collapse" class=""></a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="collapse in" id="fields-panel">
+
+                            <!-- Payment Method -->
+                            <div class="form-group col-xs-12">
+                                <label for="oto_payment_method" class="control-label">{{ lang('oto_payment_method') }}</label>
+                                <select name="oto_payment_method" id="oto_payment_method" class="form-control valid validate-select">
+                                    <option value="cod" selected>{{ lang('oto_cod') }}</option>
+                                    <option value="paid">{{ lang('oto_paid') }}</option>
+                                </select>
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- Payment Method -->
+
+                            <!-- Payment Amount -->
+                            <div class="form-group col-md-6">
+                                <label for="oto_payment_amount" class="control-label">{{ lang('oto_payment_amount') }}</label>
+                                <input type="number" class="form-control" id="oto_payment_amount" name="oto_payment_amount" value="{{ order_info['total'] }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- Payment Amount -->
+
+                            <!-- Payment Currency -->
+                            <div class="form-group col-md-6">
+                                <label for="oto_payment_currency" class="control-label">{{ lang('oto_payment_currency') }}</label>
+                                <input type="text" class="form-control" id="oto_payment_currency" name="oto_payment_currency" value="{{ order_info['currency_code'] }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- Payment Currency -->
+
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Pyamnet Details -->
+        </div>
+
+        <div class="row">
+            <div class="col-md-12 text-right">
+                <hr/>
+                {% if oto_id %}
+                    <a onclick="$('#oto-cancel-order').submit()" class="button btn btn-danger">{{ lang('oto_cancel_shipment') }}</a>
+                    <a onclick="$('#oto-track-order').submit()" class="button btn btn-primary">{{ lang('oto_track_shipment') }}</a>
+                {% else %}
+                    <a onclick="$('#oto-shipment').submit()" class="button btn btn-primary">{{ lang('oto_create_shipment') }}</a>
+                {% endif %}
+            </div>
+        </div>
+
+    </form>
+    <form enctype="multipart/form-data" action="{{ oto_cancel_order }}" method="post" class="form" id="oto-cancel-order" novalidate="novalidate">
+        <input type="hidden" name="order_id" value="{{ order_info['order_id'] }}"/>
+    </form>
+    <form enctype="multipart/form-data" action="{{ oto_track_order }}" method="post" class="form" id="oto-track-order" novalidate="novalidate">
+        <input type="hidden" name="order_id" value="{{ order_info['order_id'] }}"/>
+    </form>
+{% endblock content %}

@@ -1,0 +1,373 @@
+{{ script('js/jquery/jquery.total-storage.min.js') }}
+    {% set mfSettings = config(mega_filter_settings) %}
+        {% if mfSettings %}
+            {% if mfilter_json %}
+                <div id="mfilter-json" style="display:none">{{ mfilter_json|base64_encode }}</div>
+            {% endif %}
+        <div id="mfilter-content-container">
+    {% endif %}
+
+    <section class="breadcrumbs  hidden-xs">
+        <div class="container">
+        <ol class="breadcrumb breadcrumb--wd pull-left">
+            {% for breadcrumb in breadcrumbs %}
+            {% if loop.last %}
+            <li class="active">{{ breadcrumb['text'] }}</li>
+            {% else %}
+            <li><a href="{{ breadcrumb['href'] }}">{{ breadcrumb['text'] }}</a></li>
+            {% endif %}
+            {% endfor %}
+        </ol>
+        </div>
+    </section>
+
+<section class="content">
+    <div class="container">
+        <h2 class="text-uppercase">{{ lang('heading_title') }}</h2>
+        <div class="row">
+            <div class="col-md-3">
+                <h4>{{ lang('text_critea') }}</h4>
+                <div class="search-params">
+
+                    {% if search %}
+                    <div class="form-group">
+                        <input type="text" name="search" value="{{ search }}" class="form-control" />
+                    </div>
+                    {% else %}
+                    <div class="form-group">
+                        <input type="text" name="search" value="{{ search }}" class="form-control" onclick="this.value = '';" onkeydown="this.style.color = '000000'" style="color: #999;" />
+                    </div>
+                    {% endif %}
+
+                    <div class="form-group">
+                        <select name="category_id" class="form-control minimal">
+                            <option value="0">{{ lang('text_category') }}</option>
+                            {% for category_1 in categories %}
+                                {% if category_1['category_id'] == category_id %}
+                                    <option value="{{ category_1['category_id'] }}" selected="selected">{{ category_1['name'] }}</option>
+                                {% else %}
+                                    <option value="{{ category_1['category_id'] }}">{{ category_1['name'] }}</option>
+                                {% endif %}
+                                {% for category_2 in category_1['children'] %}
+                                    {% if category_2['category_id'] == category_id %}
+                                        <option value="{{ category_2['category_id'] }}" selected="selected">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ category_2['name'] }}</option>
+                                    {% else %}
+                                        <option value="{{ category_2['category_id'] }}">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ category_2['name'] }}</option>
+                                    {% endif %}
+                                    {% for category_3 in category_2['children'] %}
+                                        {% if category_3['category_id'] == category_id %}
+                                            <option value="{{ category_3['category_id'] }}" selected="selected">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ category_3['name'] }}</option>
+                                        {% else %}
+                                            <option value="{{ category_3['category_id'] }}">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ category_3['name'] }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endfor %}
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        {% if sub_category %}
+                            <input type="checkbox" name="sub_category" value="1" id="sub_category" checked="checked" />
+                        {% else %}
+                            <input type="checkbox" name="sub_category" value="1" id="sub_category" />
+                        {% endif %}
+                        <label for="sub_category">{{ lang('text_sub_category') }}</label>
+                    </div>
+
+                    <div class="form-group">
+                        {% if description %}
+                        <input type="checkbox" name="description" value="1" id="description" checked="checked" />
+                        {% else %}
+                        <input type="checkbox" name="description" value="1" id="description" />
+                        {% endif %}
+                        <label for="description">{{ lang('entry_description') }}</label>
+                    </div>
+
+                </div>
+                <div class="buttons">
+                    <div class="right"><input type="button" value="{{ lang('button_search') }}" id="button-search" class="btn-block btn btn--wd animation animated fadeInUp" data-animation="fadeInUp" data-animation-delay="0.5s" /></div>
+                </div>
+            </div>
+            <div class="col-md-9 searchResult">
+                <div id="notification" class="homeNotifications"></div>
+
+                {% if products %}
+                <h4 style="padding-bottom: 5px;">{{ lang('text_search') }}</h4>
+                <section class="content--fill">
+                    <div class="filters-row row" style="padding-top:0">
+                        <div class="col-sm-4 col-md-3 col-lg-3 col-1"> 
+                            <a class="filters-row__view active link-grid-view icon icon-keyboard"></a> 
+                            <a class="filters-row__view link-row-view icon icon-list"></a> 
+                            <!--
+                            <a class="btn btn--wd btn--with-icon btn--sm wave" id="showFilter"><span class="icon icon-filter"></span>{{lang('filter')}}</a> 
+                            <a class="btn btn--wd btn--with-icon btn--sm wave" id="showFilterMobile"><span class="icon icon-filter"></span>{{lang('filter')}}</a>
+                            -->
+                        </div>            
+                    </div>
+                    <div class="outer">
+                        <div id="leftCol">
+                            <div id="filtersCol" class="filters-col">
+                                <div class="filters-col__close" id="filtersColClose"><a href="#" class="icon icon-clear"></a></div>
+                                
+                                <div class="filters-col__collapse open">
+                                    <h4 class="filters-col__collapse__title text-uppercase">SHOPPING BY:</h4>
+                                    <div class="filters-col__collapse__content">
+                                        <ul class="filter-list">
+                                            <li>
+                                                <a href="#" class="icon icon-clear"></a> Price: <strong>$0.00 - $10,000.00</strong>
+                                            </li>
+                                            <li>
+                                                <a href="#" class="icon icon-clear"></a> Color: <strong>Black</strong>
+                                            </li>
+                                            <li>
+                                                <a href="#" class="icon icon-clear"></a> Size: <strong>10 (M)</strong>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="centerCol">
+                            <div class="products-grid products-listing products-col products-isotope three-in-row">
+                                {% for item_product in products %}
+                                <div class="product-preview-wrapper">
+                                    <div class="product-preview">
+                                            <div class="product-preview__image"><a href="{{ item_product.href }}"><img src="{{ image(item_product['image'], 300, 300) }}"  alt="{{ item_product.name }}"/></a></div>
+            
+                                            <div class="product-preview__label product-preview__label--left product-preview__label--new"><span>{{lang('text_new')}}</span></div>
+                                            <div class="hide productAvailableDate">{{item_product.date_available }}</div>
+                                            <div class="hide timeInterval">{{ templatesettings.newProductDuration['newInterval'] }}</div>
+                                            
+                                            {% if item_product.special != '' and item_prodcut.special != '-1'%}
+                                            <div class="product-preview__label product-preview__label--right product-preview__label--sale">
+                                            <span>{{ lang("text_sale")}}<br>
+                                            -{{item_product.saving}} %</span>
+                                            </div>
+                                            {% endif %}
+                                            <div class="product-preview__info text-center">
+                                            <div class="product-preview__info__btns">
+                                            {% if product['viewAddToCart'] %}
+                                                {% if config('show_quantity') %}
+                                                    <a class="btn btn--round ajax-to-cart" title="Add to Cart" href="javascript://"
+                                                       onclick="addToCartQty({{ item_product.product_id }}, 'cat'); return false;">
+                                                        <span class="icon icon-ecommerce"></span>
+                                                    </a>
+                                                {% else %}
+                                                    <a href="{{ item_product.href }}" onclick="event.preventDefault(); addToCart({{ item_product.product_id }},1, {{ ('-1' in item_product.price) or ('-1' in item_product.special) ? 'true' : 'false' }}); return false;" class="btn btn--round ajax-to-cart"><span class="icon icon-ecommerce"></span></a>
+                                                {% endif %}
+                                                {% endif %}
+                                                <a href="{{ item_product.href }}" class="btn btn--round btn--dark" ><span class="icon icon-eye"></span></a>
+                                            </div>
+                                            <div class="product-preview__info__title">
+                                                <h2><a href="{{ item_product.href }}">{{ item_product.name }}</a></h2>
+                                                {# Stock Status Lable #}
+                                                {% set statuses = config("config_stock_status_display_badge") %}
+                                                {% if item_product.quantity <= 0 and item_product.stock_status_id in statuses %}
+                                                <span style="position:absolute; bottom:0; {{ lang('direction') == 'rtl' ? 'left:0;' : 'right:0;' }}" class="label label-default">{{ item_product.stock_status }}</span>
+                                                {% endif %}
+                                                {% if config('show_brands') and item_product.manufacturer %}
+                                                <h6><a href="{{ item_product.manufacturer_href }}" id="brand_sections" alt"{{ item_product.manufacturer }}">{{ item_product.manufacturer }}</a></h6>
+                                                {% endif %}
+                                            </div>
+            
+                                            {% if item_product.rating %}
+                                                <div class="rating">
+                                                    <img src="{{ asset('image/stars-' ~ item_product.rating ~ '.png') }}" alt="{{ lang('text_reviews')|format(reviews_count) }}"/>  
+                                                </div>
+                                            {% endif %}
+                                            
+                                            <div class="price-box ">
+                                                {% if ('-1' in item_product.price) or ('-1' in item_product.special) %}
+                                                <span class="price-box__new clickable" onclick="contact_us('{{ item_product.product_id }}');">{{ lang('button_req_quote') }}</span>
+            
+                                                {% elseif item_product.special != ''%}
+                                                <span class="price-box__new">{{item_product.special}}</span> <span class="price-box__old">{{item_product.price}}</span>
+                                                {% else %}
+                                                <div class="price-box">{{item_product.price}}</div>
+                                                {% endif %}
+                                            </div>
+                                            {% if item_product.short_description != '' %}
+                                            <div class="product-preview__info__description">
+                                                <p>{{ item_product.short_description }}</p>
+                                            </div>
+                                            {% endif %}
+                                                <!-- Show Quantity box -->
+                                                {% if config('show_quantity') %}
+                                                    <div class="block-product-info" style="margin-top: 0">
+                                                        <table class="variations-table">
+                                                            <tr>
+                                                                <td class="table-label">{{ lang('text_Quantity') }}:</td>
+                                                                <td class="table-value">
+                                                                    <div class="box-qty">
+                                                                        <a class="quantity-minus" onclick="$('#qty_cat{{ item_product.product_id }}').val( parseInt($('#qty_cat{{ item_product.product_id }}').val()) - 1 )">-</a>
+                                                                        <input type="text" style="width: 50px;" class="form-control qty qty-val input-qty quantity" name="quantity" id="qty_cat{{ item_product.product_id }}" name="qty{{ item_product.product_id }}" value="1" maxlength="12" minlength="1" min="1">
+                                                                        <a class="quantity-plus" onclick="$('#qty_cat{{ item_product.product_id }}').val( parseInt($('#qty_cat{{ item_product.product_id }}').val()) + 1 )">+</a>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </div>
+                                                {% endif %}
+                                                <!-- /Show Quantity box -->
+                                            <div class="product-preview__info__link">
+                                                <a href="#" onclick="event.preventDefault(); addToCompare('{{ item_product.product_id }}',1); return false;" class="compare-link"><span class="icon icon-bars"></span><span class="product-preview__info__link__text">{{lang('button_compare')}}</span></a> 
+                                                <a href="#" onclick="event.preventDefault(); addToWishList('{{ item_product.product_id }}',1); return false;" class="ajax-to-wishlist"><span class="icon icon-favorite"></span><span class="product-preview__info__link__text">{{lang('button_wishlist')}}</span></a>
+                                                 {% if product['viewAddToCart'] %}
+                                                {% if config('show_quantity') %}
+                                                    <a class="btn btn--wd buy--link" title="Add to Cart" href="javascript://"
+                                                       onclick="addToCartQty({{ item_product.product_id }}, 'cat'); return false;">
+                                                        <span class="icon icon-ecommerce"></span><span class="product-preview__info__link__text">{{ ('-1' in item_product.price) or ('-1' in item_product.special) ? lang('button_req_quote') : lang('button_cart') }}</span>
+                                                    </a>
+                                                {% else %}
+                                                    <a href="#" onclick="event.preventDefault(); addToCart({{ item_product.product_id }},1, {{ ('-1' in item_product.price) or ('-1' in item_product.special) ? 'true' : 'false' }}); return false;" class="btn btn--wd buy-link">
+                                                        <span class="icon icon-ecommerce"></span><span class="product-preview__info__link__text">{{ ('-1' in item_product.price) or ('-1' in item_product.special) ? lang('button_req_quote') : lang('button_cart') }}</span>
+                                                    </a>
+                                                {% endif %}
+                                                {% endif %}
+                                                <div id="enquiry-{{ item_product.product_id }}" style="display:none">{{ item_product.name }}</div>
+                                                </div>
+                                                
+                                            </div>
+                                        </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="filters-row row">
+                        <div class="col-sm-8 col-md-9 col-lg-9 col-2">
+                            <!--<div class="filters-row__items">68 Item(s)</div>-->
+                            
+                            <div class="filters-row__select">  {{ pagination }} </div>
+                            
+                            <div class="filters-row__select">
+                                <label>{{ lang('text_limit') }} </label>
+                                <div class="select-wrapper">
+                                    <select onchange="location = this.value;" class="select--wd select--wd--sm sorter-options form-control">
+                                        {% for limitst in limits %}
+                                            {% if limitst.value == limit %}
+                                                <option value="{{ limitst.href }}" selected="selected">{{ limitst.text }}</option>
+                                            {% else %}
+                                                <option value="{{ limitst.href }}">{{ limitst.text }}</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="filters-row__select">
+                                <label>{{ lang('text_sort') }}</label>
+                                <div class="select-wrapper">
+                                    <select onchange="location = this.value;" class="select--wd select--wd--sm sorter-options form-control">
+                                        {% for sortst in sorts %}
+                                            {% if sortst.value == sort ~ '-' ~ order %}
+                                                <option value="{{ sortst.href }}" selected="selected">{{ sortst.text }}</option>
+                                            {% else %}
+                                                <option value="{{ sortst.href }}">{{ sortst.text }}</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <div class="divider divider--sm"></div>
+                        {{ pagination }}
+                    </div>
+                </section>
+                {% else %}
+            
+                <section class="">
+                    <div class="text-center"> 
+                            <img src="./expandish/view/theme/welldone/images/category-empty-icon.png" alt="category empty" class="img-responsive img-center" />
+                            <div class="divider divider--sm"></div>
+                            <h2 class="text-uppercase">{{lang('text_empty')}}</h2>
+                            <a href="{{ link('common/home') }}" class="btn btn-info">{{ lang('button_continue') }}</a>
+                    </div>
+                </section>
+
+                {% endif %}
+            </div>
+        </div>
+        <hr>  
+  
+    </div>
+</section>
+
+
+        
+    {% if mfSettings %}
+        </div>
+    {% endif %}
+
+<script type="text/javascript"><!--
+var lableb_installed = '{{lableb_search_installed}}';
+$('.search-params input[name=\'search\']').keydown(function(e) {
+	if (e.keyCode == 13) {
+		$('#button-search').trigger('click');
+	}
+});
+
+$('select[name=\'category_id\']').bind('change', function() {
+	if (this.value == '0') {
+		$('input[name=\'sub_category\']').attr('disabled', 'disabled');
+		$('input[name=\'sub_category\']').removeAttr('checked');
+	} else {
+		$('input[name=\'sub_category\']').removeAttr('disabled');
+	}
+});
+
+$('select[name=\'category_id\']').trigger('change');
+
+$('#button-search').bind('click', function() {
+	url = 'index.php?route=product/search';
+
+	var search = $('.search-params input[name=\'search\']').val();
+	
+	if(lableb_installed){
+        search = search ? search : '*';
+        url = 'index.php?route=product/search&lableb_search=' + encodeURIComponent(search);
+    }else{
+        if(search){
+            url += '&search=' + encodeURIComponent(search);
+        }
+    }
+
+	var category_id = $('.search-params select[name=\'category_id\']').val();
+	
+	if (category_id > 0) {
+		url += '&category_id=' + encodeURIComponent(category_id);
+	}
+	
+	var sub_category = $('.search-params input[name=\'sub_category\']:checked').val();
+	
+	if (sub_category) {
+		url += '&sub_category=true';
+	}
+		
+	var filter_description = $('.search-params input[name=\'description\']:checked').val();
+	
+	if (filter_description) {
+		url += '&description=true';
+	}
+
+	location = url;
+});
+//--></script> 
+
+
+    <script>
+    jQuery(document).ready(function() {
+
+        $(".product-preview-wrapper").each(function (index, value){
+            var dateofProduct = ( $(this).find('.productAvailableDate').html());
+        var interVal = ( $(this).find('.timeInterval').html());
+        var end = new Date(dateofProduct);
+        var newDate = new Date(end.setTime( end.getTime() + interVal * 86400000 ));
+        var today = new Date();
+        if(newDate<today) { ( $(this).find('.product-preview__label--new').hide()) } 
+        });
+    });
+    </script>

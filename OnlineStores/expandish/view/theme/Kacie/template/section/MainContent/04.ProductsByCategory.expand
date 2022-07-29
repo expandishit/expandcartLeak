@@ -1,0 +1,83 @@
+{% set FeaturedCategories = getFeaturedCategories(fields.ProductsByCategory_Select.field_value, 595, 738) %}
+
+<!-- Products Starts-->
+<section id="product" class="clearfix space-80">
+    <div class="col-md-12 text-center" id="section-{{ section_id }}">
+        <h2 class="section-title">{{ fields.ProductsByCategory_Title.field_value }}</h2>  
+        <div class="clearfix tabs space-15">
+            <ul class="filtrable nav font-2 theme-tabs">
+                {% for category in FeaturedCategories %}
+                <li {% if loop.index == 1 %}class="current"{% endif %}><a href="#" data-filter=".{{ category['category_id'] }}">{{ category['name'] }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="isotope isotope-items space-top-50" id="product-filter">
+
+            {% for category in FeaturedCategories %}
+
+                {% if fields.ProductsByCategory_Type.field_value == 'LatestProducts' %}
+                    {% set ProductsByCategory = getLatestProductsByCategoryId(category.category_id, fields.ProductsByCategory_Limit.field_value, 500, 500) %}
+
+                {% elseif fields.ProductsByCategory_Type.field_value == 'BestSellerProducts' %}
+                    {% set ProductsByCategory = getBestSellerProductsByCategoryId(category.category_id, fields.ProductsByCategory_Limit.field_value, 500, 500) %}
+
+                {% elseif fields.ProductsByCategory_Type.field_value == 'SpecialProducts' %}
+                    {% set ProductsByCategory = getSpecialProductsByCategoryId(category.category_id, fields.ProductsByCategory_Limit.field_value, 500, 500) %}
+
+                {% endif %}
+
+            {% for product in ProductsByCategory %}
+            <div class="product-container isotope-item {{ category['category_id'] }}">
+                <div class="thumbnail-wrap">
+                    <div class="thumbnail">
+                        <div class="thumbnail-img light-bg">
+                            <div class="flipper">
+                                <div class="front">
+                                    <a title="Product" href="{{ product.href }}">
+                                        <img class="img-responsive" src="{{ product.thumb }}" alt="{{ product.name }}"/>                                                      
+                                    </a>
+                                </div>
+                                <div class="back">                                                               
+                                    <a href="{{ product.href }}">
+                                        <img class="img-responsive" src="{{ product.thumb_swap ? product.thumb_swap : product.thumb }}" alt="{{ product.name }}"/>                                                      
+                                    </a>
+                                </div>                                                       
+                            </div>
+                            <ul class="thumbnail-conten list-items black-bg">
+                                {% if ('-1' in product.price) or ('-1' in product.special) %}
+                                <li> <a onclick="contact_us('{{ product.product_id }}');"><span class="font-2 upper-text">{{ lang('button_req_quote') }}</span> </a> </li>
+                                {% else %}
+                                 {% if customer.isCustomerAllowedToAdd_cart and ( config('config_hide_add_to_cart') != 1 or product.quantity >0 )  %}
+                                <li> <a onclick="addToCart({{ product.product_id }}); return false;"> <i class="icon ion-android-add size-18"></i> <span class="font-2 upper-text">{{ lang('button_cart') }}</span> </a> </li>
+                                {% endif %}
+                                {% endif %}
+                                <li> <a onclick="addToWishList({{ product.product_id }}); return false;"> <i class="icon ion-ios-heart-outline size-20"></i> </a> </li>
+                                <li> <a onclick="addToCompare({{ product.product_id }}); return false;"> <i class="icon ion-ios-eye-outline size-24"></i> </a> </li>
+                            </ul>                                                   
+                        </div>
+                        <div class="caption">
+                            <div class="space-top-15"><a href="{{ product.manufacturer_href }}" class="title-2">{{ product.manufacturer }}</a></div>
+                            <div class="caption-title space-15"><a href="{{ product.href }}" class="title-2">{{ fields.ProductsByCategory_NameLimit.field_value ? product.name|slice(0, 39) : product.name }}</a></div> 
+                            <div class="caption-text font-3">
+                                {% if ('-1' in product.price) or ('-1' in product.special) %}
+                                   <ins><span class="clickable" onclick="contact_us('{{ product.product_id }}');">{{ lang('button_req_quote') }}</span></ins>
+                                   <div id="enquiry-{{ product.product_id }}"  style="display:none">{{ product.name }}:</div>
+                                {% elseif product.special %}
+                                    <del><span class="size-18 grey-color">{{ product.special }} </span></del>
+                                    <span class="size-18 black-color">{{ product.special }} </span>
+                                {% else %}
+                                    <span class="size-18 black-color">{{ product.price }}</span>
+                                {% endif %}
+                            </div>                                                   
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+            {% endfor %}
+        </div>
+    </div>
+</section>
+<!-- / Product Ends -->

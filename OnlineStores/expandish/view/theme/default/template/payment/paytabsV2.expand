@@ -1,0 +1,65 @@
+
+    {% if error_paytabs %}
+    <style>
+        #confirm_payment .alert-danger
+        {
+            display:block!important;
+        }
+    </style>
+    {% endif %}
+    <div id="paytabs_error" class="alert alert-danger " style="display: none">Payment error: {{ error_paytabs }}</div>
+
+
+{#<form action="index.php?route=payment/paytabsV2/send" method="post">
+    <input type="hidden" name="hide_billing_details" value="true" />
+    <div class="buttons">
+        <div class="right">
+            <input type="submit" value="{{ lang('button_confirm') }}" class="button" />
+        </div>
+    </div>
+</form>#}
+<button type="button" class="btn-rect text-uppercase bg-color btn btn-inline" id="confirm-payment" style="display: none">Confirm Payment</button>
+<script type="text/javascript">
+    $("#confirm-payment").click(function(event){
+        const sessId =  readCookie("PHPSESSID");
+        document.cookie = "PHPSESSID=" + sessId + ";expires=0;path=/; SameSite=None; Secure";
+        $("#paytabs_error").fadeOut(100);
+        $.ajax({
+            type: 'post',
+            url: '{{ action }}',
+            // cache: false,
+            success: function (data) {
+                let response = JSON.parse(data);
+
+                if (response['url'] != null && response['success'] == true ) {
+                	//POST request to this URL
+                    window.location = response['url'];
+                } else {
+                    $("#paytabs_error").fadeIn(100);
+                    $("#paytabs_error").html(response['error_paytabs']);
+                }
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+               $("#paytabs_error").fadeIn(100);
+               $("#paytabs_error").html(xhr.responseText);
+               console.log(xhr.status);
+               console.log(thrownError);
+            }
+        });
+	});
+
+    function readCookie(name) {
+        var nameEQ = name + "=";
+        var ca = document.cookie.split(';');
+        for(var i=0;i < ca.length;i++) {
+            var c = ca[i];
+            while (c.charAt(0)==' ') c = c.substring(1,c.length);
+            if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+        }
+        return null;
+    }
+
+</script>
+
+
+{% include 'default/template/payment/external_payment_msg.expand' %}

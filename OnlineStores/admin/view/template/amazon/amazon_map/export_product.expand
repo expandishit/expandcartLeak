@@ -1,0 +1,392 @@
+{% block headelements %}
+
+  {# <button type="button" id="export-ebay-product" data-toggle="tooltip" title="{{ button_export_to_amazon }}" class="btn btn-warning"><i class="fa fa-upload" aria-hidden="true"></i> {{ lang('button_export_to_amazon') }}</button>
+  <button type="button" class="btn btn-info" data-toggle="modal" data-target="#export_amazon_result"><i class="fa fa-info-circle" aria-hidden="true"></i> Show Result</button> #}
+
+{% endblock headelements %}
+
+    
+<div id="content">
+<style>
+  #form-export-product-amazon .dropdown-item{
+    display: block;
+    width: 100%;
+    padding: .25rem 1.5rem;
+    clear: both;
+    font-weight: 400;
+    color: #212529;
+    text-align: inherit;
+    white-space: nowrap;
+    background: 0 0;
+    border: 0;
+  }
+  #form-export-product-amazon .table-responsive{
+    overflow-x: visible;
+  }
+</style>
+
+      <!-- Modal -->
+      <div class="modal fade" id="export_amazon_result" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+              <h4 class="modal-title" id="myModalLabel"><?php echo $text_export_result; ?></h4>
+            </div>
+            <div class="modal-body" id="sync_result" style="overflow-y: scroll;max-height: 350px">
+              <?php if(isset($ocproduct_export_result['success']) && $ocproduct_export_result['success']){
+                foreach($ocproduct_export_result['success'] as $product_export_success){
+                  if(isset($product_export_success['name'])){ ?>
+                  <div class="alert alert-success"> Success: Opencart store product <b><?php echo $product_export_success['name']; ?></b> [Id: <?php echo $product_export_success['product_id']; ?>] exported to amazon store successfully!</div>
+                <?php } } ?>
+              <?php } ?>
+              <?php if(isset($ocproduct_export_result['error']) && $ocproduct_export_result['error']){
+                foreach($ocproduct_export_result['error'] as $product_export_error){
+                  if(isset($product_export_error['message'])){?>
+                  <div class="alert alert-danger"> <?php echo $product_export_error['message']; ?></div>
+                <?php } } ?>
+              <?php } ?>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    <?php if ($error_warning) { ?>
+    <div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> <?php echo $error_warning; ?>
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+    </div>
+    <?php } ?>
+    <div class="col-md-12">
+      <div class="panel panel-default">
+        <div class="collapse in" id="feed-panel">
+          <div class="panel-heading"  style="display:inline-block;width:100%;">
+            <h5 class="panel-title"><i class="fa fa-info-circle" aria-hidden="true"></i> 
+            {{ lang('info_about_export_tab') }}</h5>
+          </div>
+          <div class="panel-body">
+            <ul>
+              <li>  {{ lang('text_export_tab_info1') }}</li>
+              <li>  {{ lang('text_export_tab_info2') }}</li>
+              <li>  {{ lang('text_export_tab_info4') }}</li>
+              <li>  {{ lang('text_export_tab_info5') }}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-12">
+        <!-- Advanced legend -->
+        <div class="features-table-container">
+            <div class="collapse in" id="feed-panel">
+                <div class="form-horizontal text-right">
+                  <div class="col-sm-12 form-group">
+                    <label class="col-sm-2 control-label">{{ lang('text_processing') }}</label>
+                    <div class="col-sm-10" style="margin-top:10px">
+                      <div class="progress">
+                        <div id="progress-bar-exportamazon" class="progress-bar" style="width: 0%;"></div>
+                      </div>
+                      <div id="progress-text-exportamazon"></div>
+                    </div>
+                  </div>
+                </div>
+                <table id="dt_product" class="table table-hover datatable-highlight">
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th>{{ lang('column_name') }}</th>
+                        <th>{{ lang('column_category_name') }}</th>
+                        <th>{{ lang('column_price') }}</th>
+                        <th>{{ lang('column_quantity') }}</th>
+                    </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+    </div> <!-- col-md-12 -->
+
+{% block scripts %}
+<script>
+    var dt;
+    $(document).ready(function() {
+        $.extend($.fn.dataTable.defaults, {
+            autoWidth: false,
+            dom: '<"datatable-header"fB><"datatable-scroll-wrap"t><"datatable-footer"lip>',
+            language: locales['dt_language'],
+            lengthMenu: [[10, 25, 50, 100, 200], [10, 25, 50, 100, 200]]
+        });
+        dt = $('#dt_product').DataTable({
+            processing: true,
+            serverSide: true,
+            stateSave: false,
+            language: {
+                ...locales['dt_language'],
+                search: ''
+            },
+            autoWidth: false,
+            select: {
+                style: 'multi',
+                selector: 'td:first-child'
+            },
+            lengthMenu: [[10, 25, 50, 100, 200], [10, 25, 50, 100, 200]],
+            ajax: {
+                url: "{{ link('amazon/amazon_map/export_product/dtHandler') }}",
+                type: 'POST',
+            },
+            buttons: [
+                {
+                    extend: 'collection',
+                    text: '<i class="icon-drawer-out"></i>',
+                    className: 'btn btn-default btn-export',
+                    buttons: [
+                        {
+                            extend: 'copyHtml5',
+                            text: locales['buttons']['copy'],
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        },
+                        {
+                            extend: 'csvHtml5',
+                            text: locales['buttons']['export2csv'],
+                            fieldSeparator: ',',
+                            extension: '.csv',
+                            bom: "true",
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        },
+                        {
+                            extend: 'excelHtml5',
+                            text: locales['buttons']['export2excel'],
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        },
+                        {
+                            extend: 'pdfHtml5',
+                            text: locales['buttons']['export2pdf'],
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        }
+                    ]
+                },
+                {
+                    extend: 'colvis',
+                    text: '<i class="icon-grid3"></i>',
+                    className: 'btn btn-default btn-colvis',
+                    columns: [1, 2, 3,4]
+                },
+            ],
+            columnDefs:[
+                {
+                    targets: 0,
+                    orderable: false,
+                    className: 'select-checkbox',
+                }
+            ],
+            columns: [
+                {
+                    title: `<input type="checkbox" class="select-checkbox" onchange='toggleSelectAll(this);'>`,
+                    data: "p_product_id",
+                },
+                {data: "name"},
+                {data: "category"},
+                {data: "price"},
+                {data: "quantity"},
+            ],
+        });
+        $('[data-popup="tooltip"]').tooltip();
+        
+        
+        $(".btn-export").attr({
+            "data-popup": "tooltip",
+            "title": locales['button_export']
+        });
+        
+        $(".btn-colvis").attr({
+            "data-popup": "tooltip",
+            "title": locales['button_colvis']
+        });
+        
+        $('.select').select2();
+
+        $('input, select').change(function (event) {
+            event.preventDefault();
+        });
+  
+  
+        $('.dt-buttons').append(`<button type="button" id="export-ebay-product" data-toggle="tooltip" title="{{ button_export_to_amazon }}" class="btn btn-warning"><i class="fa fa-upload" aria-hidden="true"></i> {{ lang('button_export_to_amazon') }}</button>`)
+        $('.dt-buttons').append(`<button type="button" class="btn btn-info" data-toggle="modal" data-target="#export_amazon_result"><i class="fa fa-info-circle" aria-hidden="true"></i> Show Result</button>`)
+
+
+    });
+    function toggleSelectAll(checkbox) {
+        if (checkbox.checked == true) {
+            dt.rows().select();
+        } else {
+            dt.rows().deselect();
+        }
+    }
+
+    function removeItem(id) {
+        //alert(clientId);
+        confirmMessage(function () {
+            ajax("{{ link("amazon/amazon_map/account/dtDelete") }}", {ids: [id]}, function (res) {
+                reloadDT();
+            });
+        });
+    }
+
+    function reloadDT() {
+        dt.ajax.reload();
+    }
+
+
+</script>
+<script type="text/javascript">
+
+var requests    = []; var totalExportedProduct = 0; var total = 0;
+
+var error_failed = false;
+
+$(document).ready(function(){
+  $('#export-ebay-product').on('click', function(e){
+
+    var selectedRows = dt.rows('.selected').data();
+    var selectedIds = [];
+    selectedRows.each(function (item) {
+        selectedIds.push(item.p_product_id);
+    });
+  
+    e.preventDefault();
+    var start_page  = 1;
+    
+    if (typeof timer != 'undefined') {
+        clearInterval(timer);
+    }
+    timer = setInterval(function() {
+            clearInterval(timer);
+    // Reset everything
+    $('.alert').remove();
+    $('#progress-bar-exportamazon').css('width', '0%');
+    $('#progress-bar-exportamazon').removeClass('progress-bar-danger progress-bar-success');
+    $('#progress-text-exportamazon').html('');
+
+      $.ajax({
+          url : '{{ link("amazon/amazon_map/export_product/ocExportProduct?page='+start_page+'") }}',
+          type:'POST',
+          data: {
+            'account_id': '{{account_id}}',
+            'selected': selectedIds
+          },
+          beforeSend: function() {
+            $('.block_div').css('display','block');
+            $('.container-fluid > .alert').remove();
+          },
+          complete:function() {
+            NextStep();
+          },
+          success: function(jsonAmazonPro) {
+                    if (jsonAmazonPro.error_failed) {
+                        error_failed = true;
+                        $('#progress-bar-exportamazon').addClass('progress-bar-danger');
+                        $('#progress-text-exportamazon').html('<div class="text-danger">' + jsonAmazonPro.error_failed + '</div>');
+                        $('#export_amazon_result #sync_result').append('<div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> '+jsonAmazonPro.error_failed+' <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+                    }else{
+                        error_failed = false;
+                        if(jsonAmazonPro.data.error){
+                            var html = '';
+                            for (i in jsonAmazonPro.data.error) {
+                                html += '<div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> '+jsonAmazonPro.data.error[i]['message']+' <button type="button" class="close" data-dismiss="alert">&times;</button></div>';
+                            }
+                            $('#export_amazon_result #sync_result').append(html);
+                            if(jsonAmazonPro.data.error_count){
+                                $('#progress-text-exportamazon').html('<div class="text-danger"> Warning: '+jsonAmazonPro.data.error_count+' products failed to export at amazon store!</div>');
+                            }
+                        }
+                        if(jsonAmazonPro.data.success){
+                            html1 = '';
+                            for (i in jsonAmazonPro.data.success) {
+                              html1 += '<div class="alert alert-success"><i class="fa fa-check-circle"></i> Success: Opencart store product <b>'+jsonAmazonPro.data.success[i]['name']+'</b> exported to amazon store successfully! <button type="button" class="close" data-dismiss="alert">&times;</button></div>';
+                            }
+                            $('#export_amazon_result #sync_result').append(html1);
+                            if(jsonAmazonPro.totalPage == 1) {
+                                totalExportedProduct = totalExportedProduct + jsonAmazonPro.data.success.length;
+                            } else {
+                                totalExportedProduct = totalExportedProduct + jsonAmazonPro.data.success.length;
+                            }
+
+                            $('#progress-text-exportamazon').html('<div class="text-success"> '+jsonAmazonPro.data.success_count+' products exported to amazon store successfully!</div>');
+                        }
+                        total = jsonAmazonPro.totalPage;
+
+                        for(start_page = 2; start_page <= jsonAmazonPro.totalPage; start_page++) {
+                            requests.push({
+                                url : '{{ link("amazon/amazon_map/export_product/ocExportProduct?page='+start_page+'") }}',
+                                type:'POST',
+                                data: {
+                                    'account_id': '{{account_id}}',
+                                    'selected': selectedIds
+                                },
+                                type:'POST',
+                                success :   function(json_response){
+                                    if(json_response.data.error){
+                                        var html = '';
+                                        for (i in json_response.data.error) {
+                                            html += '<div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> '+json_response.data.error[i]['message']+' <button type="button" class="close" data-dismiss="alert">&times;</button></div>';
+                                        }
+                                        $('#export_amazon_result #sync_result').append(html);
+                                        if(json_response.data.error_count){
+                                          $('#progress-text-exportamazon').html('<div class="text-danger"> Warning: '+json_response.data.error_count+' products failed to export at amazon store!</div>');
+                                        }
+                                    }
+                                    if(json_response.data.success){
+                                        html1 = '';
+                                        for (i in json_response.data.success) {
+                                          html1 += '<div class="alert alert-success"><i class="fa fa-check-circle"></i> Success: Opencart store product <b>'+json_response.data.success[i]['name']+'</b> exported to amazon store successfully! <button type="button" class="close" data-dismiss="alert">&times;</button></div>';
+                                        }
+                                        $('#export_amazon_result #sync_result').append(html1);
+                                        totalExportedProduct = totalExportedProduct + json_response.data.success.length;
+                                        $('#progress-text-exportamazon').html('<div class="text-success"> '+json_response.data.success.length+' products exported to amazon store successfully!</div>');
+                                    }
+                                }
+                            });
+                        }
+                    }
+            },
+            error: function(xhr, ajaxOptions, thrownError) {
+              alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+            }
+        });
+    }, 500);
+});
+
+})
+
+var NextStep = function(){
+    if (requests.length) {
+        $('#progress-bar-exportamazon').css('width', (100 - (requests.length / total) * 100) + '%');
+        $.ajax(requests.shift()).then(NextStep);
+    } else {
+        $('#progress-bar-exportamazon').css('width', '100%');
+        if(totalExportedProduct != 0){
+            $('#progress-text-exportamazon').html('<div class="text-success"><?php echo "Total '+totalExportedProduct+' products exported to amazon store from ExpandCart store!" ?></div>');
+            $('#progress-bar-exportamazon').addClass('progress-bar-success');
+        }else{
+            if(!error_failed){
+                $('#progress-text-exportamazon').html('<div class="text-danger"><?php echo "Total '+totalExportedProduct+' products exported to amazon store from ExpandCart store!" ?></div>');
+            }
+            $('#progress-bar-exportamazon').addClass('progress-bar-danger');
+        }
+
+        $('.block_div').css('display','none');
+    }
+};
+</script>
+
+
+{% endblock scripts %}

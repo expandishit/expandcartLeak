@@ -1,0 +1,432 @@
+{% extends "base.expand" %}
+{% import "controls/forms.expand" as forms %}
+
+{% set bodyClasses = "has-detached-right sidebar-detached-hidden" %}
+{% set hideHeader = true %}
+
+{% block content %}
+
+<!-- Tutorial Modal -->
+    <div class="list-wrapper product-list">
+        <div class="">
+
+            <div class="inner-settings-title mb-10 product-list-title">
+                <h4 class="fb-app-title">
+                    <a href="{{ link('catalog/product') }}"><i class="icon-arrow-left52 position-left text-default"></i></a>
+                    {{lang("heading_title")}}
+                </h4>
+                <div class="btns">
+                </div>
+            </div>
+
+            {% if limit_reached %}
+                <div class="domain-alert-box mb-20">
+                    <p class="first-ship-alert ai-center no-margin w-100">
+                        <i class="fas fa-exclamation-triangle"></i> &nbsp;&nbsp;
+                        {% if base.plan_trial_id == 3 %}
+                            <span class="w-100 gray-color font-13 m-bold">{{lang_printf('text_limit_reached', link('account/charge'))}}</span>
+                        {% else %}
+                            <span class="w-100 gray-color font-13 m-bold">{{lang_printf('text_limit_reached_prof', link('account/charge'))}}</span>
+                        {% endif %}
+                    </p>
+                </div>
+            {% endif %}
+
+            <div class="panel">
+                <div class="panel-body pt-0 pb-0">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <!-- Advanced legend -->
+                                <div class="features-table-container rounded">
+                                    <div class="collapse in" id="panel-language">
+                                        <table id="datatableGrid" class="table table-hover datatable-highlight">
+                                            <thead>
+                                                <tr>
+                                                    <th></th>
+                                                    <th>{{ lang('column_name') }}</th>
+                                                    <th>sort</th>
+                                                    <th></th>
+                                                </tr>
+                                            </thead>
+                                        </table>
+                                    </div>
+                                </div>
+                                <!-- /a legend -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block scripts %}
+
+
+    {% import _self as dtControls %}
+
+    <script src="view/assets/js/plugins/tables/datatables/extensions/row_reorder.min.js"></script>
+
+    <script>
+
+        var data = JSON.parse('{{ options|json_encode|e('js') }}');
+
+        $(document).ready(function () {
+            $.extend($.fn.dataTable.defaults, {
+                autoWidth: false,
+                dom: '<"datatable-header"fB><"datatable-scroll"t><"datatable-footer"lip>',
+                language: locales['dt_language'],
+                lengthMenu: [[10, 25, 50, 100, 200], [10, 25, 50, 100, 200]]
+            });
+
+            // Reorder events
+            var table = $('#datatableGrid').DataTable({
+                language: {
+                    ...locales['dt_language'],
+                    search: ""
+                },
+                rowReorder: {
+                    selector: 'td.sortable'
+                },
+                select: {
+                    style: 'multi',
+                    selector: 'td:first-child'
+                },
+                drawCallback: function () {
+                    $(this).find('tbody tr').slice(-3).find('.dropdown, .btn-group').addClass('dropup');
+                },
+                preDrawCallback: function() {
+                    $(this).find('tbody tr').slice(-3).find('.dropdown, .btn-group').removeClass('dropup');
+                },
+                data: data,
+                buttons: [
+                    {
+                        text: "<i class='fas fa-unlink'></i> {{lang('dtb_unlink')}}",
+                        className: 'bulk-unlink disabled',
+                        action: function (e, dt, node, config) {
+                            var selectedRows = dt.rows('.selected').data();
+                            var selectedIds = [];
+                            selectedRows.each(function (item) {
+                                selectedIds.push(item.option_id);
+                            });
+                            if (selectedIds.length > 0) {
+                                confirmMessage(function () {
+                                    $.ajax({
+                                        url: '{{ link('catalog/option/dtUnlink') }}',
+                                        type: 'post',
+                                        data: {ids: selectedIds},
+                                        success: function (resp) {
+                                            var response = JSON.parse(resp);
+
+                                            if (response.success == '1')
+                                            {
+                                                notify('Success', 'success', response.success_msg);
+                                            }
+                                            else
+                                            {
+                                                notify('error', 'warning', response.error);
+                                            }
+                                        }
+                                    });
+                                }, null, {
+                                    title: locales["cm_products_unlink_title"],
+                                    text: locales["cm_products_unlink_text"],
+                                    confirmButtonColor: '#f0ad4e',
+                                    confirmButtonText: locales["cm_products_unlink_confirm_button"]
+                                });
+                            }
+                        }
+                    },// unlink
+                    {
+                        extend: 'colvis',
+                        text: `<i class="fas fa-columns"></i> {{lang('dtb_custom_col')}}`,
+                        className: 'dt-menu dt-list btn-colvis',
+                        columns: [1,2]
+                    },// cols
+                    {
+                        extend: 'collection',
+                        text: '<i class="fas fa-file-download"></i> {{lang("dtb_export_table")}}',
+                        className: 'dt-menu btn-export {{ base.currentplan == 3 ? "disabled plan-lock-btn" : ""}}',
+                        buttons: [
+                            {
+                                extend: 'copyHtml5',
+                                text: locales['buttons']['copy'],
+                                exportOptions: {
+                                    columns: ':visible'
+                                }
+                            },
+                            {
+                                extend: 'csvHtml5',
+                                text: locales['buttons']['export2csv'],
+                                fieldSeparator: ',',
+                                extension: '.csv',
+                                bom: "true",
+                                exportOptions: {
+                                    columns: ':visible'
+                                }
+                            },
+                            {
+                                extend: 'excelHtml5',
+                                text: locales['buttons']['export2excel'],
+                                exportOptions: {
+                                    columns: ':visible'
+                                }
+                            },
+                            {
+                                extend: 'pdfHtml5',
+                                text: locales['buttons']['export2pdf'],
+                                exportOptions: {
+                                    columns: ':visible'
+                                }
+                            }
+                        ]
+                    },// export
+                    {
+                        text: "<i class='far fa-trash-alt'></i> {{lang('dtb_delete')}}",
+                        className: 'dt-menu bulk-delete disabled',
+                        action: function (e, dt, node, config) {
+                            var selectedRows = dt.rows('.selected').data();
+                            var selectedIds = [];
+                            selectedRows.each(function (item) {
+                                selectedIds.push(item.option_id);
+                            });
+                            if (selectedIds.length > 0) {
+                                confirmMessage(function () {
+                                    $.ajax({
+                                        url: '{{ link('catalog/option/dtDelete') }}',
+                                        type: 'post',
+                                        data: {ids: selectedIds},
+                                        success: function (resp) {
+                                            var response = JSON.parse(resp);
+
+                                            if (response.success == '1')
+                                            {
+                                                $("#create_option").removeClass("plan-lock-btn");
+                                                $("#create_option i").remove();
+                                                notify('Success', 'success', response.success_msg);
+                                                dt.rows('.selected').remove().draw();
+                                            }
+                                            else
+                                            {
+                                                notify('error', 'warning', response.error);
+                                            }
+                                        }
+                                    });
+                                });
+                            }
+                        }
+                    },// delete
+                ],
+
+                order: [[2, "asc"]],
+
+                createdRow: function( r, d, di) {
+                    $(r).attr('id', 'option_' + d.option_id);
+                    $(r).attr('data-id', d.option_id);
+                },
+
+                columns: [
+                    {
+                        title: `<input type="checkbox" class="styled" id="toggleSelectAll">`,
+                        orderable: false,
+                        data: "option_id",
+                        width: "50px"
+                    },
+                    {
+                        data: 'name',
+                        render: function (data, type, row) {
+                            return `<a href="{{ link('catalog/option/update?option_id=') }}${row['option_id']}">${row['name']}</a>`;
+                        }
+                    },
+                    {data: 'sort_order'},
+                    {data: 'option_id'},
+                ],
+                columnDefs: [
+                    {
+                        orderable: false,
+                        className: 'select-checkbox',
+                        targets: 0
+                    },
+                    {
+                        width: '50%',
+                        targets: [1]
+                    },
+                    {
+                        orderable: true,
+                        targets: [1]
+                    },
+                    {
+                        visible: false,
+                        targets: 2
+                    },
+                    {
+                        sortable: false,
+                        searchable: false,
+                        targets: [3]
+                    },
+                    {
+                        targets: 3,
+                        render: function (data, type, row) {
+                            return `<ul class="icons-list pull-right">
+                                    <li class="dropdown">
+                                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                            <i class="icon-menu9"></i>
+                                        </a>
+                                        <ul class="dropdown-menu dropdown-menu-right">
+                                            <li><a href='{{ link('catalog/option/update') }}?option_id=${row['option_id']}'><i class='icon-pencil7'></i> ${locales['button_edit']}</a></li>
+                                            <li><a class="unlinkProducts" data-rowid="${row['option_id']}"><i class='fa fa-minus-circle'></i> ${locales['button_products_unlink']}</a></li>
+                                            <li><a class="removeItem" data-rowid="${row['option_id']}"><i class='far fa-trash-alt'></i> ${locales['button_delete']}</a></li>
+                                        </ul>
+                                    </li>
+                                    <input type="hidden" class="option_id" value="${row['option_id']}" />
+                                </ul>
+                            `;
+                        }
+                    }
+                ],
+            });
+
+            
+            $('.product-list .product-list-title .btns').prepend(`<a href="{{ links['insert'] }}" class="theme-btn rounded-primary-btn {{ limit_reached ? 'plan-lock-btn' : '' }}" id="create_option">{{ limit_reached ? '<i class="fas fa-lock gray-lock"></i>' }} {{ lang('btn_new_option') }} </a>`)
+
+            $('[data-popup="tooltip"]').tooltip();
+    $('[data-toggle="tooltip"]').tooltip();
+
+            // Setup event
+            table.on('row-reorder', function (e, diff, edit) {
+
+                var data = {};
+
+                for (var i = 0, len = diff.length; i < len; i++) {
+
+                    var rowId = table.row(diff[i].node).selector.rows.id;
+                    var optionId = $('#' + rowId).data('id');
+
+                    data[optionId] = diff[i].newPosition;
+                }
+
+                var dataLength = Object.keys(data).length;
+
+                if (dataLength > 0) {
+                    $.ajax({
+                        url: 'catalog/option/updateSortOrder',
+                        method: 'POST',
+                        dataType: 'JSON',
+                        data: {'data': data, 'field': 'sort_order'},
+                        success: function (response)
+                        {
+                            if (response.success == '1') {
+                                notify('Sucess', 'success', response.success_msg);
+                            }
+                        }
+                    });
+                }
+            });
+
+            $(".styled, .multiselect-container input").uniform({
+                radioClass: 'choice'
+            });
+
+            $('select').select2({
+                minimumResultsForSearch: Infinity,
+                width: 'auto'
+            });
+
+            table.on('select', function (e, objDT, type, indexes) {
+                if (table.rows('.selected').any()) $(".bulk-delete, .bulk-unlink").removeClass('disabled');
+                else $(".bulk-delete, .bulk-unlink").addClass('disabled');
+            }).on('deselect', function (e, objDT, type, indexes) {
+                if (table.rows('.selected').any()) $(".bulk-delete, .bulk-unlink").removeClass('disabled');
+                else $(".bulk-delete, .bulk-unlink").addClass('disabled');
+            }).on('search.dt', function (e, objDT) {
+    //                console.log(e);
+    //                dt.columns(':visible').search(e);
+                if (table.rows('.selected').any()) $(".bulk-delete, .bulk-unlink").removeClass('disabled');
+                else $(".bulk-delete, .bulk-unlink").addClass('disabled');
+            });
+
+            $('#toggleSelectAll').click(function () {
+                var checkbox = this;
+                if (checkbox.checked == true) {
+                    table.rows().select();
+                } else {
+                    table.rows().deselect();
+                }
+            });
+
+            $('.removeItem').click(function () {
+
+                var that = $(this);
+                var rowId = that.data('rowid');
+
+                confirmMessage(function () {
+                    ajax("{{ link("catalog/option/dtDelete") }}", {ids: [rowId]}, function (res) {
+                        var response = JSON.parse(res);
+                        
+                        if (response.success == '1')
+                        {
+                            $("#create_option").removeClass("plan-lock-btn");
+                            $("#create_option i").remove();
+                            notify('Success', 'success', response.success_msg);
+                            table.row(that.parents('tr')).remove().draw();
+                        }
+                        else
+                        {
+                            notify('error', 'warning', response.error);
+                        }
+                    });
+                });
+            });
+
+            $('.unlinkProducts').click(function () {
+
+                var that = $(this);
+                var rowId = that.data('rowid');
+
+                confirmMessage(function () {
+                    ajax("{{ link("catalog/option/dtUnlink") }}", {ids: [rowId]}, function (res) {
+                        var response = JSON.parse(res);
+                        
+                        if (response.success == '1')
+                        {
+                            notify('Success', 'success', response.success_msg);
+                        }
+                        else
+                        {
+                            notify('error', 'warning', response.error);
+                        }
+                    });
+                }, null, {
+                    title: locales["cm_products_unlink_title"],
+                    text: locales["cm_products_unlink_text"],
+                    confirmButtonColor: '#f0ad4e',
+                    confirmButtonText: locales["cm_products_unlink_confirm_button"]
+                });
+            });
+
+            function removeItem(row, id) {
+                confirmMessage(function () {
+                    ajax("{{ link("catalog/option/dtDelete") }}", {ids: [id]}, function (res) {
+                        var response = JSON.parse(res);
+                        
+                        if (response.success == '1')
+                        {
+                            notify('Success', 'success', response.success_msg);
+                            table.row($(row).parents('tr')).remove().draw();
+                        }
+                        else
+                        {
+                            notify('error', 'warning', response.error);
+                        }
+                    });
+                });
+            }
+
+        });
+
+    </script>
+{% endblock scripts %}
+

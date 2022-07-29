@@ -1,0 +1,327 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% set dualMenuEnabled = true %}
+
+{% block title %}
+{{ lang('es_heading_title') }}
+<link rel="stylesheet" type="text/css" href="view/stylesheet/modules/expand_seo/custom.css?bn={{ BuildNumber }}"/>
+{% endblock title %}
+
+{% block breadcrumb %}
+{{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block secondarymenu %}
+    {% include 'module/expand_seo/menu.expand' with {'expand': '#expand_seo', 'active': '#url_schema'} %}
+{% endblock secondarymenu %}
+
+
+{% block headelements %}
+    {% include "includes/buttons_top.expand" %}
+{% endblock headelements %}
+
+{% block content %}
+
+<!-- Start Form -->
+<form id="form" class="form" action="{{ schemaAction }}" method="post">
+    <div class="col-md-12">
+        <!-- Advanced legend -->
+        <div class="panel panel-flat">
+            <div class="panel-body">
+               <fieldset>
+                   <legend class="text-semibold">
+                       <i class="fas fa-check-circle fa-lg position-left"></i>
+                       {{ lang('tab_general')|trim(':') }}
+                       <a class="control-arrow" data-toggle="collapse" data-target="#panel1">
+                           <i class="icon-circle-down2"></i>
+                       </a>
+                   </legend>
+                   <div class="collapse in" id="panel1" >
+                       <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group" id="schema[group]-group">
+
+                                <div class="col-md-6">
+                                    <label> {{ lang('es_entry_schema_group') }} </label>
+                                    <span class="help-block"></span>
+                                </div>
+                                <div class="col-md-6">
+                                   <div class="form-group">
+                                       <select id="schema_group" name="schema[group]" class="form-control">
+                                           {% for key,group in expand_seo['fields'] %}
+                                                <option value={{key}} > {{ group['name'] }} </option>
+                                           {% endfor %}
+                                        </select>
+                                   </div>
+                                 </div>
+                            </div>
+                            <br><br>
+                            <!-- form-group -->
+                            <div class="form-group" id="schema[language]-group">
+                                <div class="col-md-6">
+                                    <label> {{ lang('es_entry_spesify_language') }} </label>
+                                    <span class="help-block"></span>
+                                </div>
+                                <div class="col-md-6">
+                                   <div class="form-group">
+                                     <select id="optActive" name="schema[language]" class="form-control">
+                                         <option value="global">{{ lang('all_languages') }}</option>
+                                         {% for key,language in expand_seo['languages'] %}
+                                              <option value={{ language }} > {{ language }} </option>
+                                         {% endfor %}
+                                      </select>
+                                  </div>
+                                </div>
+                            </div>
+                            <br><br>
+                            <!-- form-group -->
+                            <div class="form-group" id="schema[fields_language]-group">
+                                <div class="col-md-6">
+                                    <label> {{ lang('es_entry_schema_language') }} </label>
+                                    <span class="help-block"></span>
+                                </div>
+                                <div class="col-md-6">
+                                   <div class="form-group">
+                                     <select id="optActive" name="schema[fields_language]"  class="form-control">
+                                         {% for key,language in expand_seo['languages'] %}
+                                              <option value={{ language }} > {{ language }} </option>
+                                         {% endfor %}
+                                      </select>
+                                  </div>
+                                </div>
+                            </div>
+                            <br><br>
+                            <!-- form-group -->
+                            <div class="form-group" id="schema[prefix]-group" >
+                                <div class="col-md-6">
+                                    <label> {{ lang('es_entry_prefix') }} </label>
+                                    <span class="help-block"></span>
+                                </div>
+                                <div class="col-md-6">
+                                   <div class="form-group">
+                                     <input class="ltr form-control" id="product_prefix"
+                                        value=" {{ expand_seo['products']['prefix'] }}"
+                                        type="text" name="schema[prefix]"/>
+                                  </div>
+                                </div>
+                            </div>
+                            <br><br>
+                            <!-- form-group -->
+                            <div class="form-group">
+                                <div class="col-md-6">
+                                    <label> {{ lang('es_url_schema') }} </label>
+                                    <span class="help-block">{{ lang('es_url_schema_note') }}</span>
+                                </div>
+                                <div class="col-md-6">
+                                   <div class="schema_elements schema_elements_style" style="display: none;">
+                                       <div class="separators inline_block">
+                                           {% for key,separator in expand_seo['separators'] %}
+                                            <span class="separator" onclick="appendElement(this)"
+                                                 data-parent="separators" data-unique="no"
+                                                 data-value="{{ separator }}"> {{ separator }}</span>
+                                           {% endfor %}
+                                       </div>
+                                       <div class="schema_parts inline_block">
+                                       </div>
+
+                                   </div>
+                                </div>
+                            </div>
+                            <br><br>
+                            <!-- form-group -->
+                            <div class="form-group" >
+                                <div class="col-md-6">
+                                    <label> {{ lang('es_text_final_url') }} </label>
+                                    <span class="help-block">{{ lang('es_text_final_url_note') }}</span>
+                                </div>
+                                <div class="col-md-6">
+                                   <div class="url_schema_container ltr">
+                                       <div class="url_schema inline_block schema_elements_style">
+                                           <span>
+                                               {{ domainName }}
+                                               <div class="_languages inline_block">
+                                                   {{ expand_seo['settings']['es_append_language'] == 1 ? '{language}/' : '' }}
+                                               </div>
+                                               <div class="prefix inline_block"></div>
+                                           </span>
+                                       </div>
+                                       <div class="ltr schema_elements_style" id="url_schema_div"></div>
+                                       <div class="ltr" id="hidden_url_schema_div"></div>
+                                   </div>
+                                </div>
+                            </div>
+                            <input type="hidden" id="schema_fields" value="{{ expand_seo['json_fields'] }}" />
+                            <input type="hidden" name="formType" value="schema" />
+                            <input type="hidden" name="schema[status]" value="1" />
+                        </div>
+                        <!-- col-md-12 -->
+                        </div>
+                        <!-- row -->
+                    </div> <!-- collapse -->
+                 </fieldset>
+            </div>
+        </div>
+        <!-- /a legend -->
+    </div>
+</form>
+<!-- End Form -->
+
+
+
+    <!-- Lower Buttons -->
+    {% include "includes/buttons_bottom.expand" %}
+    <!-- End Lower Buttons -->
+{% endblock content %}
+
+{% block scripts %}
+    {{ parent() }}
+    {% import _self as dtControls %}
+    <script>
+    $(document).ready(function() {
+        $('select').select2();
+        $('.touchspinney').TouchSpin({
+            'postfix': '{{ current_currency_code }}',
+            'decimals': 2,
+        });
+    });
+    $(document).ready(function() {
+        $('#schema_group').on("select2:select",function (e) {
+
+            var thisGroup = $(this).val();
+
+            $('#url_schema_div').empty();
+            $('#hidden_url_schema_div').empty();
+            $('#product_prefix').val('');
+            $('.url_schema .prefix').empty();
+
+            var fields = JSON.parse($('#schema_fields').val());
+
+            var schema_parts = $('.schema_parts');
+
+            var spanHtml = '';
+
+            var group = fields[thisGroup]['fields'];
+            var name= fields[thisGroup]['name'];
+
+            if (group) {
+                $('.schema_elements').show();
+                $('#seo_schema_language').attr('disabled', false);
+                for (elementIndex in group) {
+                    spanHtml += '<span onclick="appendElement(this)"' +
+                        ' data-parent="schema_parts" data-unique="no"' +
+                        ' data-value="' + elementIndex + '">' + group[elementIndex] + '</span>';
+                }
+            } else {
+                $('.schema_elements').hide();
+                $('#seo_schema_language').attr('disabled', true);
+            }
+
+            schema_parts.html(spanHtml);
+        });
+        $('#product_prefix').on('keyup',function () {
+            var me = $(this);
+
+            var domain = $('#domainName').data('value');
+
+            var val = me.val();
+            var newVal = '';
+            var matches;
+
+            if (matches = val.match(/^(?:[a-z]+[0-9a-z\_\-\/]*)?$/i)) {
+
+                if (matches[0].length > 0) {
+                    newVal = val;
+                }
+            }
+            $('.url_schema .prefix').html(newVal);
+        });
+    });
+    var removeElement = function (that) {
+        var me = $(that);
+
+        var hiddenId = $(document.getElementById(me.data('input')));
+
+        var $span = '<span ' +
+            'onclick="appendElement(this)" ' +
+            'data-value="' + hiddenId.val() + '"' +
+            'data-unique="' + me.data('removal') + '"' +
+            'data-parent="' + me.data('parent') + '"' +
+            'class="' + me.attr('class') + '"' +
+            '>' + me.text() + '</span>';
+        $('.' + me.data('parent')).show();
+
+        me.parent().remove();
+        hiddenId.remove();
+    };
+    var hiddenInputsIndex = 0;
+
+    var appendElement = function (that) {
+        var me = $(that);
+
+        var value = '<input ' +
+            'id="url_schema_' + me.data('value') + '_' + hiddenInputsIndex + '" ' +
+            'type="hidden" ' +
+            'value="' + me.data('value') + '" ' +
+            'name="schema[parts]['+me.data('parent')+'][' + hiddenInputsIndex + ']" ' +
+            'class="' + me.attr('class') + '"' +
+            '/>';
+
+        var valueSpan = '<div class="inline_block"><span ' +
+            'id="url_schema_' + me.data('value') + '_div" ' +
+            'onclick="removeElement(this)" ' +
+            'data-input="url_schema_' + me.data('value') + '_' + hiddenInputsIndex + '" ' +
+            'data-parent="' + me.data('parent') + '" ' +
+            'data-unique="' + me.data('removal') + '" ' +
+            'class="' + me.attr('class') + '"' +
+            '>' + me.text() + '</span></div>';
+
+        hiddenInputsIndex++;
+
+        $('#hidden_url_schema_div').append(value);
+
+
+        if (me.data('unique') == 'yes') {
+            var parent = me.parent();
+            parent.hide();
+            $('.url_schema ._languages').html(valueSpan);
+        } else {
+            $('#url_schema_div').append(valueSpan);
+        }
+    }
+
+
+
+    $('#seo_language').change(function () {
+        return false;
+        var me = $(this);
+        var textVal = me.find('option:selected').text();
+
+        $('.schema_elements .language').data('value', me.val());
+        $('.schema_elements .language').text(me.find('option:selected').text());
+        $('#url_schema_div .language').text(me.find('option:selected').text());
+        $('#hidden_url_schema_div .language').val(textVal);
+        $('#hidden_url_schema_div .language').attr('id', 'url_schema_' + textVal);
+        $('#url_schema_div .language').attr('id', 'url_schema_' + textVal + '_div');
+        $('#url_schema_' + textVal + '_div').data('input', 'url_schema_' + textVal);
+    });
+
+    $('#newSchemaForm').submit(function (event) {
+        event.preventDefault();
+
+        var me = $(this);
+
+        var action = me.attr('action');
+
+        $.ajax({
+            url: action,
+            data: me.serialize(),
+            method: 'post',
+            success: function (resp) {
+                alert(resp);
+                window.location.reload();
+            }
+        });
+    });
+</script>
+{% endblock scripts %}

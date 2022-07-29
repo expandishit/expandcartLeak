@@ -1,0 +1,1014 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% set dualMenuEnabled = true %}
+
+{% block title %}
+{{ lang('heading_title_export') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+{{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+
+{% block secondarymenu %}
+    {% include 'module/amazon_connector/menu.expand' with {'active': '#am_map_product'} %}
+{% endblock secondarymenu %}
+
+{% block headelements %}
+
+    <a href="{{ button_back_link }}" title="{{ lang('button_back') }}" class="btn btn-info"><i class="fa fa-reply" aria-hidden="true"></i> {{ lang('button_back') }}</a>
+        
+{% endblock headelements %}
+
+{% block content %}
+  
+<style>
+.daterangepicker.dropdown-menu{
+  z-index: 9000;
+}
+.product_import_section, #profiler_product, #profiler_product_export, #combination_section, #selected_export{
+  display: none;
+}
+</style>
+
+<div id="content">
+    <link href="view/stylesheet/csspin.css" rel="stylesheet" type="text/css"/>
+    <style type="text/css">
+      .alert-success{
+        color: green;
+      }
+      .cp-round::before, .cp-round::after{
+        width: 35px;
+        left:8px;
+        height: 35px;
+        margin-top: 25px;
+      }
+      .btn-success{
+        background-color:#6ABD6A;
+        color:#FFF;
+        border-style: solid;
+        border-width: 1px;
+        border-color: #6ABD6A;
+        border-bottom-width: 3px;
+      }
+      .btn-success:hover{
+        background-color:#e6e6e6;
+        color:#333;
+        border-style: solid;
+        border-width: 1px;
+        border-color: #adadad;
+        border-bottom-width: 3px;
+      }
+      .order_import_section, #profiler_order, #amazonOrderList, #start_import_all_order, .result_report, #createOrderProcessBar{
+        display: none;
+      }
+    </style>
+
+    <div class="col-md-12">
+      <div class="panel panel-default">
+        <div class="collapse in" id="feed-panel">
+            <?php if ($error_warning) { ?>
+            <div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> <?php echo $error_warning; ?>
+              <button type="button" class="close" data-dismiss="alert">&times;</button>
+            </div>
+            <?php } ?>
+          <div class="panel-heading"  style="display:inline-block;width:100%;">
+            <h5 class="panel-title"><i class="fa fa-info-circle" aria-hidden="true"></i> 
+            {{ lang('info_about_export_tab') }}</h5>
+          </div>
+          <div class="panel-body">
+            <ul>
+              <li>  {{ lang('text_export_tab_info3') }}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-12">
+      <div class="panel panel-default">
+        <div class="collapse in" id="feed-panel">
+          <div class="panel-heading" style="display:inline-block;width:100%;">
+            <h5 class="panel-title"><i class="fa fa-pencil-square-o" aria-hidden="true"></i> {{ lang('update_delete_export') }}</h5>
+          </div>
+
+            <div class="panel-body">
+                <div class="form-horizontal text-right">
+                    <div class="col-sm-12 form-group">
+                        <label class="col-sm-2 control-label">{{ lang('text_processing') }}</label>
+                        <div class="col-sm-10" style="margin-top:10px">
+                        <div class="progress">
+                            <div id="progress-bar-updateDeleteProduct" class="progress-bar" style="width: 0%;"></div>
+                        </div>
+                        <div id="progress-text-updateDeleteProduct"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="pull-right" style="margin-bottom:10px;">
+                    <button type="button" class="btn btn-primary update_export_start" id="update" data-toggle="tooltip" title="{{ lang('info_button_update_export') }}" ><i class="fa fa-pencil-square" aria-hidden="true"></i> {{ lang('info_button_update_export') }} </button>
+                    <button type="button" class="btn btn-danger update_export_start" id="delete" data-toggle="tooltip" title="{{ lang('info_button_delete_export') }}" ><i class="fa fa-trash-o" aria-hidden="true"></i> {{ lang('button_delete_export') }} </button>
+                    <button type="button" class="btn btn-success" data-toggle="modal" data-target="#UpdateDeleteResult">
+                    <i class="fa fa-info-circle" aria-hidden="true"></i> Show Result
+                    </button>
+                </div>
+
+                <!-- Modal -->
+                <div class="modal fade" id="UpdateDeleteResult" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                            <h4 class="modal-title" id="myModalLabel">Update/Delete Result List</h4>
+                        </div>
+                        <div class="modal-body" id="sync_result" style="overflow-y: scroll;max-height: 350px">
+                            <div class="alert alert-info text-center"> No result Found</div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+                <table id="dt_product" class="table table-hover datatable-highlight">
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th>{{ lang('column_amazon_product_id') }}</th>
+                        <th>{{ lang('column_product_name') }}</th>
+                        <th>{{ lang('column_product_type') }}</th>
+                    </tr>
+                    </thead>
+                </table>
+            </div>
+          
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-12">
+      
+      <div class="panel panel-default" id="profiler_product">
+        <div class="collapse in" id="feed-panel">
+     
+          <div class="panel-heading"  style="display:inline-block;width:100%;">
+            <h5 class="panel-title">{{ lang('entry_product_response') }}</h5>
+          </div>
+          <div class="panel-body profiler_product_body">
+            <div class="alert alert-danger"><i class="fa fa-exclamation-triangle" aria-hidden="true"></i> {{ lang('error_not_referesh') }}</div>
+
+          </div>
+        </div>
+    </div>
+    <!-- Models -->
+    <div class="modal fade asin_model" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="gridSystemModalLabel"><strong>{{ lang('button_import_product_by_asin') }}</strong></h4>
+          </div>
+          <div class="modal-body">
+            <div class="form-horizontal">
+              <div class="form-group required">
+                <label class="control-label" style="margin-bottom: 10px;">{{ lang('text_product_asin') }}</label>
+                <div class="col-sm-12">
+                    <input type="text" name="amazon_product_asin" value="" placeholder="{{ lang('entry_product_asin') }}" class="form-control" />
+                </div>
+              </div>
+              <div class="alert alert-info" id="info_asin">{{ lang('info_product_asin_sync')}}</div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <span class="demo-spin" style="color: #1e91cf;position: relative;top: 6px;"><i class="fa  fa-spin fa-2x fa-fw"></i></span>
+            <button type="button" id="import_by_asin" class="btn btn-primary">{{ lang('button_import') }}</button>
+            <button type="button" class="btn btn-default" data-dismiss="modal">{{ lang('button_close') }}</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+{% endblock %}
+{% block scripts %}
+
+
+<script type="text/javascript">
+    // Order Generate Report Id section
+    var createRequests    = []; var totalCreatedOrder = 0; var totalImportedOrders = 0;
+         
+    $(document).ready(function(){
+          $('#generate_report_id').on('click',function(){
+            account_id = {{ account_id }};
+            $.ajax({
+              url     : '{{ link("amazon/amazon_map/product/generate_report_id?account_id='+account_id+'&status=order") }}',
+              dataType:'json',
+              type    : 'POST',
+              cache   : false,
+              beforeSend: function()
+              {
+                  startLoadingScreen();
+              },
+              complete: function() {
+                 removeLoadingScreen();
+              },
+              success: function(json) {
+                if (json['error']) {
+                  html = '<div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i>  '+ json['error']+'<button type="button" class="close" data-dismiss="alert">&times;</button></div>';
+                  $('#generate-report-order').prepend(html);
+                }
+                if (json['success']){
+                  $('#generate-report-order .alert').remove();
+                  html = '<div class="alert alert-success"><i class="fa fa-exclamation-circle"></i>  '+ json['success']['message']+'<button type="button" class="close" data-dismiss="alert">&times;</button></div>';
+                  $('#generate-report-section').prepend(html);
+                  $('#generate_report_id').css('display','none');
+                  $('.product_import_section').css('display','block');
+                }
+              },
+              error: function(xhr, ajaxOptions, thrownError) {
+                alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+              }
+            });
+        });
+
+        $('.daterange-basic').daterangepicker({
+
+            "autoApply": true,
+            // applyClass: 'bg-slate-600',
+            // cancelClass: 'btn-default',
+            ranges: locales['drp_ranges'],
+            locale: locales['drp_locale'],
+            opens: locales['drp_direction']
+
+        });
+
+        $('.daterangepicker-inputs').addClass('hidden');
+        
+          // Import all amazon orders and save to opencart table
+        var countSavedOrder = 0;
+        $("#import_all_order").on("click", function(){
+          countSavedOrder = 0;
+          console.log($('input[name="date_all"]').val());
+          $("#importOrderList").find('.text-danger').remove();
+          $("#importOrderList").find('.alert-success, .alert-danger').remove();
+          var args        = [];
+          var getDateRange =  $('input[name="date_all"]').val();
+              args['order_daterange'] = getDateRange;
+
+            if(getDateRange.length != 0){
+              jQuery.ajax({
+                  url: "{{ link('amazon/amazon_map/order/getOrderList?account_id=' ~ account_id ~ '')}}",
+                  data: {
+                      'amazon_order_daterange': getDateRange, 
+                      'next_token'        : ''
+                  },
+                  dataType:'json',
+                  type:'POST',
+                  beforeSend: function() {
+                    $('#profiler_order .profiler_order_body, .result_report').find('.alert-success, .alert-danger').remove();
+                    $(".demo-spin > .fa").addClass('fa-cog');
+                  },
+                  success: function(json) {
+                    if (json.warning) {
+                        if(json.warning['error_date_range']){
+                            $('#importOrderList').find('input[name="date_all"]').parent().parent().append('<div class="text-danger"> '+json.warning['error_date_range']+'</div>');
+                        }
+                        if(json.warning['error']){
+                            $('#importOrderList').append('<div class="alert alert-danger"><i class="fa fa-times" aria-hidden="true"></i>   '+json.warning['error']+'<button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+                        }
+                        $(".demo-spin > .fa").removeClass('fa-cog');
+                    }else{
+                        $('#importOrderList').css('display', 'none');
+                        $('.result_report').css('display', 'block');
+                        if (json.success) {
+                            countSavedOrder = countSavedOrder + json.success;
+                            $('.result_report').append('<div class="alert alert-success"><i class="fa fa-exclamation-circle" aria-hidden="true"></i>  Success: '+countSavedOrder+' amazon order(s) imported!<button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+                        }
+                        if (json.error) {
+                            for (i in json.error) {
+                              var html = '';
+                                html = '<div class="alert alert-danger"><i class="fa fa-times" aria-hidden="true"></i>   '+json.error[i]['message']+'<button type="button" class="close" data-dismiss="alert">&times;</button></div>';
+                                $('.result_report').append(html);
+                            }
+                        }
+                        if(json.next_token){
+                            nextOrderArray(args, json.next_token, countSavedOrder);
+                        }else{
+                            $('.result_report').append('<div class="alert alert-success"><i class="fa fa-exclamation-circle" aria-hidden="true"></i>  Success: Total '+countSavedOrder+' amazon order(s) imported in opencart store from amazon, Click on <b>Create Imported Order</b> button to create imported product to opencart store! <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+                            $('body .order_import_section').parent().before('<div class="alert alert-success"><i class="fa fa-exclamation-circle" aria-hidden="true"></i>  Success: Total '+countSavedOrder+' amazon order(s) imported in opencart store from amazon, Click on <b>Create Imported Order</b> button to create imported product to opencart store! <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+                            $(".demo-spin > .fa").removeClass('fa-cog');
+                            $('#create_amazon_order').attr('data-total', json.total_order);
+                        }
+                    }
+                  },
+                  error: function(xhr, ajaxOptions, thrownError) {
+                    alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                  }
+              });
+            }
+        });
+
+        // import and create imported amazon single order to opencart store
+        $("#import_by_orderId").on("click", function(e){
+          e.preventDefault();
+          var getOrderId = $('#amazonOrderOneByOne').find('input').val();
+          if(getOrderId.length > 10 && getOrderId.length < 25){
+              $('#progress-bar-importorder').css('width', '0%');
+              $('#progress-bar-importorder').removeClass('progress-bar-danger progress-bar-success');
+              $('#progress-text-importorder').html('<div class="text-info text-left"><?php echo $text_currently_importorder; ?></div>');
+
+              jQuery.ajax({
+                  url   : '{{ link("amazon/amazon_map/order/importSingleOrder") }}',
+                  data  : {
+                            'account_id'      : '{{ account_id }}',
+                            'amazon_order_id' : getOrderId,
+                          },
+                  dataType: 'json',
+                  type    : 'POST',
+                  beforeSend: function() {
+                      $('#amazonOrderOneByOne').find('.text-danger').remove();
+                      $('#amazonOrderOneByOne').find('.alert').remove();
+                  },
+                  success: function(json) {
+                      if (json.error_failed) {
+                          $('#progress-bar-importorder').addClass('progress-bar-danger');
+                          $('#progress-text-importorder').html('<div class="text-danger">' + json.error_failed + '</div>');
+                          $("#amazonOrderOneByOne .form-horizontal").prepend('<div class="alert alert-danger"><i class="fa fa-check-circle"></i> '+json.error_failed+' <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+                      }
+                      if(json.success){
+                          $('#progress-bar-importorder').addClass('progress-bar-success');
+                          $('#progress-text-importorder').html('<div class="text-success">' + json.success + '</div>');
+                          $("#amazonOrderOneByOne .form-horizontal").prepend('<div class="alert alert-success"><i class="fa fa-check-circle"></i> '+json.success+' <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+                      }
+                      $('#progress-bar-importorder').css('width', '100%');
+                  },
+                  error: function(xhr, ajaxOptions, thrownError) {
+                    alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                  }
+              });
+          }else{
+              $('#amazonOrderOneByOne').find('.text-danger').remove();
+              $('#amazonOrderOneByOne').find('input').parent().append('<div class="text-danger">Warning: Provide valid Amazon order Id!</div>');
+          }
+        });
+
+         // create imported amazon orders to opencart store
+    
+          var countOrder  = 1;
+          $('#create_amazon_order').on('click', function(e){
+              e.preventDefault();
+              totalCreatedOrder = totalImportedOrders = 0;
+              totalImportedOrders = $('#create_amazon_order').attr('data-total');
+
+              $('#createOrderProcessBar').css('display', 'block');
+              if (typeof timer != 'undefined') {
+                  clearInterval(timer);
+              }
+              timer = setInterval(function() {
+                      clearInterval(timer);
+              // Reset everything
+              $('.alert').remove();
+              $('#progress-bar-createorder').css('width', '0%');
+              $('#progress-bar-createorder').removeClass('progress-bar-danger progress-bar-success');
+              $('#progress-text-createorder').html('<div class="text-info text-left"><?php echo "Amazon order(s) create processing..."; ?></div>');
+              $.ajax({
+                  url     : '{{ link("amazon/amazon_map/order/createOrder") }}',
+                  data    : {
+                              'account_id' : '{{ account_id }}',
+                              'count'      : countOrder,
+                            },
+                  dataType: 'json',
+                  type    : 'POST',
+                  beforeSend: function() {
+                    $('#profiler_order').css('display', 'block');
+                    $('#profiler_order .profiler_order_body').find('.alert-danger, .alert-success').remove();
+                    $('.block_div').css('display','block');
+                    $('.container-fluid > .alert').remove();
+                  },
+                  complete:function() {
+                      NextCreateStep();
+                  },
+                  success: function(jsonAmazonOrd) {
+                        if (jsonAmazonOrd.error_failed) {
+                            $('#progress-bar-createorder').addClass('progress-bar-danger');
+                            $('#progress-text-createorder').html('<div class="text-danger">' + jsonAmazonOrd.error_failed + '</div>');
+                            $('#profiler_order .profiler_order_body').append('<div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> '+jsonAmazonOrd.error_failed+' <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+                        }else{
+                            if(jsonAmazonOrd.error){
+                                $('#profiler_order .profiler_order_body').append('<div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> '+jsonAmazonOrd.error+' <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+                            }
+                            if(jsonAmazonOrd.success){
+                                $('#profiler_order .profiler_order_body').append('<div class="alert alert-success"><i class="fa fa-check-circle"></i> '+jsonAmazonOrd.success+' <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+                                totalCreatedOrder = totalCreatedOrder + 1;
+                            }
+                            for(countOrder = 2; countOrder <= totalImportedOrders; countOrder++) {
+                                createRequests.push({
+                                    url     : '{{ link("amazon/amazon_map/order/createOrder") }}',
+                                    data    : {
+                                              'account_id' : '{{ account_id }}',
+                                              'count'      : countOrder,
+                                            },
+                                    dataType: 'json',
+                                    type    : 'POST',
+                                    success :   function(json_response){
+                                        if(json_response.error){
+                                            $('#profiler_order .profiler_order_body').append('<div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> '+json_response.error+' <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+                                        }
+                                        if(json_response.success){
+                                            $('#profiler_order .profiler_order_body').append('<div class="alert alert-success"><i class="fa fa-check-circle"></i> '+json_response.success+' <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+                                            totalCreatedOrder = totalCreatedOrder + 1;
+                                        }
+                                    },
+                                });
+                            }
+                        }
+                      },
+                      error: function(xhr, ajaxOptions, thrownError) {
+                        alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                      }
+                  });
+              }, 500);
+          });
+
+
+
+    });
+
+//--></script>
+
+<script type="text/javascript">
+  // ********** Amazon product import section **********
+  $(document).ready(function(){
+    $('#import_update_product').on('click', function(e){
+        $.ajax({
+            url  : '{{ link("amazon/amazon_map/product/getProductReport") }}',
+            data: {
+              'account_id' : '{{ account_id }}',
+            },
+            dataType:'json',
+            type:'POST',
+            beforeSend: function() {
+              $('#profiler_product .profiler_product_body, #generate-report-section').find('.alert').remove();
+              $('#progress-bar-importproduct').removeClass('progress-bar-danger progress-bar-success');
+              $('.block_div, #profiler_product').css('display','block');
+              $('.block_div').css('display','block');
+              $('.container-fluid > .alert').remove();
+            },
+            complete:function() {
+                $('.block_div').css('display','none');
+                $('#progress-bar-importproduct').css('width', '100%');
+                $('#create_import_product').prop('disabled',false);
+                $('#import_update_one_by_one').prop('disabled',false);
+            },
+            success: function(jsonAmazonPro) {
+                if (jsonAmazonPro.error) {
+                    $('#progress-bar-importproduct').addClass('progress-bar-danger');
+                    $('#progress-text-importproduct').html('<div class="text-danger">' + jsonAmazonPro.error + '</div>');
+                    $('#profiler_product').append('<div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> '+jsonAmazonPro.error+' <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+                }else{
+                    if(jsonAmazonPro.data && jsonAmazonPro.message){
+                      $('#progress-bar-importproduct').addClass('progress-bar-success');
+                      $('#profiler_product .profiler_product_body').append('<div class="alert alert-success"><i class="fa fa-exclamation-circle"></i> '+jsonAmazonPro.message+' <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+                      $('#progress-text-importproduct').html('<div class="text-success"> '+jsonAmazonPro.message+' </div>');
+                      $('#create_import_product').attr('data-total', jsonAmazonPro.total_product);
+                    }
+                }
+            },
+          })
+    })
+
+  })
+</script>
+
+<script type="text/javascript">
+// ********** Amazon product create/update section **********
+  var importRequests    = []; var totalImportProduct = 0; var import_total = 0;
+  var count  = 1;
+  $('#create_import_product').on('click', function(e){
+      e.preventDefault();
+      totalImportProduct = import_total = 0;
+      import_total = $('#create_import_product').attr('data-total');
+      if (typeof timer != 'undefined') {
+          clearInterval(timer);
+      }
+      timer = setInterval(function() {
+              clearInterval(timer);
+      // Reset everything
+      $('.alert').remove();
+      $('#progress-bar-importproduct').css('width', '0%');
+      $('#progress-bar-importproduct').removeClass('progress-bar-danger progress-bar-success');
+      $('#progress-text-importproduct').html('<div class="text-info text-left"><?php echo $text_currently_import; ?></div>');
+
+      $.ajax({
+          url     : '{{ link("amazon/amazon_map/product/createProduct") }}',
+          data: {
+            'account_id' : '{{ account_id }}',
+            'count'      : count,
+          },
+          dataType:'json',
+          type:'POST',
+          beforeSend: function() {
+            $('#profiler_product .profiler_product_body, #generate-report-section').find('.alert').remove();
+            $('.block_div').css('display','block');
+            $('.container-fluid > .alert').remove();
+          },
+          complete:function() {
+              NextImportStep();
+          },
+          success: function(jsonAmazonPro) {
+                if (jsonAmazonPro.error_failed) {
+                    if(jsonAmazonPro.error_failed.status && jsonAmazonPro.error_failed.status == 'complete'){
+                        $('#progress-bar-importproduct').addClass('progress-bar-success');
+                        $('#progress-text-importproduct').html('<div class="text-danger">' + jsonAmazonPro.error_failed.message + '</div>');
+                        $('#profiler_product .profiler_product_body').append('<div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> '+jsonAmazonPro.error_failed.message+' <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+                    }else{
+                        $('#progress-bar-importproduct').addClass('progress-bar-danger');
+                        $('#progress-text-importproduct').html('<div class="text-danger">' + jsonAmazonPro.error_failed + '</div>');
+                        $('#profiler_product .profiler_product_body').append('<div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> '+jsonAmazonPro.error_failed+' <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+                    }
+                }else{
+                    if(jsonAmazonPro.error){
+                        html = '<div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> '+jsonAmazonPro.error+' <button type="button" class="close" data-dismiss="alert">&times;</button></div>';
+                        $('#profiler_product .profiler_product_body').append(html);
+                    }
+                    if(jsonAmazonPro.success){
+                        html = '<div class="alert alert-success"><i class="fa fa-check-circle"></i> '+jsonAmazonPro.success+' <button type="button" class="close" data-dismiss="alert">&times;</button></div>';
+                        $('#profiler_product .profiler_product_body').append(html);
+                        totalImportProduct = totalImportProduct + 1;
+                    }
+
+                    for(count = 2; count <= import_total; count++) {
+                        importRequests.push({
+                            url     : 'index.php?route=amazon_map/product/createProduct&token=<?php echo $token; ?>',
+                            data: {
+                              'account_id' : '<?php echo $account_id; ?>',
+                              'count'      : count,
+                            },
+                            dataType:'json',
+                            type:'POST',
+                            success :   function(json_response){
+                                if(json_response.error){
+                                    html = '<div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> '+json_response.error+' <button type="button" class="close" data-dismiss="alert">&times;</button></div>';
+                                    $('#profiler_product .profiler_product_body').append(html);
+                                }
+                                if(json_response.success){
+                                    html = '<div class="alert alert-success"><i class="fa fa-check-circle"></i> '+json_response.success+' <button type="button" class="close" data-dismiss="alert">&times;</button></div>';
+                                    $('#profiler_product .profiler_product_body').append(html);
+                                    totalImportProduct = totalImportProduct + 1;
+                                }
+                            }
+                        });
+                    }
+                }
+              },
+              error: function(xhr, ajaxOptions, thrownError) {
+                alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+              }
+          });
+      }, 600);
+  });
+
+  var NextImportStep = function(){
+      if (importRequests.length) {
+          $('#progress-bar-importproduct').css('width', (100 - (importRequests.length / import_total) * 100) + '%');
+          $.ajax(importRequests.shift()).then(NextImportStep);
+      } else {
+          $('#progress-bar-importproduct').css('width', '100%');
+          if(totalImportProduct != 0){
+              $('#progress-text-importproduct').html('<div class="text-success"><?php echo "Total '+totalImportProduct+' amazon products imported to opencart store from amazon store!" ?></div>');
+              $('#progress-bar-importproduct').addClass('progress-bar-success');
+          }else{
+              $('#progress-text-importproduct').html('<div class="text-danger"><?php echo "Total '+totalImportProduct+' amazon products imported to opencart store from amazon store!" ?></div>');
+              $('#progress-bar-importproduct').addClass('progress-bar-danger');
+          }
+          $('#generate-report-section').append('<div class="alert alert-success"><i class="fa fa-check-circle"></i> <?php echo "Total '+totalImportProduct+' amazon products imported to opencart store from amazon store!" ?> <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+          $('#generate-report-section').append('<div class="alert alert-info"><i class="fa fa-check-circle"></i> Finished Execution <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+          $('.block_div').css('display','none');
+      }
+  };
+</script>
+
+<script type="text/javascript"><!--
+
+  function nextOrderArray(args, nxt_token, countSavedOrder) {
+      $.ajax({
+          url: "{{ link('amazon/amazon_map/order/getOrderList?account_id=' ~ account_id ~ '')}}",
+          data: {
+            'amazon_order_daterange' : args['order_daterange'],
+            'next_token'        : nxt_token
+          },
+          type: 'POST',
+          dataType:'JSON',
+          success: function (response) {
+              if(response.warning){
+                  if(response.warning['error']){
+                      $('#importOrderList').append('<div class="alert alert-danger"><i class="fa fa-times" aria-hidden="true"></i>   '+response.warning['error']+'<button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+                  }
+                  $('.result_report').append('<div class="alert alert-success"><i class="fa fa-exclamation-circle" aria-hidden="true"></i>  Success: Total '+countSavedOrder+' amazon order(s) imported in opencart store from amazon, Click on <b>Create Imported Order</b> button to create imported product to opencart store! <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+
+                  $('body .order_import_section').parent().before('<div class="alert alert-success"><i class="fa fa-exclamation-circle" aria-hidden="true"></i>  Success: Total '+countSavedOrder+' amazon order(s) imported in opencart store from amazon, Click on <b>Create Imported Order</b> button to create imported product to opencart store! <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+
+                  $(".demo-spin > .fa").removeClass('fa-cog');
+                  $('#create_amazon_order').attr('data-total', response.total_order);
+              }else{
+                  if (response.success) {
+                      countSavedOrder = countSavedOrder + response.success;
+                      $('.result_report').append('<div class="alert alert-success"><i class="fa fa-exclamation-circle" aria-hidden="true"></i>  Success: '+countSavedOrder+' amazon order(s) imported!<button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+                  }
+                  if(response.next_token){
+                      if (response.error) {
+                          for (i in response.error) {
+                            var html = '';
+                              html = '<div class="alert alert-danger"><i class="fa fa-times" aria-hidden="true"></i>   '+response.error[i]['message']+'<button type="button" class="close" data-dismiss="alert">&times;</button></div>';
+                              $('.result_report').append(html);
+                          }
+                      }
+                      nextOrderArray(args, response.next_token, countSavedOrder);
+                  }else{
+                      $('.result_report').append('<div class="alert alert-success"><i class="fa fa-exclamation-circle" aria-hidden="true"></i>  Success: Total '+countSavedOrder+' amazon order(s) imported in opencart store from amazon, Click on <b>Create Imported Order</b> button to create imported product to opencart store! <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+                      $('body .order_import_section').parent().before('<div class="alert alert-success"><i class="fa fa-exclamation-circle" aria-hidden="true"></i>  Success: Total '+countSavedOrder+' amazon order(s) imported in opencart store from amazon, Click on <b>Create Imported Order</b> button to create imported product to opencart store! <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+                      $(".demo-spin > .fa").removeClass('fa-cog');
+                      $('#create_amazon_order').attr('data-total', response.total_order);
+                  }
+              }
+          },
+          error: function(xhr, ajaxOptions, thrownError) {
+            alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+          }
+      });
+  }
+//--></script>
+
+<script type="text/javascript"><!--
+
+  var NextCreateStep = function(){
+      if (createRequests.length) {
+          $('#progress-bar-createorder').css('width', (100 - (createRequests.length / totalImportedOrders) * 100) + '%');
+          $.ajax(createRequests.shift()).then(NextCreateStep);
+      } else {
+          $('#progress-bar-createorder').css('width', '100%');
+          if(totalCreatedOrder != 0){
+              $('#progress-text-createorder').html('<div class="text-success"><?php echo "Total '+totalCreatedOrder+' amazon order(s) created to opencart store from amazon store!" ?></div>');
+              $('#progress-bar-createorder').addClass('progress-bar-success');
+          }else{
+              $('#progress-text-createorder').html('<div class="text-danger"><?php echo "Total '+totalCreatedOrder+' amazon order(s) created to opencart store from amazon store!" ?></div>');
+              $('#progress-bar-createorder').addClass('progress-bar-danger');
+          }
+          $('#profiler_order .profiler_order_body').append('<div class="alert alert-success"><i class="fa fa-check-circle"></i> <?php echo "Total '+totalCreatedOrder+' amazon order(s) created to opencart store from amazon store!" ?> <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+
+          $('#profiler_order .profiler_order_body').append('<div class="alert alert-info"><i class="fa fa-check-circle"></i> Finished Execution <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+          $('.block_div').css('display','none');
+      }
+  };
+//--></script>
+
+<script type="text/javascript">
+$(document).ready(function(){
+  $( ".asin_model input[name='amazon_product_asin']" ).keyup(function() {
+      $(".asin_model input[name='amazon_product_asin']").parent().removeClass('has-error');
+      $(".asin_model").find('.text-danger').remove();
+      var getASIN = $(this).val();
+      var regex = new RegExp("^[A-Z0-9]+$");
+
+      if(getASIN.length == 0 || (getASIN.length > 0 && getASIN.length < 10 && regex.test(getASIN))){
+        $(".asin_model input[name='amazon_product_asin']").parent().removeClass('has-error');
+        $(".asin_model input[name='amazon_product_asin']").parent().removeClass('has-success');
+        $(".asin_model").find('.text-danger').remove();
+      }else if(getASIN.length == 10 && regex.test(getASIN)){
+        $(".asin_model input[name='amazon_product_asin']").parent().addClass('has-success');
+      }else if (!regex.test(getASIN)) {
+        $(".asin_model input[name='amazon_product_asin']").parent().addClass('has-error');
+        $(".asin_model input[name='amazon_product_asin']").parent().parent().append('<div class="text-danger"><?php echo $error_wrong_asinformat; ?></div>');
+      }
+  });
+  // ********** Amazon product create/update section by ASIN **********
+  $('#import_by_asin').on('click',  function(){
+    alert("ASD");
+    $(".asin_model input[name='amazon_product_asin']").parent().removeClass('has-error');
+    $(".asin_model").find('.text-danger').remove();
+    var getASIN = $(".asin_model input[name='amazon_product_asin']").val();
+    if((getASIN.length == 10) && getASIN.match(/((^[A-Z]+)|(^[0-9]+)|(^[0-9]+[A-Z]+)|(^[A-Z]+[0-9]+))+[0-9A-Z]+$/)){
+      $.ajax({
+        url     : '{{ link("amazon/amazon_map/product/createProduct") }}',
+        data    : {
+          'account_id'  : '{{ account_id }}',
+          'product_asin': getASIN,
+          'count'        : 1,
+        },
+        dataType: 'json',
+        type    : 'POST',
+        beforeSend: function() {
+          $("input[name='amazon_product_asin'] ").parent().parent().find('.alert').remove();
+          $('.block_div').css('display','block');
+          $(".asin_model").find('.alert-danger').remove();
+          $(".demo-spin > .fa").addClass('fa-cog');
+        },
+        complete: function() {
+          $('.block_div').css('display','none');
+          $(".asin_model input[name='amazon_product_asin']").val('');
+          $(".demo-spin > .fa").removeClass('fa-cog');
+        },
+        success: function(jsonAmazonPro) {
+                if (jsonAmazonPro.error_failed) {
+                    if(jsonAmazonPro.error_failed.status && jsonAmazonPro.error_failed.status == 'complete'){
+                        $('#info_asin').parent().append('<div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> '+jsonAmazonPro.error_failed.message+' <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+                    }else{
+                        $('#info_asin').parent().append('<div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> '+jsonAmazonPro.error_failed+' <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+                    }
+                }else{
+                    if(jsonAmazonPro.error){
+                        html = '<div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> '+jsonAmazonPro.error+' <button type="button" class="close" data-dismiss="alert">&times;</button></div>';
+                        $('#info_asin').parent().append(html);
+                    }
+                    if(jsonAmazonPro.success){
+                        html = '<div class="alert alert-success"><i class="fa fa-check-circle"></i> '+jsonAmazonPro.success+' <button type="button" class="close" data-dismiss="alert">&times;</button></div>';
+                        $('#info_asin').parent().append(html);
+                    }
+                }
+        },
+        error: function(xhr, ajaxOptions, thrownError) {
+          alert(thrownError + " " + xhr.statusText + " " + xhr.responseText);
+        }
+      });
+    }else {
+      $(".asin_model input[name='amazon_product_asin']").parent().addClass('has-error');
+      $(".asin_model input[name='amazon_product_asin']").parent().parent().append('<div class="text-danger">{{ error_wrong_asinformat }}</div>');
+      $(".asin_model").find('.alert-danger').remove();
+    }
+  });
+});
+
+</script>
+<script type="text/javascript">
+    // update/delete the exported product(s) at the amazon store
+    var updateRequests    = []; var totalpages = 0; var totalUpdated = 0;
+    var start_page    = 1;
+    var error_report  = false;
+
+    $(document).ready(function(){
+        $(".update_export_start").on("click", function(e){
+            e.preventDefault();
+            var getExportOption = $(this).attr('id');
+            var selectedRows = dt.rows('.selected').data();
+            var selectedIds = [];
+            selectedRows.each(function (item) {
+                selectedIds.push(item.oc_product_id);
+            });
+            if (typeof timerSet != 'undefined') {
+                clearInterval(timerSet);
+            }
+            timerSet = setInterval(function() {
+                    clearInterval(timerSet);
+            // Reset everything
+            $('.alert').remove();
+            $('#progress-bar-updateDeleteProduct').css('width', '0%');
+            $('#progress-bar-updateDeleteProduct').removeClass('progress-bar-danger progress-bar-success');
+            $('#progress-text-updateDeleteProduct').html('');
+
+            jQuery.ajax({
+                url: '{{ link("amazon/amazon_map/product/opration_export_product") }}?page='+start_page,
+                data: {
+                    selected: selectedIds,
+                    account_id: {{account_id}},
+                    export_option: getExportOption
+                },
+                type:'POST',
+                beforeSend: function() {
+                    $('.block_div').css('display','block');
+                    $('#product_export_list_section, #UpdateDeleteResult').find('.text-danger, .alert').remove();
+                },
+                complete: function() {
+                    NextUpdateDeleteStep();
+                },
+                success: function(jsonResponse) {
+                    if (jsonResponse.error_failed) {
+                        error_report = true;
+                        $('#progress-bar-updateDeleteProduct').addClass('progress-bar-danger');
+                        $('#progress-text-updateDeleteProduct').html('<div class="text-danger">' + jsonResponse.error_failed + '</div>');
+                        $('#UpdateDeleteResult #sync_result').append('<div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> '+jsonResponse.error_failed+' <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+                    }else{
+                        error_report = false;
+                        if (jsonResponse.error) {
+                            var html = '';
+                            for (i in jsonResponse.error) {
+                                html += '<div class="alert alert-danger"><i class="fa fa-times" aria-hidden="true"></i>   '+jsonResponse.error[i]+'<button type="button" class="close" data-dismiss="alert">&times;</button></div>';
+                            }
+                            $('#UpdateDeleteResult #sync_result').append(html);
+                            $('#progress-text-updateDeleteProduct').html('<div class="text-danger"> Warning: '+jsonResponse.error.length+' products failed to '+getExportOption+'d at amazon store!</div>');
+                        }
+                        if (jsonResponse.success) {
+                            var html1 = '';
+                            for (i in jsonResponse.success) {
+                            html1 += '<div class="alert alert-success"><i class="fa fa-check-circle-o" aria-hidden="true"></i>  '+jsonResponse.success[i]+'<button type="button" class="close" data-dismiss="alert">&times;</button></div>';
+                            }
+                            totalUpdated = totalUpdated + jsonResponse.success.length;
+                            $('#UpdateDeleteResult #sync_result').append(html1);
+                            $('#progress-text-updateDeleteProduct').html('<div class="text-success"> '+jsonResponse.success.length+' products '+getExportOption+'d to amazon store successfully!</div>');
+                        }
+                        if(jsonResponse.totalpages){
+                            totalpages = jsonResponse.totalpages;
+                            for(start_page = 2; start_page < totalpages; start_page++) {
+                                updateRequests.push({
+                                    url: '{{ link("amazon/amazon_map/product/opration_export_product") }}?page='+start_page,
+                                    data: {
+                                        selected: selectedIds,
+                                        account_id: {{account_id}},
+                                        export_option: getExportOption
+                                    },
+                                    type:'POST',
+                                    success :   function(json_response){
+                                        if (json_response.error) {
+                                            var html = '';
+                                            for (i in json_response.error) {
+                                                html += '<div class="alert alert-danger"><i class="fa fa-times" aria-hidden="true"></i>   '+json_response.error[i]+'<button type="button" class="close" data-dismiss="alert">&times;</button></div>';
+                                            }
+                                            $('#UpdateDeleteResult #sync_result').append(html);
+                                            $('#progress-text-updateDeleteProduct').html('<div class="text-danger"> Warning: '+json_response.error.length+' products failed to '+getExportOption+'d at amazon store!</div>');
+                                        }
+                                        if (json_response.success) {
+                                            var html1 = '';
+                                            for (i in json_response.success) {
+                                            html1 += '<div class="alert alert-success"><i class="fa fa-check-circle-o" aria-hidden="true"></i>  '+json_response.success[i]+'<button type="button" class="close" data-dismiss="alert">&times;</button></div>';
+                                            }
+                                            totalUpdated = totalUpdated + json_response.success.length;
+                                            $('#UpdateDeleteResult #sync_result').append(html1);
+                                            $('#progress-text-updateDeleteProduct').html('<div class="text-success"> '+json_response.success.length+' products '+getExportOption+'d to amazon store successfully!</div>');
+                                        }
+                                    },
+                                });
+                            }
+
+                        }
+                    }
+                },
+                error: function(xhr, ajaxOptions, thrownError) {
+                    alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                }
+            });
+            }, 500);
+        });
+    })
+
+
+    var NextUpdateDeleteStep = function(){
+        if (updateRequests.length) {
+            $('#progress-bar-updateDeleteProduct').css('width', (100 - (updateRequests.length / totalpages) * 100) + '%');
+            $.ajax(updateRequests.shift()).then(NextUpdateDeleteStep);
+        } else {
+            $('#progress-bar-updateDeleteProduct').css('width', '100%');
+            if(totalUpdated != 0){
+                $('#progress-text-updateDeleteProduct').html('<div class="text-success"><?php echo "Total '+totalUpdated+' products updated/deleted to amazon store from opencart store, check show result!" ?></div>');
+                $('#progress-bar-updateDeleteProduct').addClass('progress-bar-success');
+            }else{
+                if(!error_report){
+                    $('#progress-text-updateDeleteProduct').html('<div class="text-danger"><?php echo "Total '+totalUpdated+' products updated/deleted to amazon store from opencart store, check show result!" ?></div>');
+                }
+                $('#progress-bar-updateDeleteProduct').addClass('progress-bar-danger');
+            }
+            $('.block_div').css('display','none');
+        }
+    };
+</script>
+
+<script>
+    var dt;
+    $(document).ready(function() {
+        $.extend($.fn.dataTable.defaults, {
+            autoWidth: false,
+            dom: '<"datatable-header"fB><"datatable-scroll-wrap"t><"datatable-footer"lip>',
+            language: locales['dt_language'],
+            lengthMenu: [[10, 25, 50, 100, 200], [10, 25, 50, 100, 200]]
+        });
+        dt = $('#dt_product').DataTable({
+            processing: true,
+            serverSide: true,
+            stateSave: false,
+            language: locales['dt_language'],
+            autoWidth: false,
+            select: {
+                style: 'multi',
+                selector: 'td:first-child'
+            },
+            lengthMenu: [[10, 25, 50, 100, 200], [10, 25, 50, 100, 200]],
+            ajax: {
+                url: "{{ link('amazon/amazon_map/product/dtUpdatedProduct') }}",
+                type: 'POST',
+            },
+            buttons: [
+                {
+                    extend: 'collection',
+                    text: '<i class="icon-drawer-out"></i>',
+                    className: 'btn btn-default btn-export',
+                    buttons: [
+                        {
+                            extend: 'copyHtml5',
+                            text: locales['buttons']['copy'],
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        },
+                        {
+                            extend: 'csvHtml5',
+                            text: locales['buttons']['export2csv'],
+                            fieldSeparator: ',',
+                            extension: '.csv',
+                            bom: "true",
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        },
+                        {
+                            extend: 'excelHtml5',
+                            text: locales['buttons']['export2excel'],
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        },
+                        {
+                            extend: 'pdfHtml5',
+                            text: locales['buttons']['export2pdf'],
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        }
+                    ]
+                },
+                {
+                    extend: 'colvis',
+                    text: '<i class="icon-grid3"></i>',
+                    className: 'btn btn-default btn-colvis',
+                    columns: [1, 2, 3]
+                },
+            ],
+
+            
+            columnDefs:[
+                {
+                    targets: 0,
+                    orderable: false,
+                    className: 'select-checkbox',
+                    
+                },
+                {
+                  targets: 3,
+                  orderable: false,
+                  render: function (data, type, row) {
+                     
+                    if(row['combinations'] != null && row['combinations'].length != 0){
+                        component = `<div class="btn-group">
+                            <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Variations List</button>
+                            <div class="dropdown-menu">`;
+
+                        for(i=0;i<row['combinations'].length;i++) {
+                           component += ` <p class="dropdown-item">`+row['combinations'][i]['name']+`' ('`+row['combinations'][i]['id_value']+`')'</p>`;
+                        }
+                        component += `</div></div>`;
+                    }
+                    else{
+                        component = "Simple";
+                    }
+                    return component;
+                  }
+                }
+            ],
+            columns: [
+                {
+                    title: `<input type="checkbox" class="select-checkbox" onchange='toggleSelectAll(this);'>`,
+                    data: "oc_product_id",
+                },
+                {data: "main_product_type_value"},
+                {data: "product_name"}
+            ],
+        });
+        $('[data-popup="tooltip"]').tooltip();
+        
+        
+        $(".btn-export").attr({
+            "data-popup": "tooltip",
+            "title": locales['button_export']
+        });
+        
+        $(".btn-colvis").attr({
+            "data-popup": "tooltip",
+            "title": locales['button_colvis']
+        });
+        
+     
+    });
+    function toggleSelectAll(checkbox) {
+        if (checkbox.checked == true) {
+            dt.rows().select();
+        } else {
+            dt.rows().deselect();
+        }
+    }
+
+    function reloadDT() {
+        dt.ajax.reload();
+    }
+
+
+</script>
+{% endblock %}

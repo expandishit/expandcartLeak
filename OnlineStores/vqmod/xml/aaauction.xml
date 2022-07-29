@@ -1,0 +1,3469 @@
+<modification>
+	<id>Auction</id>
+	<author>Aditya Palmia</author>
+	<authoremail>aditya.palmia@gmail.com</authoremail>
+	<version>1.0</version>
+
+	<file name="catalog/controller/common/header.php">
+		<operation error="skip">
+			<search position="after"><![CDATA[
+			$this->data['checkout'] = $this->url->link('checkout/checkout', '', 'SSL');	
+			]]></search>
+			<add><![CDATA[
+		$this->data['text_auction'] = $this->language->get('text_auction');
+		
+		$this->data['auction'] = $this->url->link('account/auction', '', 'SSL');
+		
+			]]></add>
+		</operation>
+	</file>
+	
+	
+<file name="catalog/model/catalog/product.php">
+		<operation error="skip">
+			<search position="before"><![CDATA[
+			public function getProduct($product_id) {
+			]]></search>
+			<add><![CDATA[
+	
+	
+	
+	 public function forMaxProductBids($product_id){
+	 
+	     
+		$query = $this->db->query("SELECT MAX(price_bid) as max_price_bid FROM " . DB_PREFIX . "customer_bids WHERE product_id=".(int)$product_id." LIMIT 1");
+			
+		if (isset($query->row['max_price_bid'])){
+		return $query->row['max_price_bid'];		
+		}else{
+		return 0;
+		}
+	}
+	
+	public function checkforMaxProductBids($product_id){
+		$query = $this->db->query("SELECT MAX(price_bid) as max_price_bid FROM " . DB_PREFIX . "customer_bids WHERE product_id=".(int)$product_id." LIMIT 1");
+		if (isset($query->row['max_price_bid'])){
+		$max_query = $this->db->query("SELECT * FROM " . DB_PREFIX . "customer_bids WHERE price_bid=".$query->row['max_price_bid']."");
+		}		
+		if (isset($max_query->row['price_bid']) && isset($max_query->row['customer_id'])) {
+			return array($max_query->row['customer_id'],$max_query->row['price_bid'],$max_query->row['accept'],$max_query->row['date_added']);		
+		}else{
+			return 0;		
+		}
+	}
+
+   	
+	
+	
+	
+	
+	 
+	
+	public function updateProductBidstable($product_id,$customer_id,$price_bid,$firstname,$lastname,$pname){
+	
+			
+	$name= $firstname.' '.$lastname;
+		 
+
+	$insertquery = $this->db->query("INSERT INTO " . DB_PREFIX . "winner SET 
+		product_id=".(int)$product_id.", 
+		customer_id=".(int)$customer_id.", 
+		name = '".$this->db->escape($name)."',
+		nickname = '".$this->db->escape($firstname)."',
+		status='1',
+		ban='0',
+		productname='".$this->db->escape($pname)."',
+		price_bid=".(int)$price_bid.", date_added=NOW()");			
+
+	
+	$query = $this->db->query("UPDATE  " . DB_PREFIX . "product_bid SET product_id=".(int)$product_id.", 
+		bid_close_status='1', 
+		bid_close_date_time=NOW()
+		WHERE product_id=".(int)$product_id."
+		");
+		
+		
+	$link = HTTP_SERVER.'/index.php?route=account/account';
+		
+		
+        $email=$this->customer->getEmail();
+		
+		$name = $this->customer->getFirstName();
+		
+		$date_added= date("d/m/Y");
+		
+		$this->language->load('mail/winner');	
+
+		$subject = sprintf($this->language->get('text_subject'), $this->config->get('config_name'));		
+
+		$message = $this->language->get('text_welcome'). "<br/>";
+		
+		$message .= $name . "<br/>";
+		
+		$message .= $this->language->get('text_sub');
+		
+		$message .= $date_added . "<br/>";
+					
+		$message .= $this->language->get('text_auction');
+		
+		$message .= $pname . "<br/><br/>";
+		
+		$message .= $this->language->get('text_price');
+		
+		$message .= $this->currency->format($price_bid) . "<br/><br/>";
+		
+		$message .= $this->language->get('text_date');
+		
+		$message .= $date_added . "<br/><br/>";
+		
+		$message .= $this->language->get('text_message') . "<br/><br/>";
+		
+				
+		$message .= $this->language->get('text_thanks') . "<br/>";
+
+		$message .= $this->config->get('config_name');
+
+		
+
+		$mail = new Mail();
+
+		$mail->protocol = $this->config->get('config_mail_protocol');
+
+		$mail->parameter = $this->config->get('config_mail_parameter');
+
+		$mail->hostname = $this->config->get('config_smtp_host');
+
+		$mail->username = $this->config->get('config_smtp_username');
+
+		$mail->password = $this->config->get('config_smtp_password');
+
+		$mail->port = $this->config->get('config_smtp_port');
+
+		$mail->timeout = $this->config->get('config_smtp_timeout');				
+
+		$mail->setTo($email);
+
+		$mail->setFrom($this->config->get('config_email'));
+
+		$mail->setSender($this->config->get('config_name'));
+
+		$mail->setSubject(html_entity_decode($subject, ENT_QUOTES, 'UTF-8'));
+		
+		$mail->setHtml($message);
+
+		$mail->setText(html_entity_decode($message, ENT_QUOTES, 'UTF-8'));
+
+		$mail->send();
+		
+	return 1;
+	
+	
+	}
+	
+	public function forMaxProductBidstable($product_id){
+	   $query = $this->db->query("SELECT COUNT(bid_max_price) as num FROM " . DB_PREFIX . "product_bid WHERE 
+		product_id=".(int)$product_id." AND max_price_status='1' LIMIT 1");
+		return $query->row['num'];
+	}
+	
+	public function forMaxProductBids1($product_id){
+	
+	   $query = $this->db->query("SELECT bid_max_price FROM " . DB_PREFIX . "product_bid WHERE 
+		product_id=".(int)$product_id." AND max_price_status='1' LIMIT 1");
+		if (isset($query->row['bid_max_price'])){
+		return $query->row['bid_max_price'];		
+		}else{
+		return 0;
+		}
+	}
+
+
+   public function forautobids($product_id,$cid){
+	
+	   $query = $this->db->query("SELECT price_bid FROM " . DB_PREFIX . "autobid WHERE 
+		product_id=".(int)$product_id." AND status='1' AND customer_id = ".(int)$cid."
+		LIMIT 1");
+		if (isset($query->row['price_bid'])){
+		return $query->row['price_bid'];		
+		}else{
+		return 0;
+		}
+	}	
+	
+	
+	public function minofferstep($product_id){
+		$query = $this->db->query("SELECT bid_min_price FROM " . DB_PREFIX . "product_bid WHERE product_id=".(int)$product_id." LIMIT 1");
+		if (isset($query->row['bid_min_price'])){
+		return $query->row['bid_min_price'];		
+		}else{
+		return 1;
+		}		
+		
+	}
+	
+	
+	public function checkwinner($product_id){
+	
+		$query = $this->db->query("SELECT MAX(price_bid) as max_price_bid FROM " . DB_PREFIX . "winner WHERE product_id=".(int)$product_id." LIMIT 1");
+				
+		if (isset($query->row['max_price_bid'])){
+		
+		$max_query = $this->db->query("SELECT * FROM " . DB_PREFIX . "winner WHERE price_bid=".$query->row['max_price_bid']." AND product_id=".(int)$product_id." LIMIT 1");
+		}
+		
+		if (isset($max_query->row['price_bid']) && isset($max_query->row['customer_id'])) {
+			return array($max_query->row['customer_id'],$max_query->row['price_bid'],$max_query->row['name'],$max_query->row['date_added'],$max_query->row['nickname']);		
+		}else{
+			return "";		
+		}
+	}
+	
+	
+	public function checkcustomerwinner($product_id){
+	
+		$query = $this->db->query("SELECT MAX(price_bid) as max_price_bid FROM " . DB_PREFIX . "customer_bids WHERE product_id=".(int)$product_id." LIMIT 1");
+		
+		if (isset($query->row['max_price_bid'])){
+		$max_query = $this->db->query("SELECT * FROM " . DB_PREFIX . "customer_bids WHERE price_bid=".$query->row['max_price_bid']." AND product_id=".(int)$product_id."");
+		}
+		
+				
+		if (isset($max_query->row)) {
+		
+			return array($max_query->row['customer_id'],$max_query->row['price_bid'],$max_query->row['name'],$max_query->row['date_added'],$max_query->row['nickname']);		
+		}else{
+			return "";		
+		}
+	}
+
+
+    public function checkBidstatus($product_id){
+	
+		$query = $this->db->query("SELECT auction_status FROM " . DB_PREFIX . "product_bid WHERE product_id=".(int)$product_id."");
+		if (isset($query->row['auction_status'])){
+		
+		return $query->row['auction_status'];
+		
+		}else{
+		
+		return "";
+		
+		}
+		
+	}
+
+   public function checkclosedatetime($product_id){
+	
+		$query = $this->db->query("SELECT bid_date_end FROM " . DB_PREFIX . "product_bid WHERE product_id=".(int)$product_id."");
+		
+		
+		if (isset($query->row['bid_date_end'])){
+		
+		return $query->row['bid_date_end'];
+		
+		}else{
+		
+		return "";
+		
+		}
+		
+	}	
+	
+	public function checkforCustomerBid($product_id,$customer_id){
+		$query = $this->db->query("SELECT price_bid FROM " . DB_PREFIX . "customer_bids WHERE product_id=".(int)$product_id." AND customer_id=".(int)$customer_id."");
+		if (isset($query->row['price_bid'])) {
+			return $query->row['price_bid'];
+		} else {
+			return 0;	
+		}
+	}
+
+    public function countforCustomerBids($product_id,$customer_id){
+		$query = $this->db->query("SELECT COUNT(price_bid) as num FROM " . DB_PREFIX . "customer_bids WHERE 
+		product_id=".(int)$product_id." AND customer_id=".(int)$customer_id."");
+		return $query->row['num'];
+	}	
+	
+	
+	public function countforautoBids($product_id,$customer_id){
+		$query = $this->db->query("SELECT COUNT(price_bid) as num FROM " . DB_PREFIX . "autobid WHERE 
+		product_id=".(int)$product_id." AND customer_id=".(int)$customer_id."");
+		return $query->row['num'];
+	}	
+	
+	
+	public function countwin($product_id,$customer_id){
+		$query = $this->db->query("SELECT COUNT(price_bid) as num FROM " . DB_PREFIX . "winner WHERE 
+		product_id=".(int)$product_id." AND customer_id=".(int)$customer_id."");
+		return $query->row['num'];
+	}	
+	
+	
+	public function addBidhistory($product_id,$customer_id,$price_bid,$name,$last,$pname){
+	
+		$query = $this->db->query("INSERT INTO " . DB_PREFIX . "bids_history SET 
+		product_id=".(int)$product_id.", 
+		customer_id=".(int)$customer_id.", 
+		price_bid=".(int)$price_bid.", 
+		date_added=NOW(),
+		firstname = '".$this->db->escape($name)."',
+		lastname = '".$this->db->escape($last)."',
+		status = '1',
+		nickname = '".$this->db->escape($name)."'");
+		
+		return 1;
+		
+		
+		}
+	
+	public function addCustomerBid($product_id,$customer_id,$price_bid,$name,$last,$pname){
+		$query = $this->db->query("INSERT INTO " . DB_PREFIX . "customer_bids SET product_id=".(int)$product_id.", 
+		customer_id=".(int)$customer_id.", price_bid=".(int)$price_bid.", date_added=NOW(),
+		name = '".$this->db->escape($name)."',
+		lastname = '".$this->db->escape($last)."',
+		status = '1',
+		nickname = '".$this->db->escape($name)."'");
+		
+		
+					
+		
+		$link = HTTP_SERVER.'/index.php?route=account/account';
+		
+		
+        $email=$this->customer->getEmail();
+		
+		$name = $this->customer->getFirstName();
+		
+		$date_added= date("d/m/Y");
+		
+		$this->language->load('mail/bid');	
+
+		$subject = sprintf($this->language->get('text_subject'), $this->config->get('config_name'));		
+
+		$message = $this->language->get('text_welcome');
+		
+		$message .= $name . "<br/>";
+		
+		$message .= $this->language->get('text_sub') . "<br/><br/>";
+					
+		$message .= $this->language->get('text_auction');
+		
+		$message .= $pname . "<br/><br/>";
+		
+		$message .= $this->language->get('text_price');
+		
+		$message .= $this->currency->format($price_bid) . "<br/><br/>";
+		
+		$message .= $this->language->get('text_date');
+		
+		$message .= $date_added . "<br/><br/>";
+		
+		$message .= $this->language->get('text_message');
+		
+		$message .= "<a href=".$link.">Auction Block</a>" . "<br/><br/>";
+		
+		$message .= $this->language->get('text_thanks') . "<br/>";
+
+		$message .= $this->config->get('config_name');
+
+		
+
+		$mail = new Mail();
+
+		$mail->protocol = $this->config->get('config_mail_protocol');
+
+		$mail->parameter = $this->config->get('config_mail_parameter');
+
+		$mail->hostname = $this->config->get('config_smtp_host');
+
+		$mail->username = $this->config->get('config_smtp_username');
+
+		$mail->password = $this->config->get('config_smtp_password');
+
+		$mail->port = $this->config->get('config_smtp_port');
+
+		$mail->timeout = $this->config->get('config_smtp_timeout');				
+
+		$mail->setTo($email);
+
+		$mail->setFrom($this->config->get('config_email'));
+
+		$mail->setSender($this->config->get('config_name'));
+
+		$mail->setSubject(html_entity_decode($subject, ENT_QUOTES, 'UTF-8'));
+		
+		$mail->setHtml($message);
+
+		$mail->setText(html_entity_decode($message, ENT_QUOTES, 'UTF-8'));
+
+		$mail->send();
+		
+
+		
+		
+		
+		return 1;
+	}
+	
+	public function updateCustomerBid($product_id,$customer_id,$price_bid,$name,$last,$pname){
+		$query = $this->db->query("UPDATE  " . DB_PREFIX . "customer_bids SET product_id=".(int)$product_id.", 
+		price_bid=".(int)$price_bid.", date_added=NOW(),
+		name = '".$this->db->escape($name)."',
+		nickname = '".$this->db->escape($name)."',
+		status = '1',
+		lastname = '".$this->db->escape($last)."'
+		WHERE customer_id=".(int)$customer_id." AND product_id=".(int)$product_id."
+		");
+		
+		$link = HTTP_SERVER.'/index.php?route=account/account';
+		
+		
+        $email=$this->customer->getEmail();
+		
+		$name = $this->customer->getFirstName();
+		
+		$date_added= date("d/m/Y");
+		
+		$this->language->load('mail/bid');	
+
+		$subject = sprintf($this->language->get('text_subject'), $this->config->get('config_name'));		
+
+		$message = $this->language->get('text_welcome');
+		
+		$message .= $name . "<br/>";
+		
+		$message .= $this->language->get('text_sub') . "<br/><br/>";
+					
+		$message .= $this->language->get('text_auction');
+		
+		$message .= $pname . "<br/><br/>";
+		
+		$message .= $this->language->get('text_price');
+		
+		$message .= $this->currency->format($price_bid) . "<br/><br/>";
+		
+		$message .= $this->language->get('text_date');
+		
+		$message .= $date_added . "<br/><br/>";
+		
+		$message .= $this->language->get('text_message');
+		
+		$message .= "<a href=".$link.">Auction Block</a>" . "<br/><br/>";
+		
+		$message .= $this->language->get('text_thanks') . "<br/>";
+
+		$message .= $this->config->get('config_name');
+
+		
+
+		$mail = new Mail();
+
+		$mail->protocol = $this->config->get('config_mail_protocol');
+
+		$mail->parameter = $this->config->get('config_mail_parameter');
+
+		$mail->hostname = $this->config->get('config_smtp_host');
+
+		$mail->username = $this->config->get('config_smtp_username');
+
+		$mail->password = $this->config->get('config_smtp_password');
+
+		$mail->port = $this->config->get('config_smtp_port');
+
+		$mail->timeout = $this->config->get('config_smtp_timeout');				
+
+		$mail->setTo($email);
+
+		$mail->setFrom($this->config->get('config_email'));
+
+		$mail->setSender($this->config->get('config_name'));
+
+		$mail->setSubject(html_entity_decode($subject, ENT_QUOTES, 'UTF-8'));
+		
+		$mail->setHtml($message);
+
+		$mail->setText(html_entity_decode($message, ENT_QUOTES, 'UTF-8'));
+
+		$mail->send();
+		return 1;
+	}
+	
+	
+	public function addautoBid($product_id,$customer_id,$price_bid,$name,$last,$pname){
+		$query = $this->db->query("INSERT INTO " . DB_PREFIX . "autobid SET 
+		product_id=".(int)$product_id.", 
+		customer_id=".(int)$customer_id.", 
+		price_bid=".(int)$price_bid.", 
+		date_added=NOW(),
+		name = '".$this->db->escape($name)."',
+		lastname = '".$this->db->escape($last)."',
+		status='1',
+		nickname = '".$this->db->escape($name)."'");
+		
+		$link = HTTP_SERVER.'/index.php?route=account/account';
+		
+		
+        $email=$this->customer->getEmail();
+		
+		$name = $this->customer->getFirstName();
+		
+		$date_added= date("d/m/Y");
+		
+		$this->language->load('mail/bid');	
+
+		$subject = sprintf($this->language->get('text_subject1'), $this->config->get('config_name'));		
+
+		$message = $this->language->get('text_welcome1');
+		
+		$message .= $name . "<br/>";
+		
+		$message .= $this->language->get('text_sub1') . "<br/><br/>";
+					
+		$message .= $this->language->get('text_auction');
+		
+		$message .= $pname . "<br/><br/>";
+		
+		$message .= $this->language->get('text_price');
+		
+		$message .= $this->currency->format($price_bid) . "<br/><br/>";
+		
+		$message .= $this->language->get('text_date');
+		
+		$message .= $date_added . "<br/><br/>";
+		
+		$message .= $this->language->get('text_message');
+		
+		$message .= "<a href=".$link.">Auction Block</a>" . "<br/><br/>";
+		
+		$message .= $this->language->get('text_thanks') . "<br/>";
+
+		$message .= $this->config->get('config_name');
+
+		
+
+		$mail = new Mail();
+
+		$mail->protocol = $this->config->get('config_mail_protocol');
+
+		$mail->parameter = $this->config->get('config_mail_parameter');
+
+		$mail->hostname = $this->config->get('config_smtp_host');
+
+		$mail->username = $this->config->get('config_smtp_username');
+
+		$mail->password = $this->config->get('config_smtp_password');
+
+		$mail->port = $this->config->get('config_smtp_port');
+
+		$mail->timeout = $this->config->get('config_smtp_timeout');				
+
+		$mail->setTo($email);
+
+		$mail->setFrom($this->config->get('config_email'));
+
+		$mail->setSender($this->config->get('config_name'));
+
+		$mail->setSubject(html_entity_decode($subject, ENT_QUOTES, 'UTF-8'));
+		
+		$mail->setHtml($message);
+
+		$mail->setText(html_entity_decode($message, ENT_QUOTES, 'UTF-8'));
+
+		$mail->send();
+		return 1;
+	}
+	
+	public function updateautoBid($product_id,$customer_id,$price_bid,$name,$last,$pname){
+		$query = $this->db->query("UPDATE  " . DB_PREFIX . "autobid SET 
+		product_id=".(int)$product_id.", 
+		price_bid=".(int)$price_bid.", date_added=NOW(),
+		name = '".$this->db->escape($name)."',
+		nickname = '".$this->db->escape($name)."',
+		lastname = '".$this->db->escape($last)."',
+		status='1'
+		WHERE customer_id=".(int)$customer_id." AND product_id=".(int)$product_id."
+		");
+		
+		$link = HTTP_SERVER.'/index.php?route=account/account';
+		
+		
+        $email=$this->customer->getEmail();
+		
+		$name = $this->customer->getFirstName();
+		
+		$date_added= date("d/m/Y");
+		
+		$this->language->load('mail/bid');	
+
+		$subject = sprintf($this->language->get('text_subject1'), $this->config->get('config_name'));		
+
+		$message = $this->language->get('text_welcome1');
+		
+		$message .= $name . "<br/>";
+		
+		$message .= $this->language->get('text_sub1') . "<br/><br/>";
+					
+		$message .= $this->language->get('text_auction');
+		
+		$message .= $pname . "<br/><br/>";
+		
+		$message .= $this->language->get('text_price');
+		
+		$message .= $this->currency->format($price_bid) . "<br/><br/>";
+		
+		$message .= $this->language->get('text_date');
+		
+		$message .= $date_added . "<br/><br/>";
+		
+		$message .= $this->language->get('text_message');
+		
+		$message .= "<a href=".$link.">Auction Block</a>" . "<br/><br/>";
+		
+		$message .= $this->language->get('text_thanks') . "<br/>";
+
+		$message .= $this->config->get('config_name');
+
+
+
+		$mail = new Mail();
+
+		$mail->protocol = $this->config->get('config_mail_protocol');
+
+		$mail->parameter = $this->config->get('config_mail_parameter');
+
+		$mail->hostname = $this->config->get('config_smtp_host');
+
+		$mail->username = $this->config->get('config_smtp_username');
+
+		$mail->password = $this->config->get('config_smtp_password');
+
+		$mail->port = $this->config->get('config_smtp_port');
+
+		$mail->timeout = $this->config->get('config_smtp_timeout');				
+
+		$mail->setTo($email);
+
+		$mail->setFrom($this->config->get('config_email'));
+
+		$mail->setSender($this->config->get('config_name'));
+
+		$mail->setSubject(html_entity_decode($subject, ENT_QUOTES, 'UTF-8'));
+		
+		$mail->setHtml($message);
+
+		$mail->setText(html_entity_decode($message, ENT_QUOTES, 'UTF-8'));
+
+		$mail->send();
+		return 1;
+	}
+	
+	
+	public function addwinner($product_id,$customer_id,$name,$price_bid,$pname){
+		$query = $this->db->query("INSERT INTO " . DB_PREFIX . "winner SET 
+		product_id=".(int)$product_id.", 
+		customer_id=".(int)$customer_id.", 
+		name = '".$this->db->escape($name)."',
+		nickname = '".$this->db->escape($name)."',
+		status='0',
+		ban='0',
+		productname='".$this->db->escape($pname)."',
+		price_bid=".(int)$price_bid.", date_added=NOW()");
+		return 1;
+	}
+	
+	public function updatewinner($product_id,$customer_id,$name,$price_bid,$pname){
+		$query = $this->db->query("UPDATE  " . DB_PREFIX . "winner SET 
+		product_id=".(int)$product_id.", 
+		name = '".$this->db->escape($name)."',
+		nickname = '".$this->db->escape($name)."',
+		status='0',
+		ban='0',
+		productname='".$this->db->escape($pname)."',
+		price_bid=".(int)$price_bid.", date_added=NOW()
+		WHERE customer_id=".(int)$customer_id." AND product_id=".(int)$product_id."
+		");
+		return 1;
+	}
+	
+	public function deleteCustomerBid($product_id,$customer_id){
+		$query = $this->db->query("DELETE FROM " . DB_PREFIX . "customer_bids WHERE product_id=".(int)$product_id." AND customer_id=".(int)$customer_id."");
+		return 1;
+	}	
+	
+	public function customerAcceptBuying($product_id,$customer_id){
+		$query = $this->db->query("SELECT price_bid FROM " . DB_PREFIX . "customer_bids WHERE product_id=".(int)$product_id." AND customer_id=".(int)$customer_id."");
+		$update = $this->db->query("UPDATE " . DB_PREFIX . "customer_bids SET accept='1' WHERE product_id=".(int)$product_id." AND customer_id=".(int)$customer_id."");
+		return 1;
+	}
+	
+	public function countCustomerBids($product_id){
+		$query = $this->db->query("SELECT COUNT(price_bid) as num FROM " . DB_PREFIX . "customer_bids WHERE product_id=".(int)$product_id."");
+		return $query->row['num'];
+	}
+	
+	public function checkBidstate($product_id){
+	
+		$query = $this->db->query("SELECT bid_close_status FROM " . DB_PREFIX . "product_bid WHERE product_id=".(int)$product_id."");
+		if(isset($query->row['bid_close_status'])){
+		 
+		 return $query->row['bid_close_status'];
+		
+		}else{
+		return "";
+		}
+		
+		
+	}
+
+
+     public function closeBidstate($product_id){
+	
+		$query = $this->db->query("UPDATE " . DB_PREFIX . "product_bid
+		SET bid_close_status= 1
+		WHERE product_id=".(int)$product_id."");
+
+		return 1;
+		
+		
+	}
+
+
+
+      public function declarewinner($product_id){
+
+
+            $query = $this->db->query("SELECT bid_close_status FROM " . DB_PREFIX . "product_bid WHERE product_id=".(int)$product_id."");
+	     
+             if($query->row['bid_close_status' ]== 0){
+
+              
+
+               $query = $this->db->query("SELECT MAX(price_bid) as max_price_bid FROM " . DB_PREFIX . "customer_bids WHERE product_id=".(int)$product_id." LIMIT 1");
+		
+		if (isset($query->row['max_price_bid'])){
+		$max_query = $this->db->query("SELECT * FROM " . DB_PREFIX . "customer_bids WHERE price_bid=".$query->row['max_price_bid']."");
+		}
+
+                  
+               if (isset($max_query->row['price_bid']) && isset($max_query->row['customer_id'])) {
+		
+		$product_query = $this->db->query("SELECT name FROM " . DB_PREFIX . "product_description WHERE product_id=".$max_query->row['product_id']."");
+		
+		$customer_query = $this->db->query("SELECT email FROM " . DB_PREFIX . "customer WHERE customer_id=".$max_query->row['customer_id']."");
+		
+		
+			$customer_id=$max_query->row['customer_id'];
+			$product_id=$max_query->row['product_id'];
+			$pname=$product_query->row['name'];
+			$price_bid=$max_query->row['price_bid'];
+			$name=$max_query->row['name'];
+			$date=$max_query->row['date_added'];
+			$nickname=$max_query->row['nickname'];
+			
+		$email = $customer_query->row['email'];          	
+		$date_added= date("d/m/Y");
+       		
+ 		$this->language->load('mail/winner');
+
+   		
+                $subject= $this->language->get('text_subject');
+                $message = $this->language->get('text_welcome'). "<br/>";
+		
+		$message .= $name . "<br/>";
+		
+		$message .= $this->language->get('text_sub');
+		
+		$message .= $date_added . "<br/>";
+					
+		$message .= $this->language->get('text_auction');
+		
+		$message .= $pname . "<br/><br/>";
+		
+		$message .= $this->language->get('text_price');
+		
+		$message .= $this->currency->format($price_bid) . "<br/><br/>";
+		
+		$message .= $this->language->get('text_date');
+		
+		$message .= $date_added . "<br/><br/>";
+		
+		$message .= $this->language->get('text_message') . "<br/><br/>";
+		
+				
+		$message .= $this->language->get('text_thanks') . "<br/>";
+
+		$message .= $this->config->get('config_name');
+
+
+		$mail = new Mail();
+		$mail->protocol = $this->config->get('config_mail_protocol');
+		$mail->parameter = $this->config->get('config_mail_parameter');
+		$mail->hostname = $this->config->get('config_smtp_host');
+		$mail->username = $this->config->get('config_smtp_username');
+		$mail->password = $this->config->get('config_smtp_password');
+		$mail->port = $this->config->get('config_smtp_port');
+		$mail->timeout = $this->config->get('config_smtp_timeout');				
+		$mail->setTo($email);
+		$mail->setFrom($this->config->get('config_email'));
+		$mail->setSender($this->config->get('config_name'));
+		$mail->setSubject(html_entity_decode($subject, ENT_QUOTES, 'UTF-8'));
+                $mail->setHtml($message);
+		$mail->setText(html_entity_decode($message, ENT_QUOTES, 'UTF-8'));
+		$mail->send();
+
+
+               $insertquery = $this->db->query("INSERT INTO " . DB_PREFIX . "winner SET 
+			product_id=".(int)$product_id.", 
+			customer_id=".(int)$customer_id.", 
+			name = '".$this->db->escape($name)."',
+			nickname = '".$this->db->escape($name)."',
+			status='1',
+			ban='0',
+			productname='".$this->db->escape($pname)."',
+			price_bid=".(int)$price_bid.", date_added=NOW()");
+			
+	}
+
+        }
+	
+		
+
+		return 1;
+		
+		
+	}
+	
+	
+	public function checkbanipaddress($customer_id){
+	
+	
+	
+		$query = $this->db->query("SELECT count(c.customer_id) as num FROM " . DB_PREFIX . "customer c
+        LEFT JOIN " . DB_PREFIX . "block_ipaddress b ON (c.ip = b.ip_address)	
+		WHERE c.customer_id=".(int)$customer_id." AND b.status='1'");
+		return $query->row['num'];
+		
+	}
+	
+	
+	public function addsubscription($product_id,$customer_id,$firstname,$lastname,$email,$pname,$price){
+	
+	    $today = date('YmdHi');
+$startDate = date('YmdHi', strtotime('2012-03-14 09:06:00'));
+$range = $today - $startDate;
+$code = rand(0, $range);
+	
+	    $name = $firstname.' '.$lastname;
+		$query = $this->db->query("INSERT INTO " . DB_PREFIX . "subscriptionsbids SET 
+		product_id=".(int)$product_id.", 
+		customer_id=".(int)$customer_id.", 
+		name = '".$this->db->escape($name)."',
+		email = '".$this->db->escape($email)."',
+		status='0',
+		delete_sub='0',
+		code = '".$this->db->escape($code)."',
+		date_added=NOW()");
+		
+		$sub_id = $this->db->getLastId();
+		
+		$link = HTTP_SERVER.'/index.php?route=product/product/subscriptions&id='.$sub_id.'&code='.$code.'&status=1';
+		
+		$config_subscriptions_confirmation_on = $this->config->get('config_subscriptions_confirmation_on');
+		
+		if($config_subscriptions_confirmation_on=='1'){
+		
+		$this->language->load('mail/subscription');	
+
+		$subject = sprintf($this->language->get('text_subject'), $this->config->get('config_name'));
+
+		
+
+		$message = sprintf($this->language->get('text_welcome'), $this->config->get('config_name')) . "\n\n";
+
+		$message .= $this->language->get('text_sub') . "\n";
+				
+
+		$message .= $link . "\n\n";
+
+		$message .= $this->language->get('text_auction');
+		
+		$message .= $pname . "\n\n";
+		
+		$message .= $this->language->get('text_price');
+		
+		$message .= $price . "\n\n";
+		
+		$message .= $this->language->get('text_thanks') . "\n";
+
+		$message .= $this->config->get('config_name');
+
+		
+
+		$mail = new Mail();
+
+		$mail->protocol = $this->config->get('config_mail_protocol');
+
+		$mail->parameter = $this->config->get('config_mail_parameter');
+
+		$mail->hostname = $this->config->get('config_smtp_host');
+
+		$mail->username = $this->config->get('config_smtp_username');
+
+		$mail->password = $this->config->get('config_smtp_password');
+
+		$mail->port = $this->config->get('config_smtp_port');
+
+		$mail->timeout = $this->config->get('config_smtp_timeout');				
+
+		$mail->setTo($email);
+
+		$mail->setFrom($this->config->get('config_email'));
+
+		$mail->setSender($this->config->get('config_name'));
+
+		$mail->setSubject(html_entity_decode($subject, ENT_QUOTES, 'UTF-8'));
+
+		$mail->setText(html_entity_decode($message, ENT_QUOTES, 'UTF-8'));
+
+		$mail->send();
+		
+		}
+		
+		return 1;
+	}
+	
+	public function countsubscribe($product_id,$customer_id){
+		$query = $this->db->query("SELECT COUNT(email) as num FROM " . DB_PREFIX . "subscriptionsbids WHERE product_id=".(int)$product_id." AND customer_id=".(int)$customer_id."");
+		return $query->row['num'];
+	}
+	
+	
+	public function namesettings(){
+		$query = $this->db->query("SELECT nickname FROM " . DB_PREFIX . "option_setting WHERE 
+		customer_id=".(int)$this->customer->getId()." ");
+		
+		if ($query->num_rows) {
+			return $query->row['nickname'];
+		}else{
+		 return "";
+		
+		}
+	}
+	
+	
+	public function chkcode($id,$code){
+		$query = $this->db->query("SELECT COUNT(email) as num FROM " . DB_PREFIX . "subscriptionsbids WHERE id=".(int)$id." AND code=".(int)$code."");
+		return $query->row['num'];
+	}
+	
+	public function getsubscribe($product_id,$customer_id){
+		$query = $this->db->query("SELECT status FROM " . DB_PREFIX . "subscriptionsbids WHERE product_id=".(int)$product_id." AND customer_id=".(int)$customer_id."");
+		if($query->row['status']){
+		return $query->row['status'];
+		}else{
+		 return "";
+		
+		}
+	}
+	
+	
+	public function updatesubscription($product_id,$customer_id,$firstname,$lastname,$email,$pname,$price){
+	
+	
+	  $today = date('YmdHi');
+$startDate = date('YmdHi', strtotime('2012-03-14 09:06:00'));
+$range = $today - $startDate;
+$code = rand(0, $range);
+	    $name = $firstname.' '.$lastname;
+		$query = $this->db->query("UPDATE " . DB_PREFIX . "subscriptionsbids SET 
+		product_id=".(int)$product_id.", 
+		customer_id=".(int)$customer_id.", 
+		name = '".$this->db->escape($name)."',
+		email = '".$this->db->escape($email)."',
+		status='0',
+		code = '".$this->db->escape($code)."',
+		delete_sub='0',
+		date_added=NOW() WHERE product_id=".(int)$product_id." AND customer_id=".(int)$customer_id."");
+		
+		$sub_id = $this->db->getLastId();
+		
+		$link = HTTP_SERVER.'/index.php?route=product/product/subscriptions&id='.$sub_id.'&code='.$code.'&status=1';
+		
+		
+		$this->language->load('mail/subscription');	
+
+		$subject = sprintf($this->language->get('text_subject'), $this->config->get('config_name'));
+
+		
+
+		$message = sprintf($this->language->get('text_welcome'), $this->config->get('config_name')) . "\n\n";
+
+		$message .= $this->language->get('text_sub') . "\n";
+				
+
+		$message .= $link . "\n\n";
+
+		$message .= $this->language->get('text_auction');
+		
+		$message .= $pname . "\n\n";
+		
+		$message .= $this->language->get('text_price');
+		
+		$message .= $price . "\n\n";
+		
+		$message .= $this->language->get('text_thanks') . "\n";
+
+		$message .= $this->config->get('config_name');
+
+		
+
+		$mail = new Mail();
+
+		$mail->protocol = $this->config->get('config_mail_protocol');
+
+		$mail->parameter = $this->config->get('config_mail_parameter');
+
+		$mail->hostname = $this->config->get('config_smtp_host');
+
+		$mail->username = $this->config->get('config_smtp_username');
+
+		$mail->password = $this->config->get('config_smtp_password');
+
+		$mail->port = $this->config->get('config_smtp_port');
+
+		$mail->timeout = $this->config->get('config_smtp_timeout');				
+
+		$mail->setTo($email);
+
+		$mail->setFrom($this->config->get('config_email'));
+
+		$mail->setSender($this->config->get('config_name'));
+
+		$mail->setSubject(html_entity_decode($subject, ENT_QUOTES, 'UTF-8'));
+
+		$mail->setText(html_entity_decode($message, ENT_QUOTES, 'UTF-8'));
+
+		$mail->send();
+		
+		return 1;
+	}
+	
+	
+	public function deletesubscription($product_id,$customer_id){
+		$query = $this->db->query("DELETE FROM " . DB_PREFIX . "subscriptionsbids WHERE product_id=".(int)$product_id." AND customer_id=".(int)$customer_id."");
+		return 1;
+	}
+
+
+   public function updatesubscriptions($id,$status){
+		$query = $this->db->query("UPDATE " . DB_PREFIX . "subscriptionsbids 
+		SET status = ".(int)$status."
+		WHERE id=".(int)$id."");
+		return 1;
+	}
+	
+	public function getauctionproduct($product_id){
+	
+	 $query = $this->db->query("SELECT * FROM " . DB_PREFIX . "product_bid WHERE product_id = '" . (int)$product_id . "' AND auction_status='1'");
+	 
+			if ($query->num_rows) {
+			
+			return $query->row;
+			} else {
+			return false;
+			}
+	
+	
+	}
+	public function getProductwinner($product_id,$winner_id) {
+		if ($this->customer->isLogged()) {
+			$customer_group_id = $this->customer->getCustomerGroupId();
+			$customer_id = $this->customer->getId();
+		} else {
+			$customer_group_id = $this->config->get('config_customer_group_id');
+			$customer_id = 0;
+		}	
+				
+		$query = $this->db->query("SELECT DISTINCT *, pd.name AS name, p.image, m.name AS manufacturer,w.price_bid AS price, 
+		(SELECT price FROM " . DB_PREFIX . "product_discount pd2 WHERE pd2.product_id = p.product_id AND pd2.customer_group_id = '" . (int)$customer_group_id . "' AND pd2.quantity = '1' AND ((pd2.date_start = '0000-00-00' OR pd2.date_start < NOW()) AND (pd2.date_end = '0000-00-00' OR pd2.date_end > NOW())) ORDER BY pd2.priority ASC, pd2.price ASC LIMIT 1) AS discount, (SELECT points FROM " . DB_PREFIX . "product_reward pr WHERE pr.product_id = p.product_id AND customer_group_id = '" . (int)$customer_group_id . "') AS reward, (SELECT ss.name FROM " . DB_PREFIX . "stock_status ss WHERE ss.stock_status_id = p.stock_status_id AND ss.language_id = '" . (int)$this->config->get('config_language_id') . "') AS stock_status, (SELECT wcd.unit FROM " . DB_PREFIX . "weight_class_description wcd WHERE p.weight_class_id = wcd.weight_class_id AND wcd.language_id = '" . (int)$this->config->get('config_language_id') . "') AS weight_class, (SELECT lcd.unit FROM " . DB_PREFIX . "length_class_description lcd WHERE p.length_class_id = lcd.length_class_id AND lcd.language_id = '" . (int)$this->config->get('config_language_id') . "') AS length_class, (SELECT AVG(rating) AS total FROM " . DB_PREFIX . "review r1 WHERE r1.product_id = p.product_id AND r1.status = '1' GROUP BY r1.product_id) AS rating, (SELECT COUNT(*) AS total FROM " . DB_PREFIX . "review r2 WHERE r2.product_id = p.product_id AND r2.status = '1' GROUP BY r2.product_id) AS reviews, p.sort_order FROM " . DB_PREFIX . "product p LEFT JOIN " . DB_PREFIX . "product_description pd ON (p.product_id = pd.product_id) LEFT JOIN " . DB_PREFIX . "product_to_store p2s ON (p.product_id = p2s.product_id) LEFT JOIN " . DB_PREFIX . "manufacturer m ON (p.manufacturer_id = m.manufacturer_id)
+LEFT JOIN " . DB_PREFIX . "winner w ON (p.product_id = w.product_id)		WHERE w.product_id = '" . (int)$product_id . "' AND 
+w.winner_id = '" . (int)$winner_id . "' AND pd.language_id = '" . (int)$this->config->get('config_language_id') . "' AND p.status = '1' AND p.date_available <= NOW() AND p2s.store_id = '" . (int)$this->config->get('config_store_id') . "'");
+
+		if ($query->num_rows) {
+			$query->row['price'] = ($query->row['discount'] ? $query->row['discount'] : $query->row['price']);
+			$query->row['rating'] = (int)$query->row['rating'];
+			
+			return $query->row;
+		} else {
+			return false;
+		}
+	}
+
+			]]></add>
+		</operation>
+		
+		<operation error="skip">
+			<search position="replace" offset="56"><![CDATA[
+			public function getProduct($product_id) {
+			]]></search>
+			<add><![CDATA[
+		public function getProduct($product_id) {	
+	if ($this->customer->isLogged()) {
+			$customer_group_id = $this->customer->getCustomerGroupId();
+			$customer_id = $this->customer->getId();
+		} else {
+			$customer_group_id = $this->config->get('config_customer_group_id');
+			$customer_id = 0;
+		}	
+
+         $queryAuctionModule = $this->db->query("SELECT * FROM " . DB_PREFIX . "extension WHERE `code` = 'special_count_down'");
+        if ($queryAuctionModule->num_rows) {
+		    $query = $this->db->query("SELECT DISTINCT *, pd.name AS name, p.image, m.name AS manufacturer, m.image AS manufacturerimg, (SELECT price_bid FROM " . DB_PREFIX . "customer_bids cb WHERE cb.product_id = p.product_id AND cb.customer_id = '" . (int)$customer_id . "' AND cb.accept='1' ORDER BY cb.price_bid ASC LIMIT 1) AS price_bid, (SELECT price FROM " . DB_PREFIX . "product_discount pd2 WHERE pd2.product_id = p.product_id AND pd2.customer_group_id = '" . (int)$customer_group_id . "' AND pd2.quantity = '1' AND ((pd2.date_start = '0000-00-00' OR pd2.date_start < NOW()) AND (pd2.date_end = '0000-00-00' OR pd2.date_end > NOW())) ORDER BY pd2.priority ASC, pd2.price ASC LIMIT 1) AS discount, (SELECT bid_date_end FROM " . DB_PREFIX . "product_bid pb WHERE pb.product_id = p.product_id  AND pb.auction_status='1' ORDER BY pb.bid_start_price ASC LIMIT 1) AS endbidtime, (SELECT price_bid FROM " . DB_PREFIX . "customer_bids cb WHERE cb.product_id = p.product_id AND cb.customer_id = '" . (int)$customer_id . "' AND cb.accept='1' ORDER BY cb.price_bid ASC LIMIT 1) AS price_bid, (SELECT price FROM " . DB_PREFIX . "product_discount pd2 WHERE pd2.product_id = p.product_id AND pd2.customer_group_id = '" . (int)$customer_group_id . "' AND pd2.quantity = '1' AND ((pd2.date_start = '0000-00-00' OR pd2.date_start < NOW()) AND (pd2.date_end = '0000-00-00' OR pd2.date_end > NOW())) ORDER BY pd2.priority ASC, pd2.price ASC LIMIT 1) AS discount, (SELECT  product_bid_id FROM " . DB_PREFIX . "product_bid pb WHERE pb.product_id = p.product_id AND ((pb.bid_date_start = '0000-00-00' OR pb.bid_date_start < NOW()) AND (pb.bid_date_end = '0000-00-00' OR pb.bid_date_end > NOW())) ORDER BY pb.bid_start_price ASC LIMIT 1) AS startbidid, (SELECT bid_start_price FROM " . DB_PREFIX . "product_bid pb WHERE pb.product_id = p.product_id AND pb.auction_status='1' ORDER BY pb.bid_start_price ASC LIMIT 1) AS startbidprice, (SELECT price FROM " . DB_PREFIX . "product_special ps WHERE ps.product_id = p.product_id AND ps.customer_group_id = '" . (int)$customer_group_id . "' AND ((ps.date_start = '0000-00-00' OR ps.date_start < NOW()) AND (ps.date_end = '0000-00-00' OR ps.date_end > NOW())) ORDER BY ps.priority ASC, ps.price ASC LIMIT 1) AS special, (SELECT points FROM " . DB_PREFIX . "product_reward pr WHERE pr.product_id = p.product_id AND customer_group_id = '" . (int)$customer_group_id . "') AS reward, (SELECT ss.name FROM " . DB_PREFIX . "stock_status ss WHERE ss.stock_status_id = p.stock_status_id AND ss.language_id = '" . (int)$this->config->get('config_language_id') . "') AS stock_status, (SELECT wcd.unit FROM " . DB_PREFIX . "weight_class_description wcd WHERE p.weight_class_id = wcd.weight_class_id AND wcd.language_id = '" . (int)$this->config->get('config_language_id') . "') AS weight_class, (SELECT lcd.unit FROM " . DB_PREFIX . "length_class_description lcd WHERE p.length_class_id = lcd.length_class_id AND lcd.language_id = '" . (int)$this->config->get('config_language_id') . "') AS length_class, (SELECT AVG(rating) AS total FROM " . DB_PREFIX . "review r1 WHERE r1.product_id = p.product_id AND r1.status = '1' GROUP BY r1.product_id) AS rating, (SELECT COUNT(*) AS total FROM " . DB_PREFIX . "review r2 WHERE r2.product_id = p.product_id AND r2.status = '1' GROUP BY r2.product_id) AS reviews, p.sort_order FROM " . DB_PREFIX . "product p LEFT JOIN " . DB_PREFIX . "product_description pd ON (p.product_id = pd.product_id) LEFT JOIN " . DB_PREFIX . "product_to_store p2s ON (p.product_id = p2s.product_id) LEFT JOIN " . DB_PREFIX . "manufacturer m ON (p.manufacturer_id = m.manufacturer_id) WHERE p.product_id = '" . (int)$product_id . "' AND pd.language_id = '" . (int)$this->config->get('config_language_id') . "' AND p.status = '1' AND p.date_available <= NOW() AND p2s.store_id = '" . (int)$this->config->get('config_store_id') . "'");
+        } else {
+		$query = $this->db->query("SELECT DISTINCT *, pd.name AS name, p.image, m.name AS manufacturer, m.image AS manufacturerimg, (SELECT price FROM " . DB_PREFIX . "product_discount pd2 WHERE pd2.product_id = p.product_id AND pd2.customer_group_id = '" . (int)$customer_group_id . "' AND pd2.quantity = '1' AND ((pd2.date_start = '0000-00-00' OR pd2.date_start < NOW()) AND (pd2.date_end = '0000-00-00' OR pd2.date_end > NOW())) ORDER BY pd2.priority ASC, pd2.price ASC LIMIT 1) AS discount, (SELECT price FROM " . DB_PREFIX . "product_special ps WHERE ps.product_id = p.product_id AND ps.customer_group_id = '" . (int)$customer_group_id . "' AND ((ps.date_start = '0000-00-00' OR ps.date_start < NOW()) AND (ps.date_end = '0000-00-00' OR ps.date_end > NOW())) ORDER BY ps.priority ASC, ps.price ASC LIMIT 1) AS special, (SELECT points FROM " . DB_PREFIX . "product_reward pr WHERE pr.product_id = p.product_id AND customer_group_id = '" . (int)$customer_group_id . "') AS reward, (SELECT ss.name FROM " . DB_PREFIX . "stock_status ss WHERE ss.stock_status_id = p.stock_status_id AND ss.language_id = '" . (int)$this->config->get('config_language_id') . "') AS stock_status, (SELECT wcd.unit FROM " . DB_PREFIX . "weight_class_description wcd WHERE p.weight_class_id = wcd.weight_class_id AND wcd.language_id = '" . (int)$this->config->get('config_language_id') . "') AS weight_class, (SELECT lcd.unit FROM " . DB_PREFIX . "length_class_description lcd WHERE p.length_class_id = lcd.length_class_id AND lcd.language_id = '" . (int)$this->config->get('config_language_id') . "') AS length_class, (SELECT AVG(rating) AS total FROM " . DB_PREFIX . "review r1 WHERE r1.product_id = p.product_id AND r1.status = '1' GROUP BY r1.product_id) AS rating, (SELECT COUNT(*) AS total FROM " . DB_PREFIX . "review r2 WHERE r2.product_id = p.product_id AND r2.status = '1' GROUP BY r2.product_id) AS reviews, p.sort_order FROM " . DB_PREFIX . "product p LEFT JOIN " . DB_PREFIX . "product_description pd ON (p.product_id = pd.product_id) LEFT JOIN " . DB_PREFIX . "product_to_store p2s ON (p.product_id = p2s.product_id) LEFT JOIN " . DB_PREFIX . "manufacturer m ON (p.manufacturer_id = m.manufacturer_id) WHERE p.product_id = '" . (int)$product_id . "' AND pd.language_id = '" . (int)$this->config->get('config_language_id') . "' AND p.status = '1' AND p.date_available <= NOW() AND p2s.store_id = '" . (int)$this->config->get('config_store_id') . "'");
+		}
+		if ($query->num_rows) {
+			$query->row['price'] = ($query->row['discount'] ? $query->row['discount'] : $query->row['price']);
+			$query->row['rating'] = (int)$query->row['rating'];
+			
+			return $query->row;
+		} else {
+			return false;
+		};
+		}
+			]]></add>
+		</operation>
+				
+	</file>
+	
+	<file name="catalog/controller/module/latest.php">
+		
+		
+		<operation error="skip">
+			<search position="after"><![CDATA[
+					foreach ($results as $result) {
+			]]></search>
+			<add><![CDATA[
+			$queryAuctionModule = $this->db->query("SELECT * FROM " . DB_PREFIX . "extension WHERE `code` = 'special_count_down'");
+if($queryAuctionModule->num_rows) {
+				$auctionproduct = $this->model_catalog_product->getauctionproduct($result['product_id']);
+				
+				if($auctionproduct){
+				
+				$bidprice = $auctionproduct['bid_start_price'];
+				
+				
+				}else{
+				
+				$bidprice = 0;
+				
+				}
+				}
+			]]></add>
+		</operation>
+		
+		
+		<operation error="skip">
+			<search position="after"><![CDATA[
+					$this->data['products'][] = array(
+			]]></search>
+			<add><![CDATA[
+//if($queryAuctionModule->num_rows) {
+				'bidprice'   	 => $queryAuctionModule->num_rows ? $bidprice : -1,
+//				}
+			]]></add>
+		</operation>
+		
+	</file>
+	
+	<file name="catalog/view/theme/*/template/module/latest.tpl">
+		
+		<operation error="skip">
+			<search position="replace"><![CDATA[
+				 <div class="cart"><input type="button" value="<?php echo $button_cart; ?>" onclick="addToCart('<?php echo $product['product_id']; ?>');" class="button" /></div>
+			]]></search>
+			<add><![CDATA[
+			
+			 <?php $queryAuctionModule = $this->db->query("SELECT * FROM " . DB_PREFIX . "extension WHERE `code` = 'special_count_down'");
+			 if ($product['bidprice'] > 0 && $queryAuctionModule->num_rows) { ?>
+			 
+			  <div class="cart"><a href="<?php echo $product['href']; ?>" class="button">Bid Now</a></div>
+			 
+				
+				 
+			<?php }else{ ?>
+			
+			 <div class="cart"><input type="button" value="<?php echo $button_cart; ?>" onclick="addToCart('<?php echo $product['product_id']; ?>');" class="button" /></div>
+			
+			<?php } ?>
+				 
+			]]></add>
+		</operation>
+	</file>
+
+    <file name="catalog/controller/module/pavproductcarousel.php">
+        <operation error="skip">
+            <search position="after"><![CDATA[
+					foreach ($results as $result) {
+			]]></search>
+            <add><![CDATA[
+			$queryAuctionModule = $this->db->query("SELECT * FROM " . DB_PREFIX . "extension WHERE `code` = 'special_count_down'");
+if($queryAuctionModule->num_rows) {
+				$auctionproduct = $this->model_catalog_product->getauctionproduct($result['product_id']);
+
+				if($auctionproduct){
+
+				$bidprice = $auctionproduct['bid_start_price'];
+
+
+				}else{
+
+				$bidprice = 0;
+
+				}
+				}
+			]]></add>
+        </operation>
+
+
+        <operation error="skip">
+            <search position="after"><![CDATA[
+					$products[] = array(
+			]]></search>
+            <add><![CDATA[
+//if($queryAuctionModule->num_rows) {
+				'bidprice'   	 => ($queryAuctionModule->num_rows && $auctionproduct) ? $bidprice : -1,
+//				}
+			]]></add>
+        </operation>
+
+    </file>
+
+    <file name="catalog/view/theme/*/template/module/pavproductcarousel.tpl">
+
+        <operation error="skip">
+            <search position="replace"><![CDATA[
+				 <div class="cart"><input type="button" value="<?php echo $button_cart; ?>" onclick="addToCart('<?php echo $product['product_id']; ?>');" class="button" /></div>
+			]]></search>
+            <add><![CDATA[
+
+			 <?php $queryAuctionModule = $this->db->query("SELECT * FROM " . DB_PREFIX . "extension WHERE `code` = 'special_count_down'");
+			 if ($product['bidprice'] >= 0 && $queryAuctionModule->num_rows) { ?>
+
+			  <div class="cart"><a href="<?php echo $product['href']; ?>" class="button"><?php echo $text_bidnow; ?></a></div>
+
+
+
+			<?php }else{ ?>
+
+			 <div class="cart"><input type="button" value="<?php echo $button_cart; ?>" onclick="addToCart('<?php echo $product['product_id']; ?>');" class="button" /></div>
+
+			<?php } ?>
+
+			]]></add>
+        </operation>
+    </file>
+	
+	
+	<file name="catalog/controller/product/category.php">
+		
+		
+		<operation error="skip">
+			<search position="before"><![CDATA[
+					$this->data['products'][] = array(
+			]]></search>
+			<add><![CDATA[
+			$queryAuctionModule = $this->db->query("SELECT * FROM " . DB_PREFIX . "extension WHERE `code` = 'special_count_down'");
+if($queryAuctionModule->num_rows) {
+				$auctionproduct = $this->model_catalog_product->getauctionproduct($result['product_id']);
+				
+				if($auctionproduct){
+				
+				$bidprice = $auctionproduct['bid_start_price'];
+				
+				
+				}else{
+				
+				$bidprice = 0;
+				
+				}
+				}
+			]]></add>
+		</operation>
+		
+		
+		<operation error="skip">
+			<search position="after"><![CDATA[
+					$this->data['products'][] = array(
+			]]></search>
+			<add><![CDATA[
+			//if($queryAuctionModule->num_rows) {
+				'bidprice'   	 => ($queryAuctionModule->num_rows && $auctionproduct) ? $bidprice : -1,
+			//}
+			]]></add>
+		</operation>
+		
+	</file>
+	
+	<file name="catalog/view/theme/*/template/product/category.tpl">
+		
+		<operation error="skip">
+			<search position="replace"><![CDATA[
+				   <input type="button" value="<?php echo $button_cart; ?>" onclick="addToCart('<?php echo $product['product_id']; ?>');" class="button" />
+     
+			]]></search>
+			<add><![CDATA[
+			
+			 <?php $queryAuctionModule = $this->db->query("SELECT * FROM " . DB_PREFIX . "extension WHERE `code` = 'special_count_down'");
+			        if ($product['bidprice'] > 0 && $queryAuctionModule->num_rows) { ?>
+			 
+			<a href="<?php echo $product['href']; ?>" class="button"><?php echo $text_bidnow; ?></a>
+			 
+				
+				 
+			<?php }else{ ?>
+			
+			
+			<input type="button" value="<?php echo $button_cart; ?>" onclick="addToCart('<?php echo $product['product_id']; ?>');" class="button" />
+			
+			
+			<?php } ?>
+				 
+			]]></add>
+		</operation>
+	</file>
+	
+	
+	
+	<file name="catalog/controller/module/featured.php">
+		
+		
+		<operation error="skip">
+			<search position="before"><![CDATA[
+					$this->data['products'][] = array(
+			]]></search>
+			<add><![CDATA[
+			$queryAuctionModule = $this->db->query("SELECT * FROM " . DB_PREFIX . "extension WHERE `code` = 'special_count_down'");
+if($queryAuctionModule->num_rows) {
+				$auctionproduct = $this->model_catalog_product->getauctionproduct($product_info['product_id']);
+				
+				if($auctionproduct){
+				
+				$bidprice = $auctionproduct['bid_start_price'];
+				
+				
+				}else{
+				
+				$bidprice = 0;
+				
+				}
+				}
+			]]></add>
+		</operation>
+		
+		
+		<operation error="skip">
+			<search position="after"><![CDATA[
+					$this->data['products'][] = array(
+			]]></search>
+			<add><![CDATA[
+			//if($queryAuctionModule->num_rows) {
+				'bidprice'   	 => $queryAuctionModule->num_rows ? $bidprice : -1,
+			//}
+			]]></add>
+		</operation>
+		
+	</file>
+	
+	<file name="catalog/view/theme/*/template/module/featured.tpl">
+		
+		<operation error="skip">
+			<search position="replace"><![CDATA[
+				  <div class="cart"><input type="button" value="<?php echo $button_cart; ?>" onclick="addToCart('<?php echo $product['product_id']; ?>');" class="button" /></div>
+			]]></search>
+			<add><![CDATA[
+			
+			 <?php $queryAuctionModule = $this->db->query("SELECT * FROM " . DB_PREFIX . "extension WHERE `code` = 'special_count_down'");
+			        if ($product['bidprice'] > 0 && $queryAuctionModule->num_rows) { ?>
+			 
+			  <div class="cart"><a href="<?php echo $product['href']; ?>" class="button">Bid Now</a></div>
+			 
+				
+				 
+			<?php }else{ ?>
+			
+			 <div class="cart"><input type="button" value="<?php echo $button_cart; ?>" onclick="addToCart('<?php echo $product['product_id']; ?>');" class="button" /></div>
+			
+			<?php } ?>
+				 
+			]]></add>
+		</operation>
+	</file>
+	
+	
+	
+	<file name="catalog/controller/common/header.php">
+		
+		<operation error="skip">
+			<search position="after"><![CDATA[
+				$this->data['account'] = $this->url->link('account/account', '', 'SSL');
+			]]></search>
+			<add><![CDATA[
+
+$queryAuctionModule = $this->db->query("SELECT * FROM " . DB_PREFIX . "extension WHERE `code` = 'special_count_down'");
+if ($queryAuctionModule->num_rows) {
+				$this->data['text_auction'] = $this->language->get('text_auction');				
+				$this->data['auction'] = $this->url->link('account/auction', '', 'SSL');
+}
+			]]></add>
+		</operation>
+	</file>
+	
+	
+	
+	
+	
+	<file name="catalog/view/theme/*/template/common/header.tpl">
+		
+		<operation error="skip">
+			<search position="replace"><![CDATA[
+				<div class="links"><a href="<?php echo $home; ?>"><?php echo $text_home; ?></a><a href="<?php echo $wishlist; ?>" id="wishlist-total"><?php echo $text_wishlist; ?></a><a href="<?php echo $account; ?>"><?php echo $text_account; ?></a><a href="<?php echo $shopping_cart; ?>"><?php echo $text_shopping_cart; ?></a><a href="<?php echo $checkout; ?>"><?php echo $text_checkout; ?></a></div>
+			]]></search>
+			<add><![CDATA[
+			<?php $queryAuctionModule = $this->db->query("SELECT * FROM " . DB_PREFIX . "extension WHERE `code` = 'special_count_down'");
+if ($queryAuctionModule->num_rows) { ?>
+				<div class="links"><a href="<?php echo $home; ?>"><?php echo $text_home; ?></a><a href="<?php echo $wishlist; ?>" id="wishlist-total"><?php echo $text_wishlist; ?></a><a href="<?php echo $account; ?>"><?php echo $text_account; ?></a>  <?php if($this->config->get('config_display_popular_auctions_block_on')==1) { ?>   <a href="<?php echo $auction; ?>"><?php echo $text_auction; ?></a>  <?php } ?>   <a href="<?php echo $shopping_cart; ?>"><?php echo $text_shopping_cart; ?></a><a href="<?php echo $checkout; ?>"><?php echo $text_checkout; ?></a></div>
+	<?php } else {?>
+		<div class="links"><a href="<?php echo $home; ?>"><?php echo $text_home; ?></a><a href="<?php echo $wishlist; ?>" id="wishlist-total"><?php echo $text_wishlist; ?></a><a href="<?php echo $account; ?>"><?php echo $text_account; ?></a><a href="<?php echo $shopping_cart; ?>"><?php echo $text_shopping_cart; ?></a><a href="<?php echo $checkout; ?>"><?php echo $text_checkout; ?></a></div>
+		<?php } ?>
+			]]></add>
+		</operation>
+		
+		
+		<operation error="skip">
+			<search position="before"><![CDATA[
+				</head>
+			]]></search>
+			<add><![CDATA[
+			<?php $queryAuctionModule = $this->db->query("SELECT * FROM " . DB_PREFIX . "extension WHERE `code` = 'special_count_down'");
+			if ($queryAuctionModule->num_rows) { ?>
+				<script type="text/javascript">
+
+				$(document).ready(function() {
+
+				$.ajax({
+				url: 'index.php?route=account/closebid',
+				type: 'post',				
+				dataType: 'json',
+				success: function(data) {
+
+				$('.success, .warning, .attention, information, .error').remove();
+
+				if (data['success']) {
+				 	window.location.reload(true);
+
+				}
+				}
+				});
+				});
+				</script>
+				<?php } ?>
+			]]></add>
+		</operation>
+		
+		
+	</file>
+	
+	
+<file name="catalog/controller/product/product.php">
+		<operation error="skip">
+			<search position="after"><![CDATA[
+			if ($product_info) {
+			]]></search>
+			<add><![CDATA[
+			$queryAuctionModule = $this->db->query("SELECT * FROM " . DB_PREFIX . "extension WHERE `code` = 'special_count_down'");
+if ($queryAuctionModule->num_rows) {
+$this->data['logged'] = $this->customer->isLogged();
+$this->data['text_close_time'] = $this->language->get('text_close_time');
+			$this->data['login'] = $this->url->link('account/login');
+			$this->data['text_bid_only_reg'] = $this->language->get('text_bid_only_reg');
+			
+			$this->data['text_winner'] = $this->language->get('text_winner');
+			$this->data['text_part'] = $this->language->get('text_part');
+			$this->data['text_current_price'] = $this->language->get('text_current_price');
+			
+			$this->data['text_min_step'] = $this->language->get('text_min_step');
+			
+			$this->data['productname'] = $product_info['name'];
+			
+			$this->data['text_bid_bids'] = $this->language->get('text_bid_bids');
+			$this->data['text_bid_place'] = $this->language->get('text_bid_place');
+			$this->data['text_bid_submit'] = $this->language->get('text_bid_submit');
+			$this->data['text_bid_delete'] = $this->language->get('text_bid_delete');
+			$this->data['text_bid_curr_is'] = $this->language->get('text_bid_curr_is');
+			$this->data['text_bid_accept'] = $this->language->get('text_bid_accept');
+			$this->data['text_bid_refuse'] = $this->language->get('text_bid_refuse');
+			$this->data['text_bid_big_off'] = $this->language->get('text_bid_big_off');
+			$this->data['text_bid_explain'] = $this->language->get('text_bid_explain');	
+			$this->data['text_bid_reserved'] = $this->language->get('text_bid_reserved');
+			$this->data['text_bids'] = $this->language->get('text_bids');
+			
+	}
+
+			]]></add>
+		</operation>
+		
+		<operation error="skip">
+			<search position="before"><![CDATA[
+			$this->document->setTitle($product_info['name']);
+			]]></search>
+			<add><![CDATA[
+			if ($queryAuctionModule->num_rows) {
+			error_reporting(E_ERROR | E_PARSE);
+			$this->data['logged'] = $this->customer->isLogged();
+			
+			$this->data['text_close_time'] = $this->language->get('text_close_time');
+			$this->data['login'] = $this->url->link('account/login');
+			
+			$this->data['text_winner'] = $this->language->get('text_winner');
+			$this->data['text_part'] = $this->language->get('text_part');
+			$this->data['text_current_price'] = $this->language->get('text_current_price');
+			
+			$this->data['text_min_step'] = $this->language->get('text_min_step');
+			
+			$this->data['productname'] = $product_info['name'];
+			
+			
+			if ((float)$product_info['startbidid']) {
+				$this->data['startbidid'] = $product_info['startbidid'];
+			} else {
+				$this->data['startbidid'] = false;
+			}
+		
+			
+			if ((float)$product_info['startbidprice']) {
+				$this->data['startbidprice'] = $this->currency->format($product_info['startbidprice']);
+			$this->data['clearstartbidprice'] = $product_info['startbidprice'];
+			} else {
+				$this->data['startbidprice'] = false;
+				$this->data['clearstartbidprice'] = 0;
+			}
+					
+			if ((float)$product_info['endbidtime']) {
+				$this->data['endbidtime'] = $product_info['endbidtime'];
+			} else {
+				$this->data['endbidtime'] = "";
+			}
+			
+			
+			if($this->customer->isLogged()){
+			$this->data['customerid'] = $this->customer->getId();
+			$this->data['firstname'] = $this->customer->getFirstName();
+			$this->data['email'] = $this->customer->getEmail();
+			}else{
+			$this->data['customerid'] ='';
+			}
+			
+		$this->data['auctionproduct'] = $this->model_catalog_product->getauctionproduct($this->request->get['product_id']);
+		
+		$this->data['checkclosedate'] = $this->model_catalog_product->checkclosedatetime($this->request->get['product_id']);
+
+		$currentdate= date("Y-m-d");
+
+			
+
+		
+
+		$this->data['checkBidstate'] = $this->model_catalog_product->checkBidstate($this->request->get['product_id']);
+
+
+			
+			
+			$this->data['checkstatusbid'] = $this->model_catalog_product->checkBidstatus($this->request->get['product_id']);
+			
+			
+			
+			
+			$this->data['checkwinner'] = $this->model_catalog_product->checkcustomerwinner($this->request->get['product_id']);
+			
+			
+			
+			$this->data['checkwinner1'] = $this->model_catalog_product->checkwinner($this->request->get['product_id']);
+
+		
+			
+			
+			$this->data['minofferstep'] = $this->model_catalog_product->minofferstep($this->request->get['product_id']);
+			
+			$this->data['minoffersteps'] = $this->currency->format($this->data['minofferstep']);
+			
+			
+			$this->data['selectmaxcustomerbid'] = $this->model_catalog_product->checkforMaxProductBids($this->request->get['product_id']);
+		
+			$this->data['checkforcustomerbid'] = $this->model_catalog_product->checkforCustomerBid($this->request->get['product_id'],$this->customer->getId());
+			
+			$countsubscribe = $this->model_catalog_product->countsubscribe($this->request->get['product_id'],$this->customer->getId());
+			
+			$this->data['checksub'] = $countsubscribe;
+			
+		if($countsubscribe>0){	
+		$this->data['getsubscribe'] = $this->model_catalog_product->getsubscribe($this->request->get['product_id'],$this->customer->getId());
+		}
+		
+		if($this->customer->isLogged()){
+		$this->data['namesetting'] = $this->model_catalog_product->namesettings();
+		
+		
+		
+		}else{
+		$this->data['namesetting'] ="";
+		}
+			
+			
+			
+			
+		 $this->data['maxcustomerbid'] = $this->model_catalog_product->forMaxProductBids($this->request->get['product_id']);
+			
+		$this->data['maxpbids'] = $this->model_catalog_product->forMaxProductBids1($this->request->get['product_id']);
+			
+			
+			
+			
+			
+		$this->data['countCustomerBids'] = $this->model_catalog_product->countCustomerBids($this->request->get['product_id']);
+		
+		$this->data['countproductbids'] = $this->model_catalog_product->forMaxProductBidstable($this->request->get['product_id']);
+			
+		if($this->data['countCustomerBids'] > 0){
+						
+				$this->data['mincustomerbid'] = $this->data['maxcustomerbid']+ $this->data['minofferstep'];
+				
+				$this->data['maxcustomerbidamt'] = $this->currency->format($this->data['maxcustomerbid']);
+				
+				}else {
+				
+				$this->data['mincustomerbid'] = $this->data['clearstartbidprice']+$this->data['minofferstep'];
+				
+				$this->data['maxcustomerbidamt'] = $this->currency->format($this->data['clearstartbidprice']);
+			
+			
+			}
+			
+		
+			
+		
+		$this->data['config_bid'] = $this->config->get('config_bid');
+		$this->data['config_autobid'] = $this->config->get('config_autobid');
+
+		$this->data['config_buy_now'] = $this->config->get('config_buy_now');
+
+
+
+		$this->data['config_allow_subscriptions_on'] = $this->config->get('config_allow_subscriptions_on');
+		$this->data['config_subscriptions_type'] = $this->config->get('config_subscriptions_type');
+
+		$this->data['config_subscriptions_confirmation_on'] = $this->config->get('config_subscriptions_confirmation_on');
+
+
+
+		$this->load->model('account/activity');
+
+		$this->data['bids'] = $this->model_account_activity->getTotalbids1($this->request->get['product_id']);
+
+		$this->data['rbids'] = $this->model_account_activity->getbids1($this->request->get['product_id']);
+		
+		
+		$this->data['bids1'] = $this->model_account_activity->getTotalbids1($this->request->get['product_id']);
+
+		$this->data['rbids1'] = $this->model_account_activity->getbids1($this->request->get['product_id']);
+
+			
+			
+					
+			
+			if(isset($this->request->post['accept_customer_buy']) && $this->data['checkforcustomerbid'] != 0){
+				$this->data['acceptbuy'] = $this->model_catalog_product->customerAcceptBuying($this->request->get['product_id'],$this->customer->getId());			
+			}else{
+				$this->data['acceptbuy'] = 0;			
+			}
+			
+			
+			
+			
+			}
+			
+		
+
+			]]></add>
+		</operation>
+		
+		
+		<operation error="skip">
+			<search position="before"><![CDATA[
+			public function index() { 
+			]]></search>
+			<add><![CDATA[
+	public function bid() {
+		//echo "<pre/>";print_r($this->request->post);die;
+		$this->language->load('product/product');
+		
+		$this->load->model('catalog/product');
+				
+		$json = array();
+		
+		
+		
+		if (empty($this->request->post['customer_id'])) {
+		   
+				$json['error'] = "In order to participate, you must be logged in";
+		}else{
+			
+			$num = $this->model_catalog_product->checkbanipaddress($this->customer->getId());
+			
+			if($num){
+			
+					$json['error'] = "You have been denied the right to participate in auctions";
+			
+			}else{			
+			        if ($this->request->post['customer_bid'] < $this->request->post['mincustomerbid']) {
+				     $json['error'] = "Your price is too low.Offer atleast ".$this->request->post['mincustomerbid']."";
+			        }
+
+					$autobids = $this->model_catalog_product->forautobids($this->request->get['product_id'],$this->customer->getId());
+					if ($this->request->post['customer_bid'] > $autobids && $autobids>0) {
+						$json['error'] = "Your price is high .your max bid limit is ".$autobids."";
+			        }
+            }			
+			
+		}
+			
+			
+			if (!$json) {
+		
+			
+			$countproductbids = $this->model_catalog_product->forMaxProductBidstable($this->request->get['product_id']);			
+			$maxpbids = $this->model_catalog_product->forMaxProductBids1($this->request->get['product_id']);				
+			$minvalue =$maxpbids;
+			
+	    if($minvalue > 0){				
+						
+		if($countproductbids > 0){
+		            if($this->request->post['customer_bid'] >= $minvalue){
+						$this->model_catalog_product->updateProductBidstable($this->request->get['product_id'],$this->customer->getId(),$this->request->post['customer_bid'],$this->customer->getFirstName(),$this->customer->getLastName(),$this->request->post['productname']);
+						$json['success'] = "Auction reached maximum limit.Auction Ended";
+				    }			
+		    }
+				
+		}else{
+		
+			if($countproductbids > 0){
+		            if($this->request->post['customer_bid'] >= $maxpbids){
+					
+						$this->model_catalog_product->updateProductBidstable($this->request->get['product_id'],$this->customer->getId(),$this->request->post['customer_bid'],$this->customer->getFirstName(),$this->customer->getLastName(),$this->request->post['productname']);
+						$json['success'] = "Auction reached maximum limit.Auction Ended";
+				    }			
+		    }
+		
+		
+		
+		}
+		
+		$this->data['checkclosedate'] = $this->model_catalog_product->checkclosedatetime($this->request->get['product_id']);
+		$currentdate= date("Y-m-d");
+			
+			
+			
+			
+			$total = $this->model_catalog_product->countforCustomerBids($this->request->get['product_id'],$this->customer->getId());
+					
+			if($total){
+					$this->model_catalog_product->updateCustomerBid($this->request->get['product_id'],$this->customer->getId(),$this->request->post['customer_bid'],$this->customer->getFirstName(),$this->customer->getLastName(),$this->request->post['productname']);
+					
+					
+					
+			}else{
+					
+					$this->model_catalog_product->addCustomerBid($this->request->get['product_id'],$this->customer->getId(),$this->request->post['customer_bid'],$this->customer->getFirstName(),$this->customer->getLastName(),$this->request->post['productname']);
+					
+					
+					
+			}
+			
+			   $this->model_catalog_product->addBidhistory($this->request->get['product_id'],$this->customer->getId(),$this->request->post['customer_bid'],$this->customer->getFirstName(),$this->customer->getLastName(),$this->request->post['productname']);
+					
+					
+			
+								
+					$json['success'] = "Your bid is successfully placed";
+		   }	
+		
+		
+		
+		
+		$this->response->setOutput(json_encode($json));
+	}
+	
+	
+	public function auto() {
+		$this->language->load('product/product');
+		
+		$this->load->model('catalog/product');
+				
+		$json = array();
+		
+		  if (empty($this->request->post['customer_id'])) {
+		   
+				$json['error'] = "In order to participate, you must be logged in";
+			}else{
+			
+			$num = $this->model_catalog_product->checkbanipaddress($this->customer->getId());
+			
+			if($num){
+			
+					$json['error'] = "You have been denied the right to participate in auctions";
+			
+			}else{
+			
+			if ($this->request->post['autobid_value'] < $this->request->post['mincustomerbid']) {
+				$json['error'] = "Please set exact or higher autobid amount";
+			}
+
+            }			
+			
+			}
+			
+			
+			if (!$json) {
+			
+			$total = $this->model_catalog_product->countforautoBids($this->request->get['product_id'],$this->customer->getId());
+			
+			if($total){
+			
+			
+			
+			$this->model_catalog_product->updateautoBid($this->request->get['product_id'],$this->customer->getId(),$this->request->post['autobid_value'],$this->customer->getFirstName(),$this->customer->getLastName(),$this->request->post['productname']);
+			
+			
+			
+			}else{
+			
+			$this->model_catalog_product->addautoBid($this->request->get['product_id'],$this->customer->getId(),$this->request->post['autobid_value'],$this->customer->getFirstName(),$this->customer->getLastName(),$this->request->post['productname']);
+			
+			
+			
+			}
+			
+			
+						
+			$json['success'] = "Your Max price is successfully set to ".$this->request->post['autobid_value']."";
+			
+			}
+		   	
+		
+		
+		
+		
+		$this->response->setOutput(json_encode($json));
+	}
+	
+	
+	public function subscriptions() {
+	
+		$this->language->load('mail/subscription');
+
+
+		$this->load->model('catalog/product');
+		
+		$chk =  $this->model_catalog_product->chkcode($this->request->get['id'],$this->request->get['code']);
+		
+		if($chk){
+			
+		  $result=$this->model_catalog_product->updatesubscriptions($this->request->get['id'],$this->request->get['status']);
+
+
+			 $this->data['error_warning'] = "Subscription successfully confirmed.";
+
+		
+		}
+
+		$this->redirect($this->url->link('product/success'));	
+	
+	
+	
+	
+	}
+	
+	public function subscription() {
+		$this->language->load('product/product');
+		
+		$this->load->model('catalog/product');
+				
+		$json = array();
+		
+		
+	if (!$json) {	
+
+
+           $total = $this->model_catalog_product->countsubscribe($this->request->get['product_id'],$this->customer->getId());
+			
+			if($total){	
+			
+			
+			$this->model_catalog_product->updatesubscription($this->request->get['product_id'],$this->customer->getId(),$this->customer->getFirstName(),$this->customer->getLastName(),$this->customer->getEmail(),$this->request->post['productname'],$this->request->post['currentprice']);
+			
+			
+			}else {
+			
+			
+			$this->model_catalog_product->addsubscription($this->request->get['product_id'],$this->customer->getId(),$this->customer->getFirstName(),$this->customer->getLastName(),$this->customer->getEmail(),$this->request->post['productname'],$this->request->post['currentprice']);
+			
+			}
+						
+			$config_subscriptions_confirmation_on = $this->config->get('config_subscriptions_confirmation_on');
+		
+		if($config_subscriptions_confirmation_on=='1'){
+						
+			$json['success'] = "An email with confirmation details has been sent to address  ".$this->customer->getEmail()."";
+			
+			}else {
+			$json['success'] = "Subscribed Successfully";
+			
+			}
+			
+	}
+		   	
+		
+		
+		
+		
+		$this->response->setOutput(json_encode($json));
+	}
+	
+	
+	public function unsubscription() {
+		$this->language->load('product/product');
+		
+		$this->load->model('catalog/product');
+				
+		$json = array();
+		
+		
+	if (!$json) {	
+
+
+           
+			
+			$this->model_catalog_product->deletesubscription($this->request->get['product_id'],$this->customer->getId());
+			
+			
+			
+			$json['success'] = "Sucessfully unsubscribed";
+			
+	}
+		   	
+		
+		
+		
+		
+		$this->response->setOutput(json_encode($json));
+	}
+
+			]]></add>
+		</operation>
+		
+	</file>
+	
+	
+<!--<file name="catalog/language/*/product/product.php">
+		<operation error="skip">
+			<search position="before"><![CDATA[
+			?>
+			]]></search>
+			<add><![CDATA[
+	$_['text_bid_only_reg']    = 'Auction has ended!';
+$_['text_bid_start_from']  = 'Bidding start from:';
+$_['text_bid_curr']  		= 'Auction In Progress';
+$_['text_bid_bids'] 			= 'Nobody';
+$_['text_bid_place'] 		= 'PLACE YOUR BID';
+$_['text_bid_submit'] 		= 'SUBMIT';
+$_['text_bid_delete'] 		= 'DELETE';
+$_['text_bid_curr_is'] 		= 'Starting bid:';
+$_['text_bid_accept'] 		= 'ACCEPT BUYING';
+$_['text_bid_refuse'] 		= 'REFUSE BUYING';
+$_['text_bid_reserved']    = 'THIS PRODUCT IS RESERVED FOR BUYING TO CUSTOMER OFFER BIGGEST PRICE';
+$_['text_bid_big_off'] 		= 'YOUR OFFERED BIGGEST PRICE FOR THIS PRODUCT: ';
+$_['text_bid_explain'] 		= 'DID YOU ACCEPT TO BUY THIS PRODUCT?<br><br>
+										 <span style="font-size:12px;font-weight:normal;">
+										 - if you accept to buy this product you will able to buy this product on your bidded price
+										 - if you refuse to buy this product your bid will be deleted and next customer offered max bid price will be able to buy this product.
+										 </span><br><br>
+										';
+$_['text_close_time'] 		= 'Auction End Date:';
+$_['text_winner'] 		= 'Winning bidder:';
+$_['text_current_price'] 		= 'Current price:';
+$_['text_part'] 		= 'Participating as:';
+$_['text_min_step'] 		= 'Minimal bidding amount:';
+
+			]]></add>
+		</operation>
+	</file>-->
+	
+	
+	<file name="catalog/view/theme/*/template/product/product.tpl">
+		
+		<operation error="skip">
+			<search position="before"><![CDATA[
+				<?php echo $footer; ?>
+			]]></search>
+			<add><![CDATA[
+				<style>
+.auction .content_prices
+{
+    border-top: none;
+    margin-top: auto;
+    padding-top: 0;
+	padding-left: 14px;
+}
+
+.auction .content_prices a.ajax_add_to_cart_button
+{
+	height: auto !important;
+}
+
+.auction #timer_0
+{
+	color: #000000 !important;
+	text-align:center;
+	font-size: 17px;
+    font-weight: bold;
+    line-height: 90%;
+	text-shadow: 0 1px 0 #FFFFFF;
+}
+
+.auction .auction_closing_time, .auction .auction_min_step, #auction_loader span
+{
+    color: #666666;
+    font-size: 10px;
+    line-height: 13px;
+}
+
+.auction .auction_closing_time
+{
+	text-align:center;
+}
+
+.auction .auction_min_step
+{
+	float:right;
+}
+
+.auction_button
+{
+	width: 100px;
+}
+
+#winning_bidder
+{
+	font-weight:bold;
+}
+
+#winning_bidder.auction_leader
+{
+	color: green;
+}
+
+#auction_nickname a
+{
+	text-decoration: underline;
+}
+
+#auction_nickname a:hover
+{
+	text-decoration: none;
+}
+
+#nickname_
+{
+	vertical-align:top;
+	width:14px;
+	margin-left:-3px;
+}
+
+#auction_loader
+{
+	float:left;
+}
+
+#auction_loader img
+{
+	vertical-align:middle;
+	width:13px;
+	height:13px;
+}
+
+.auction .liner
+{
+	margin-top: 5px;
+}
+
+.auctiondivider 
+{
+    border-bottom : 1px dotted #E9E9E9;
+    height: 2px;
+    margin: 8px 0;
+    overflow: hidden;
+    width: 100%;
+}
+
+.buy_now
+{
+	/* margin: 0 auto; */
+}
+
+.auction .currency_symbol
+{
+	margin-right: 10px;
+}
+
+input.bid_input
+{
+	height: 21px;
+	margin-left: 0;
+	margin-right: 10px;
+    padding: 0 5px;
+    width: 30px;
+}
+
+.fleft
+{
+	float:left;
+}
+
+.fright
+{
+	float:right;
+}
+<?php if ($this->language->get('direction') == 'rtl') { ?>
+.price_tag
+{
+	float: right;
+	min-width: 85px;
+}
+<?php } else {?>
+.price_tag
+{
+	float: left;
+	min-width: 85px;
+}
+<?php }?>
+.buy_now_price
+{
+	padding-top: 3px;
+}
+
+a#auction_nickname
+{
+	text-decoration: underline;	
+}
+
+a#auction_nickname:hover
+{
+	text-decoration: none;
+}
+
+/* auction block error messages start */
+
+.msg_holder
+{
+	position:relative;
+	
+}
+
+
+.liner {
+    margin-top: 5px;
+}
+
+.field_error:before, .field_error:after
+{
+    border-style: solid;
+    display: block;
+    content: " ";
+    height: 0;
+    position: absolute;
+    width: 0;
+}
+
+.field_error:before 
+{
+    border-color: transparent yellow;
+    border-width: 6px 0 6px 6px;
+    right: -6px;
+    top: 8px;
+    z-index: 2;
+}
+
+.field_error:after
+{
+    border-color: transparent red;
+    border-width: 6px 0 6px 6px;
+    right: -7px;
+    top: 8px;
+    z-index: 1;
+}
+
+.field_error 
+{
+    background: none repeat scroll 0 0 yellow;
+    border: 1px solid red;
+    border-radius: 5px 5px 5px 5px;
+    box-shadow: 2px 2px 2px gray;
+    display: none;
+    left: -169px;
+    margin: 10px;
+    padding: 5px;
+    position: absolute;
+    top: -10px;
+    width: 160px;
+    z-index: 1;
+	opacity: 0.8;
+}
+
+.price_msg
+{
+	left: -105px !important;
+	top: -16px !important;
+}
+
+.nickname_msg
+{
+	left: -190px !important;
+	top: -18px !important;
+}
+
+/* auction block error messages end */
+
+.auction_taxes_label
+{
+	margin-left: 3px;
+	font-size: 9px;
+}
+
+.auction .iframe
+{
+	font-weight: normal !important;
+}
+
+#auction_subscriptions
+{
+	padding-left: 20px !important;
+	background: url("../img/mail.png") no-repeat scroll 0 0 transparent;
+}
+
+/* bids history start */
+
+#module-advauction-bids table
+{
+	border-left: 1px solid #e9e9e9;
+}
+
+#module-advauction-bids table .table-header
+{
+	border-left: 1px solid #999999;
+}
+
+#module-advauction-bids table tr.my-bid
+{
+	background:#FAF0E6;
+}
+
+/* bids history end */
+
+/* my account begin */
+
+#module-advauction-account #left_column,
+#module-advauction-currentactivity #left_column,
+#module-advauction-paymenthistory #left_column,
+#module-advauction-subscriptions #left_column,
+#module-advauction-options #left_column {
+    display: none;
+}
+
+#module-advauction-account #center_column,
+#module-advauction-currentactivity #center_column,
+#module-advauction-paymenthistory #center_column,
+#module-advauction-subscriptions #center_column,
+#module-advauction-options #center_column {
+    width: 757px;
+}
+
+#module-advauction-account #center_column p.title_block,
+#module-advauction-currentactivity #center_column p.title_block,
+#module-advauction-paymenthistory #center_column p.title_block,
+#module-advauction-subscriptions #center_column p.title_block,
+#module-advauction-options #center_column p.title_block,
+#module-advauction-options p.title_block.content_only {
+	color: #666666;
+	font-size: 12px;
+	font-weight: normal;
+}
+
+/* current activity begin */
+
+#module-advauction-currentactivity #center_column table.std td,
+#module-advauction-paymenthistory #center_column table.std td
+{
+	vertical-align:middle;
+}
+
+#module-advauction-currentactivity #center_column table.std td.leader
+{
+	color: green;
+}
+
+#module-advauction-currentactivity #center_column table.std td.loser
+{
+	color: red;
+}
+
+#module-advauction-currentactivity #center_column table.std th.center,
+#module-advauction-currentactivity #center_column table.std td.center
+{
+	text-align: center;
+}
+
+/* current activity end */
+
+/* payment history begin */
+#module-advauction-paymenthistory #center_column #product_list li
+{
+	margin-left: 9px;
+    border: none;
+    margin-bottom: 0;
+    padding: 0;
+}
+
+#module-advauction-paymenthistory #center_column .price_with_taxes
+{
+	font-weight:bold;
+	margin-top:5px;
+}
+
+#module-advauction-paymenthistory #center_column .unpaid
+{
+	color:red;
+}
+
+/* payment history end */
+
+#module-advauction-account .myaccount_lnk_list {
+    list-style-type: none;
+}
+
+#module-advauction-account .myaccount_lnk_list li {
+    font-size: 13px;
+    line-height: 36px;
+}
+
+#module-advauction-account .myaccount_lnk_list img.icon,
+#module-advauction-account p img.icon {
+    left: 0;
+    position: relative;
+    top: 6px;
+}
+
+#module-advauction-subscriptions .auction-subscriptions
+{
+    border: 1px solid #EEEEEE;
+    border-radius: 3px 3px 3px 3px;
+    margin-bottom: 14px;
+    padding: 12px 8px;
+    position: relative;
+}
+
+#module-advauction-subscriptions .auction-subscriptions a.product_img_link {
+    border: 1px solid #CCCCCC;
+    display: block;
+    float: left;
+    margin-right: 14px;
+    overflow: hidden;
+    position: relative;
+}
+
+#module-advauction-subscriptions .auction-subscriptions h3 {
+    color: #000000;
+    font-size: 13px;
+    padding: 0 0 10px;
+}
+
+#module-advauction-subscriptions .auction-subscriptions .remove {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+}
+
+#module-advauction-subscriptions .auction-subscriptions .remove .icon {
+    cursor: pointer;
+}
+
+#module-advauction-options fieldset
+{
+	background: none repeat scroll 0px 0px rgb(248, 248, 248);
+	border: 1px solid rgb(204, 204, 204);
+	margin: 0px 0px 12px;
+	padding-top: 20px;
+}
+
+#module-advauction-options fieldset input[type="text"]
+{
+	border: 1px solid #CCCCCC;
+	color: #666666;
+	font-size: 12px;
+	height: 22px;
+	padding: 0 5px;
+	width: 360px;
+}
+
+#module-advauction-options label
+{
+	display: inline-block;
+	font-size: 14px;
+	padding: 6px 15px;
+	text-align: right;
+	width: 230px;
+}
+
+#module-advauction-options label.popup_label
+{
+	width: 140px;
+}
+
+#module-advauction-options label.options-checkbox
+{
+	width: 589px;
+}
+
+/* my account end */
+
+/* homefeatured fix */
+
+#featured-products_block_center li
+{
+	height: 295px;
+}
+</style>
+			]]></add>
+		</operation>
+		
+		
+		<!--<operation error="skip">
+			<search position="replace" offset="143"><![CDATA[
+				   <div class="options">
+			]]></search>
+			<add><![CDATA[
+	
+<?php if(!empty($auctionproduct)){ ?>	
+	<?php if($this->config->get('config_buy_now')=="1"){ ?>
+			
+      <div class="options">
+        <h2><?php echo $text_option; ?></h2>
+        <br />
+        <?php foreach ($options as $option) { ?>
+        <?php if ($option['type'] == 'select') { ?>
+        <div id="option-<?php echo $option['product_option_id']; ?>" class="option">
+          <?php if ($option['required']) { ?>
+          <span class="required">*</span>
+          <?php } ?>
+          <b><?php echo $option['name']; ?>:</b><br />
+          <select name="option[<?php echo $option['product_option_id']; ?>]">
+            <option value=""><?php echo $text_select; ?></option>
+            <?php foreach ($option['option_value'] as $option_value) { ?>
+            <option value="<?php echo $option_value['product_option_value_id']; ?>"><?php echo $option_value['name']; ?>
+            <?php if ($option_value['price']) { ?>
+            (<?php echo $option_value['price_prefix']; ?><?php echo $option_value['price']; ?>)
+            <?php } ?>
+            </option>
+            <?php } ?>
+          </select>
+        </div>
+        <br />
+        <?php } ?>
+        <?php if ($option['type'] == 'radio') { ?>
+        <div id="option-<?php echo $option['product_option_id']; ?>" class="option">
+          <?php if ($option['required']) { ?>
+          <span class="required">*</span>
+          <?php } ?>
+          <b><?php echo $option['name']; ?>:</b><br />
+          <?php foreach ($option['option_value'] as $option_value) { ?>
+          <input type="radio" name="option[<?php echo $option['product_option_id']; ?>]" value="<?php echo $option_value['product_option_value_id']; ?>" id="option-value-<?php echo $option_value['product_option_value_id']; ?>" />
+          <label for="option-value-<?php echo $option_value['product_option_value_id']; ?>"><?php echo $option_value['name']; ?>
+            <?php if ($option_value['price']) { ?>
+            (<?php echo $option_value['price_prefix']; ?><?php echo $option_value['price']; ?>)
+            <?php } ?>
+          </label>
+          <br />
+          <?php } ?>
+        </div>
+        <br />
+        <?php } ?>
+        <?php if ($option['type'] == 'checkbox') { ?>
+        <div id="option-<?php echo $option['product_option_id']; ?>" class="option">
+          <?php if ($option['required']) { ?>
+          <span class="required">*</span>
+          <?php } ?>
+          <b><?php echo $option['name']; ?>:</b><br />
+          <?php foreach ($option['option_value'] as $option_value) { ?>
+          <input type="checkbox" name="option[<?php echo $option['product_option_id']; ?>][]" value="<?php echo $option_value['product_option_value_id']; ?>" id="option-value-<?php echo $option_value['product_option_value_id']; ?>" />
+          <label for="option-value-<?php echo $option_value['product_option_value_id']; ?>"><?php echo $option_value['name']; ?>
+            <?php if ($option_value['price']) { ?>
+            (<?php echo $option_value['price_prefix']; ?><?php echo $option_value['price']; ?>)
+            <?php } ?>
+          </label>
+          <br />
+          <?php } ?>
+        </div>
+        <br />
+        <?php } ?>
+        <?php if ($option['type'] == 'image') { ?>
+        <div id="option-<?php echo $option['product_option_id']; ?>" class="option">
+          <?php if ($option['required']) { ?>
+          <span class="required">*</span>
+          <?php } ?>
+          <b><?php echo $option['name']; ?>:</b><br />
+          <table class="option-image">
+            <?php foreach ($option['option_value'] as $option_value) { ?>
+            <tr>
+              <td style="width: 1px;"><input type="radio" name="option[<?php echo $option['product_option_id']; ?>]" value="<?php echo $option_value['product_option_value_id']; ?>" id="option-value-<?php echo $option_value['product_option_value_id']; ?>" /></td>
+              <td><label for="option-value-<?php echo $option_value['product_option_value_id']; ?>"><img src="<?php echo $option_value['image']; ?>" alt="<?php echo $option_value['name'] . ($option_value['price'] ? ' ' . $option_value['price_prefix'] . $option_value['price'] : ''); ?>" /></label></td>
+              <td><label for="option-value-<?php echo $option_value['product_option_value_id']; ?>"><?php echo $option_value['name']; ?>
+                  <?php if ($option_value['price']) { ?>
+                  (<?php echo $option_value['price_prefix']; ?><?php echo $option_value['price']; ?>)
+                  <?php } ?>
+                </label></td>
+            </tr>
+            <?php } ?>
+          </table>
+        </div>
+        <br />
+        <?php } ?>
+        <?php if ($option['type'] == 'text') { ?>
+        <div id="option-<?php echo $option['product_option_id']; ?>" class="option">
+          <?php if ($option['required']) { ?>
+          <span class="required">*</span>
+          <?php } ?>
+          <b><?php echo $option['name']; ?>:</b><br />
+          <input type="text" name="option[<?php echo $option['product_option_id']; ?>]" value="<?php echo $option['option_value']; ?>" />
+        </div>
+        <br />
+        <?php } ?>
+        <?php if ($option['type'] == 'textarea') { ?>
+        <div id="option-<?php echo $option['product_option_id']; ?>" class="option">
+          <?php if ($option['required']) { ?>
+          <span class="required">*</span>
+          <?php } ?>
+          <b><?php echo $option['name']; ?>:</b><br />
+          <textarea name="option[<?php echo $option['product_option_id']; ?>]" cols="40" rows="5"><?php echo $option['option_value']; ?></textarea>
+        </div>
+        <br />
+        <?php } ?>
+        <?php if ($option['type'] == 'file') { ?>
+        <div id="option-<?php echo $option['product_option_id']; ?>" class="option">
+          <?php if ($option['required']) { ?>
+          <span class="required">*</span>
+          <?php } ?>
+          <b><?php echo $option['name']; ?>:</b><br />
+          <input type="button" value="<?php echo $button_upload; ?>" id="button-option-<?php echo $option['product_option_id']; ?>" class="button">
+          <input type="hidden" name="option[<?php echo $option['product_option_id']; ?>]" value="" />
+        </div>
+        <br />
+        <?php } ?>
+        <?php if ($option['type'] == 'date') { ?>
+        <div id="option-<?php echo $option['product_option_id']; ?>" class="option">
+          <?php if ($option['required']) { ?>
+          <span class="required">*</span>
+          <?php } ?>
+          <b><?php echo $option['name']; ?>:</b><br />
+          <input type="text" name="option[<?php echo $option['product_option_id']; ?>]" value="<?php echo $option['option_value']; ?>" class="date" />
+        </div>
+        <br />
+        <?php } ?>
+        <?php if ($option['type'] == 'datetime') { ?>
+        <div id="option-<?php echo $option['product_option_id']; ?>" class="option">
+          <?php if ($option['required']) { ?>
+          <span class="required">*</span>
+          <?php } ?>
+          <b><?php echo $option['name']; ?>:</b><br />
+          <input type="text" name="option[<?php echo $option['product_option_id']; ?>]" value="<?php echo $option['option_value']; ?>" class="datetime" />
+        </div>
+        <br />
+        <?php } ?>
+        <?php if ($option['type'] == 'time') { ?>
+        <div id="option-<?php echo $option['product_option_id']; ?>" class="option">
+          <?php if ($option['required']) { ?>
+          <span class="required">*</span>
+          <?php } ?>
+          <b><?php echo $option['name']; ?>:</b><br />
+          <input type="text" name="option[<?php echo $option['product_option_id']; ?>]" value="<?php echo $option['option_value']; ?>" class="time" />
+        </div>
+        <br />
+        <?php } ?>
+        <?php } ?>
+      </div>
+      <?php } }else{ ?>
+	  
+	  <div class="options">
+        <h2><?php echo $text_option; ?></h2>
+        <br />
+        <?php foreach ($options as $option) { ?>
+        <?php if ($option['type'] == 'select') { ?>
+        <div id="option-<?php echo $option['product_option_id']; ?>" class="option">
+          <?php if ($option['required']) { ?>
+          <span class="required">*</span>
+          <?php } ?>
+          <b><?php echo $option['name']; ?>:</b><br />
+          <select name="option[<?php echo $option['product_option_id']; ?>]">
+            <option value=""><?php echo $text_select; ?></option>
+            <?php foreach ($option['option_value'] as $option_value) { ?>
+            <option value="<?php echo $option_value['product_option_value_id']; ?>"><?php echo $option_value['name']; ?>
+            <?php if ($option_value['price']) { ?>
+            (<?php echo $option_value['price_prefix']; ?><?php echo $option_value['price']; ?>)
+            <?php } ?>
+            </option>
+            <?php } ?>
+          </select>
+        </div>
+        <br />
+        <?php } ?>
+        <?php if ($option['type'] == 'radio') { ?>
+        <div id="option-<?php echo $option['product_option_id']; ?>" class="option">
+          <?php if ($option['required']) { ?>
+          <span class="required">*</span>
+          <?php } ?>
+          <b><?php echo $option['name']; ?>:</b><br />
+          <?php foreach ($option['option_value'] as $option_value) { ?>
+          <input type="radio" name="option[<?php echo $option['product_option_id']; ?>]" value="<?php echo $option_value['product_option_value_id']; ?>" id="option-value-<?php echo $option_value['product_option_value_id']; ?>" />
+          <label for="option-value-<?php echo $option_value['product_option_value_id']; ?>"><?php echo $option_value['name']; ?>
+            <?php if ($option_value['price']) { ?>
+            (<?php echo $option_value['price_prefix']; ?><?php echo $option_value['price']; ?>)
+            <?php } ?>
+          </label>
+          <br />
+          <?php } ?>
+        </div>
+        <br />
+        <?php } ?>
+        <?php if ($option['type'] == 'checkbox') { ?>
+        <div id="option-<?php echo $option['product_option_id']; ?>" class="option">
+          <?php if ($option['required']) { ?>
+          <span class="required">*</span>
+          <?php } ?>
+          <b><?php echo $option['name']; ?>:</b><br />
+          <?php foreach ($option['option_value'] as $option_value) { ?>
+          <input type="checkbox" name="option[<?php echo $option['product_option_id']; ?>][]" value="<?php echo $option_value['product_option_value_id']; ?>" id="option-value-<?php echo $option_value['product_option_value_id']; ?>" />
+          <label for="option-value-<?php echo $option_value['product_option_value_id']; ?>"><?php echo $option_value['name']; ?>
+            <?php if ($option_value['price']) { ?>
+            (<?php echo $option_value['price_prefix']; ?><?php echo $option_value['price']; ?>)
+            <?php } ?>
+          </label>
+          <br />
+          <?php } ?>
+        </div>
+        <br />
+        <?php } ?>
+        <?php if ($option['type'] == 'image') { ?>
+        <div id="option-<?php echo $option['product_option_id']; ?>" class="option">
+          <?php if ($option['required']) { ?>
+          <span class="required">*</span>
+          <?php } ?>
+          <b><?php echo $option['name']; ?>:</b><br />
+          <table class="option-image">
+            <?php foreach ($option['option_value'] as $option_value) { ?>
+            <tr>
+              <td style="width: 1px;"><input type="radio" name="option[<?php echo $option['product_option_id']; ?>]" value="<?php echo $option_value['product_option_value_id']; ?>" id="option-value-<?php echo $option_value['product_option_value_id']; ?>" /></td>
+              <td><label for="option-value-<?php echo $option_value['product_option_value_id']; ?>"><img src="<?php echo $option_value['image']; ?>" alt="<?php echo $option_value['name'] . ($option_value['price'] ? ' ' . $option_value['price_prefix'] . $option_value['price'] : ''); ?>" /></label></td>
+              <td><label for="option-value-<?php echo $option_value['product_option_value_id']; ?>"><?php echo $option_value['name']; ?>
+                  <?php if ($option_value['price']) { ?>
+                  (<?php echo $option_value['price_prefix']; ?><?php echo $option_value['price']; ?>)
+                  <?php } ?>
+                </label></td>
+            </tr>
+            <?php } ?>
+          </table>
+        </div>
+        <br />
+        <?php } ?>
+        <?php if ($option['type'] == 'text') { ?>
+        <div id="option-<?php echo $option['product_option_id']; ?>" class="option">
+          <?php if ($option['required']) { ?>
+          <span class="required">*</span>
+          <?php } ?>
+          <b><?php echo $option['name']; ?>:</b><br />
+          <input type="text" name="option[<?php echo $option['product_option_id']; ?>]" value="<?php echo $option['option_value']; ?>" />
+        </div>
+        <br />
+        <?php } ?>
+        <?php if ($option['type'] == 'textarea') { ?>
+        <div id="option-<?php echo $option['product_option_id']; ?>" class="option">
+          <?php if ($option['required']) { ?>
+          <span class="required">*</span>
+          <?php } ?>
+          <b><?php echo $option['name']; ?>:</b><br />
+          <textarea name="option[<?php echo $option['product_option_id']; ?>]" cols="40" rows="5"><?php echo $option['option_value']; ?></textarea>
+        </div>
+        <br />
+        <?php } ?>
+        <?php if ($option['type'] == 'file') { ?>
+        <div id="option-<?php echo $option['product_option_id']; ?>" class="option">
+          <?php if ($option['required']) { ?>
+          <span class="required">*</span>
+          <?php } ?>
+          <b><?php echo $option['name']; ?>:</b><br />
+          <input type="button" value="<?php echo $button_upload; ?>" id="button-option-<?php echo $option['product_option_id']; ?>" class="button">
+          <input type="hidden" name="option[<?php echo $option['product_option_id']; ?>]" value="" />
+        </div>
+        <br />
+        <?php } ?>
+        <?php if ($option['type'] == 'date') { ?>
+        <div id="option-<?php echo $option['product_option_id']; ?>" class="option">
+          <?php if ($option['required']) { ?>
+          <span class="required">*</span>
+          <?php } ?>
+          <b><?php echo $option['name']; ?>:</b><br />
+          <input type="text" name="option[<?php echo $option['product_option_id']; ?>]" value="<?php echo $option['option_value']; ?>" class="date" />
+        </div>
+        <br />
+        <?php } ?>
+        <?php if ($option['type'] == 'datetime') { ?>
+        <div id="option-<?php echo $option['product_option_id']; ?>" class="option">
+          <?php if ($option['required']) { ?>
+          <span class="required">*</span>
+          <?php } ?>
+          <b><?php echo $option['name']; ?>:</b><br />
+          <input type="text" name="option[<?php echo $option['product_option_id']; ?>]" value="<?php echo $option['option_value']; ?>" class="datetime" />
+        </div>
+        <br />
+        <?php } ?>
+        <?php if ($option['type'] == 'time') { ?>
+        <div id="option-<?php echo $option['product_option_id']; ?>" class="option">
+          <?php if ($option['required']) { ?>
+          <span class="required">*</span>
+          <?php } ?>
+          <b><?php echo $option['name']; ?>:</b><br />
+          <input type="text" name="option[<?php echo $option['product_option_id']; ?>]" value="<?php echo $option['option_value']; ?>" class="time" />
+        </div>
+        <br />
+        <?php } ?>
+        <?php } ?>
+      </div>
+	  
+	  <?php }?>
+	
+			
+			
+			]]></add>
+		</operation>-->
+		
+		
+		<!--<operation error="skip">
+			<search position="replace" offset="13"><![CDATA[
+				  <div class="cart">
+      
+			]]></search>
+			<add><![CDATA[
+			
+			<?php if(!empty($auctionproduct)){ ?>
+			<?php if(($this->config->get('config_buy_now')=="1")){ ?>
+  
+  <div class="cart">
+			<div><?php echo $text_qty; ?>
+			  <input type="text" name="quantity" size="2" value="<?php echo $minimum; ?>" />
+			  <input type="hidden" name="product_id" size="2" value="<?php echo $product_id; ?>" />
+			  &nbsp;
+			 
+			  <input type="button" value="<?php echo $button_cart; ?>" id="button-cart" class="button" />
+			
+			</div>
+        <div><span>&nbsp;&nbsp;&nbsp;<?php echo $text_or; ?>&nbsp;&nbsp;&nbsp;</span></div>
+        <div><a onclick="addToWishList('<?php echo $product_id; ?>');"><?php echo $button_wishlist; ?></a><br />
+          <a onclick="addToCompare('<?php echo $product_id; ?>');"><?php echo $button_compare; ?></a></div>
+			<?php if ($minimum > 1) { ?>
+			<div class="minimum"><?php echo $text_minimum; ?></div>
+			<?php } ?>
+      </div>
+	  
+	 
+	  
+	  
+	 <?php }}else{ ?>
+
+	  <div class="cart">
+			<div><?php echo $text_qty; ?>
+			  <input type="text" name="quantity" size="2" value="<?php echo $minimum; ?>" />
+			  <input type="hidden" name="product_id" size="2" value="<?php echo $product_id; ?>" />
+			  &nbsp;
+			 
+			  <input type="button" value="<?php echo $button_cart; ?>" id="button-cart" class="button" />
+			
+			</div>
+        <div><span>&nbsp;&nbsp;&nbsp;<?php echo $text_or; ?>&nbsp;&nbsp;&nbsp;</span></div>
+        <div><a onclick="addToWishList('<?php echo $product_id; ?>');"><?php echo $button_wishlist; ?></a><br />
+          <a onclick="addToCompare('<?php echo $product_id; ?>');"><?php echo $button_compare; ?></a></div>
+			<?php if ($minimum > 1) { ?>
+			<div class="minimum"><?php echo $text_minimum; ?></div>
+			<?php } ?>
+      </div>
+	 
+	 <?php } ?>
+	 
+	]]></add>
+		</operation>-->
+	  
+	  
+    
+	<operation error="skip">
+			<search position="before" index="1"><![CDATA[
+				<?php if ($review_status) { ?>
+			]]></search>
+			<add><![CDATA[
+<?php $queryAuctionModule = $this->db->query("SELECT * FROM " . DB_PREFIX . "extension WHERE `code` = 'special_count_down'");
+if ($queryAuctionModule->num_rows) { ?>
+			  <?php if(!$logged){ ?>	  
+	   <?php if($checkstatusbid == 1){ ?>
+	   
+	    <?php if($checkBidstate == 0){ ?>
+         	 <div id="timercontents">     
+		<?php include('catalog/view/theme/default/template/product/counter.tpl'); ?>
+		</div>
+        <?php } else {?>
+ 
+
+       <b><?php echo $text_bid_only_reg;?></b>
+	   
+       <?php } ?> 
+		
+		<?php if($endbidtime){ 
+		$date_end = date("Y-m-d", strtotime($endbidtime));
+		$date = explode("-",$date_end);
+		$TargetDate = $date[1].'/'.$date[2].'/'.$date[0];
+		?>
+		<div class="auction_closing_time"><span><?php echo $text_close_time;?></span>  <?php echo $TargetDate;?></div>
+		<?php } ?>	
+		
+		<br/>
+         
+        <div class="auctiondivider"></div>		 
+		
+		<div class="msg_holder">
+		<div class="field_error nickname_msg"></div>
+			<?php echo $text_part; ?><span id="auction_nickname">Guest (<a href="<?php echo $login;?>">log in</a>)</span>	
+		</div>
+		
+		<div class="liner">
+		 <?php echo $text_winner; ?>
+		 
+		<?php if($countCustomerBids>0){ ?>
+		<?php if($checkwinner) {?>
+		<span id="winning_bidder"><?php echo $checkwinner[2]; ?></span>
+		<?php } else {?>
+		<span id="winning_bidder"><?php echo $text_bid_bids;?></span>
+		<?php } ?>	
+       <?php }else{ ?>
+	   	<span id="winning_bidder"><?php echo $text_bid_bids;?></span>
+		
+      <?php } ?>	   
+	  </div>
+	  
+	  <div class="auctiondivider"></div>	
+		
+	<div class="msg_holder" id="current_price">
+		    <div class="price_tag"><?php echo $text_current_price; ?></div>
+
+			     <div id="current_price_value"><?php echo $maxcustomerbidamt;?></div>
+				 
+				 <div class="price_tag"><?php echo $text_bid_curr_is;?></div><div id="current_price_value"><?php echo $startbidprice;?></div>
+				 
+				 
+				 <div style="text-align:<?php echo $this->language->get('direction') == 'rtl' ? "left" : "right"; ?>;font-weight:bold;color:#38B0E3;" ><a id="btn"><?php echo $text_bids;?>(<?php echo $bids1;?>)</a></div>
+			  
+				<div class="clearfix"></div>
+	</div>
+	
+	<div style="display:none;">
+    <div id="lightboxRegister"> 
+	<table class="list" style="margin-top:20px;">
+	
+	
+	 <thead>
+	 
+      <tr>
+        <td class="left">Date</td>
+        <td class="left">Bidder</td>
+		<td class="left">Price</td>
+		</tr>
+    </thead>
+	
+	<?php if ($rbids1) { ?>
+      <?php foreach ($rbids1 as $ractivity) { ?>
+	
+	 <tr>
+	     
+		 <td class="left"><?php echo $ractivity['date_added']; ?></td>
+	     <td class="left"><?php echo $ractivity['firstname']; ?> <?php echo $ractivity['lastname']; ?></td>
+        <td class="left"><?php echo $this->currency->format($ractivity['price_bid']); ?></td>
+		
+		
+		</tr>
+		
+	<?php } } else{?>
+	
+	<tr><td colspan="3"  style="text-align:center">There are no bid yet</td></tr>
+	
+	
+	<?php } ?>
+	
+	
+	
+	</table>
+	
+	</div>
+</div>
+	
+	<script>
+	  $('#btn').click(function(){
+    $.colorbox({inline:true, width:"50%",height:"60%", href: '#lightboxRegister'});
+});
+	  </script>
+	
+ <div class="auctiondivider"></div>	
+	
+	
+	<?php if($checkBidstate == 0){ ?>
+	<div id="openAuction">
+	
+	           <?php if($config_bid == 1){ ?>
+            	<div class="liner msg_holder" id="pbid">
+				
+				<input type="hidden" name="customer_id" value="<?php echo $customerid;?>" id="customer_id">
+				<input type="hidden" name="mincustomerbid" value="<?php echo $mincustomerbid;?>" id="mincustomerbid">
+				<input type="hidden" name="productname" value="<?php echo $productname;?>" id="productname">
+				<input type="text" id="bid_value" class="bid_input" name="customer_bid">
+				<!--<a id="button-bid" class="button"><?php echo $text_bid_place;?></a>-->
+				<input type="button" id="button-bid" class="button" value="<?php echo $text_bid_place;?>" style="background: none repeat scroll 0 0 #F37404; border: 1px solid #F37404; color: #fff;" />
+
+		        </div>
+				
+				<?php } ?>
+				
+				<br/>
+				
+				<?php if($config_bid == 1){ ?>
+				
+				<div class="liner msg_holder" id="abid">
+				
+				<input type="hidden" name="customer_id" value="<?php echo $customerid;?>" id="customer_id">
+				<input type="hidden" name="mincustomerbid" value="<?php echo $mincustomerbid;?>" id="mincustomerbid">
+				<input type="hidden" name="productname" value="<?php echo $productname;?>" id="productname">
+				<input type="text" id="autobid_value" class="bid_input" name="autobid_value">
+				<a id="button-auto" class="button">Auto bid to</a>		
+			
+				
+				</div>
+				
+				<?php } ?>
+				
+	
+			<div class="liner" style="text-align:right;"><?php echo $text_min_step;?><?php echo $minoffersteps;?></div>
+			<div class="clearfix"></div>
+	</div>
+	<?php }  ?>
+	
+	
+	<div class="auctiondivider"></div>
+	
+     <?php }?>	
+		
+      <?php }else{ ?>
+      	
+		<?php if($checkstatusbid == 1){ ?>
+         	   
+		<?php if($checkBidstate == 0){ ?>
+         	 <div id="timercontents">  
+		<?php include('catalog/view/theme/default/template/product/counter.tpl'); ?>
+		</div>
+        <?php } else {?>
+ 
+
+       <b><?php echo $text_bid_only_reg;?></b>
+	   
+       <?php } ?> 		
+		
+		<?php if($endbidtime){ ?>
+		
+	<?php	$date_end = date("Y-m-d", strtotime($endbidtime));
+        $date = explode("-",$date_end);
+		$TargetDate = $date[1].'/'.$date[2].'/'.$date[0];
+		?>
+		<div class="auction_closing_time"><span><?php echo $text_close_time;?></span>  <?php echo $TargetDate;?></div>
+		
+		<?php } ?>		
+		<br/>
+         
+        <div class="auctiondivider"></div>		 
+		
+		<div class="msg_holder">
+		<div class="field_error nickname_msg"></div>
+			<?php echo $text_part; ?><span id="auction_nickname">
+			
+			<?php if($namesetting){
+			
+			echo $namesetting;
+			}else {
+			echo $firstname;
+			}
+			?>
+			
+			</span>	
+		</div>
+		
+		<div class="liner">
+		 <?php echo $text_winner; ?>
+		<?php if($countCustomerBids>0){ ?>
+		<?php if($checkwinner) {?>
+		<span id="winning_bidder"><?php echo $checkwinner[2]; ?></span>
+		<?php } else {?>
+		<span id="winning_bidder"><?php echo $text_bid_bids;?></span>
+		<?php } ?>	
+       <?php }else{ ?>
+	   	<span id="winning_bidder"><?php echo $text_bid_bids;?></span>
+		
+      <?php } ?>		
+	  </div>
+	  
+	
+	  
+	  <div class="auctiondivider"></div>	
+
+	<div class="msg_holder" id="current_price" style="">
+		    <div class="price_tag"><?php echo $text_current_price; ?></div>
+
+		      <div id="current_price_value"><?php echo $maxcustomerbidamt;?></div>
+			  
+			  <div class="price_tag"><?php echo $text_bid_curr_is;?></div>
+			  
+			  <div id="current_price_value"><?php echo $startbidprice;?></div>
+			  
+			  <div style="text-align:<?php echo $this->language->get('direction') == 'rtl' ? "left" : "right"; ?>;font-weight:bold;color:#38B0E3;" ><a id="btn"><?php echo $text_bids;?>(<?php echo $bids1;?>)</a></div>
+			  
+			
+				<div class="clearfix"></div>
+				
+	</div>
+
+	<div style="display:none;">
+    <div id="lightboxRegister"> 
+	<table class="list" style="margin-top:20px;">
+	
+	
+	 <thead>
+	 
+      <tr>
+        <td class="left">Date</td>
+        <td class="left">Bidder</td>
+		<td class="left">Price</td>
+		</tr>
+    </thead>
+	
+	<?php if ($rbids1) { ?>
+      <?php foreach ($rbids1 as $ractivity) { ?>
+	
+	 <tr>
+	     
+		 <td class="left"><?php echo $ractivity['date_added']; ?></td>
+	     <td class="left"><?php echo $ractivity['firstname']; ?> <?php echo $ractivity['lastname']; ?></td>
+        <td class="left"><?php echo $this->currency->format($ractivity['price_bid']); ?></td>
+		
+		
+		</tr>
+		
+	<?php } } else{?>
+	
+	<tr><td colspan="3"  style="text-align:center">There are no bid yet</td></tr>
+	
+	
+	<?php } ?>
+	
+	
+	
+	</table>
+	
+	</div>
+</div>
+	
+	<script>
+	  $('#btn').click(function(){
+    $.colorbox({inline:true, width:"50%",height:"60%", href: '#lightboxRegister'});
+});
+	  </script>
+	
+	<div class="auctiondivider"></div>	
+	
+	
+	
+	
+
+	
+	
+	<?php if($checkBidstate == 0){ ?>
+	
+	
+	<div id="openAuction">
+	
+	            <?php if($config_bid == 1){ ?>
+				
+            	<div class="liner msg_holder" id="pbid">				
+				
+				<input type="hidden" name="customer_id" value="<?php echo $customerid;?>" id="customer_id">
+					<input type="hidden" name="mincustomerbid" value="<?php echo $mincustomerbid;?>" id="mincustomerbid">
+					<input type="hidden" name="productname" value="<?php echo $productname;?>" id="productname">
+				<input type="text" id="bid_value" class="bid_input" name="customer_bid">
+				<a id="button-bid" class="button"><?php echo $text_bid_place;?></a>
+				
+				
+		        </div>
+				
+				<br/>
+				<?php } ?>
+				
+				<?php if($config_autobid == 1){ ?>
+				
+				<div class="liner msg_holder" id="abid">
+				
+				<input type="hidden" name="customer_id" value="<?php echo $customerid;?>" id="customer_id">
+				<input type="hidden" name="mincustomerbid" value="<?php echo $mincustomerbid;?>" id="mincustomerbid">
+				<input type="hidden" name="productname" value="<?php echo $productname;?>" id="productname">
+				<input type="text" id="autobid_value" class="bid_input" name="autobid_value">
+				<a id="button-auto" class="button">Auto bid to</a>		
+			
+				
+				</div>
+				
+				<?php } ?>
+				<div class="clearfix"></div>
+	
+	
+			<div class="liner" style="text-align:right;"><?php echo $text_min_step;?><?php echo $minoffersteps;?></div>
+			
+			<div class="clearfix"></div>
+			
+			<br/>
+			
+			<?php if($config_allow_subscriptions_on == 1){ ?>
+			
+			<div class="liner msg_holder" id="sub">				
+				
+				<input type="hidden" name="customer_id" value="<?php echo $customerid;?>" id="customer_id">
+				<input type="hidden" name="mincustomerbid" value="<?php echo $mincustomerbid;?>" id="mincustomerbid">
+				<input type="hidden" name="productname" value="<?php echo $productname;?>" id="productname">
+				<input type="hidden" id="email" name="email" value="<?php echo $email;?>">
+				<input type="hidden" id="currentprice" name="currentprice" value="<?php echo $maxcustomerbidamt;?>">
+				<?php if($checksub>0){	?>
+				<a id="button-sub" style="display:none">Subscribe this auction</a>	
+
+                <a id="button-unsub" style="display:block">UnSubscribe this auction</a>
+				
+				<?php } else{ ?>
+				
+				<a id="button-sub" style="display:block">Subscribe this auction</a>	
+
+                <a id="button-unsub" style="display:none">UnSubscribe this auction</a>
+				
+				<?php } ?>
+				
+				
+				
+		        </div>
+           <?php } ?>				
+	</div>
+	<?php } ?>
+	
+	
+	
+	<div class="auctiondivider"></div>
+	
+     <?php }	 ?>	
+		
+      <?php } ?>
+    
+      
+   
+  
+  <script type="text/javascript"><!--
+
+$('#button-bid').bind('click', function() {
+//debugger;
+$.ajax({
+	url: 'index.php?route=product/product/bid&product_id=<?php echo $product_id; ?>',
+	type: 'post',
+	data: $('#pbid input[type=\'text\'], #pbid input[type=\'hidden\']'),
+	dataType: 'json',
+      success: function(data) {
+	  
+	      $('.success, .warning, .attention, information, .error').remove();
+		  
+			if (data['error']) {
+			//debugger;
+				$('#button-bid').after('<span class="error">' + data['error'] + '</span>');
+			}
+			
+			if (data['success']) {
+			//debugger;
+				$('#button-bid').after('<div style="color:green">' + data['success'] + '</div>');
+				window.location.reload(true);
+				
+			}
+		},
+		error: function(jqXHR, textStatus, errorThrown) {
+		//debugger;
+		}
+	});
+});
+
+
+$('#button-auto').bind('click', function() {
+$.ajax({
+	url: 'index.php?route=product/product/auto&product_id=<?php echo $product_id; ?>',
+	type: 'post',
+	data: $('#abid input[type=\'text\'], #abid input[type=\'hidden\']'),
+	dataType: 'json',
+      success: function(data) {
+	  
+	       $('.success, .warning, .attention, information, .error').remove();
+		   
+			if (data['error']) {
+				$('#button-auto').after('<span class="error">' + data['error'] + '</span>');
+			}
+			
+			if (data['success']) {
+				$('#button-auto').after('<div style="color:green">' + data['success'] + '</div>');
+				window.location.reload(true);
+				
+			}
+		}
+	});
+});
+
+
+$('#button-sub').bind('click', function() {
+$.ajax({
+	url: 'index.php?route=product/product/subscription&product_id=<?php echo $product_id; ?>',
+	type: 'post',
+	data: $('#sub input[type=\'hidden\']'),
+	dataType: 'json',
+      success: function(data) {
+	  
+	       $('.success, .warning, .attention, .abc, .error').remove();
+		   
+			if (data['error']) {
+				$('#button-sub').after('<span class="error">' + data['error'] + '</span>');
+			}
+			
+			if (data['success']) {
+			
+					
+				$('#sub').after('<div style="color:green" class="abc">' + data['success'] + '</div>');
+				
+				var ele = document.getElementById("button-sub");
+				var text = document.getElementById("button-unsub");
+				
+				if(ele.style.display == "block") {
+					ele.style.display = "none";
+					text.style.display = "block";
+					}
+					else if(text.style.display == "block") {
+					ele.style.display = "block";
+					text.style.display = "none";
+				}
+											
+			}
+		}
+	});
+});
+
+
+
+$('#button-unsub').bind('click', function() {
+$.ajax({
+	url: 'index.php?route=product/product/unsubscription&product_id=<?php echo $product_id; ?>',
+	type: 'post',
+	data: $('#sub input[type=\'hidden\']'),
+	dataType: 'json',
+      success: function(data) {
+	  
+	       $('.success, .warning, .attention, .abc, .error').remove();
+		   
+			if (data['error']) {
+				$('#button-sub').after('<span class="error">' + data['error'] + '</span>');
+			}
+			
+			if (data['success']) {
+			
+					
+				$('#sub').after('<div style="color:green" class="abc">' + data['success'] + '</div>');
+				
+				
+				
+				var ele = document.getElementById("button-sub");
+				var text = document.getElementById("button-unsub");
+				
+				if(ele.style.display == "block") {
+					ele.style.display = "none";
+					text.style.display = "block";
+					}
+					else if(text.style.display == "block") {
+					ele.style.display = "block";
+					text.style.display = "none";
+				}
+											
+			}
+		}
+	});
+});
+
+function toggle() {
+	var ele = document.getElementById("button-sub");
+	var text = document.getElementById("button-unsub");
+	if(ele.style.display == "block") {
+    		ele.style.display = "none";
+		text.innerHTML = "show";
+  	}
+	else {
+		ele.style.display = "block";
+		text.innerHTML = "hide";
+	}
+}
+
+</script>
+
+
+<?php } ?>
+
+			
+			]]></add>
+		</operation>
+	</file>
+
+	
+	
+	<file name="catalog/controller/checkout/cart.php">
+		<operation error="skip">
+			<search position="before"><![CDATA[
+			public function add() {
+			]]></search>
+			<add><![CDATA[
+	public function add1() {
+		$this->language->load('checkout/cart');
+		$json = array();
+		
+		
+		if (isset($this->request->post['product_id']))
+		{
+			$product_id = $this->request->post['product_id'];
+		} else {			$product_id = 0;		}
+		
+		if (isset($this->request->post['winner_id'])) {
+			$winner_id = $this->request->post['winner_id'];
+		} else {			$winner_id = 0;		}
+		
+		$this->load->model('catalog/product');
+		$product_info = $this->model_catalog_product->getProductwinner($product_id,$winner_id);
+		if ($product_info) {
+			if (isset($this->request->post['quantity'])) {	
+				$quantity = $this->request->post['quantity'];
+			} else {				$quantity = 1;			}
+
+			$option = array();
+			
+			$profile_id = 0;
+			
+			
+			if (!$json) {
+				if(isset($this->session->data['auctionwinner'])){
+					$recs = explode("#",$this->session->data['auctionwinner']);
+					if(!in_array($this->request->post['winner_id'],$recs)){
+						$recs[] = $this->request->post['winner_id'];
+					}
+					$this->session->data['auctionwinner'] = implode("#",$recs);
+				}
+				else{
+					$recs[] = $this->request->post['winner_id'];
+					
+					
+					$this->session->data['auctionwinner'] = $this->request->post['winner_id'];
+				}
+				
+				
+
+				$this->session->data['auctionproductprice'] = $product_info['price_bid'];
+				
+				$this->cart->add1($this->request->post['product_id'], $quantity, $option,$profile_id,$this->request->post['winner_id']);
+				
+				$json['success'] = sprintf($this->language->get('text_success'), $this->url->link('product/product', 'product_id=' . $this->request->post['product_id']), $product_info['name'], $this->url->link('checkout/cart'));
+				$total_data = array();
+				$total = 0;	
+				$taxes = $this->cart->getTaxes();
+				$this->load->model('setting/extension');
+				if (($this->config->get('config_customer_price') && $this->customer->isLogged()) || !$this->config->get('config_customer_price')) {
+					$sort_order = array();
+					$results = $this->model_setting_extension->getExtensions('total');
+					foreach ($results as $key => $value) {
+						$sort_order[$key] = $this->config->get($value['code'] . '_sort_order');
+					}
+					array_multisort($sort_order, SORT_ASC, $results);
+					foreach ($results as $result) {
+						if ($this->config->get($result['code'] . '_status'))
+						{
+							$this->load->model('total/' . $result['code']);
+							$this->{'model_total_' . $result['code']}->getTotal($total_data, $total, $taxes);
+						}	
+						$sort_order = array(); 
+						foreach ($total_data as $key => $value) {
+							$sort_order[$key] = $value['sort_order'];
+						}
+						array_multisort($sort_order, SORT_ASC, $total_data);
+					}	
+				}	
+				$json['total'] = sprintf($this->language->get('text_items'), $this->cart->countProducts() + (isset($this->session->data['vouchers']) ? count($this->session->data['vouchers']) : 0), $this->currency->format($total));
+			} else {
+				$json['redirect'] = str_replace('&amp;', '&', $this->url->link('product/product', 'product_id=' . $this->request->post['product_id']));
+			}
+		}				$this->response->setOutput(json_encode($json));					}
+			]]></add>
+		</operation>
+	</file>
+	
+	
+	
+	<file name="catalog/model/checkout/order.php">
+		<operation error="skip">
+			<search position="after"><![CDATA[
+			$this->db->query("UPDATE `" . DB_PREFIX . "order` SET order_status_id = '" . (int)$order_status_id . "', date_modified = NOW() WHERE order_id = '" . (int)$order_id . "'");
+			]]></search>
+			<add><![CDATA[
+
+$queryAuctionModule = $this->db->query("SELECT * FROM " . DB_PREFIX . "extension WHERE `code` = 'special_count_down'");
+if ($queryAuctionModule->num_rows) {
+	if(isset($this->session->data['auctionwinner']) && $this->customer->isLogged()){
+				$recs = explode("#",$this->session->data['auctionwinner']);
+				foreach($recs as $rec){
+
+					$this->db->query("UPDATE `" . DB_PREFIX . "winner` SET 	status = '" . (int)$order_status_id . "' WHERE winner_id = '" . (int)$rec. "'");
+				}
+				unset($this->session->data['auctionwinner']);
+			}
+}
+			]]></add>
+		</operation>
+	</file>
+	
+	
+</modification>

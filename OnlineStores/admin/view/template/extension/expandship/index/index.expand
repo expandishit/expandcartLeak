@@ -1,0 +1,354 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+
+{% block title %}
+{{ lang('heading_title_expandship', 'extension/expandship') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block content %}
+
+<style>
+    .content-wrapper {
+        background-color: #f8f9ff;
+    }
+
+    .page-header-default {
+        background-color: transparent;
+    }
+    .page-header-content + .breadcrumb-line {
+        border: 0;
+    }
+
+    .page-header {
+        margin: 0 60px;
+    }
+
+    .breadcrumb-line {
+        /* border-bottom: 1px solid #e0ddef !important; */
+        margin: 0 32px;
+        border-top: 0;
+        margin-bottom: 30px !important;
+    }
+
+    .page-holder-center {
+        margin: 0 70px;
+    }
+    
+    .daterangepicker {
+        z-index: 999999 !important;
+    }
+    
+    @media (max-width: 768px) {
+        .page-header {
+            margin: 0;
+        }
+        .page-holder-center {
+            margin: 0 0px;
+        }
+
+        .navbar-header {
+
+        display: none !important;
+    }
+    }
+
+</style>
+
+    {% if error %}
+        <div class="alert alert-danger alert-styled-left alert-bordered knawat_import_message">
+            <button type="button" class="close" data-dismiss="alert"><span>×</span><span class="sr-only">Close</span></button>
+            {{ error }}
+        </div>
+    {% endif %}
+    {% if success %}
+        <div class="alert alert-success alert-styled-left alert-bordered knawat_import_message">
+            <button type="button" class="close" data-dismiss="alert"><span>×</span><span class="sr-only">Close</span></button>
+            {{ success }}
+        </div>
+    {% endif %}
+
+
+
+
+    {% include "extension/expandship/index/parts/main_setting.expand" %}
+    {% include "extension/expandship/index/parts/balance_history.expand" %}
+    {% include "extension/expandship/index/parts/cancel_modal.expand" %}
+    {% include "extension/expandship/index/parts/topup_modal.expand" %}
+
+
+{% endblock %}
+
+{% block scripts %}
+
+    <script>
+
+
+        $(document).ready(function () {
+            // select2 initial
+            $('select').select2();
+
+            // tooltip initial
+            $('[data-toggle="tooltip"]').tooltip();
+
+            //hide submit if the required fields are empty
+            function emptyInputCreate() {
+                var empty = false;
+                $('.main-setting input.required-field-toSubmit, .main-setting select.required-field-toSubmit').each(function () {
+                    if (($(this).val()).trim().length == 0) {
+                        empty = true;
+                    }
+                });
+                if (empty) {
+                    $('#updateMainSetting').addClass('hiddenSubmit');
+                } else {
+                    $('#updateMainSetting').removeClass('hiddenSubmit');
+                }
+            };
+            $('.main-setting input.required-field-toSubmit').keyup(function () {
+                emptyInputCreate();
+            });
+
+            $('.main-setting select.required-field-toSubmit').change(function () {
+                emptyInputCreate();
+            });
+            emptyInputCreate()
+
+            //hide topUpModal_submit if the required fields are empty
+            function emptyInputTopUp() {
+                var empty = false;
+                $('.topUpModal input.required-field-toSubmit, .topUpModal select.required-field-toSubmit').each(function () {
+                    if ($(this).val() == '') {
+                        empty = true;
+                    }
+                });
+                if (empty) {
+                    $('#btn_topUp').addClass('hiddenSubmit');
+                } else {
+                    $('#btn_topUp').removeClass('hiddenSubmit');
+                }
+            };
+            $('.topUpModal input.required-field-toSubmit').keyup(function () {
+                emptyInputTopUp();
+            });
+
+            $('.topUpModal select.required-field-toSubmit').change(function () {
+                emptyInputTopUp();
+            });
+            emptyInputTopUp()
+
+            //date filter
+            $('.date-added').daterangepicker({
+                autoApply: true,
+                ranges: locales['drp_ranges'],
+                locale: locales['drp_locale']
+            }, function (start, end, label) {
+                $('#date-added-start').val(start.format('YYYY-MM-DD'));
+                $('#date-added-end').val(end.format('YYYY-MM-DD'));
+                startDate=start.format('YYYY-MM-DD');
+                endDate=end.format('YYYY-MM-DD');
+                getBalanceByDate();
+            });
+        });
+
+        //get balance history on page previous courser
+        $(document).on('click','.paginate_button.previous',function (){
+            if(pageNumber  <= 1)
+                return;
+            pageNumber--;
+            getBalanceByDate();
+            $('.page-number-button').siblings().removeClass('current');
+            $(".page-number-button:nth-child("+pageNumber+")").addClass('current');
+        });
+
+        //get balance history on page next courser
+        $(document).on('click','.paginate_button.next',function (){
+            if(pageNumber >= maxPageNumber)
+                return;
+
+            pageNumber++;
+            getBalanceByDate();
+            $('.page-number-button').siblings().removeClass('current');
+            $(".page-number-button:nth-child("+pageNumber+")").addClass('current');
+        });
+
+
+        //get balance history on page number change
+        $(document).on('click','.page-number-button ',function (){
+            pageNumber = $(this).html();
+            getBalanceByDate();
+            $(this).siblings().removeClass('current');
+            $(this).addClass('current');
+
+        });
+
+
+        //get balance history on page change
+        $(document).on('click','#discardChangesButton ',function (){
+            location.reload();
+        });
+
+        /*************** update main settings ***************/
+        $(document).on('click','#updateMainSetting',function (){
+            // $('.alert-loading.createloader').show();
+            $("input").parent().removeClass('has-error');
+            $("input").closest('.form-group').removeClass('has-error');
+            // $("input").next().empty();
+            $("input").closest('.form-group').find('.help-block').empty();
+
+            let formData = new FormData($("#mainSettingForm")[0]);
+            $.ajax({
+                url: "{{update_setting_url}}",
+                data: formData,
+                dataType: 'JSON',
+                method: 'POST',
+                processData: false,
+                contentType: false,
+                success: function (response) {
+
+                    // $('.alert-loading.createloader').hide();
+                    if (response.success == 1) {
+                        $("#updateMainSetting").removeAttr("disabled data-loading");
+                        fireAlert( "{{ lang('info_updated') }}", "success" );
+                    } else {
+                        $("#updateMainSetting").removeAttr("disabled data-loading");
+                        $.each(response.errors, function (key, value) {
+                            $("input[name='" + key + "']").closest('.form-group').addClass('has-error');
+                            $("input[name='" + key + "']").closest('.form-group').find('.help-block').append(value[0])
+                        });
+                    }
+                }
+            });
+        });
+
+        $(document).on('change','select[name="package_id"]',function(){
+            $('#packageAmount ').val($('select[name="package_id"] option:selected').data('amount'))
+        })
+
+        /*************** topup balance  ***************/
+        $(document).on('click','#btn_topUp',function (){
+            // $('.alert-loading.createloader').show();
+            $("input").parent().removeClass('has-error');
+            $("input").closest('.form-group').removeClass('has-error');
+            // $("input").next().empty();
+            $("input").closest('.form-group').find('.help-block').empty();
+
+            let formData = new FormData($("#topUpForm")[0]);
+            $.ajax({
+                url: "{{topup_url}}",
+                data: formData,
+                dataType: 'JSON',
+                method: 'POST',
+                processData: false,
+                contentType: false,
+                success: function (response) {
+                    console.log(response);
+                    // $('.alert-loading.createloader').hide();
+                    if (response.success == 1) {
+                        $("#btn_topUp").removeAttr("disabled data-loading");
+                        fireAlert("{{ lang('transaction_executed') }}", "success" );
+                        setTimeout(function () {
+                            location.reload();
+                        }, 2000);
+
+
+                    }
+                    else if(response.success == 2){
+                        // window.open(response.location, '_blank').focus();
+                        window.location.href = response.location;
+                    }
+                    else {
+                        $("#btn_topUp").removeAttr("disabled data-loading");
+                        $.each(response.errors, function (key, value) {
+                            $("#"+key).closest('.form-group').addClass('has-error');
+                            // $("select[name='"+key+"']").next().append(value[0])
+                            // $("#"+key).closest('.form-group').find('.help-block').append(value)
+                        });
+                    }
+                }
+            });
+        });
+
+
+        /*************** Get balance history by date  ***************/
+        var startDate="";
+        var endDate="";
+        var pageNumber = 1;
+        var maxPageNumber = parseInt("{{ data.balance_history_pagination.total_pages }}");
+        function getBalanceByDate(){
+
+            $.ajax({
+                url: "{{balance_history_url}}?page="+pageNumber+"&date_from="+startDate+"&date_to="+endDate,
+                dataType: 'JSON',
+                method: 'GET',
+                processData: false,
+                contentType: false,
+                success: function (response) {
+                    // $('.alert-loading.createloader').hide();
+                    if (response.success == 1) {
+
+                        $('.balance-history-list').empty();
+
+                        $.each(response.history, function (key, value) {
+                            let item = '<li>';
+                            if(value.type == 'topup')
+                                item +=  '<svg xmlns="http://www.w3.org/2000/svg" width="20.891" height="20.891" viewBox="0 0 20.891 20.891">'+
+                                    '<path id="Icon_awesome-arrow-alt-circle-up" data-name="Icon awesome-arrow-alt-circle-up"'+
+                                    ' d="M.563,11.008A10.445,10.445,0,1,1,11.008,21.453,10.444,10.444,0,0,1,.563,11.008Zm12.3,4.886V11.008h2.986a.506.506,0,0,0,.358-.863L11.366,5.33a.5.5,0,0,0-.712,0L5.81,10.144a.505.505,0,0,0,.358.863H9.155v4.886a.507.507,0,0,0,.505.505h2.7A.507.507,0,0,0,12.861,15.894Z"'+
+                                    ' transform="translate(-0.563 -0.563)" fill="#00ab06"/></svg>';
+                            else
+                                item +=  '<svg xmlns="http://www.w3.org/2000/svg" width="20.891" height="20.891" viewBox="0 0 20.891 20.891">'+
+                                    '<path id="Icon_awesome-arrow-alt-circle-up" data-name="Icon awesome-arrow-alt-circle-up"'+
+                                    ' d="M.563,11.008A10.445,10.445,0,1,0,11.008.563,10.444,10.444,0,0,0,.563,11.008Zm12.3-4.886v4.886h2.986a.506.506,0,0,1,.358.863l-4.839,4.814a.5.5,0,0,1-.712,0L5.81,11.871a.505.505,0,0,1,.358-.863H9.155V6.122a.507.507,0,0,1,.505-.505h2.7A.507.507,0,0,1,12.861,6.122Z"'+
+                                    ' transform="translate(-0.563 -0.563)" fill="#ef0000"/></svg>';
+
+
+                            item += '<span class="balance-history-price">'+value.amount+'</span>'+
+                                '<div class="balance-history-info">'+
+                                '<span class="balance-history-dec">'+value.comment+'</span>'+
+                                '<span class="balance-history-time">'+value.created_at+'</span>'+
+                                '</div>'+
+                                '</li>';
+
+                            $('.balance-history-list').append(item);
+
+                            if(pageNumber>= maxPageNumber){
+                                pageNumber=maxPageNumber;
+                                $(".paginate_button.next").addClass('disabled');
+                            }else {
+                                $(".paginate_button.next").removeClass('disabled');
+                            }
+                            if(pageNumber<= 1){
+                                pageNumber=1;
+                                $(".paginate_button.previous").addClass('disabled');
+                            }else{
+                                $(".paginate_button.previous").removeClass('disabled');
+                            }
+                        });
+
+                    } else {
+                        // $.each(response.errors, function (key, value) {
+                        //     $("select[name='"+key+"']").closest('.form-group').addClass('has-error');
+                        //     // $("select[name='"+key+"']").next().append(value[0])
+                        //     $("select[name='"+key+"']").closest('.form-group').find('.help-block').append(value[0])
+                        // });
+                    }
+                }
+            });
+        };
+
+        function fireAlert(message, type="error") {
+            swal({
+                title: message,
+                type: type,
+                confirmButtonText: '{{ lang('close') }}'
+            })
+        }
+
+
+    </script>
+
+{% endblock scripts %}

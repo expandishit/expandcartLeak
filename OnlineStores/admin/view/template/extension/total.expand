@@ -1,0 +1,120 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+
+{% block title %}
+    {{ lang('heading_title', 'extension/total') }}
+{% endblock title %}
+
+{% block styles %}
+	{% if base.direction == "ltr" %}
+    <link href="view/assets/css/LTR/icons/icomoon2/style.css" rel="stylesheet" type="text/css">
+	{% else %}
+    <link href="view/assets/css/RTL/icons/icomoon2/style.css" rel="stylesheet" type="text/css">
+	{% endif %}	
+{% endblock styles %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block secondarymenu %}
+    {% include 'setting/settingmenu.expand' with {'expand': '#advanced', 'active': '#ordertotals'} %}
+{% endblock secondarymenu %}
+
+{% block content %}
+    <style>
+        .page-header-default {
+            background-color: transparent;
+        }
+        .page-header-content + .breadcrumb-line {
+            border: 0;
+        }
+    </style>
+    <div class="container">
+        <form class="form" action="{{ links['submit'] }}">
+            <div class="panel panel-flat">
+                <table class="table extension_total table-hover">
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>{{ lang('column_name') }}</th>
+                            <th>{{ lang('column_status') }}</th>
+                            <th>{{ lang('column_re_order') }}</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for extension in extensions %}
+
+                            <tr id="extension_{{ extension['extension_id'] }}">
+                                <td class="sortable">{{ extension['sort_order'] }}</td>
+                                <td class="sortable">{{ extension['name'] }}</td>
+                                <td class="text-center">
+                                    <!-- Switchery -->
+                                    <div class="checkbox checkbox-switchery">
+                                        <label>
+                                            <input type="checkbox" onchange="changeStatus(this);" name="weight_status" class="switchery" data-extension="{{ extension['unique_name'] }}" {{ extension['status'] == 1 ? 'checked' }} {{ extension['unique_name'] == 'sub_total' ? 'disabled' }}>
+                                            <span class="switchery-status">{{ extension['status'] == 1 ? lang('switch_text_enabled') : lang('switch_text_disabled') }}</span>
+                                        </label>
+                                    </div>
+                                    <!-- /Switchery -->
+                                </td>
+                                <input type="hidden" class="extension_id" data-extension="{{ extension['extension_id'] }}"/>
+                                <input type="hidden" class="unique_name"data-unique="{{ extension['unique_name'] }}"/>
+                                <td class="sortable text-center">
+                                    <i class="fa fa-bars fa-lg"></i>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                        <tfoot>
+                        {% for extension in pinned_extensions %}
+                            <tr id="extension_{{ extension['extension_id'] }}">
+                                <td class="sortable">{{ extension['sort_order'] }}</td>
+                                <td class="sortable">{{ extension['name'] }}</td>
+                                <td class="text-center">
+                                    <!-- Switchery -->
+                                    <div class="checkbox checkbox-switchery">
+                                        <label>
+                                            {# <input type="checkbox" name="weight_status" class="switchery" data-extension="{{ extension['unique_name'] }}" {{ extension['status'] == 1 ? 'checked' }} readonly> #}
+                                            <span class="switchery-status">{{ extension['status'] == 1 ? lang('switch_text_enabled') : lang('switch_text_disabled') }}</span>
+                                        </label>
+                                    </div>
+                                    <!-- /Switchery -->
+                                </td>
+                                <td></td>
+                            </tr>
+                        {% endfor %}
+                        </tfoot>
+                    </table>
+            </div>
+        </form>
+    </div>
+    <script>
+
+        function changeStatus(checkbox)
+        {
+            var self = $(checkbox);
+            var switch_status = self.siblings('.switchery-status');
+
+            if ( self.is(':checked') )
+            {
+                switch_status.html("{{ lang('text_enabled') }}");
+            }
+            else
+            {
+                switch_status.html("{{ lang('text_disabled') }}");
+            }
+
+            updateStatus(checkbox);
+        }
+
+        var locales = JSON.parse('{{ locales|json_encode }}');
+
+        $('select').select2({
+            minimumResultsForSearch: 3
+        });
+
+    </script>
+{% endblock %}

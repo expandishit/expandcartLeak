@@ -1,0 +1,235 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% set dualMenuEnabled = false %}
+
+{% set bodyClasses = "has-detached-left" %}
+
+{% block title %}
+    {{ lang('custom_code_heading_title') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+{% endblock headelements %}
+
+{% block content %}
+    <!-- Detached sidebar -->
+    <div class="sidebar-detached">
+        <div class="sidebar sidebar-default sidebar-separate">
+            <div class="sidebar-content">
+                <!-- Sidebar search -->
+                <div class="panel panel-white">
+                    <div class="panel-heading">
+                        <div class="panel-title text-semibold">
+                            <i class="icon-search4 text-size-base position-left"></i>
+                            {{ lang('custom_code_heading_title') }}
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <form id="filter_report_sales">
+
+
+                            <div class="form-group">
+                                <label>{{ lang('entry_date_start') }}</label>
+                                <input type="text" class="form-control daterange-basic"
+                                       value="{{ filter_date_start }} - {{ filter_date_end }}" id="date_all"
+                                       name="date_all">
+                            </div>
+                            <button type="submit" class="btn bg-blue btn-block">
+                                <i class="icon-search4 text-size-base position-left"></i>
+                                {{ lang('button_filter') }}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <!-- /sidebar search -->
+            </div>
+        </div>
+    </div>
+    <!-- /detached sidebar -->
+
+    <!-- Detached content -->
+    <div class="container-detached">
+        <div class="content-detached">
+            <div class="panel panel-flat">
+                <table class="table datatable-basic" id="reports-sales">
+                    <thead>
+                    <tr>
+                        <th>{{ lang('column_username') }}</th>
+                        <th>{{ lang('column_email') }}</th>
+                        <th>{{ lang('column_log_action') }}</th>
+                        <th>{{ lang('column_date') }}</th>
+                        <th>{{ lang('column_action') }}</th>
+                    </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+    </div>
+    <!-- /detached content -->
+
+    <script type="text/javascript">
+
+
+        var action = "{{ link('loghistory/logs/ajaxResponse?log_module=custom_code_setting&base_module=setting/setting') }}" ;
+        //==================================================== Basic Date picker date range ================================
+        $('.daterange-basic').daterangepicker({
+
+            "autoApply": true,
+            // applyClass: 'bg-slate-600',
+            // cancelClass: 'btn-default',
+            ranges: locales['drp_ranges'],
+            locale: locales['drp_locale'],
+             opens: locales['drp_direction']
+
+
+        });
+
+        $('.daterangepicker-inputs').addClass('hidden');
+        //==================================================== Basic Date picker date range ================================
+        //==================================================== Basic datatable ================================
+        $(function () {
+            $.extend($.fn.dataTable.defaults, {
+                autoWidth: false,
+                columnDefs: [{
+                    orderable: false,
+                    width: '100px',
+                }],
+                dom: '<"datatable-header"fB><"datatable-scroll-wrap"t><"datatable-footer"lip>',
+                language: locales['dt_language'],
+                buttons: [
+                    {
+                        extend: 'excelHtml5',
+                        text: `<i class='icon-drawer-out'></i> {{ lang('entry_export_excel') }}`,
+                        className: 'btn btn-default',
+                    },
+                    {
+                        text: `<i class='icon-drawer-out'></i> {{ lang('entry_export_all') }}`,
+                        className: 'btn btn-default',
+                        action: function () {
+                            window.location.href = "{{ export_link }}";
+                        }
+                    }
+                ],
+                drawCallback: function () {
+                    $(this).find('tbody tr').slice(-3).find('.dropdown, .btn-group').addClass('dropup');
+                },
+                preDrawCallback: function () {
+                    $(this).find('tbody tr').slice(-3).find('.dropdown, .btn-group').removeClass('dropup');
+                }
+            });
+
+            dtRender();
+
+
+            $('#reports-sales tbody').on( 'click', 'button', function () {
+                var data = table.row( $(this).parents('tr') ).data();
+                // alert( data[4]['text'] +"'s salary is: "+ data[4]['href'] );
+                window.location.href = data[4]['href'];
+            } );
+
+
+            //==================================================== Basic datatable ================================
+
+            // ===================================================   submit form  ==================================
+
+            $("#filter_report_sales").submit(function (e) {
+                dtRender();
+
+                $('#reports-sales tbody').on( 'click', 'button', function () {
+                    var data = table.row( $(this).parents('tr') ).data();
+                    // alert( data[4]['text'] +"'s salary is: "+ data[4]['href'] );
+                    window.location.href = data[4]['href'];
+                } );
+
+                console.log($('#filter_report_sales').serialize());
+
+                e.preventDefault(); // avoid to execute the actual submit of the form.
+            });
+
+
+        });
+
+        function dtRender(){
+            var table =  $('.datatable-basic').DataTable({
+                "destroy": true,
+                "processing": true,
+                "serverSide": true,
+                language: locales['dt_language'],
+                drawCallback: function () {
+                    if($("#datatable-language").find('tbody tr').length > 2){
+                        $("#datatable-language").find('tbody tr').slice(-2).find('.dropdown, .btn-group').addClass('dropup');
+                    }
+                },
+                preDrawCallback: function() {
+                    if($("#datatable-language").find('tbody tr').length > 2){
+                        $("#datatable-language").find('tbody tr').slice(-2).find('.dropdown, .btn-group').removeClass('dropup');
+                    }
+                },
+                "ajax": {
+                    url: action, // json datasource
+                    type: "post",  // method  , by default get
+                    beforeSend: function() {
+                      $('#reports-sales').before('<div class="text-center loading" style="position: absolute;width: 100%;height: 100%;"><img src="view/image/blue-loading-gif-transparent-9.gif"  style="width: 100px" /></div>');
+                    },
+                    complete: function() {
+                        $('.loading').remove();
+                    },
+                    data: {
+                        'date': $('#date_all').val(),
+
+                    },
+                    error: function () {  // error handling
+                        $("#reports-sales-error").html(" ");
+                        $("#reports-sales").append('<tbody id="reports-sales-error"><tr><th colspan="6">No data found in the server</th></tr></tbody>');
+                        $("#reports-sales_processing").css("display", "none");
+
+                    }
+                },
+                columns: [
+                    {
+                        data:'username'
+                    },
+                    {
+                        data:'email'
+                    },
+                    {
+                        data:'action'
+                    },
+                    {
+                        data:'date_added'
+                    },
+                    {
+
+                    }
+                ],
+                columnDefs: [ {
+                    targets: 4,
+                    orderable: false,
+                    width: "10px",
+                    className: "text-center",
+                    render: function (data, type, row) {
+                        return `<ul class="icons-list pull-right">
+                                    <li class="dropdown">
+                                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                            <i class="icon-menu9"></i>
+                                        </a>
+                                        <ul class="dropdown-menu dropdown-menu-right">
+                                            <li><a href='{{ link('loghistory/logs/view?log_module=custom_code_setting&base_module=setting/setting&log_id=') }}${row['log_history_id']}'><i class='icon-eye'></i> ${locales['button_view']}</a></li>
+                                            </ul>
+                                    </li>
+                                </ul>
+                            `;
+                    }
+                } ]
+            });
+        }
+    </script>
+
+
+
+{% endblock content %}

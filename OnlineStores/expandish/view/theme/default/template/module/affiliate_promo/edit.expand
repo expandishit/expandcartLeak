@@ -1,0 +1,98 @@
+{% if success %}
+<br>
+<div class="alert alert-success alert-dismissible" role="alert">
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+    {{ success }}
+</div>
+{% endif %}
+
+<div id="content row">
+    <!-- breadcrumb -->
+    <div class="breadcrumb-page">
+        <ol class="breadcrumb">
+            {% for breadcrumb in breadcrumbs %}
+                {% if loop.last %}
+                    <li class="active">{{ breadcrumb['text'] }}</li>
+                {% else %}
+                    <li><a href="{{ breadcrumb['href'] }}">{{ breadcrumb['text'] }}</a></li>
+                {% endif %}
+            {% endfor %}
+        </ol>
+    </div> <!-- breadcrumb -->
+
+    <div class="col-md-6">
+        <div class="page-title-base">
+            <h1 class="title-base">{{ lang('affiliate_promo_edit') }}</h1>
+        </div>
+        <form method="post" action="{{ promo_code_submit_link }}">
+            <input type="hidden" name="coupon_id" value="{{ coupon['coupon_id'] }}"/>
+            <div class="form-group">
+                <lable>{{ lang('affiliate_promo_code') }} <span class="text-danger">*</span></label>
+                <input name="code" value="{{ coupon['code'] }}" class="form-control"/>
+                <span class="text-danger">{{ errors['affiliate_promo_code_error'] }}</span>
+                <span class="text-danger">{{ errors['affiliate_promo_code_exists_error'] }}</span>
+            </div>
+            {% if ( not affiliates_cannot_create_promo_type_discount ) %}
+            <div class="form-group">
+                <lable for="type">{{ lang('affiliate_promo_type') }} <span class="text-danger">*</span></label>
+                <select name="type" class="form-control" id="type">
+                    <option value="P" {{ coupon['type'] == 'P' ? 'selected' : '' }}>{{ lang('affiliate_promo_percent') }}</option>
+                    <option value="F" {{ coupon['type'] == 'F' ? 'selected' : '' }}>{{ lang('affiliate_promo_fixed') }}</option>
+                </select>
+                <span class="text-danger">{{ errors['affiliate_promo_code_type_error'] }}</span>
+            </div>
+            <div class="form-group">
+                <lable for="discount">{{ lang('affiliate_promo_ratio') }} <span class="text-danger">*</span></label>
+                <input type="number" name="discount" id="discount" min="1" value="{{ coupon['discount'] }}" class="form-control"/>  
+                <span class="text-danger promo-ratio-error">{{ errors['affiliate_promo_code_ratio_error'] }}</span>
+            </div>
+        {% if ( not affiliates_create_only_code_type_discount) %}
+            <div class="form-group">
+                <lable for="minimum_to_apply">{{ lang('minimum_to_apply') }} </label>
+                    <input type="number" name="minimum_to_apply" id="minimum_to_apply" min="1" value="{{ coupon['minimum_to_apply'] }}" class="form-control"/>
+                    <span class="text-danger promo-ratio-error">{{ errors['minimum_to_apply_error'] }}</span>
+            </div>
+
+            <div class="form-group">
+                <lable for="maximum_limit">{{ lang('maximum_limit') }} </label>
+                    <input type="number" name="maximum_limit" id="maximum_limit" min="0" value="{{ coupon['maximum_limit'] }}" class="form-control"/>
+            </div>
+
+            <div class="form-group">
+                <lable for="uses_per_customer">{{ lang('uses_per_customer') }}</label>
+                    <input type="number" name="uses_per_customer" id="uses_per_customer" min="0" value="{{ (coupon['uses_customer'])?: coupon['uses_per_customer'] }}" class="form-control"/>
+            </div>
+
+            <div class="form-group">
+                <lable for="uses_per_customer">{{ lang('uses_per_coupon') }}</label>
+                    <input type="number" name="uses_per_coupon" id="uses_per_coupon" min="0" value="{{ (coupon['uses_total']) ?: coupon['uses_per_coupon'] }}" class="form-control"/>
+            </div>
+        {% endif %}
+        {% endif %}
+
+            <div class="form-group">
+                <button class="btn btn-warning" type="submit">{{ lang('affiliate_promo_edit') }}</button>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+    var promo_code_max_percent_ratio = '{{ promo_code_max_percent_ratio }}';
+    var promo_code_max_fixed_ratio = '{{ promo_code_max_fixed_ratio }}';
+    $(document).ready(function () {
+        var compare = promo_code_max_percent_ratio;
+        console.log(compare)
+        $('#discount').on('keyup', function () {
+            var type = $('#type').val();
+            if (type === 'F') {
+                compare = promo_code_max_fixed_ratio;
+            }
+            if (Number($(this).val()) > compare) {
+                $(this).val('');
+                $('.promo-ratio-error').html("{{ lang('affiliate_promo_code_max_ratio_error') }}" + compare + (type == 'P' ? '%' : ''));
+            } else {
+                $('.promo-ratio-error').html('');
+            }
+        });
+    });
+</script>

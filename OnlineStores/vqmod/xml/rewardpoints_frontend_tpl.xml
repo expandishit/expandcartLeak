@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<modification>
+    <id>Reward Points - FRONTEND TPL</id>
+    <version>1.4.x and 1.5.x</version>
+    <vqmver required="true">2.4.0</vqmver>
+    <author>vqmod.com</author>
+
+    <file path="catalog/view/theme/*/template/module/" name="latest.tpl,bestseller.tpl,special.tpl,featured.tpl" keep="true">
+        <operation error="continue">
+            <search position="replace"><![CDATA[<?php echo $product['name']; ?></a>]]></search>
+            <add><![CDATA[
+            <?php echo $product['name']; ?></a>
+            <?php
+                $queryRewardPointInstalled = $this->db->query("SELECT * FROM " . DB_PREFIX . "extension WHERE `code` = 'reward_points_pro'");
+
+                if($queryRewardPointInstalled->num_rows) {
+                    $this->load->model('rewardpoints/helper');
+                    echo $this->model_rewardpoints_helper->displayRewardPointProductListing($product, '', 'text_category_earn_point');
+                }
+            ?>
+            ]]></add>
+        </operation>
+    </file>
+
+    <file name="catalog/view/theme/*/template/checkout/cart.tpl">
+        <operation error="continue">
+            <search position="replace"><![CDATA[<small><?php echo $product['reward']; ?></small>]]></search>
+            <add><![CDATA[
+            <?php
+                $queryRewardPointInstalled = $this->db->query("SELECT * FROM " . DB_PREFIX . "extension WHERE `code` = 'reward_points_pro'");
+
+                if(!$queryRewardPointInstalled->num_rows) { ?>
+            <small><?php echo $product['reward']; ?></small>
+            <?php } ?>
+                    ]]></add>
+        </operation>
+    </file>
+
+    <file name="catalog/view/theme/*/template/product/category.tpl">
+        <operation error="continue">
+            <search position="replace"><![CDATA[<?php echo $product['name']; ?></a>]]></search>
+            <add><![CDATA[
+            <?php echo $product['name']; ?></a>
+            <?php
+                $queryRewardPointInstalled = $this->db->query("SELECT * FROM " . DB_PREFIX . "extension WHERE `code` = 'reward_points_pro'");
+
+                if($queryRewardPointInstalled->num_rows) {
+                    $this->load->model('rewardpoints/helper');
+                    echo $this->model_rewardpoints_helper->displayRewardPointProductListing($product, '', 'text_category_earn_point');
+                }
+            ?>
+            ]]></add>
+        </operation>
+    </file>
+
+    <file name="catalog/view/theme/*/template/product/product.tpl">
+        <operation error="continue">
+            <search position="after"><![CDATA[<div class="cart">]]></search>
+            <add><![CDATA[
+            <?php
+                $queryRewardPointInstalled = $this->db->query("SELECT * FROM " . DB_PREFIX . "extension WHERE `code` = 'reward_points_pro'");
+
+                if($queryRewardPointInstalled->num_rows) {
+                    $this->load->model('rewardpoints/helper');
+                    echo $this->model_rewardpoints_helper->displayRewardPointProductListing(array('product_id' => $product_id), "product-detail", 'text_product_earn_point');
+                }
+            ?>
+            ]]></add>
+        </operation>
+    </file>
+
+    <file name="catalog/view/theme/*/template/account/reward.tpl">
+        <operation error="continue">
+            <search position="replace" regex="true"><![CDATA[~<table(.*?)class="(.*?)"(.*?)>~]]></search>
+            <add><![CDATA[
+                <?php $queryRewardPointInstalled = $this->db->query("SELECT * FROM " . DB_PREFIX . "extension WHERE `code` = 'reward_points_pro'");
+
+                if($queryRewardPointInstalled->num_rows) { ?>
+                <!-- TRANSACTION:$1:$2:$3: --><table style="display:none" $1class="$2"$3>
+                <?php } else { ?>
+                <table $1class="$2"$3>
+                <?php } ?>
+            ]]></add>
+        </operation>
+        <operation error="continue">
+            <search position="replace" regex="true"><![CDATA[~<!-- TRANSACTION:(.*?):(.*?):(.*?): -->~]]></search>
+            <add><![CDATA[
+   <style>
+   p{
+      margin: 0 !important;
+   }
+   </style>
+   <span style="margin-bottom: 10px; display: block">
+	 <?php echo $this->language->get('text_exchange_rate')?><b> <?php echo $exchange_rate['point']; ?></b> <?php echo $this->config->get('text_points_'.$this->language->get('code'))?> = <b><?php echo $exchange_rate['rate']; ?></b>
+   </span>
+   <!-- DISPATCH_EVENT:ACCOUNT_REWARD_TRANSACTION_BEFORE_RENDER_TABLE -->
+    <table$1class="$2"$3 style="margin: 10px 0;">
+    <thead>
+      <tr>
+        <td class="left"><?php echo $column_date_added; ?></td>
+        <td class="left"><?php echo $column_description; ?></td>
+        <td class="right"><?php echo $column_points; ?></td>
+      </tr>
+    </thead>
+    <tbody>
+      <?php if ($rewards) { ?>
+	      <?php foreach ($rewards  as $reward) { ?>
+		      <?php if($reward['status'] == '1'){ ?>
+			      <tr>
+        <td class="left"><?php echo $reward['date_added']; ?></td>
+        <td class="left"><?php if ($reward['order_id']) { ?>
+		        <a href="<?php echo $reward['href']; ?>"><?php echo $reward['description']; ?></a>
+	        <?php } else { ?>
+		        <?php echo $reward['description']; ?>
+	        <?php } ?></td>
+        <td class="right"><?php echo ($reward['points'] > 0 ? '+' : '').$reward['points']; ?></td>
+      </tr>
+		      <?php } ?>
+	      <?php } ?>
+      <?php } else { ?>
+	      <tr>
+        <td class="center" colspan="5"><?php echo $text_empty; ?></td>
+      </tr>
+      <?php } ?>
+    </tbody>
+    </table>
+            ]]></add>
+        </operation>
+    </file>
+</modification>

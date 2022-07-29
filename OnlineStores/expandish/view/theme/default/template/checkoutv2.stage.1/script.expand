@@ -1,0 +1,1831 @@
+<script>
+
+    var geoIpLookup = null;    
+
+    function getGeoIPLockup(callback) {
+        if (geoIpLookup) return callback(geoIpLookup);
+        $.get('https://ipinfo.io', function () { }, "jsonp").always(function (resp) {
+            geoIpLookup = resp;
+            callback(resp);
+        });
+    }
+
+    function jsValidateForm(form, callback = function() {}) {
+        if (!form) return callback();
+        
+        var requireFields = Array.from(form.querySelectorAll('[data-require="require"]'));
+        
+        var valid = true;
+        
+        requireFields.map(field => {
+            var value = field.value.trim();
+            if (!value.length || value == 0) {
+                valid = false;
+                $(field).closest('.form-group').addClass('highlight-error').append('<div class="error_span">' + field.dataset.requireMsg + '</div>');
+            }
+        });
+        
+        var speciolFields = Array.from(form.querySelectorAll('[data-type]'));
+        
+        speciolFields.map(field => {
+            var value = field.value.trim();
+            if (value.length) {
+                if (field.dataset.type == "integer" && Number.isInteger(Number(value)) === false) {
+                    valid = false;
+                    $(field).closest('.form-group').addClass('highlight-error').append('<div class="error_span">' + field.dataset.invalidMsg + '</div>');
+                } else if(field.dataset.type == "iti" && field.iti && !field.iti.isValidNumber()) {
+                    valid = false;
+                    $(field).closest('.form-group').addClass('highlight-error').append('<div class="error_span">' + field.dataset.invalidMsg + '</div>');
+                } 
+            }
+        });
+        
+        if (valid && typeof callback === "function") callback();
+        
+    }
+    
+    if (typeof placeholder === "undefined") var placeholder = "select";
+    $(document).ready(function() {
+        $('.cust_select').select2();
+        $(".mySelect").select2({          
+            placeholder: placeholder,
+            allowClear: false,
+            minimumResultsForSearch: 5,
+            tags: true
+        });
+    });
+
+    /* 	Core refresh functions
+*
+*	1 Full Checkout refresh (level 1)
+*	2 Payment address + Shipping address + Shipping method + Payment method + Confirm (level 2)
+*	3 Shipping address + Shipping method + Payment method + Confirm (level 3)
+*	4 Shipping method + Payment method + Confirm (level 4)
+*	5 Payment method + Confirm (level 5)
+*	6 Confirm (level 6)
+*	0 Session (level 0)
+*/
+
+    function refreshCheckout(Step, func){
+
+        console.log('refreshCheckout level:'+Step)
+        //updateSettings(function(){
+            if(Step == 0){
+                if (typeof func == "function") func();
+
+            }else{
+
+                //New v 23/02/2020
+                refreshStep(Step, function(){
+                    if(Step == 1){
+                        console.log(' - All steps refreshed');
+                    }else{
+                        if (typeof func == "function") func();
+                        console.log(' - step_'+Step+' refreshed');
+                    }
+                })
+            }
+        //})
+    }
+    
+    var lastRefreshedData = null;
+    
+    function refreshStep(step_number, func = function() {}){
+        // avoid calling multiple refresh steps at once to reduce the load on the checkout page
+        /*if ($.active > 1) {
+            // this timing function to avoid call stack overflow of recalling the same function using recursion
+            setTimeout(function () {
+                refreshStep(step_number, func);
+            }, 10);
+            return;
+        }*/
+        
+       /**
+        if (typeof refreshStep.load === "undefined") {
+            refreshStep.load = {};
+        }
+        
+        if (refreshStep.load[step_number]) {
+            return;
+        }
+        
+        refreshStep.load[step_number] = true;
+        */
+        var data = $('#quickcheckout input[type=\'text\'], #quickcheckout input[type=\'number\'], #quickcheckout input[type=\'password\'], #quickcheckout input[type=\'checkbox\'], #quickcheckout input[type=\'radio\']:checked, #quickcheckout select, #quickcheckout textarea').filter((a, b) => !!$(b).val() && $(b).val() != 0).serialize();
+        
+        var url = 'index.php?route=checkout/checkoutv2/refreshSteps&step_number='+step_number;
+        
+        if (lastRefreshedData === url+data.toString()) return;
+        lastRefreshedData = url+data.toString();
+        
+        console.log(lastRefreshedData);
+        
+        $.ajax({
+
+            //New v 23/02/2020
+            url: url,
+
+            //OLD v 23/02/2020
+            //url: 'index.php?route=module/quickcheckout/refresh_step'+step_number,
+
+            type: 'post',
+            data: data,
+            dataType: 'html',
+            beforeSend: function() {
+
+            },
+            complete: function() {
+                // delete refreshStep.load[step_number];
+            },
+            success: function(html) {
+
+                //New v 23/02/2020
+                var respondsData = JSON.parse(html);
+                for (var key in respondsData) {
+                    if (respondsData.hasOwnProperty(key)) {
+                        /*if(key == "step_7") {
+                            var code = $('#selected_payment_code').val(), codeInput, currentPaymentContent;
+                            $('.payment_method_content').html('');
+                            if(code.length) {
+                                currentPaymentContent = $("#payment_method_content_" + code);
+                                currentPaymentContent.html(respondsData[key]);
+                                // append external hint message html
+                                codeInput = $('input#' + code);
+                                if(codeInput.length && parseInt(codeInput.data('external') || 0) === 1) {
+                                    $(currentPaymentContent)
+                                        .append(
+                                            $('#payment-method-external-tpl')
+                                            .html()
+                                            .replace(
+                                                /%s/, 
+                                                $("label[data-payment='"+ code +"']").text()
+                                            )
+                                        );
+                                }
+                                
+                                codeInput.length && (codeInput.closest('.input-group-prepend').find('.payment-method__toggle').slideDown());
+                            }
+                        }else{*/
+                            $('.'+key).html(respondsData[key]);
+                        //}
+                    }
+                }
+
+                //OLD v 23/02/2020
+                //$('.step_'+step_number).html(html);
+
+                // this prevents cart requests from being repeated for no reason each step which casues delays
+                // and redundant database hits we check if active ajax requests is only one that means it's the
+                // last request to execute so we start to refresh the cart at this moment
+                /*if ($.active === 1) {
+                    $.get('index.php?route=common/cart', function(html) {
+                        $('#cartDropList').html(html);
+                    });
+
+                    $.get('index.php?route=common/cart/get_cart_count', function (count) {
+                        $('#counterLabel').html(count);
+                    });
+                }*/
+
+                if (typeof func == "function") func();
+                debug_update();
+
+                /**
+                 * check if Payment/shipping Address changed
+                 * and the user select to use new Address
+                 * so set the region selection to blank
+                 * this was applied in souq theme only
+                 **/
+                /**$("input[name='payment_address[address_id]']").on("change",function(){
+                    if($("input[name='payment_address[address_id]']:checked").val() == "0"){
+                        $("#payment_address_zone_id").prop("selectedIndex", 0);
+                    }
+                });
+                $("input[name='shipping_address[address_id]']").on("change",function(){
+                    if($("input[name='shipping_address[address_id]']:checked").val() == "0"){
+                        $("#shipping_address_zone_id").prop("selectedIndex", 0);
+                    }
+                });
+                */
+
+            },
+            error: function(xhr, ajaxOptions, thrownError) {
+                console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+            }
+        });
+    }
+
+    function refreshStepView(step_number, is_single_step, func){      
+        return new Promise(resolve => {
+            $.ajax({
+                url: 'index.php?route=checkout/checkoutv2/refreshStepsViews&step_number='+step_number+'&is_single_step='+is_single_step,
+                //Old v 23/02/2020
+                //url: 'index.php?route=module/quickcheckout/refresh_step_view'+step_number,
+
+                type: 'post',
+                data: $('#quickcheckout input[type=\'text\'], #quickcheckout input[type=\'number\'], #quickcheckout input[type=\'hidden\'], #quickcheckout input[type=\'password\'], #quickcheckout input[type=\'checkbox\'], #quickcheckout input[type=\'radio\']:checked, #quickcheckout select, #quickcheckout textarea'),
+                dataType: 'html',
+                beforeSend: function() {
+
+                },
+                complete: function() {
+
+                },
+                success: function(html) {
+                    //New v 23/02/2020
+                    var respondsData = JSON.parse(html);
+                    for (var key in respondsData) {
+                        if (respondsData.hasOwnProperty(key)) {
+                            $('.'+key).html(respondsData[key]);
+                        }
+                    }
+
+                    debug_update()
+                    
+                    if (typeof func == "function") {
+                        return resolve(func());    
+                    }
+                },
+                error: function(xhr, ajaxOptions, thrownError) {
+                    console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                }
+            });
+        });
+    }
+
+    /*function updateSettings(func){
+        console.log(' - updateSettings')
+        $.ajax({
+            url: 'index.php?route=module/quickcheckoutv2/update_settings',
+            type: 'post',
+            data: $('#quickcheckout input[type=\'text\'], #quickcheckout input[type=\'number\'], #quickcheckout input[type=\'password\'], #quickcheckout input[type=\'checkbox\'], #quickcheckout input[type=\'radio\']:checked, #quickcheckout select,  #quickcheckout textarea'),
+            dataType: 'json',
+            beforeSend: function() {
+
+            },
+            complete: function() {
+
+            },
+            success: function(json) {
+                console.log(json);
+                if (typeof func == "function") func();
+            },
+            error: function(xhr, ajaxOptions, thrownError) {
+                console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+            }
+        });
+    }*/
+
+    function refreshAllSteps(func){
+        $.ajax({
+            url: 'index.php?route=checkout/checkoutv2/refresh',
+            type: 'post',
+            data: $('#quickcheckout input[type=\'text\'], #quickcheckout input[type=\'number\'], #quickcheckout input[type=\'password\'], #quickcheckout input[type=\'checkbox\']:checked, #quickcheckout input[type=\'radio\']:checked, #quickcheckout select,  #quickcheckout textarea'),
+            dataType: 'html',
+            beforeSend: function() {
+
+            },
+            complete: function() {
+
+            },
+            success: function(html) {
+                $('#quickcheckout').html(html)
+                if (typeof func == "function") func();
+                $('#quickcheckout').show()
+                debug_update()
+            },
+            error: function(xhr, ajaxOptions, thrownError) {
+                console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+            }
+        });
+    }
+
+    var isPhoneVerified = 0;
+
+    $(document).on('click', '#qc_confirm_order', function(event) {
+        console.log('qc_confirm_order -> click')
+        //refreshCheckout(0, function(){
+        validateFields(function () {
+            verifyPhoneNumber(function () {
+                //refreshStepView(2, 0,function(){
+                    confirmOrderQC(function () {
+                        refreshStepView(7, 1, function () {
+                            $('.processing-payment').show()
+                            triggerPayment()
+                        })
+                    });
+                //});
+            })
+        });
+        event.stopImmediatePropagation();
+    });
+
+    function triggerPayment(){
+        console.log('triggerPayment');
+        var theConfirmatonBtn = $("{{ settings['general']['trigger'] ? settings['general']['trigger'] : '#confirm_payment .button, #confirm_payment .btn, #confirm_payment input[type=submit]' }}");
+        var href = theConfirmatonBtn.attr('href');
+        
+        if (href != '' && href != undefined) {
+            console.log('clicked');
+            document.location.href = href;
+        } else {
+            console.log('clicked');
+            theConfirmatonBtn.trigger("click", function(){
+
+            });
+        }
+    }
+
+    /*
+*	Registration button click
+*/
+    var accountType = "";
+    var smsDialog;
+    function send_conf_code(action) {
+        $.ajax({
+            url: 'index.php?route=checkout/checkoutv2/send_conf_code_sms',
+            type: 'post',
+            data: {action: action},
+            dataType: 'json',
+            success: function (json) {
+                console.log(json);
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+            }
+        });
+    }
+
+    function verifyPhoneNumber(func) {
+        submitByNewAddress = false;
+        if(accountType == "logged" && $("input[name='payment_address[address_id]']:checked").val() == "0"){
+            submitByNewAddress = true;
+        }
+        if(isPhoneVerified=="1" || ( submitByNewAddress && $("#payment_address_telephone").is(":hidden") ) || (accountType=="register" && $("#payment_address_telephone").is(":hidden") )) {
+            if (typeof func == "function") func();
+            return;
+        }
+
+        var verify_phone_number = "{{ settings['verify_phone_number'] ? '1' : '0' }}";
+
+        if (verify_phone_number == 1) {
+
+            send_conf_code('');
+            if(typeof smsDialog != "undefined")
+                smsDialog.dialog('open');
+            else
+                smsDialog = $("<div><div style='margin: 15px 0;'>{{ lang('sms_conf_msg') }}</div><input id='confirmation_code' class='conf_code' value='' /><br><a style='font-size: 12px;' id='resend_message_a_tag' onclick=\"send_conf_code('resend')\">{{ lang('sms_conf_resend') }}</a></div>").dialog({
+                    width: 350,
+                    modal: true,
+                    draggable: false,
+                    resizable: false,
+                    // position: ['center', 'center'],
+                    show: 'blind',
+                    hide: 'blind',
+                    dialogClass: "sms-conf-dialog",
+                    buttons: {
+                        "{{ lang('sms_conf_verify') }}": function() {
+                            var conf_code = $('#confirmation_code').val();
+
+                            // Verify confim code and then
+                            $.ajax({
+                                url: 'index.php?route=checkout/checkoutv2/verify_conf_code',
+                                type: 'post',
+                                data: {conf_code: conf_code},
+                                dataType: 'json',
+                                success: function(json) {
+                                    console.log(json);
+                                    if(json['error'] == '0'){
+                                        if (typeof func == "function") func();
+                                    }
+                                    else {
+                                        //Change message.
+                                        alert('{{ lang('sms_conf_error') }}');
+                                    }
+                                },
+                                error: function(xhr, ajaxOptions, thrownError) {
+                                    console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                                }
+                            });
+
+                        },
+                        "{{ lang('sms_conf_cancel') }}": function() {
+                            smsDialog.dialog( "close" );
+                        }
+                    }
+                });
+        }
+        else {
+            if (typeof func == "function") func();
+        }
+    }
+
+    /* 	Validation
+    *
+    *	Validate all fields in the checkout
+    */
+    function validateFields(func) {
+        // console.log('validateFields')
+        var error = false;
+        var wizard_status = true;
+        $.ajax({
+            url: 'index.php?route=checkout/checkoutv2/validate_fields',
+            type: 'post',
+            //data:  $('#validate_section, #quickcheckout input[data-require=require], #quickcheckout select[data-require=require],#quickcheckout textarea[data-require=require]'),
+            data: $("#validate_section, #payment_address_form, #payment_method_form, #shipping_method_form, #confirm_form").serialize(),
+            dataType: 'json',
+            async: false,
+            beforeSend: function() {
+                resetValidationErrors();
+            },
+            complete: function() {
+            },
+            success: function(json) {
+                isPhoneVerified=json['phoneverified'];
+                accountType = json['accountType'];
+                $('.highlight-error').removeClass('highlight-error')
+                
+                if("error" in json){
+                    if (json['error']['payment_address']) {
+                    
+                        var currentAddressInput = $('.register_payment [name=\'payment_address\['+ 'address_id' +'\]\']:checked');
+
+                        if (currentAddressInput.val() != "" && currentAddressInput.val() != "0") {
+                            var editAddressBtn = $('.radio-input__info-container__edit[data-address_id='+ currentAddressInput.val() +']');
+                            var addressThumbBox = editAddressBtn.closest('.map-box ');
+                            if (!addressThumbBox.is(':hidden')) {
+                                editAddressBtn.trigger('click');
+                            }
+                        } else {
+                            var addAddressFormArea = $('.add--new-address').closest('.add-address-area').find(".address-toogle");
+                            if (addAddressFormArea.is(":hidden")) {
+                                $('.add--new-address').trigger('click');
+                            }
+                        }    
+                    
+                        error = true;
+                        wizard_status = false;
+                        
+                        $.each(json['error']['payment_address'], function(key, value){
+                            $('#payment_address [name=\'payment_address\['+key+'\]\']').closest('.form-group').addClass('highlight-error').append('<div class="error_span">' + value + '</div>');
+                        });
+                        
+                        $("#steps-uid-0-t-0").click();
+                    }
+                    /*if ($('#shipping_address').is(':visible') && json['error']['shipping_address'] ) {
+                        $.each(json['error']['shipping_address'], function(key, value){
+                            console.log(key, value);
+                            $('#shipping_address_wrap [name=\'shipping_address\['+key+'\]\']').parents('[class*=-input]').addClass('highlight-error').append('<div class="error_span">' + value + '</div>');
+                        });
+                        error = true;
+                    }*/
+
+                    if (json['error']['shipping_method'] ) {
+                        $.each(json['error']['shipping_method'], function(key, value){
+                            console.log(key, value);
+                            $('#shipping_method_wrap[data-has-error=0]').prepend('<div class="error_span">' + value + '</div>');
+                        });
+                        error = true;
+                        wizard_status = false;
+                    }
+
+                    if (json['error']['payment_method'] ) {
+                        $.each(json['error']['payment_method'], function(key, value){
+                            console.log(key, value);
+                            $('#payment_method_wrap ').prepend('<div class="error_span">' + value + '</div>');
+                        });
+                        error = true;
+                        wizard_status = false;
+                    }
+
+                    if (json['error']['confirm'] ) {
+                        error = true;
+                        wizard_status = false;
+                        $.each(json['error']['confirm'], function(key, value){
+                            if(key == 'error_warning'){
+                                $.each(json['error']['confirm']['error_warning'], function(key, value){
+                                    $('#confirm_wrap .checkout-product').prepend('<div class="error_span">' + value + '</div>');
+                                });
+                            }else{
+                                console.log(key, value);
+                                $('#confirm_wrap [name=\'confirm\['+key+'\]\']').parents('[class*=-input]').addClass('highlight-error').append('<div class="error_span">' + value + '</div>');
+                            }
+                        });
+
+                    }                    
+                }
+
+                if(error == false){
+                    if (typeof func == "function") func();
+                }else if($(".error_span").length) {
+                    $('html,body').animate({
+                        scrollTop: $(".error_span").offset().top - 60},
+                    'slow');
+                }
+                
+                // if (!error && 'payment_address' == $('[name=validate_section]').val()) {
+                    // addAddress();
+                // }
+
+            },
+            error: function(xhr, ajaxOptions, thrownError) {
+                console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+            }
+        });
+        
+        return wizard_status;
+    }
+
+    function resetValidationErrors() {
+        var is3StepsMode = !(($('#validate_section').val() || 'all') === 'all');
+
+        if (is3StepsMode) {
+            var currentStepIndex = $("#contact").children("div").steps("getCurrentIndex"),
+                stepsMapSelectors = {
+                    0: "#contact .address-section", 
+                    1: "#contact .shipping-section", 
+                    2: "#contact .payment-section", 
+                };
+        
+            if (stepsMapSelectors.hasOwnProperty(currentStepIndex) ) {
+                $('.warning', stepsMapSelectors[currentStepIndex]).remove();
+                $('.error_span', stepsMapSelectors[currentStepIndex]).remove();
+                $('.highlight-error', stepsMapSelectors[currentStepIndex]).removeClass('highlight-error');
+            }
+            
+        } else {
+            $('.warning').remove();
+            $('.error_span').remove();
+            $('.highlight-error').removeClass('highlight-error');
+        }
+    }
+    
+    /*
+    *	Validate changed field in checkout
+    */
+    function validateField(fieldId, func){
+        if($('#'+fieldId).attr('data-require') == 'require'){
+            $.ajax({
+                url: 'index.php?route=checkout/checkoutv2/validate_field',
+                type: 'post',
+                data:  $('#quickcheckout input') + '&field='+$('#'+fieldId).attr('name')+'&value='+$('#'+fieldId).val(),
+                dataType: 'html',
+                beforeSend: function() {
+                    resetValidationErrors();
+                },
+                complete: function() {
+
+                },
+                success: function(html) {
+                    $('#'+fieldId).parents('[class*=-input]').removeClass('highlight-error').next('.error_span').remove()
+                    if(html  != "" && html.length > 6){
+                        $('#'+fieldId).parents('[class*=-input]').addClass('highlight-error').append('<div class="error_span">'+html+'</div>')
+                    }
+                    if (typeof func == "function") func();
+
+                },
+                error: function(xhr, ajaxOptions, thrownError) {
+                    console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                }
+            });
+        }
+    }
+
+    /*
+    *	Validate Checkboxes and radio buttons
+    */
+    function validateCheckbox(fieldId, func){
+        var fieldVal = $('#'+fieldId).is(":checked") ? 1 : 0;
+        console.log('validateCheckbox:' + 'field='+$('#'+fieldId).attr('name')+'&value='+fieldVal)
+        if($('#'+fieldId).attr('data-require') == 'require'){
+            $('#'+fieldId).val(fieldVal);
+            $.ajax({
+                url: 'index.php?route=checkout/checkoutv2/validate_field',
+                type: 'post',
+                data:  'field='+$('#'+fieldId).attr('name')+'&value='+fieldVal,
+                dataType: 'html',
+                beforeSend: function() {
+                    resetValidationErrors();
+                },
+                complete: function() {
+
+                },
+                success: function(html) {
+                    $('#'+fieldId).parents('[class*=-input]').next('.error_span').remove()
+                    if(html  != "" && html.length > 6){
+                        $('#'+fieldId).parents('[class*=-input]').append('<div class="error_span">'+html+'</div>')
+                    }
+                    if (typeof func == "function") func();
+
+                },
+                error: function(xhr, ajaxOptions, thrownError) {
+                    console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                }
+            });
+        }
+    }
+
+    function validateRadiobutton(fieldId, func){
+        var fieldVal = $('#'+fieldId + ":checked").val();
+
+        console.log('validateCheckbox:' + 'field='+$('#'+fieldId).attr('name')+'&value='+fieldVal)
+        if($('#'+fieldId).attr('data-require') == 'require'){
+
+            $.ajax({
+                url: 'index.php?route=checkout/checkoutv2/validate_field',
+                type: 'post',
+                data:  'field='+$('#'+fieldId).attr('name')+'&value='+fieldVal,
+                dataType: 'html',
+                beforeSend: function() {
+                    resetValidationErrors();
+                },
+                complete: function() {
+
+                },
+                success: function(html) {
+                    $('#'+fieldId).parents('[class*=-input]').next('.error_span').remove()
+                    if(html  != "" && html.length > 6){
+                        $('#'+fieldId).parents('[class*=-input]').append('<div class="error_span">'+html+'</div>')
+                    }
+                    if (typeof func == "function") func();
+
+                },
+                error: function(xhr, ajaxOptions, thrownError) {
+                    console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                }
+            });
+        }
+    }
+
+    /*
+    *	Confirm Order
+    */
+    function confirmOrderQC(func){
+        console.log('confirmOrderQC')
+        return new Promise(resolve => {
+            $.ajax({
+                url: 'index.php?route=checkout/checkoutv2/confirm_order',
+                type: 'post',
+                data:   $('#quickcheckout input[type=\'text\'], #quickcheckout input[type=\'number\'], #quickcheckout input[type=\'password\'], #quickcheckout input[type=\'checkbox\']:checked, #quickcheckout input[type=\'radio\']:checked, #quickcheckout select'),
+                dataType: 'html',
+                beforeSend: function() {
+
+                },
+                complete: function() {
+
+                },
+                success: function(html) {
+                    if (typeof func == "function") {
+                        return resolve(func());
+                    } 
+                },
+                error: function(xhr, ajaxOptions, thrownError) {
+                    console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                }
+            });
+        });
+    }
+
+    /*$(document).on('focus', '#quickcheckout input[type=text], #quickcheckout input[type=password], #quickcheckout select, #quickcheckout textarea', function(event) {
+        console.log("resass");
+        var input_field = $(this);
+
+        setTimeout(function (e) {
+
+            input_field.on('change', function(e) {
+                confirmOrder = 0;
+                if ($('#qc_confirm_order').is(':hover'))
+                    confirmOrder = 1;
+                else
+                    confirmOrder = 0;
+
+                var dataRefresh = $(this).attr('data-refresh');
+
+                validateField( $(this).attr('id') )
+
+                if(dataRefresh){refreshCheckout(dataRefresh)}
+
+                if (confirmOrder == 1) {
+                    console.log('qc_confirm_order -> click')
+                    refreshCheckout(0, function(){
+                        validateFields(function(){
+                            //verifyPhoneNumber(function () { // this was applied in souq
+
+                            //New v 23/02/2020
+                            //refreshStepView(3, 0,function(){
+                                confirmOrderQC(function(){
+                                    $('.processing-payment').show()
+                                    triggerPayment()
+                                })
+                            //});
+                        });
+                    })
+                }
+                e.stopImmediatePropagation()
+            });
+
+
+
+        }, 50)
+
+        event.stopImmediatePropagation()
+    });*/
+
+    function validateChackoutData(processingOrderCallback = function() {}) {
+        return new Promise(resolve => {
+            isValidFields = validateFields();
+            if (!isValidFields) return resolve(undefined);
+            return confirmOrderQC(function() {
+                $('.processing-payment').show();
+                return resolve(processingOrderCallback());
+            });            
+        });
+        
+        
+        /*
+        validateFields(function () {
+            verifyPhoneNumber(function () {
+                    confirmOrderQC(function () {
+                        refreshStepView(7, 1, function () {
+                            $('.processing-payment').show()
+                            return processingOrderCallback();
+                        })
+                    });
+            })
+        });
+        */
+    }
+</script>
+
+
+{# Google Map #}
+<script>
+    const GOOGLE_MAP_SETTING = {{google_map|json_encode}} || {};
+    
+    var initializeAddressMap = function () {
+        function initializeAddressMap(options) {
+            var containerSelector = document.querySelector(options.containerSelector),
+                inputLocation = containerSelector && containerSelector.querySelector("input[name='payment_address[location]']"),
+                inputAddress = containerSelector && containerSelector.querySelector("input[name='payment_address[address_1]']"),
+                inputCountry = containerSelector && containerSelector.querySelector("[name='payment_address[country_id]']"),
+                inputRegion = containerSelector && containerSelector.querySelector("[name='payment_address[zone_id]']"),
+                inputCity = containerSelector && containerSelector.querySelector("[name='payment_address[area_id]']"),
+                inputPostalCode = containerSelector && containerSelector.querySelector("[name='payment_address[postcode]']"),
+                inputTelephone = containerSelector && containerSelector.querySelector('#payment_address_telephone'),
+                mapDiv = containerSelector && containerSelector.querySelector("#map"),
+                inputAutoComplete,
+                buttonGetMyLocation,
+                defaultCoords,
+                map,
+                infoWindow,
+                marker,
+                geocoder,
+                autocomplete,
+                defaultZoom,
+                mapMaXZoomService,
+                styles = [
+                    {
+                        featureType: "all",
+                        elementType: "labels",
+                        stylers: [
+                            {
+                                visibility: "on",
+                            },
+                        ],
+                    },
+                ],
+                onClickConfirm;
+            
+            if (!mapDiv) return false; // #map div not found
+            
+            mapDiv.innerHTML = "";
+
+            inputAutoComplete = document.createElement("INPUT");
+            inputAutoComplete.setAttribute("id", "pac-input");
+            inputAutoComplete.setAttribute("class", "controls");
+            inputAutoComplete.setAttribute(
+                "placeholder",
+                options.local.enter_your_location || "Enter Your Location"
+            );
+
+            buttonGetMyLocation = document.createElement("BUTTON");
+            buttonGetMyLocation.setAttribute("id", "pac-location");
+            buttonGetMyLocation.setAttribute("class", "controls");
+            buttonGetMyLocation.appendChild(
+                document.createTextNode(
+                    options.local.detect_my_location || "Detect My Location"
+                )
+            );
+            
+            if(options.shouldConfirmLocation) {
+                if (!containerSelector.querySelector(".confirm_address")) {
+                    var btnClass = 'confirm-btn-' + Date.now();
+                    mapDiv.insertAdjacentHTML('afterend', '<div class="confirm_address"><button type="button" class="primary-btn ml-auto ' + btnClass + '">' + (options.local.confirm_location || 'Confirm Location') + '</button></div>');
+                    document.querySelector('.' + btnClass).addEventListener('click', function() {
+                        Object.prototype.toString.call(onClickConfirm) === "[object Function]" && onClickConfirm()
+                    });
+                }
+            }
+            
+            try {
+                var locationParts = inputLocation.value.split(',');
+                if(Array.isArray(locationParts) && locationParts.length === 2) {
+                    defaultCoords = {
+                        lat: locationParts[0],
+                        lng: locationParts[1],
+                    };
+                } else throw new Error('Invalid location string');
+            } catch (error) {
+                defaultCoords = {
+                    lat: options.lat || 0,
+                    lng: options.lng || 0,
+                };
+            }
+            
+            defaultCoords.lat = parseFloat(defaultCoords.lat);
+            defaultCoords.lng = parseFloat(defaultCoords.lng);
+
+            if (!defaultCoords.lat || isNaN(defaultCoords.lat))
+                defaultCoords.lat = 0;
+
+            if (!defaultCoords.lng || isNaN(defaultCoords.lng))
+                defaultCoords.lng = 0;
+            
+            function _browserHasLocation() {
+                return navigator.geolocation && window.isSecureContext;
+            }
+
+            function _getElementInArray(
+                elements = [],
+                condition = function () { }
+            ) {
+                if (!(elements instanceof Array) || !elements.length)
+                    return null;
+
+                var map = function (elements) {
+                    if (!elements.length) return null;
+                    element = elements.splice(0, 1)[0];
+                    return condition(element) ? element : map(elements);
+                },
+                    element;
+
+                return map(elements.slice(0));
+            }
+
+            function _getCurrentUserCoords(event) {
+                event.preventDefault();
+                event.stopPropagation();
+                //check if geolocation is available
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(function (
+                        position
+                    ) {
+                        if (position.coords.latitude) {
+                            defaultCoords = {
+                                lat: parseFloat(position.coords.latitude),
+                                lng: parseFloat(position.coords.longitude),
+                            };
+                            mapMaXZoomService = mapMaXZoomService || new google.maps.MaxZoomService();
+                            mapMaXZoomService.getMaxZoomAtLatLng( defaultCoords, function (r) {
+                                var maxZoom = (r.status === "OK" && r.zoom > 4) ? r.zoom : 20;
+                                defaultZoom = parseInt(maxZoom - 4);
+                                map.setCenter(defaultCoords);
+                                map.setZoom(defaultZoom);
+                                marker.setPosition(defaultCoords);
+                                _geoCodeLatLng(geocoder, map, infoWindow );
+                            });
+                        }
+                    });
+                }
+            }
+
+            // eslint-disable-next-line no-unused-vars
+            function _geoCodeLatLng(
+                geocoder,
+                map,
+                infoWindow,
+                countryOnly = false
+            ) {
+                geocoder.geocode(
+                    { location: defaultCoords },
+                    function (results, status) {
+                        if (status === "OK") {
+                            if (results[0]) {
+                                _setAddress(
+                                    results[0].formatted_address,
+                                    results[0].geometry.location.toJSON(),
+                                    results[0].address_components,
+                                    countryOnly
+                                );
+
+                                // infoWindow.setContent(results[0].formatted_address);
+                                // infoWindow.open(map, marker);
+                            } else {
+                                console.log("No results found");
+                            }
+                        } else {
+                            console.log("Geocoder failed due to: " + status);
+                        }
+                    }
+                );
+            }
+
+            function _confirmAddress(address, location, address_components, countryOnly = false) {  
+
+                !countryOnly &&
+                    inputAddress &&
+                    address &&
+                    address.length &&
+                    (inputAddress.value = address);
+                inputLocation && location && (inputLocation.value = (location.lat + ',' + location.lng));
+                
+                Object.prototype.toString.call(options.onConfirmLocation) === "[object Function]" 
+                    && options.onConfirmLocation({address, location}) 
+            
+                if (!Array.isArray(address_components)) return;
+
+                // reset fields
+                inputCountry && (inputCountry.value = "");
+                inputRegion && (inputRegion.value = "");
+                inputCity && (inputCity.value = "");
+
+                for (
+                    let index = 0;
+                    index < address_components.length;
+                    index++
+                ) {
+                    const component = address_components[index];
+                    if (
+                        component.types.indexOf("country") !== -1 &&
+                        inputCountry &&
+                        options.countries
+                    ) {
+                        // country check
+                        var country = _getElementInArray(
+                            options.countries,
+                            function (country) {
+                                return (
+                                    country.iso_code_2.trim().toUpperCase() ===
+                                    component.short_name.trim().toUpperCase()
+                                );
+                            }
+                        );
+                        
+                        if (country) {
+                            $(inputCountry).val(country.value).change(); // required to update zone
+                        }
+                        
+                    } else if (
+                        !countryOnly &&
+                        component.types.indexOf(
+                            "administrative_area_level_1"
+                        ) !== -1 &&
+                        inputRegion
+                    ) {
+                        // region check
+                        setTimeout(() => {
+                            Array.from(inputRegion.options).map((opt) => {
+                                if (component.short_name.toLowerCase().includes(opt.innerText.toLowerCase()) || 
+                                    opt.innerText.toLowerCase().includes(component.short_name.toLowerCase())
+                                ) {
+                                    $(inputRegion).val(opt.value).change(); // required to update city
+                                }
+                            });
+                        }, 500);
+                    } else if (
+                        !countryOnly &&
+                        component.types.indexOf(
+                            "administrative_area_level_2"
+                        ) !== -1 &&
+                        inputCity
+                    ) {
+                        // city check
+                        // console.log("administrative_area_level_2", component.short_name)
+                    } else if (
+                        !countryOnly &&
+                        component.types.indexOf("postal_code") !== -1 &&
+                        inputPostalCode
+                    ) {
+                        // postcode check
+                        inputPostalCode.value = component.long_name;
+                    }
+                }
+            }
+                
+            function _setAddress(
+                address,
+                location,
+                address_components,
+                countryOnly = false
+            ) {
+                
+                if (countryOnly) {
+                    _confirmAddress(address, location, address_components, countryOnly);
+                }
+                            
+                if(options.shouldConfirmLocation) {
+                    onClickConfirm = _confirmAddress.bind(null, address, location, address_components, false);
+                } else {
+                    _confirmAddress(address, location, address_components, countryOnly);
+                }
+            }
+            return (function () {
+                infoWindow        = new google.maps.InfoWindow();
+                geocoder          = new google.maps.Geocoder();
+                mapMaXZoomService = mapMaXZoomService || (new google.maps.MaxZoomService());
+                mapMaXZoomService.getMaxZoomAtLatLng(
+                    defaultCoords,
+                    function (r) {
+                        var maxZoom = r.status === "OK" ? r.zoom : 20;
+                        defaultZoom = parseInt( maxZoom / 2.5 );
+                        map = new google.maps.Map(
+                            mapDiv,
+                            {
+                                center: defaultCoords,
+                                zoom: defaultZoom,
+                                panControl: false,
+                                gestureHandling: "greedy",
+                                streetViewControl: !1,
+                                styles: styles,
+                                mapTypeControl: !1,
+                            }
+                        );
+                        marker = new google.maps.Marker({
+                            position: defaultCoords,
+                            map: map,
+                            draggable: true,
+                            status: "active",
+                        });
+                        autocomplete = new google.maps.places.Autocomplete(
+                            inputAutoComplete
+                        );
+                        map.controls[google.maps.ControlPosition.TOP_LEFT].push(
+                            inputAutoComplete
+                        );
+                        // geolocation working only secure origin
+                        if (_browserHasLocation()) {
+                            map.controls[google.maps.ControlPosition.TOP_LEFT].push(
+                                buttonGetMyLocation
+                            );
+
+                            buttonGetMyLocation.onclick = _getCurrentUserCoords;
+                        }
+                        // Bind the map's bounds (viewport) property to the autocomplete object,
+                        // so that the autocomplete requests use the current map bounds for the
+                        // bounds option in the request.
+                        autocomplete.bindTo("bounds", map);
+                        // Set the data fields to return when the user selects a place.
+                        autocomplete.setFields([
+                            "address_components",
+                            "geometry",
+                            "icon",
+                            "name",
+                        ]);
+                        autocomplete.addListener("place_changed", function () {
+                            marker.setVisible(false);
+
+                            var place = autocomplete.getPlace();
+
+                            if (!place.geometry) {
+                                // User entered the name of a Place that was not suggested and
+                                // pressed the Enter key, or the Place Details request failed.
+                                // console.log("No details available for input: '" + place.name + "'");
+                                return;
+                            }
+
+                            defaultCoords = place.geometry.location.toJSON();
+
+                            // If the place has a geometry, then present it on a map.
+                            if (place.geometry.viewport) {
+                                map.fitBounds(place.geometry.viewport);
+                            } else {
+                                map.setCenter(defaultCoords);
+                                map.setZoom(defaultZoom); // Why 17? Because it looks good.
+                            }
+
+                            marker.setPosition(defaultCoords);
+                            marker.setVisible(true);
+                            _geoCodeLatLng(geocoder, map, infoWindow);
+                        });
+                        map.addListener("click", function (e) {
+                            defaultCoords = e.latLng.toJSON();
+                            marker.setPosition(defaultCoords);
+                            map.setCenter(defaultCoords);
+                            marker.setVisible(true);
+                            _geoCodeLatLng(geocoder, map, infoWindow);
+                        });
+                        marker.addListener("dragend", function () {
+                            defaultCoords = marker.getPosition();
+                            _geoCodeLatLng(geocoder, map, infoWindow);
+                        });
+                        google.maps.event.addDomListener(
+                            inputAutoComplete,
+                            "keydown",
+                            function (event) {
+                                if (event.keyCode === 13) {
+                                    event.preventDefault();
+                                }
+                            }
+                        );
+                        marker.setMap(map);
+                        _geoCodeLatLng(geocoder, map, infoWindow, true);
+                    } // callback success
+                );
+                return {
+                    setDefaultCoords: function (coords) {
+                        var locationParts = coords.split(',');
+                        if(Array.isArray(locationParts) && locationParts.length === 2) {
+                            defaultCoords = {lat: locationParts[0], lng: locationParts[1],};
+                            if(!defaultCoords.lat) defaultCoords.lat = 0;
+                            if(!defaultCoords.lng) defaultCoords.lng = 0;
+                            defaultCoords.lat = parseFloat(defaultCoords.lat);
+                            defaultCoords.lng = parseFloat(defaultCoords.lng);
+                            mapMaXZoomService = mapMaXZoomService || (new google.maps.MaxZoomService());
+                            mapMaXZoomService.getMaxZoomAtLatLng(defaultCoords, function (r) {
+                                var maxZoom = r.status === "OK" ? r.zoom : 20;
+                                defaultZoom = parseInt(3 * (maxZoom / 4));
+                                defaultZoom = parseInt((GOOGLE_MAP_SETTING.lat == defaultCoords.lat && GOOGLE_MAP_SETTING.lng == defaultCoords.lng) ? maxZoom / 2.5 : 3 * (maxZoom / 4));
+                                marker.setVisible(false);
+                                map.setCenter(defaultCoords);
+                                map.setZoom(defaultZoom);
+                                marker.setPosition(defaultCoords);
+                                marker.setVisible(true);
+                                _geoCodeLatLng(geocoder, map, infoWindow);
+                            });
+                        }
+                    },
+                }
+            })();
+        }
+
+        return typeof google !== "undefined" ?
+            initializeAddressMap({
+                containerSelector: "#payment_address",
+                lat: parseFloat('{{ google_map['lat'] ?: 0 }}'),
+                lng: parseFloat('{{ google_map['lng'] ?: 0 }}'),
+                local: {
+                    enter_your_location: "{{ lang('text_checkout_enter_your_location') }}",
+                    detect_my_location: "{{ lang('text_checkout_detect_location') }}",
+                    confirm_location: "{{ lang('text_checkout_confirm_location') }}",
+                },
+                countries: {{ payment_address['country_id']['options'] | json_encode }},
+                shouldConfirmLocation: true,
+                onConfirmLocation: function(result) {
+                    // console.log(result);
+                }
+            }) : {};
+    };
+
+    $(function() {
+       typeof google !== "undefined" && (window.googleMapInstance = initializeAddressMap());
+    });
+</script>
+
+{# Render google map tumb #}
+<script>
+    const MAP_THUMB_STYLE = [
+        {
+            "featureType": "water",
+            "elementType": "geometry",
+            "stylers": [
+                {
+                    "color": "#b1b1ff"
+                },
+                {
+                    "lightness": 17
+                }
+            ]
+        },
+        {
+            "featureType": "landscape",
+            "elementType": "geometry",
+            "stylers": [
+                {
+                    "color": "#ffffff"
+                },
+                {
+                    "lightness": 10
+                }
+            ]
+        },
+        {
+            "featureType": "road.highway",
+            "elementType": "geometry.fill",
+            "stylers": [
+                {
+                    "visibility": "on"
+                }
+            ]
+        },
+        {
+            "featureType": "road.highway",
+            "elementType": "geometry.stroke",
+            "stylers": [
+                {
+                    "visibility": "on"
+                }
+            ]
+        },
+        {
+            "featureType": "road.arterial",
+            "elementType": "geometry",
+            "stylers": [
+                {
+                    "visibility": "on"
+                }
+            ]
+        },
+        {
+            "featureType": "road.local",
+            "elementType": "geometry",
+            "stylers": [
+                {
+                    "visibility": "off"
+                }
+            ]
+        },
+        {
+            "featureType": "poi",
+            "elementType": "geometry",
+            "stylers": [
+                {
+                    "visibility": "off"
+                }
+            ]
+        },
+        {
+            "featureType": "poi.park",
+            "elementType": "geometry",
+            "stylers": [
+                {
+                    "visibility": "off"
+                }
+            ]
+        },
+        {
+            "elementType": "labels.text.stroke",
+            "stylers": [
+                {
+                    "visibility": "off"
+                }
+            ]
+        },
+        {
+            "elementType": "labels.text.fill",
+            "stylers": [
+                {
+                    "visibility": "on"
+                },
+                {
+                    "color": "#79afb7"
+                },
+                {
+                    "lightness": 1
+                }
+            ]
+        },
+        {
+            "elementType": "labels.icon",
+            "stylers": [
+                {
+                    "visibility": "off"
+                }
+            ]
+        },
+        {
+            "featureType": "transit",
+            "elementType": "geometry",
+            "stylers": [
+                {
+                    "visibility": "off"
+                }
+            ]
+        },
+        {
+            "featureType": "administrative",
+            "elementType": "geometry.fill",
+            "stylers": [
+                {
+                    "visibility": "off"
+                }
+            ]
+        },
+        {
+            "featureType": "administrative",
+            "elementType": "geometry.stroke",
+            "stylers": [
+                {
+                    "visibility": "on"
+                }
+            ]
+        }
+    ];
+    
+    function errorRenderMap(mapBox) {
+        // console.error('unknown google maps cdn');
+    }   
+    
+    function renderAddressMap(mapBox) {
+        if (!mapBox) return false;
+        
+        if (typeof google === "undefined") return errorRenderMap(mapBox); // undefined google map cdn
+        
+        var locationParts = (mapBox.getAttribute('data-location') || '').split(',');
+        
+        if (locationParts.length !== 2) {
+            locationParts = [GOOGLE_MAP_SETTING.lat || 0, GOOGLE_MAP_SETTING.lng || 0];
+        }
+                
+        var coords = {lat: locationParts[0], lng: locationParts[1]};
+        
+        if(!coords.lat) coords.lat = 0;
+        if(!coords.lng) coords.lng = 0;
+        
+        coords.lat = parseFloat(coords.lat);
+        coords.lng = parseFloat(coords.lng);
+        
+        if(isNaN(coords.lat)) coords.lat = 0;
+        if(isNaN(coords.lng)) coords.lng = 0;
+
+        var mapContainer = mapBox.querySelector('.map');
+        if (!mapContainer) return false;
+        
+        var mapMaXZoomService = new google.maps.MaxZoomService;
+        
+        mapMaXZoomService.getMaxZoomAtLatLng(coords, function(r) {
+            var maxZoom = r.status === "OK" ? r.zoom : 20;
+            var minZoom = parseInt(maxZoom / 2.2);
+            var mapThumbOptions  = {
+                zoom: minZoom,
+                center: coords,
+                disableDefaultUI: true,
+                draggable: false,
+                center: new google.maps.LatLng(coords.lat, coords.lng),
+                mapTypeId: google.maps.MapTypeId.TERRAIN,
+                styles: MAP_THUMB_STYLE,
+            }
+                
+            mapAdress = new google.maps.Map(mapContainer, mapThumbOptions);
+
+            new google.maps.Marker({
+                position: new google.maps.LatLng(coords.lat, coords.lng),
+                map: mapAdress
+            });
+        });              
+        
+    }
+        
+    function reinitializeAddressMaps() {
+        Array.from(document.querySelectorAll(".map-box[data-location]")).map(renderAddressMap);
+    }
+    
+    $(function() {
+        typeof google !== "undefined" && reinitializeAddressMaps();
+    });    
+</script>
+
+{# telephone js #}
+<script>
+   $(function() {
+        (function() {
+           var inputs = document.querySelectorAll(".tel"),
+                // country = document.querySelector('#payment_address_iso_code_2') ? document.querySelector('#payment_address_iso_code_2').value : '';
+                country = null;
+                 
+            if(inputs.length && typeof intlTelInput !== "undefined") {
+                inputs.forEach(function(input) {
+                    var name = input.name;
+                    input.setAttribute('name', '');
+                    var iti = intlTelInput(input, Object.assign({
+                        nationalMode: true,
+                        separateDialCode: !true,
+                        autoPlaceholder: "aggressive",
+                        formatOnDisplay: true,
+                        preferredCountries: [],
+                        responsiveDropdown: true,
+                        placeholderNumberType: "MOBILE",
+                        hiddenInput: name,
+                        utilsScript: "expandish/view/javascript/iti/js/utils.js",
+                    }, function() {
+                        return (country && country.length ? {initialCountry: (country).toLowerCase()} : {
+                            initialCountry: "auto",
+                            geoIpLookup: function (callback) {
+                                getGeoIPLockup(resp => {
+                                    var countryCode = (resp && resp.country) ? resp.country : "us";
+                                    callback(countryCode);
+                                    
+                                    var countrySelect = document.querySelector('#payment_address_country_id');
+                                    if (!countrySelect || countrySelect.value.length) return;
+                                    var countryOption = countrySelect.querySelector('option[data-code="'+countryCode.toUpperCase()+'"]');
+                                    if (!countryOption) return;
+                                    var index = Array.from(countrySelect.options).indexOf(countryOption);
+                                    if (index === -1) return;
+                                    countrySelect.selectedIndex = index;      
+                                    $(countrySelect).trigger('change');
+                                });
+                            },
+                        })
+                    }()));      
+                    
+                    input.onkeypress = function(e) {
+                        e.stopPropagation ? e.stopPropagation() : (e.cancelBubble = !0);
+                        "number" != typeof e.which && (e.which = e.keyCode);
+                        if (
+                            [43, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57].indexOf(
+                                e.which
+                            ) === -1
+                        ) {
+                            e.preventDefault();
+                            return false;
+                        }    
+                    };
+                            
+                    input.onkeyup = function(event) {
+                        document.querySelector('input[name="' + name + '"]').value = iti.getNumber();
+                    };
+                    
+                    var inputPhoneCode = document.querySelector("input[name='payment_address[phonecode]']");
+                    var inputIso2 = document.querySelector("input[name='payment_address[iso_code_2]']");
+                    
+                    input.onchange = function(event) {
+                        var selectedCountry = input.iti.getSelectedCountryData();
+                        if (!selectedCountry) return;
+                        inputPhoneCode && (inputPhoneCode.value = (selectedCountry.dialCode || ""));
+                        inputIso2 && (inputIso2.value = (selectedCountry.iso2 || "")).toUpperCase();
+                    };
+                    
+                    input.iti = iti;
+                });
+            } 
+        }());
+   });
+</script>
+
+{# select default address form data #}
+<script>
+function fillAddressFormData(dataset = {}) {
+    resetValidationErrors();
+    $("#payment_address_zone_id").val(dataset.zone_id || '').attr('data-zone_id', dataset.zone_id || '');
+    $("#payment_address_area_id").val(dataset.area_id || '').attr('data-area_id', dataset.area_id || '');
+    
+    $("#payment_address_country_id").val(dataset.country_id || '').trigger("change");
+    
+    $("#payment_address_address_1").val(dataset.address_1 || '');
+    $("#payment_address_address_2").val(dataset.address_2 || '');
+    $("#payment_address_postcode").val(dataset.postcode || '');
+    $("#payment_address_location").val(dataset.location || '');
+    
+    Object.prototype.toString.call(window.googleMapInstance) === "[object Object]" 
+        && Object.prototype.toString.call(window.googleMapInstance.setDefaultCoords) === "[object Function]"
+        && window.googleMapInstance.setDefaultCoords(dataset.location || '');
+
+    if (document.querySelector('#payment_address_telephone')) {
+        var telInput = document.querySelector('#payment_address_telephone');
+        var telVal = dataset.telephone || '';
+        if (telInput.iti) {
+            telInput.iti.setNumber(telVal);
+            telInput.iti.hiddenInput.value = telVal;
+        } else {
+            telInput.value = telVal;
+        }
+        
+        $(telInput).trigger('change');
+    }
+
+    /*
+    setTimeout(() => {
+        refreshPaymentAddessZone(
+            dataset.country_id, 
+            dataset.zone_id, 
+            dataset.area_id
+        )
+    }, 2000);*/
+}
+$(function() {
+    $(document).on('change', function(event) {
+        if (event.target.classList.contains('payment--address')) {
+            if (event.target.checked) {
+                var currentAddress = $(event.target).closest('.map-box').find('.radio-input__info-container__edit').get(0);
+                if (currentAddress) {                
+                    fillAddressFormData(currentAddress.dataset);
+                }
+                $('#payment_address').removeClass('added');
+            }
+            
+            // undimmed next action
+            var nextActionBtn = document.querySelector('.actions li a[href="#next"]');
+            if (nextActionBtn) {
+                nextActionBtn.classList.remove('disabled');
+            }
+            
+            $('.map-box').show();
+        }
+    });
+});
+</script>
+{# add new address #}
+<script>
+    // UI 
+    $(function() {
+        $('.add--new-address').click(function (e) { 
+            resetValidationErrors();
+            $('.map-box').show();
+            $('.address-toogle__save-btn').hide();
+            var formArea = $(e.target).closest('.add-address-area').find(".address-toogle");
+            if (!formArea.is(":hidden")) {
+                formArea.slideUp();
+                return;
+            }
+            
+            $('.address-toogle').slideUp();
+            
+            // collapse any selected address                  
+            $('.radio-input').removeClass('active');
+            
+            $('.radio-input .radio-input__info-container__label span:not(.radio-input__full-name), .radio-input .radio-input__info-container__label a ,.radio-input  .mapouter').slideUp();
+            
+            $('.radio-input.active .radio-input__info-container__label span:not(.radio-input__full-name),.radio-input.active .radio-input__info-container__label a ,.radio-input.active  .mapouter').slideDown();
+            $('.edit--address-input').remove();
+
+            // reset address form inputs
+            if (!$('#payment_address').hasClass('added')) {
+                $("#payment_address_zone_id").val("").attr('data-zone_id', '').trigger("change");
+                $("#payment_address_area_id").val("").attr('data-area_id', '').trigger("change");
+                
+                getGeoIPLockup(resp => {
+                    if (resp && resp.country) {
+                        var countryCode =  resp.country;
+                        var countrySelect = document.querySelector('#payment_address_country_id');
+                        if (countrySelect) {
+                            var countryOption = countrySelect.querySelector('option[data-code="'+countryCode.toUpperCase()+'"]');
+                            if (countryOption) {
+                                var index = Array.from(countrySelect.options).indexOf(countryOption);
+                                if (index > -1) {
+                                    countrySelect.selectedIndex = index;      
+                                    $(countrySelect).trigger('change');
+                                    var telInput = document.querySelector('#payment_address_telephone');
+                                    if (telInput && telInput.iti) {
+                                        var isoCode = countrySelect[index].dataset.code;
+                                        if (isoCode && isoCode.length) telInput.iti.setCountry(isoCode.toUpperCase());
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    fillAddressFormData({ country_id: $("#payment_address_country_id").val(), });
+                });
+            }  
+            
+            $('#payment_address').removeClass('edited').attr('data-address', '').addClass('added').appendTo(formArea);
+           
+            
+            
+            Object.prototype.toString.call(window.googleMapInstance) === "[object Object]" 
+                && Object.prototype.toString.call(window.googleMapInstance.setDefaultCoords) === "[object Function]"
+                && window.googleMapInstance.setDefaultCoords(`${GOOGLE_MAP_SETTING.lat},${GOOGLE_MAP_SETTING.lng}`);
+                
+            formArea.slideDown();
+            
+            $('.address-toogle__save-btn').hide();
+            $('.address-toogle__add-btn').show();
+            
+            // dimmed next action
+            var nextActionBtn = document.querySelector('.actions li a[href="#next"]');
+            if (nextActionBtn) {
+                nextActionBtn.classList.add('disabled');
+            }
+        });        
+    });
+    
+    function addAddress(event, data, callback = function() {}) {
+        $.ajax({
+            url: "?route=checkout/checkoutv2/addAddress",
+            type: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            data: new URLSearchParams(data).toString(),
+            beforeSend: () => {
+                resetValidationErrors();
+            },
+            complete: callback,
+        })
+            .done((response) => {
+                response = JSON.parse(response);
+                if (!response.success) {
+                    for (var key in response.errors || {}) {
+                        $("#payment_address [name='payment_address[" + key + "]']")
+                            .closest(".form-group")
+                            .addClass("highlight-error")
+                            .append(
+                                '<div class="error_span">' +
+                                    response.errors[key] +
+                                    "</div>"
+                            );
+                    }
+                    return;
+                }
+                
+                var addressTpl = document.querySelector('#address-box-tpl');
+                if (!addressTpl) return;
+                addressTpl = addressTpl.innerHTML;
+                
+                for (var key in response.data) {
+                    addressTpl = addressTpl.replace(new RegExp('%' + key.toUpperCase() + '%', 'g'), response.data[key]);
+                }
+                
+                $('.address-toogle').slideUp();
+                
+                document.querySelector('#payment_address_form div').insertAdjacentHTML('beforeEnd', addressTpl);
+                
+                $('.radio-input .radio-input__info-container__label span:not(.radio-input__full-name) , .radio-input .radio-input__info-container__label a ,.radio-input  .mapouter').slideUp(0);
+                $('.radio-input.active .radio-input__info-container__label span:not(.radio-input__full-name) ,.radio-input.active .radio-input__info-container__label a,.radio-input.active  .mapouter').slideDown(0);
+        
+                // undimmed next action
+                var nextActionBtn = document.querySelector('.actions li a[href="#next"]');
+                if (nextActionBtn) {
+                    nextActionBtn.classList.remove('disabled');
+                }
+
+                return true;
+            })
+            .fail((error) => {
+                console.error(error);
+            });
+    }
+    
+    function editAddress(event, data, callback = function() {}) {
+        $.ajax({
+            url: "?route=checkout/checkoutv2/updateAddress",
+            type: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            data: new URLSearchParams(data).toString(),
+            beforeSend: () => {
+                resetValidationErrors();
+            },
+            complete: callback,
+        })
+        .done((response) => {
+            response = JSON.parse(response);
+            if (!response.success) {
+                for(var key in response.errors || {}) {
+                    $('#payment_address [name=\'payment_address\['+key+'\]\']').closest('.form-group').addClass('highlight-error').append('<div class="error_span">' + response.errors[key] + '</div>');
+                }
+                return;
+            }
+            
+            // Fill updated data to address box - JS
+            var addressBox = $(event.target).closest('.address-radio-box');
+            
+            addressBox.find('.radio-input__full-name').text(response.data.short_address);
+            addressBox.find('.thumb-address_1').text(response.data.address_1);
+            addressBox.find('.thumb-address_2').text(response.data.address_2);
+            addressBox.find('.thumb-area').text(response.data.area);
+            addressBox.find('.thumb-zone').text(response.data.zone);
+            addressBox.find('.thumb-country').text(response.data.country);
+            addressBox.find('.radio-input__info-container__edit').attr('data-address_id', response.data.address_id);
+            addressBox.find('.radio-input__info-container__edit').attr('data-country_id', response.data.country_id);
+            addressBox.find('.radio-input__info-container__edit').attr('data-zone_id', response.data.zone_id);
+            addressBox.find('.radio-input__info-container__edit').attr('data-area_id', response.data.area_id);
+            addressBox.find('.radio-input__info-container__edit').attr('data-city', response.data.city);
+            addressBox.find('.radio-input__info-container__edit').attr('data-address_1', response.data.address_1);
+            addressBox.find('.radio-input__info-container__edit').attr('data-address_2', response.data.address_2);
+            addressBox.find('.radio-input__info-container__edit').attr('data-postcode', response.data.postcode);
+            addressBox.find('.radio-input__info-container__edit').attr('data-location', response.data.location);
+            addressBox.find('.radio-input__info-container__edit').attr('data-telephone', response.data.telephone);
+            addressBox.find('.radio-input__info-container__edit').attr('data-default', response.data.default);
+            addressBox.find('.map-box').attr('data-location', response.data.location);
+            
+            addressBox.find('.address-toogle').slideToggle();
+            addressBox.find('.map-box').slideToggle();
+            
+            renderAddressMap(addressBox.find('.map-box').get(0));
+            
+            // undimmed next action
+            var nextActionBtn = document.querySelector('.actions li a[href="#next"]');
+            if (nextActionBtn) {
+                nextActionBtn.classList.remove('disabled');
+            }
+
+            return true;
+        })
+        .fail((error) => {
+            console.error(error)
+        });   
+    }
+    
+</script>
+
+{# Edit Address #}
+<script>
+    $(function() {
+        $('body').click(function (e) {
+            if (! e.target.classList.contains('radio-input__info-container__edit')) return;
+            
+            e.preventDefault();
+            e.stopPropagation();
+                        
+            var formArea = $(e.target).closest('.edit-address-area').find('.address-toogle');
+            var thumbArea = $(e.target).closest('.edit-address-area').find('.map-box');
+            
+            if (!formArea.is(":hidden")) {
+                formArea.slideUp();
+                return;
+            }
+            
+            $('.address-toogle').slideUp();
+            var addressId = $(e.target).attr('data-address_id');
+            
+            if (!$('#payment_address').hasClass('edited') || $('#payment_address').attr('data-address') != addressId ) {
+                $('.edit--address-input').remove();
+                $('#payment_address').append('<input type="hidden" class="edit--address-input" name="payment_address[edit_address]" value="1">');
+            }
+                
+            $('#payment_address').removeClass('added').addClass('edited').attr('data-address', addressId).appendTo(formArea);
+            
+            thumbArea.hide();
+            formArea.slideDown();            
+            // show edit btn
+            $('.address-toogle__add-btn').hide();
+            $('.address-toogle__save-btn').show();
+            // dimmed next action
+            var nextActionBtn = document.querySelector('.actions li a[href="#next"]');
+            if (nextActionBtn) {
+                nextActionBtn.classList.add('disabled');
+            }
+        });
+        
+        $('.address-toogle__save-btn, .address-toogle__add-btn').click(function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            event.target.classList.add('disabled');
+            
+            resetValidationErrors();
+            
+            var form = document.querySelector('#payment_address_form');
+            
+            jsValidateForm(form, function() {
+                // console.log("Form is valid");
+                var formData = new FormData(form);
+                
+                if (document.querySelector('#payment_address_telephone')) {
+                    var telInput = document.querySelector('#payment_address_telephone');
+                    if (telInput.iti) {
+                        formData.delete("payment_address[telephone]");
+                        formData.append("payment_address[telephone]", telInput.iti.getNumber());
+                    }
+                }
+                
+                var data = new FormData;
+                
+                data.append('address_id', formData.get('payment_address[address_id]'));  
+                data.append('country_id', formData.get('payment_address[country_id]'));  
+                data.append('zone_id', formData.get('payment_address[zone_id]'));  
+                data.append('area_id', formData.get('payment_address[area_id]'));  
+                data.append('address_1', formData.get('payment_address[address_1]'));  
+                data.append('address_2', formData.get('payment_address[address_2]'));  
+                data.append('telephone', formData.get('payment_address[telephone]'));  
+                data.append('postcode', formData.get('payment_address[postcode]'));
+                data.append('default', 1); 
+                
+                if (formData.get('payment_address[location]')) {
+                    data.append('location', formData.get('payment_address[location]'));  
+                }  
+
+                if (Number(data.get("address_id"))) {
+                    editAddress(event, data, () => event.target.classList.remove('disabled'));
+                } else {
+                    addAddress(event, data, () => event.target.classList.remove('disabled'));
+                }
+            });
+            
+        });
+    }); // on load
+</script>
+
+{% if addresses is not defined or addresses|length == 0 %}
+<script>
+    $(document).ready(function () {
+            setTimeout(function() {
+                $('.add--new-address').click();
+            }, 500);
+    });
+</script>
+{% endif %}
+
+<script>
+$(document).ready(function () {
+    $('#payment_address_wrap .box-content .radio-input .payment--address[checked="checked"]').closest('.radio-input').addClass('active')
+    $('.radio-input .radio-input__info-container__label span:not(.radio-input__full-name) , .radio-input .radio-input__info-container__label a ,.radio-input  .mapouter').slideUp(0);
+    $('.radio-input.active .radio-input__info-container__label span:not(.radio-input__full-name) ,.radio-input.active .radio-input__info-container__label a,.radio-input.active  .mapouter').slideDown(0);
+    
+    var currentAddress = $('.payment--address[checked="checked"]').closest('.map-box').find('.radio-input__info-container__edit').get(0);
+    if (currentAddress) {                
+        fillAddressFormData(currentAddress.dataset)
+    }
+});
+</script>

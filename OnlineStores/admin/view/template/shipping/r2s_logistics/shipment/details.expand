@@ -1,0 +1,218 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block title %}
+    {{ lang('heading_title_r2s_logistics') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+
+     <a href="{{ link('sale/order/info?order_id=')~order_id }}"  class="button btn btn-success">{{ lang('button_return') }}</a>
+     <a  href="{{ link('shipping/r2s_logistics/trackShipment?order_id=')~order_id }}"  class="button btn btn-primary">{{ lang('button_track_shipment') }}</a>
+     <a href="{{ r2s_logistics_label_url }}"  target="_blank" class="button btn btn-primary">{{ lang('button_print_label') }}</a>
+     <a href="{{ r2s_logistics_sticker_url }}"  target="_blank" class="button btn btn-primary">{{ lang('button_print_sticker') }}</a>
+    <a onclick="cancelShipment();" target="_blank" class="button btn btn-danger">{{ lang('button_cancel_shipment') }}</a>
+{% endblock headelements %}
+
+
+{% block content %}
+    <!-- Fieldset legend -->
+ <div class="row">
+ <div class="alert alert-info" id="infoDialog" style="display: none;">
+    <i class="fa fa-exclamation-circle"></i> <span id="infoDialogText">{{ lang('please_wait') }}</span>
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+ </div>
+    <form method="post" class="form">
+       <div class="col-md-12">
+          <!-- Advanced legend -->
+          <div class="panel panel-white">
+             <div class="panel-heading">
+                <h6 class="panel-title"><span class="text-bold"><i class="fa fa-cog fa-lg"></i> {{ lang('text_shipment_details') }}</span></h6>
+                <div class="heading-elements not-collapsible">
+                   <ul class="icons-list">
+                      <li><a data-action="collapse" class=""></a></li>
+                   </ul>
+                </div>
+             </div>
+              <div class="panel-body">
+                  <div class="collapse in" id="panel1">
+                      <div class="form-group col-md-6">
+                          <label class="control-label">
+                              {{ lang('entry_name') }} <span class="text-danger">*</span>
+                          </label>
+                          <input type="text" name="r2s_logistics_entry_recipient_name" id="r2s_logistics_entry_recipient_name" class="form-control"
+                                 value="{{ r2s_logistics_entry_name }}"/>
+                      </div>
+                      <div class="form-group col-md-6">
+                          <label class="control-label">
+                              {{ lang('entry_mobile') }} <span class="text-danger">*</span>
+                          </label>
+                          <input type="text" name="r2s_logistics_entry_recipient_phone" id="r2s_logistics_entry_recipient_phone" class="form-control"
+                                 value="{{ r2s_logistics_entry_mobile }}"/>
+                      </div>
+                      <div class="form-group col-md-6">
+                          <label class="control-label">
+                              {{ lang('entry_consignee_code') }} <span class="text-danger">*</span>
+                          </label>
+                          <input type="text" name="r2s_logistics_entry_consignee_code" id="r2s_logistics_entry_consignee_code" class="form-control"
+                                 value="{{ r2s_logistics_entry_consignee_code }}"/>
+                          <span class="help-block"> {{ lang('entry_consignee_code_note') }}</span>
+                      </div>
+                      <div class="form-group col-md-6">
+                          <label class="control-label">
+                              {{ lang('entry_client_code') }} <span class="text-danger">*</span>
+                          </label>
+                          <input type="text" name="r2s_logistics_entry_client_code" id="r2s_logistics_entry_client_code" class="form-control"
+                                 value="{{ r2s_logistics_entry_client_code }}"/>
+                          <span class="help-block"> {{ lang('entry_client_code_note') }}</span>
+                      </div>
+                      <div class="form-group col-md-6">
+                          <label class="control-label">
+                              {{ lang('entry_address') }} <span class="text-danger">*</span>
+                          </label>
+                          <input type="text" name="r2s_logistics_entry_recipient_address" id="r2s_logistics_entry_recipient_address" class="form-control"
+                                 value="{{ r2s_logistics_entry_address }}"/>
+                          <span class="help-block"> {{ lang('entry_address') }}</span>
+                      </div>
+                      <div class="form-group col-md-6">
+                          <label>{{ lang('entry_country_code') }}</label> <span class="text-danger">*</span>
+                          <input type="text" name="r2s_logistics_entry_recipient_country" id="r2s_logistics_entry_recipient_country" value="{{ r2s_logistics_entry_country }}" class="form-control" />
+                          <span class="help-block"> {{ lang('entry_country_code_note') }}</span>
+                      </div>
+                      <div class="form-group col-md-6">
+                          <label>{{ lang('entry_state') }}</label> <span class="text-danger">*</span>
+                          <input type="text" name="r2s_logistics_entry_recipient_state" id="r2s_logistics_entry_recipient_state" class="form-control"
+                                 value="{{ r2s_logistics_state }}"/>
+                          <span class="help-block"> {{ lang('entry_state') }}</span>
+                      </div>
+                      <div class="form-group col-md-6">
+                          <label>{{ lang('entry_city') }}</label> <span class="text-danger">*</span>
+                          <input type="text" name="r2s_logistics_entry_recipient_city" id="r2s_logistics_entry_recipient_city" class="form-control"
+                                 value="{{ r2s_logistics_city }}"/>
+                          <span class="help-block"> {{ lang('entry_city') }}</span>
+                      </div>
+                      <div class="form-group col-md-6">
+                          <label>{{ lang('entry_service') }}</label> <span class="text-danger">*</span>
+                          <input type="text" name="r2s_logistics_entry_service" id="r2s_logistics_entry_service" class="form-control"
+                                 value="{{ r2s_logistics_entry_service }}"/>
+                          <span class="help-block"> {{ lang('entry_service') }}</span>
+                      </div>
+                      <div class="form-group col-md-6">
+                          <label>{{ lang('entry_payment_method') }}</label> <span class="text-danger">*</span>
+                          <input type="text" name="r2s_logistics_entry_payment_method" id="r2s_logistics_entry_payment_method" class="form-control"
+                                 value="{{ r2s_logistics_entry_payment_method }}"/>
+                          <span class="help-block"> {{ lang('entry_payment_method') }} </span>
+                      </div>
+                      <div class="form-group col-md-6">
+                          <label class="control-label"> {{ lang('entry_amount') }} </label>
+                          <input type="text" name="r2s_logistics_entry_amount" id="r2s_logistics_entry_amount" class="form-control"
+                                 value="{{ r2s_logistics_entry_amount }}" />
+                          <span class="help-block"> {{ lang('entry_amount_note') }}</span>
+                      </div>
+
+                      <div class="form-group col-md-6">
+                          <label>{{ lang('entry_cod_payment_method') }}</label>
+                          <input type="text" name="r2s_logistics_entry_cod_payment_method" id="r2s_logistics_entry_cod_payment_method" class="form-control"
+                                 value="{{ r2s_logistics_entry_cod_payment_method }}" />
+                          <span class="help-block"> {{ lang('entry_cod_payment_method_note') }}</span>
+                      </div>
+
+                      <div class="form-group col-md-6">
+                          <label class="control-label"> {{ lang('entry_currency') }} </label>
+                          <input type="text" name="r2s_logistics_entry_currency" id="r2s_logistics_entry_currency" class="form-control"
+                                 value="{{ r2s_logistics_entry_currency }}" />
+                          <span class="help-block"> {{ lang('entry_currency_note') }}</span>
+                      </div>
+
+                      <div class="form-group col-md-6">
+                          <label class="control-label"> {{ lang('entry_package_number') }} </label> <span class="text-danger">*</span>
+                          <input type="text" name="r2s_logistics_entry_package_number" id="r2s_logistics_entry_package_number" class="form-control"
+                                 value="{{ r2s_logistics_entry_package_number }}" />
+                          <span class="help-block"> {{ lang('entry_package_number_note') }}</span>
+                      </div>
+
+                      <div class="form-group col-md-6">
+                          <label class="control-label"> {{ lang('entry_actual_weight') }} </label> <span class="text-danger">*</span>
+                          <input type="text" name="r2s_logistics_entry_actual_weight" id="r2s_logistics_entry_actual_weight" class="form-control"
+                                 value="{{ r2s_logistics_entry_actual_weight }}" />
+                          <span class="help-block"> {{ lang('entry_actual_weight_note') }}</span>
+                      </div>
+
+                      <div class="form-group col-md-6">
+                          <label>{{ lang('entry_weight_unit') }}</label> <span class="text-danger">*</span>
+                          <input type="text" name="r2s_logistics_entry_weight_unit" id="r2s_logistics_entry_weight_unit" class="form-control"
+                                 value="{{ r2s_logistics_entry_weight_unit }}" />
+                          <span class="help-block"> {{ lang('entry_weight_unit') }}</span>
+                      </div>
+
+                      <div class="form-group col-md-6">
+                      <label>{{ lang('entry_reference_number') }}</label> <span class="text-danger">*</span>
+                      <input type="text" name="r2s_logistics_entry_reference_number" id="r2s_logistics_entry_reference_number" class="form-control"
+                             value="{{ r2s_logistics_entry_reference_number }}" />
+                      <span class="help-block"> {{ lang('entry_reference_number') }}</span>
+                     </div>
+
+                      <div class="form-group col-md-6">
+                          <label>{{ lang('entry_waybill_number') }}</label> <span class="text-danger">*</span>
+                          <input type="text" name="r2s_logistics_entry_waybill_numberr" id="r2s_logistics_entry_waybill_number" class="form-control"
+                                 value="{{ r2s_logistics_entry_waybill_number }}" />
+                          <span class="help-block"> {{ lang('entry_waybill_number') }}</span>
+                      </div>
+
+                      <div class="form-group col-md-12">
+                          <label class="control-label">
+                              {{ lang('r2s_logistics_entry_description') }}
+                          </label>
+                          <textarea type="text" class="form-control" rows="3" id="r2s_logistics_entry_description" name="r2s_logistics_entry_description">{{ r2s_logistics_entry_description }}</textarea>
+                          <span class="help-block"> {{ lang('r2s_logistics_entry_description') }}</span>
+                      </div>
+                      <div class="clearfix"></div>
+                  </div>
+              </div>
+          </div>
+          <!-- /a legend -->
+       </div>
+    </form>
+
+ </div>
+
+    <script>
+        // Default initialization
+        $('.select').select2({
+            minimumResultsForSearch: Infinity
+        });
+
+        $('.form').on("submit",function(){
+         $("#infoDialog").fadeIn(300);
+         setTimeout(function(){
+             $("#infoDialog").fadeOut(300);
+         },4000);
+        });
+
+
+         function cancelShipment() {
+                        $("#infoDialog").fadeIn(300);
+                        $.ajax({
+                            url: '{{ link('shipping/r2s_logistics/cancelShipment?order_id=')~order_id }}',
+                            dataType: 'json',
+                            success: function (response) {
+                                $("#infoDialogText").text(response.success_msg);
+                                if ( response.redirect == 1 )
+                                {
+                                    window.location.href = response.to;
+                                    return;
+                                }
+                            },
+                            error:function(){
+                             $("#infoDialogText").text(" {{ lang('error_r2s_logistics_tracking') }} ");
+                            }
+                        });
+                    }
+    </script>
+
+{% endblock %}

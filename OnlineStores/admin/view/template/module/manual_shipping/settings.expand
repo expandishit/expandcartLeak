@@ -1,0 +1,486 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block title %}
+    {{ lang('heading_title') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+    {% include "includes/buttons_top.expand" %}
+    <button data-toggle="modal" data-target="#manual-gateway-modal"
+        data-source="insert-trigger" class="btn btn-success btn-labeled">
+        <b><i class="icon-plus3"></i></b>{{lang('button_add_shipping_gateway')}}
+    </button>
+{% endblock headelements %}
+
+{% block content %}
+
+<div class="modal fade" id="manual-gateway-modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title">{{ lang('button_add_shipping_gateway') }} </h4>
+            </div>
+            <div class="modal-body">
+                <div class="modal-errors col-md-12"></div>
+                <form id="manual-gateway-form"
+                    data-action=""
+                    data-update="{{ link('module/manual_shipping/update', 'id=') }}"
+                    data-store="{{ link('module/manual_shipping/store') }}">
+                    <div class="tabbable nav-tabs-vertical nav-tabs-right col-md-12">
+                        <div class="tab-content col-md-12">
+                            {% for lng in languages %}
+                                <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}"
+                                     id="langTab{{ lng['code'] }}">
+                                    <div class="form-group" id="content_{{lng['code']}}-group">
+                                        <label class="control-label">
+                                            {{ lang('gateway_title') }}
+                                        </label>
+                                        <input type="text" name="mp[{{ lng['language_id'] }}][title]"
+                                            class="form-control" id="title_{{ lng['language_id'] }}">
+                                    </div>
+                                    
+                                    <div class="form-group" id="content_{{lng['code']}}-group">
+                                        <label class="control-label">
+                                            {{ lang('gateway_description') }}
+                                        </label>
+                                        <textarea class="form-control"
+                                            id="description_{{ lng['language_id'] }}"
+                                            name="mp[{{ lng['language_id'] }}][description]"></textarea>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                            <div class="form-group" id="content_{{lng['code']}}-group">
+                                        <label class="control-label">
+                                            {{ lang('gateway_shipping_company_id') }}
+                                        </label>
+                                        <input type="text" name="msGateway[shipping_company_id]"
+                                            class="form-control" id="shipping_company_id">
+                                    </div>
+                                    <div class="form-group" id="content_{{lng['code']}}-group">
+                                        <label class="control-label">
+                                            {{ lang('gateway_sku_number') }}
+                                        </label>
+                                        <input type="text" name="msGateway[sku_number]"
+                                            class="form-control" id="sku_number">
+                                    </div>
+                        </div>
+                        <div class="clearfix clear"></div>
+                        <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                            {% for language in languages %}
+                                <li class="{{ loop.first ? 'active' : '' }}">
+                                    <a href="#langTab{{ language['code'] }}" data-toggle="tab"
+                                       aria-expanded="false">
+                                        <img src="view/image/flags/{{ language['image'] }}"
+                                             title="{{ language['name'] }}" class="pull-right">
+                                        <div> {{ language['name'] }}</div>
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer text-left">
+                <button type="button" class="btn btn-danger pull-left" data-dismiss="modal">
+                    {{ lang('button_close') }}
+                </button>
+                <button type="button" class="btn btn-primary submit-form-trigger">
+                    {{ lang('button_save') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<form class="form" action="{{ link('module/manual_shipping/updateSettings') }}">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="panel panel-white">
+                <div class="panel-heading">
+                    <h6 class="panel-title"><span class="text-bold">{{ lang('entry_status') }}</span></h6>
+                    <div class="heading-elements not-collapsible">
+                        <ul class="icons-list">
+                            <li><a data-action="collapse" class=""></a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="collapse in" id="panel1">
+                        <div class="form-group" id="status-group">
+                            <label class="control-label">{{ lang('entry_status') }}</label>
+                            <div class="checkbox checkbox-switchery">
+                                <label>
+                                    <input type="checkbox" onchange="changeStatus(this);"
+                                           name="manual_shipping[status]"
+                                           class="switchery" {{ manual_shipping['status'] == 1 ? 'checked' : '' }}>
+                                    <span class="switchery-status">
+                                        {{ manual_shipping['status'] == 1 ? lang('text_enabled') : lang('text_disabled') }}
+                                    </span>
+                                </label>
+                            </div>
+                            <span class="help-block"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-9">
+            <div class="panel panel-white">
+                <div class="panel-heading">
+                    <h6 class="panel-title"><span
+                                class="text-bold">{{ lang('gateways_heading') }}</span></h6>
+                    <div class="heading-elements not-collapsible">
+                        <ul class="icons-list">
+                            <li><a data-action="collapse" class=""></a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="collapse in" id="fields-panel">
+                        <table class="table table-hover" id="manual-shipping-table">
+                            <thead>
+                            <tr>
+                                <!-- <th></th> -->
+                                <th>{{ lang('gateway_title') }}</th>
+                                <th>{{ lang('gateway_status') }}</th>
+                                <th></th>
+                            </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+<!-- End Form -->
+
+<!-- Lower Buttons -->
+{% include "includes/buttons_bottom.expand" %}
+<!-- End Lower Buttons -->
+<script>
+let dt;
+locales['confirm_hard_delete'] = '{{ lang("confirm_hard_delete") }}';
+locales['confirm_hard_delete_message'] = '{{ lang("confirm_hard_delete_message") }}';
+
+$(document).ready(function () {
+    $('select').select2();
+
+    let manualGatewayModal = $('#manual-gateway-modal');
+    let manualGatewayForm = $('#manual-gateway-form');
+    
+    let msgCache = {};
+    let msgDataHref = '{{ link("module/manual_shipping/get?id=") }}';
+    locales['switch_text_enabled'] = '{{ lang("switch_text_enabled") }}';
+    locales['switch_text_disabled'] = '{{ lang("switch_text_disabled") }}';
+
+    manualGatewayModal.on('hide.bs.modal', (e) => {
+        manualGatewayForm.find('input').val('');
+        manualGatewayForm.find('textarea').val('');
+    });
+
+    manualGatewayModal.on('show.bs.modal', (e) => {
+        let r = $(e.relatedTarget), c = $(e.currentTarget);
+        let source = r.data('source');
+
+        if (source == 'insert-trigger') {
+            manualGatewayForm.attr('data-action', manualGatewayForm.data('store'));
+        } else if (source == 'update-trigger') {
+
+            if (typeof r.data('id') === 'undefined') {
+                manualGatewayModal.modal('toggle');
+                return;
+            }
+
+            let id = r.data('id');
+
+            if (typeof msgCache[id] === 'undefined') {
+                $.ajax({
+                    url: msgDataHref + id,
+                    method: 'GET',
+                    dataType: 'JSON',
+                    async: false,
+                    success: (r) => {
+                        if (typeof r.status !== 'undefined' && r.status === 'OK') {
+                            msgCache[id] = r.data;
+                        } else {
+                            manualGatewayModal.modal('toggle');
+                            return;
+                        }
+                    }
+                });
+            }
+
+            if (typeof msgCache[id] !== 'undefined') {
+                for (i in msgCache[id]) {
+                    let msg = msgCache[id][i];
+                    manualGatewayModal.find('#title_' + msg['language_id']).val(msg['title']);
+                    manualGatewayModal.find('#sku_number').val(msg['sku_number']);     
+                    manualGatewayModal.find('#shipping_company_id').val(msg['shipping_company_id']);     
+                    manualGatewayModal.find('#description_' + msg['language_id']).val(msg['description']);
+                }
+            }
+
+            manualGatewayForm.attr('data-action', manualGatewayForm.data('update') + id);
+        }
+    });
+
+    dt = $('#manual-shipping-table').DataTable({
+        processing: true,
+        serverSide: true,
+        stateSave: true,
+        language: locales['dt_language'],
+        dom: '<"datatable-header"fB><"datatable-scroll"t><"datatable-footer"lip>',
+        select: {
+            style: 'multi',
+            selector: 'td:first-child'
+        },
+        drawCallback: function () {
+            $(this).find('tbody tr').slice(-3).find('.dropdown, .btn-group').addClass('dropup');
+        },
+        preDrawCallback: function() {
+            $(this).find('tbody tr').slice(-3).find('.dropdown, .btn-group').removeClass('dropup');
+        },
+        "ajax": {
+            url: '{{ link("module/manual_shipping/list") }}',
+            type: "post",
+            error: function (e,m,l) {
+                $(".datatables_country-error").html("");
+                $("#datatables_country").append('<tbody class="datatables_country-error"><tr><th colspan="3">No data found in the server</th></tr></tbody>');
+                $("#datatables_country_processing").css("display", "none");
+            }
+        },
+        buttons: [
+            /*{
+                text: "<i class='icon-trash'></i>",
+                className: 'btn btn-default bulk-delete disabled',
+                action: function(e, dt, node, config) {
+                    var selectedRows = dt.rows('.selected').data();
+                    var selectedIds = [];
+                    selectedRows.each(function(item) {
+                        selectedIds.push(item.user_id);
+                    });
+                    // console.log(selectedIds);
+                    if (selectedIds.length > 0){
+                        confirmMessage(function () {
+                            $.ajax({
+                                url: '{{ link('user/user/delete') }}',
+                                type: 'post',
+                                data: {ids: selectedIds},
+                                success: function(){
+                                    reloadDT();
+                                }
+                            });
+                        });
+                    }
+                }
+            },*/
+            {
+                extend: 'collection',
+                text: '<i class="icon-drawer-out"></i>',
+                className: 'btn btn-default btn-export',
+                buttons: [
+                    {
+                        extend: 'copyHtml5',
+                        text: locales['buttons']['copy'],
+                        exportOptions: {
+                            columns: ':visible'
+                        }
+                    },
+                    {
+                        extend: 'csvHtml5',
+                        text: locales['buttons']['export2csv'],
+                        fieldSeparator: ',',
+                        extension: '.csv',
+                        bom: "true",
+                        exportOptions: {
+                            columns: ':visible'
+                        }
+                    },
+                    {
+                        extend: 'excelHtml5',
+                        text: locales['buttons']['export2excel'],
+                        exportOptions: {
+                            columns: ':visible'
+                        }
+                    },
+                    {
+                        extend: 'pdfHtml5',
+                        text: locales['buttons']['export2pdf'],
+                        exportOptions: {
+                            columns: ':visible'
+                        }
+                    }
+                ]
+            },
+            {
+                extend: 'colvis',
+                text: '<i class="icon-grid3"></i>',
+                className: 'btn btn-default btn-colvis',
+                columns: [0, 1]
+            }
+        ],
+
+        columns: [
+            /*{
+                title:`<input type="checkbox" class="styled" onchange='toggleSelectAll(this);'>`,
+                orderable: false,
+                data: "id",
+                width: "50px",
+                render: function (d, t, r) {
+                    return `<input type="checkbox" class="select-checkbox">`;
+                }
+            },*/
+            {
+                data: "title",
+                render: function (d, t, r) {
+                    return `<a data-toggle="modal" data-target="#manual-gateway-modal"
+                        data-id="${r.id}"
+                        data-source="update-trigger" href="">${d}</a>`;
+                }
+            },
+            {
+                data: "status",
+                render: (d, t, r) => {
+                    return d == 1 ? locales['switch_text_enabled'] : locales['switch_text_disabled']
+                }
+            },
+            {
+                data: "id",
+                render: function (d, t, r) {
+                    /*let tmp = `<ul class="icons-list pull-right">
+                            <li class="dropdown">
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                    <i class="icon-menu9"></i>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-right">
+                                    <li><a href='{{ link('user/user/update') }}?user_id=${r['user_id']}'><i class='icon-pencil7'></i> ${locales['button_edit']}</a></li>`;
+
+                    if (r.user_id != 1) {
+                        tmp += `<li><a onclick="removeGateway(${r['user_id']})"><i class='icon-trash'></i> ${locales['button_delete']}</a></li>`;
+                    }
+                                    
+                    tmp += `</ul>
+                            </li>
+                        </ul>
+                    `;
+
+                    return tmp;*/
+
+                    return `<a onclick="removeGateway(${d})"><i class='icon-trash'></i></a></li>`;
+                }
+            },
+        ],
+        "order": [[1, "asc"]],
+    });
+
+    $('.submit-form-trigger').click(() => {
+
+        $('.submit-form-trigger').attr('disabled', true);
+
+        manualGatewayModal.find('.modal-errors').html('');
+
+        $.ajax({
+            url: manualGatewayForm.attr('data-action'),
+            data: manualGatewayForm.serialize(),
+            dataType: 'JSON',
+            method: 'POST',
+            success: (r) => {
+
+                if (typeof r.status !== 'undefined' && r.status === 'OK') {
+                    dt.ajax.reload();
+
+                    delete msgCache[r.id];
+
+                    if (typeof r.data !== 'undefined') {
+                        msgCache[r.id] = r.data;
+                    }
+
+                    manualGatewayModal.modal('toggle');
+                    $('.submit-form-trigger').attr('disabled', false);
+                    return;
+                }
+
+                for (i in r.errors) {
+                    let e = r.errors[i];
+
+                    manualGatewayModal.find('.modal-errors').append(`<div class="alert alert-danger">${e}</div>`);
+                }
+
+                $('.submit-form-trigger').attr('disabled', false);
+
+            }
+        });
+    });
+});
+
+function changeStatus(checkbox) {
+    var self = $(checkbox);
+    var switch_status = self.siblings('.switchery-status');
+
+    if (self.is(':checked')) {
+        switch_status.html("{{ lang('text_enabled') }}");
+    }
+    else {
+        switch_status.html("{{ lang('text_disabled') }}");
+    }
+}
+
+function hardRemoveGateway(id) {
+    confirmMessage(() => {
+        console.log(133);
+        $.ajax({
+            url: "{{ link('module/manual_shipping/destroy') }}",
+            data: {id: id, _h: 1},
+            method: 'POST',
+            dataType: 'JSON',
+            success: (r) => {
+                if (typeof r.status !== 'undefined' && r.status === 'OK') {
+                    dt.ajax.reload();
+                    return;
+                }
+            }
+        });
+    }, null, {
+        title: locales['confirm_hard_delete'],
+        text: locales['confirm_hard_delete_message'],
+        type: 'error',
+    });
+}
+
+function removeGateway(id) {
+    confirmMessage(() => {
+        $.ajax({
+            url: "{{ link('module/manual_shipping/destroy') }}",
+            data: {id: id},
+            method: 'POST',
+            dataType: 'JSON',
+            success: (r) => {
+                if (typeof r.status !== 'undefined' && r.status === 'OK') {
+                    dt.ajax.reload();
+                } else if (typeof r.status !== 'undefined' && r.status === 'ERR') {
+                    if (r.error === 'INVALID_CONSTRAINTS') {
+                        console.log(55);
+                        hardRemoveGateway(id);
+                    }
+                }
+            }
+        });
+    }, null, {
+        closeOnConfirm: false
+    });
+}
+</script>
+{% endblock %}

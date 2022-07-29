@@ -1,0 +1,111 @@
+<div class="modal fade create-category-modal center-modal" id="create_category_modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="head">
+                <p class="title">
+                    {{lang('text_create_category')}}
+                </p>
+                <i class="fas fa-times close-modal" data-dismiss="modal"></i>
+            </div>
+            <div id="category-error-area"></div>
+            <form id="setting-payment" class="category-form" action="{{ link('catalog/category/insert') }}">
+                <!-- Multi Language Information -->
+                <div class="tabbable langs-tabs">
+
+                    <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                        {% for language in languages %}
+                            <li class="{{ loop.first ? 'active' : '' }}">
+                                <a href="#category_langTab{{ language['language_id'] }}" data-toggle="tab" aria-expanded="false">
+                                    <img src="view/image/flags/{{ language['image'] }}" title="{{ language['name'] }}" class="pull-right">
+                                    <div> {{ language['code'] }}</div>
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                    <div class="tab-content">
+                        {% for language in languages %}
+                            <div class="tab-pane {{ loop.first ? 'active' : '' }}" id="category_langTab{{ language['language_id'] }}">
+                                <!-- Category Name -->
+                                <div class="form-group" id="category_name_{{ language['language_id'] }}-group">
+                                    <label for="category_name_{{ language['language_id'] }}" class="control-label">{{ lang('entry_name', 'catalog/category') }} <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="category_name_{{ language['language_id'] }}" name="category_description[{{ language['language_id']}}][name]" size="100" value="">
+                                    <span class="help-block"></span>
+                                </div>
+                                <!-- /Category Name -->
+
+                                <div class="clearfix"></div>
+                                <!-- /Meta Keyword -->
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+{#                <input type="checkbox" name="status" class="hide" checked>#}
+                {% if category_droplist %}
+                <input type="checkbox" name="droplist_show" class="hide" checked>
+                {% endif %}
+                <!-- Parent -->
+                <div class="form-group">
+                    <label for="parenty" class="control-label">{{ lang('entry_parent') }}</label>
+                    <select name="parent_id" class="form-control">
+                            <option value="0">--- {{ lang('entry_none') }} ---</option>
+                        {% for cat in all_cats %}
+                            <option value="{{ cat['category_id'] }}" {{ parent_id == cat['category_id'] ? 'selected="selected"' }}>{{ cat['name'] }}</option>
+                        {% endfor %}
+                    </select>
+                    <span class="help-block"></span>
+                </div>
+                <!-- /Parent -->
+            </form>
+            <div class="text-right">
+                <button type="button" class="theme-btn primary-btn" onclick="$('.category-form').submit();">{{ lang('button_save') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let addCategorySuccess = function(catText, id) {
+        console.log(catText, id)
+        $('#create_category_modal').modal('hide');
+        var data = {
+            id: id,
+            text: catText,
+            selected: true
+        };
+
+        var newOption = new Option(data.text, data.id, true, false);
+        $('.categories-autocomplete').append(newOption).trigger('change');
+    }
+
+    $('.category-form').submit(function(e) {
+        e.preventDefault();
+
+        let form = $(this);
+
+        $("#category-error-area").empty()
+        form.siblings(".text-right").find('.theme-btn').addClass("load-btn");
+
+        var $formData = $(this).serialize();
+        var $action = $(this).attr('action');
+
+        $.ajax({
+            url: $action,
+            method: 'POST',
+            dataType: 'JSON',
+            data: $formData,
+            success: function (response) {
+                form.siblings(".text-right").find('.theme-btn').removeClass("load-btn");
+
+                if (response.success == '0') {
+                    $("#category-error-area").append("<div class=\"alert alert-danger alert-styled-left alert-bordered\">" +
+                                            "<button type=\"button\" class=\"close\" data-dismiss=\"alert\"><span>×</span><span class=\"sr-only\">Close</span></button>" +
+                                            response.errors.name_2 +
+                                            "</div>");
+                } else {
+                    let catText = (response.path ? response.path.replaceAll('&gt;','>') : "") + (response.path ? " > " : "")+ response.name;
+                    addCategorySuccess(catText, response.category_id)
+                }
+            }
+        });
+    })
+</script>

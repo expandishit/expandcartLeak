@@ -1,0 +1,699 @@
+<!DOCTYPE HTML>
+<html lang="{{ lang('code') }}" class="no-js {{ lang('direction') == 'rtl' ? 'cms-rtl' : '' }}">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    {# Basic Tags #}
+    <base href="{{ base_url }}" />
+
+    {% if document_description != '' %}
+        <meta name="description" content="{{ document_description }}" />
+    {% endif %}
+
+    {% if document_keywords != '' %}
+        <meta name="keywords" content="{{ document_keywords }}" />
+    {% endif %}
+
+    {% if store_icon != '' %}
+        <link href="{{ store_icon }}" rel="icon" />
+    {# <meta property="og:image" content="{{ store_icon }}"/> #}
+
+    {% endif %}
+
+    <title>{{ document_title }}</title>
+
+
+    {% if route == "product/product" %}
+      {% include 'default/template/structured_data/facebook_og.expand' %}
+    {% else %}
+      {% include 'default/template/structured_data/store.expand' %}
+    {% endif %}
+
+    {# Documets Links #}
+    {% for link in document_links %}
+    <link href="{{ link.href }}" rel="{{ link.rel }}" />
+    {% endfor %}
+
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,500,700,900" rel="stylesheet">
+    <link rel="stylesheet" href="{{ csslink('css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ csslink('css/core.css') }}">
+
+    {# Common CSS Files #}
+    <link rel="stylesheet" type="text/css"
+          href="index.php?route=common/style{{ isdraft == 1 ? '&isdraft=1' : '' }}{{ config('tmp_prev') ? '&__p=' ~ config('tmp_prev') : '' }}">
+
+    {% if lang('direction') == 'rtl' %}
+    <link rel="stylesheet" href="{{ csslink('css/rtl.css') }}">
+    {% endif %}
+
+    <link rel="stylesheet" href="{{ csslink('css/responsive.css') }}">
+
+    {% if lang('direction') == 'rtl' %}
+    <link rel="stylesheet" href="{{ csslink('css/rtl-responsive.css') }}">
+    {% endif %}
+
+    <link rel="stylesheet" href="{{ csslink('css/custom.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ csslink('css/jquery-ui.min.css') }}" />
+
+    {# CSS Files :: From Othe Pages #}
+    {% for style in document_styles %}
+        <link rel="{{ style.rel }}" type="text/css" href="{{ style.href }}" media="{{ style.media }}" />
+    {% endfor %}
+
+    {# Common JS Files #}
+    <script type="text/javascript" src="{{ jslink('js/jquery.min.js') }}"></script>
+<script type="text/javascript" src="expandish/view/theme/abstract/js/rotate360.js"></script>
+    <script type="text/javascript" src="{{ jslink('js/jquery-ui.min.js') }}"></script>
+    <script type="text/javascript" src="{{ jslink('js/common.js') }}"></script>
+
+    <script src="{{ jslink('js/vendor/modernizr-2.8.3.min.js') }}"></script>
+
+    {# JS Files :: From Othe Pages #}
+    {% for script in document_scripts %}
+        <script type="text/javascript" src="{{ script }}"></script>
+    {% endfor %}
+
+    <!-- Inline Script:Start -->
+    {% for script in inline_scripts %}
+        {% if script['type'] == 'callable' %}
+            {{ script['script']|base64_decode }}
+        {% endif %}
+    {% endfor %}
+    <!-- Inline Script:End -->
+
+    {# Google Analytics #}
+    {{ google_analytics }}
+
+  	<!-- Gameball -->
+  {% if gameballApiKey %}
+
+  		<script>
+  		{% if logged == false  %}
+              window.GbLoadInit = function(){
+                  GbSdk.init({
+                      lang: '{{ lang('code') }}',
+                      APIKey: '{{ gameballApiKey }}'
+                  });
+              };
+            {% else %}
+            window.GbLoadInit = function(){
+                    GbSdk.init({
+                        playerUniqueId: '{{ customer.getId() }}',
+                        playerAttributes: {
+                            displayName: '{{ customer.getFirstName() }}',
+                            email: '{{ customer.getEmail() }}'
+                        },
+                        lang: '{{ lang('code') }}',
+                        APIKey: '{{ gameballApiKey }}'
+                    });
+                };
+            {% endif %}
+          </script>
+
+          <script defer src="https://assets.gameball.co/widget/js/gameball-init.min.js"></script>
+      {% endif %}
+</head>
+
+<body>
+
+    {# include top banner app html ("topBannerFixed" parameter used to show fixed layout) #}
+    {% include "default/template/module/top_banner/index.expand" with {'topBannerFixed': false} %}
+
+    {# ========= Start ::  Header Content ======================================================================== #}
+    <div class="wrapper">
+        <header id="header" class="header-area">
+            <!-- Start Header top area -->
+            <div class="header-top bg-black">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-md-8 col-sm-7 col-lg-8 col-xs-12">
+                            <div class="chat-phone-area">
+                                <form action="{{ link('common/home') }}" method="post" enctype="multipart/form-data">
+                                    <ul>
+                                        {% for currency in currencies %}
+                                            <li><a href="" onclick="$('input[name=\'currency_code\']').attr('value', '{{ currency.code }}'); $(this).closest('form').submit(); return false;">{{ currency.title }}</a></li>
+                                        {% endfor %}
+                                        </ul>
+                                        <input type="hidden" name="currency_code" value="" />
+                                        <input type="hidden" name="redirect" value="{{ redirect }}" />
+                                </form>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-sm-5 col-lg-4 col-xs-12">
+                            <div class="account-language-area">
+                                <div class="account-box-top hidden-lg hidden-md">
+                                        <div class="account-action">
+                                                {% if logged == true %}
+                                                    <a href="{{ link('account/account') }}"><span class="lnr lnr-user"></span>{{ customer.getFirstName() }}</a>
+                                                {% else %}
+                                                    <a href="#"><span class="lnr lnr-user"></span>{{ lang('text_account') }}</a>
+                                                {% endif %}
+                                            </div>
+                                            <div class="account-form">
+                                                {% if logged == false %}
+                                                <form action="{{ link('account/login', '', 'SSL') }}" method="post" enctype="multipart/form-data" id="login">
+                                                    <div class="acc-form-fields">
+                                                        <input type="text" name="email"  placeholder="{{ lang('Input_Email') }}">
+                                                        <input type="password" name="password" placeholder="{{ lang('Input_Password') }}">
+                                                    </div>
+                                                    <div class="acc-buttons">
+                                                        <button type="submit" class="tm-btn small thin">{{ lang('button_login') }}</button>
+                                                        <a href="{{ link('account/register') }}" class="tm-btn small thin">{{ lang('SignUp_Register') }}</a>
+                                                    </div>
+                                                </form>
+                                                {% else %}
+                                                    <ul class="store_info">
+                                                        <li style="margin-top: 5px;"><i class="fa fa-user"></i>&nbsp;&nbsp;<a href="{{ link('account/account') }}">{{ lang('Text_Account') }}</a></li>
+                                                        <li style="margin-top: 5px;"><i class="fa fa-pencil-square-o"></i>&nbsp;&nbsp;<a href="{{ link('account/edit') }}">{{ lang('Text_EditAccount') }}</a></li>
+                                                           {% if customer.isCustomerAllowedToView_products %}
+                                                        <li style="margin-top: 5px;"><i class="fa fa-heart"></i>&nbsp;&nbsp;<a href="{{ link('account/wishlist') }}">{{ lang('text_wishlist')|format(wishlist_count)  }}</a></li>
+                                                        {% endif %}
+                                                        <li style="margin-top: 5px;"><i class="fa fa-sign-out"></i>&nbsp;&nbsp;<a href="{{ link('account/logout') }}">{{ lang('Text_Logout') }}</a></li>
+                                                    </ul>
+                                                {% endif %}
+                                            </div>
+                                </div>
+                                <div class="chat-phone-area text-right">
+                                    <form method="post" enctype="multipart/form-data" class="language-selection">
+                                        <ul>
+                                            {% for language in languages %}
+                                                <li><a href="" onclick="$('input[name=\'language_code\']').attr('value', '{{ language.code }}'); $(this).closest('form').submit(); return false;">{{ language.name }}</a></li>
+                                            {% endfor %}
+                                        </ul>
+                                        <input type="hidden" name="language_code" value="" />
+                                        <input type="hidden" name="redirect" value="{{ redirect }}" />
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- End Header top area -->
+            <!-- Start header middle area -->
+            <div class="header-middle bg-white">
+                <div class="container">
+                    <div class="row">
+                        <div class="mobile-logo"><a href="{{ link('common/home') }}"><img src="{{ image(header_data.StoreLogo.fields.StoreImage.value) }}" alt="{{ store_name }}"></a></div>
+                        
+                        <div class="col-md-10 col-lg-10 col-sm-9 col-xs-12">
+                            <div class="header-middle-inner">
+                                <div class="logo hidden-xs hidden-sm">
+                                    <a href="{{ link('common/home') }}"><img src="{{ image(header_data.StoreLogo.fields.StoreImage.value) }}" alt="logo"></a>
+                                </div>
+                                <div class="search-area">
+                                    <div id="search">
+                                        <form>
+                                            <input type="text" placeholder="{{ lang('text_search') }}" name="search" value="{{ search }}">
+                                            <button class="subscribe-btn button-search" type="button">{{ lang('text_searchbtn') }}</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-lg-2 col-sm-3 col-xs-12">
+                            <div class="wish-cart block-minicart">
+                                <ul>
+                                {% if customer.isCustomerAllowedToView_products %}
+                                    <li class="wish">
+                                        <a href="{{ link('account/wishlist') }}">
+                                            <span class="lnr lnr-heart"></span>
+                                            <p>{{ lang('text_wishlist')|format(wishlist_count)  }}</p>
+                                        </a>
+                                    </li>
+                                     {% endif %}
+                                    <li class="shopping">
+                                        <a href="{{ link('checkout/cart') }}">
+                                            <span class="lnr lnr-cart"></span>
+                                            <p>{{ lang('text_shopping_cart') }}</p>
+                                            <span class="cart-items">{{ cart.countProducts() }}</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                                <div class="shopping-cart-list cart_items">
+                                    {{ cart_content }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- End header middle area -->
+            <div class="divide-bar">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-md-12 col-lg-12 col-sm-12 col-xs-12">
+                            <hr class="m-0">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Start Header bottom area -->
+            <div class="header-bottom-area hidden-xs hidden-sm bg-white full-width-mega-menu">
+                <div class="container">
+                    <div class="full-width-mega-menu-wrap">
+                        <div class="row">
+                            <div class="col-md-10 col-lg-10 col-sm-10 col-xs-12">
+                                <!-- Start main menu -->
+                                <nav id="primary-menu" class="full-width">
+                                    <ul class="main-menu">
+                                        {% for collection in header_data.Navbar.collections %}
+                                        <li class="plus active-mega-menu full-width"><a href="{{ collection.Navbar_ItemLink.value }}">{{ collection.Navbar_ItemTitle.value }}</a>
+                                            {% if collection.Navbar_MegaMenuCheck.value %}
+                                            <!-- start mega menu -->
+                                            <div class="megamenu-area">
+                                                <ul class="megamenu">
+                                                    {% if collection.MegaMenu_1_Title.value %}
+                                                    <li class="mega-child">
+                                                        <span class="mega-title"><a  href="">{{ collection.MegaMenu_1_Title.value }}</button></span>
+                                                        <ul class="mega-dropedown">
+                                                            {% set MegaMenuCategories_1 = getFeaturedCategories(collection.MegaMenu_1_Select.value, 595, 738) %}
+                                                            {% for category in MegaMenuCategories_1 %}
+                                                            <li><a href="{{ category.href }}">{{ category.name }}</a></li>
+                                                            {% endfor %}
+                                                        </ul>
+                                                    </li>
+                                                    {% endif %}
+
+                                                    {% if collection.MegaMenu_2_Title.value %}
+                                                    <li class="mega-child">
+                                                        <span class="mega-title"><a href="">{{ collection.MegaMenu_2_Title.value }}</a></span>
+                                                        <ul class="mega-dropedown">
+                                                            {% set MegaMenuCategories_2 = getFeaturedCategories(collection.MegaMenu_2_Select.value, 595, 738) %}
+                                                            {% for category in MegaMenuCategories_2 %}
+                                                            <li><a href="{{ category.href }}">{{ category.name }}</a></li>
+                                                            {% endfor %}
+                                                        </ul>
+                                                    </li>
+                                                    {% endif %}
+
+                                                    {% if collection.MegaMenu_3_Title.value %}
+                                                    <li class="mega-child">
+                                                            <span class="mega-title"><a href="">{{ collection.MegaMenu_3_Title.value }}</a></span>
+                                                        <ul class="mega-dropedown">
+                                                            {% set MegaMenuCategories_3 = getFeaturedCategories(collection.MegaMenu_2_Select.value, 595, 738) %}
+                                                            {% for category in MegaMenuCategories_3 %}
+                                                            <li><a href="{{ category.href }}">{{ category.name }}</a></li>
+                                                            {% endfor %}
+                                                        </ul>
+                                                    </li>
+                                                    {% endif %}
+
+                                                    {% if collection.MegaMenu_4_Title.value %}
+                                                    <li class="mega-child">
+                                                        <span class="mega-title"><a href="">{{ collection.MegaMenu_4_Title.value }}</a></span>
+                                                        <ul class="mega-dropedown">
+                                                            {% set MegaMenuCategories_4 = getFeaturedCategories(collection.MegaMenu_4_Select.value, 595, 738) %}
+                                                            {% for category in MegaMenuCategories_4 %}
+                                                            <li><a href="{{ category.href }}">{{ category.name }}</a></li>
+                                                            {% endfor %}
+                                                        </ul>
+                                                    </li>
+                                                    {% endif %}
+
+                                                </ul>
+                                            </div>
+                                            <!-- End mega menu -->
+                                            {% endif %}
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
+                                </nav>
+                                <!-- End main menu -->
+                            </div>
+                            <div class="col-md-2 col-lg-2 col-sm-2 col-xs-12">
+                                <div class="account-wrap">
+                                    <div class="account-action">
+                                        {% if logged == true %}
+                                            <a href="{{ link('account/account') }}"><span class="lnr lnr-user"></span>{{ customer.getFirstName() }}</a>
+                                        {% else %}
+                                            <a href="#"><span class="lnr lnr-user"></span>{{ lang('text_account') }}</a>
+                                        {% endif %}
+                                    </div>
+                                    <div class="account-form">
+                                            {% if logged == false %}
+                                            {# <form action="{{ link('account/login', '', 'SSL') }}" method="post" enctype="multipart/form-data" id="login">
+                                                <div class="acc-form-fields">
+                                                    <input type="text" name="email"  placeholder="{{ lang('Input_Email') }}">
+                                                    <input type="password" name="password" placeholder="{{ lang('Input_Password') }}">
+                                                </div>
+                                                <div class="acc-buttons">
+                                                    <button type="submit" class="tm-btn small thin">{{ lang('button_login') }}</button>
+                                                    <a href="{{ link('account/register') }}" class="tm-btn small thin">{{ lang('SignUp_Register') }}</a>
+                                                </div>
+                                            </form> #}
+                                            <ul class="store_info">
+                                                <li style="margin-top: 5px;">{% include 'default/template/common/login_link.expand' with {with_icon: true} %}</li>
+                                                {% if multiseller == true %}<li style="margin-top: 5px;">{% include 'default/template/common/login_seller_link.expand' with {with_icon: true} %}</li>{% endif %}
+                                            </ul>
+                                            {% else %}
+                                            <ul class="store_info">
+                                                <li style="margin-top: 5px;"><i class="fa fa-user"></i>&nbsp;&nbsp;<a href="{{ link('account/account') }}">{{ lang('Text_Account') }}</a></li>
+                                                <li style="margin-top: 5px;"><i class="fa fa-pencil-square-o"></i>&nbsp;&nbsp;<a href="{{ link('account/edit') }}">{{ lang('Text_EditAccount') }}</a></li>
+                                                <li style="margin-top: 5px;"><i class="fa fa-heart"></i>&nbsp;&nbsp;<a href="{{ link('account/wishlist') }}">{{ lang('text_wishlist')|format(wishlist_count)  }}</a></li>
+                                                <li style="margin-top: 5px;"><i class="fa fa-sign-out"></i>&nbsp;&nbsp;<a href="{{ link('account/logout') }}">{{ lang('Text_Logout') }}</a></li>
+                                            </ul>
+                                            {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- End Header bottom area -->
+            <!-- Mobile-menu-area start -->
+            <div class="mobile-menu-area hidden-md hidden-lg">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <nav id="mobile_dropdown">
+                                <ul>
+                                    {% for collection in header_data.Navbar.collections %}
+                                    <li><a href="{{ collection.Navbar_ItemLink.value }}">{{ collection.Navbar_ItemTitle.value }}</a>
+                                        {% if collection.Navbar_MegaMenuCheck.value %}
+                                        <ul>
+                                            {% set MegaMenuCategories_1 = getFeaturedCategories(collection.MegaMenu_1_Select.value, 595, 738) %}
+                                            {% for category in MegaMenuCategories_1 %}
+                                            <li><a href="{{ category.href }}">{{ category.name }}</a></li>
+                                            {% endfor %}
+
+                                            {% set MegaMenuCategories_2 = getFeaturedCategories(collection.MegaMenu_2_Select.value, 595, 738) %}
+                                            {% for category in MegaMenuCategories_2 %}
+                                            <li><a href="{{ category.href }}">{{ category.name }}</a></li>
+                                            {% endfor %}
+
+                                            {% set MegaMenuCategories_3 = getFeaturedCategories(collection.MegaMenu_3_Select.value, 595, 738) %}
+                                            {% for category in MegaMenuCategories_3 %}
+                                            <li><a href="{{ category.href }}">{{ category.name }}</a></li>
+                                            {% endfor %}
+
+                                            {% set MegaMenuCategories_4 = getFeaturedCategories(collection.MegaMenu_4_Select.value, 595, 738) %}
+                                            {% for category in MegaMenuCategories_4 %}
+                                            <li><a href="{{ category.href }}">{{ category.name }}</a></li>
+                                            {% endfor %}
+
+                                        </ul>
+                                        {% endif %}
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Mobile-menu-area end -->
+        </header>
+    </div>
+    {# ====================================================== #}
+
+    {# ========= Start ::  Template Content ======================================================================== #}
+    <div id="pageContent" class="page-content">
+    {% if is_home_page %}
+        <div class="container" id="notification"></div>
+        {{ regions_data.MainContent.content }}
+    {% elseif not is_home_page and route starts with 'product/category' %}
+    <div class="container">
+        <div class="row">
+        <div class="col-md-3 col-lg-3 col-sm-4 col-xs-12">
+        {% if modules.filter.enabled or modules.mega_filter.enabled %}
+            {% if modules.mega_filter.enabled %}
+                {{ modules.mega_filter.content }}
+		    {% endif %}
+            {% if modules.filter.enabled %}
+                {{ modules.filter.content }}
+		    {% endif %}
+		{% endif %}
+        {{ regions_data.SidebarContent.content }}
+        </div>
+        <div class="col-md-9 col-lg-9 col-sm-8 col-xs-12 innerpages" id="content">
+        {{ page_content }}
+        </div>
+        </div>
+        </div>
+        {{ regions_data.BottomContent.content }}
+    {% else %}
+        {{ page_content }}
+    {% endif %}
+    </div>
+    {# ====================================================== #}
+
+    {% if integration_settings['mn_criteo_status'] %}
+		{{ include('manymore/template/module/criteo/criteo_home.expand') }}
+	{% endif %}
+
+    {# ========= Start ::  Footer Content ======================================================================== #}
+    <div class="wrapper">
+        <footer id="footer" class="footer-area">
+            <div class="footer-top-area bg-white ptb-100">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-md-12 col-sm-12 col-lg-12 col-xs-12">
+                            <div class="footer-widgets-subscribe">
+                                {% if footer_data.FeaturedPages_1.section_state == 'enabled' %}
+                                <div class="footer-single-widgets about-us-widget" id="section-{{ footer_data.FeaturedPages_1.section_id }}">
+                                    <h4 class="footer-section-title">{{ footer_data.FeaturedPages_1.fields.FeaturedPages_1_MainTitle.value }}</h4>
+                                    <ul>
+                                        {% for collection in footer_data.FeaturedPages_1.collections %}
+                                            <li><a href="{{ collection.FeaturedPage_Link.value }}">{{ collection.FeaturedPages_Title.value }}</a></li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                {% endif %}
+
+                                {% if footer_data.FeaturedPages_2.section_state == 'enabled' %}
+                                <div class="footer-single-widgets" id="section-{{ footer_data.FeaturedPages_2.section_id }}">
+                                    <h4 class="footer-section-title">{{ footer_data.FeaturedPages_2.fields.FeaturedPages_2_MainTitle.value }}</h4>
+                                    <ul>
+                                        {% for collection in footer_data.FeaturedPages_2.collections %}
+                                            <li><a href="{{ collection.FeaturedPage_Link.value }}">{{ collection.FeaturedPages_Title.value }}</a></li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                {% endif %}
+
+                                {% if footer_data.FeaturedPages_3.section_state == 'enabled' %}
+                                <div class="footer-single-widgets" id="section-{{ footer_data.FeaturedPages_3.section_id }}">
+                                    <h4 class="footer-section-title">{{ footer_data.FeaturedPages_3.fields.FeaturedPages_3_MainTitle.value }}</h4>
+                                    <ul>
+                                        {% for collection in footer_data.FeaturedPages_3.collections %}
+                                            <li><a href="{{ collection.FeaturedPage_Link.value }}">{{ collection.FeaturedPages_Title.value }}</a></li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                {% endif %}
+
+                                {% if footer_data.Newsletters.section_state == 'enabled' %}
+                                <div class="footer-newsletter" id="section-{{ footer_data.Newsletters.section_id }}">
+                                    <h4 class="footer-section-title">{{ footer_data.Newsletters.fields.News_Title.value }}</h4>
+                                    <form action="{{ footer_data.Newsletter.fields.MailChimp_Code.value }}" id="subscribe-form" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" target="_blank" novalidate>
+                                        <input type="email" value="" name="EMAIL" id="mce-EMAIL" placeholder="{{ lang('enter_email') }}" required>
+                                        <button type="submit" id="mc-embedded-subscribe" name="subscribe" class="subscribe-btn">{{ footer_data.Newsletters.fields.News_BtnTitle.value }}</button>
+                                    </form>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if footer_data.AboutStore.section_state == 'enabled' %}
+            <div class="footer-middle-area bg-gray-light ptb-100" id="section-{{ footer_data.AboutStore.section_id }}">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-md-8 col-md-offset-2 col-sm-10 col-sm-offset-1 col-lg-8 col-lg-offset-2 col-xs-12">
+                            <div class="footer-middle-content">
+                                <div class="footer-logo text-center">
+                                    <a href="{{ link('common/home') }}"><img src="{{ image(footer_data.AboutStore.fields.StoreLogo.value) }}" alt="footer logo"></a>
+                                </div>
+                                <p class="text-center">{{ footer_data.AboutStore.fields.AboutUs.value }}</p>
+                                <div class="footer-social-icons text-center">
+                                    <ul class="social-list dir-rtl">
+                                        {% for collection in footer_data.AboutStore.collections %}
+                                        <li><a href="{{ collection.SMediaLink.value }}"><i class="{{ collection.SMediaIcon.value }}"></i></a></li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="footer-copyright-area bg-gray-dark ptb-20">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-md-6 col-sm-6 col-lg-6 col-xs-12">
+                            <div class="copyright-text">
+                                <p class="text-capitalize">{{ footer_data.Copyrights.fields.Copyright_Title.value }}</p>
+                                <p class="text-capitalize">{{ footer_data.Copyrights.fields.Copyright_Powered.value }}</p>
+                            </div>
+                        </div>
+
+                        {% if footer_data.Payments.section_state == 'enabled' %}
+                        <div class="col-md-6 col-sm-6 col-lg-6 col-xs-12" id="section-{{ footer_data.Payments.section_id }}">
+                            <div class="payment-icons text-right">
+                                {% for collection in footer_data.Payments.collections %}
+                                <img src="{{ image(collection.PaymentImage.value) }}" alt="payment">
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+    {# ====================================================== #}
+
+    {# ========= Start ::  Template Apps ======================================================================== #}
+        {# Enable Social Slides #}
+        {% if modules.socialslides.enabled %}
+        {{ modules.socialslides.content }}
+        {% endif %}
+
+        {# Enable Smartlook #}
+	    {% if modules.smartlook.enabled %}
+	    {{ modules.smartlook.content }}
+	    {% endif %}
+
+        {# Enable Zopim Live Chat #}
+        {% if modules.zopim_live_chat.enabled %}
+        {{ modules.zopim_live_chat.content }}
+        {% endif %}
+
+        {# Enable Popup Window #}
+        {% if modules.popupwindow.enabled %}
+        {{ modules.popupwindow.content }}
+        {% endif %}
+    {# ====================================================== #}
+
+    <!-- buy x get y gift box -->
+    {% include "default/template/module/gift_coupon.expand" %}
+	{% include "default/template/module/whatsapp_chat.expand" %}
+
+    {# ========= Start ::  Call For Price ======================================================================== #}
+    <form id="contact-form" action="{{ link('information/contact') }}"  method="POST" enctype="multipart/form-data" >
+        <input type="hidden" name="no-validate" value="1" />
+        <input type="hidden" name="name"  value="{{ (customer.getFirstname() ~ ' ' ~ customer.getLastname())|e }}"/>
+        <input type="hidden" name="email" value="{{ customer.getEmail() }}"/>
+        <input type="hidden" name="enquiry" />
+        <input type="hidden" name="captcha" />
+        <input type="hidden" name="product_id" />
+    </form>
+    <script type="text/javascript">
+        function contact_us(id) {
+            $('#contact-form input[name="enquiry"]').val($('#enquiry-'+id).html()+'\n');
+            $('#contact-form input[name="product_id"]').val(id);
+            $('#contact-form').submit();
+        }
+    </script>
+    {# ====================================================== #}
+
+
+
+    <!-- Bootstrap framework JS -->
+    <script src="{{ jslink('js/bootstrap.min.js') }}"></script>
+    <!-- All JS plugins included in this file. -->
+    <script src="{{ jslink('js/plugins.js') }}"></script>
+    <!-- Main JS file that contents all jQuery Plugins activation. -->
+    <script src="{{ jslink('js/main.js') }}"></script>
+
+    {# include top banner app css and js #}
+    {% include "default/template/module/top_banner/includes.expand" %}
+
+    <script type="text/javascript" src="{{ jslink('js/jquery.fancybox.js') }}"></script>
+    <script type="text/javascript" src="{{ jslink('js/jquery.elevatezoom.js') }}"></script>
+    <script type="text/javascript" src="{{ jslink('js/jquery.jcarousellite.js') }}"></script>
+    <script>
+        $( document ).ready(function() {
+            function detail_gallery(){
+                if($('.detail-gallery').length>0){
+                    $('.detail-gallery').each(function(){
+
+                        $(this).find(".carousel").jCarouselLite({
+                            btnNext: $(this).find(".gallery-control .next"),
+                            btnPrev: $(this).find(".gallery-control .prev"),
+                            speed: 800,
+                            visible: 4,
+                            mouseWheel: true
+                        });
+                        //Elevate Zoom
+                        if ($(window).width() > 767) {
+                        if ( $('html').attr('lang') == 'ar' ) {
+                        $(this).find('.mid img').elevateZoom({
+                            cursor: "pointer",
+                            zoomWindowFadeIn: 500,
+                            zoomWindowPosition: 9,
+                            zoomType : "window",
+                            gallery:'zoomGallery',
+                            zoomWindowFadeOut: 750
+                        });
+                        $("#zoom_01").bind("click", function(e) {
+                            var ez = $('#zoom_01').data('elevateZoom');
+                            $.fancybox(ez.getGalleryList());
+                            return false;
+                        });
+                        } else {
+                        $(this).find('.mid img').elevateZoom({
+                            cursor: "pointer",
+                            zoomWindowFadeIn: 500,
+                            zoomType : "window",
+                            gallery:'zoomGallery',
+                            zoomWindowFadeOut: 750
+                        });
+                        $("#zoom_01").bind("click", function(e) {
+                            var ez = $('#zoom_01').data('elevateZoom');
+                            $.fancybox(ez.getGalleryList());
+                            return false;
+                        });
+                        }}
+                        else {
+                            if ( $('html').attr('lang') == 'ar' ) {
+                                $(this).find('.mid img').elevateZoom({
+                                    cursor: "pointer",
+                                    zoomWindowFadeIn: 500,
+                                    zoomWindowPosition: 10,
+                                    zoomType : "inner",
+                                    gallery:'zoomGallery',
+                                    galleryActiveClass: 'active',
+                                    zoomWindowFadeOut: 750
+                                });
+
+                                } else {
+                                $(this).find('.mid img').elevateZoom({
+                                    cursor: "pointer",
+                                    zoomWindowFadeIn: 500,
+                                    zoomType : "inner",
+                                    zoomWindowFadeOut: 750
+                                });
+                            }
+
+                        }
+                        $(this).find(".carousel a").on('click',function(event) {
+                            event.preventDefault();
+                            $(this).parents('.detail-gallery').find(".carousel a").removeClass('active');
+                            $(this).addClass('active');
+                            $(this).parents('.detail-gallery').find(".mid img").attr("src", $(this).find('img').attr("src"));
+                            var z_url = $(this).parents('.detail-gallery').find('.mid img').attr('src');
+                            $('.zoomWindow').css('background-image','url("'+z_url+'")');
+                        });
+                    });
+                }
+            }
+            detail_gallery();
+        });
+    </script>
+
+    {{ templatesettings.MailChimp_popup.MailChimpCode|convert_encoding('UTF-8', 'HTML-ENTITIES') }}
+
+    {{ body_scripts }}
+
+</body>
+</html>

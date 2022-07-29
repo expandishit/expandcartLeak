@@ -1,0 +1,165 @@
+   {% set products_list = groupProducts(products, 'seller', seller_based) %}
+        {% for idx, productArr in products_list %}
+      <table class="qc-table qc-cart table-bordered {{ warehouses ? '': 'table-striped' }} table-hover">
+      <thead>
+       <tr>
+         <td colspan="7" style="text-align: center;background-color: #ccc;"><strong><span class="text">{{ lang('seller_name') }}: <span/> {{seller_names[idx]['seller_name'] }}</strong></td>
+          </tr>
+        <tr>
+          <td class="qc-image {% if not data['columns']['image'] %}qc-hide{% endif %}">{{ lang('column_image') }}</td>
+          <td class="qc-name {% if not data['columns']['name'] %}qc-hide{% endif %}">{{ lang('column_name') }}</td>
+          <td class="qc-model {% if not data['columns']['model'] %}qc-hide{% endif %}">{{ lang('column_model') }}</td>
+          <td class="qc-quantity {% if not data['columns']['quantity'] %}qc-hide{% endif %}">{{ lang('column_quantity') }}</td>
+          <td class="qc-price  {% if not data['columns']['price'] or (config('config_customer_price') and not is_logged) %}qc-hide{% endif %}">{{ lang('column_price') }}</td>
+          <td class="qc-total {% if not data['columns']['total'] or (config('config_customer_price') and not is_logged) %}qc-hide{% endif %}">{{ lang('column_total') }}</td>
+        </tr>
+      </thead>
+          <tbody> 
+          {% for product in productArr %}
+        <tr {% if not product['stock'] %}class="stock"{% endif %}>
+          <td class="qc-image {% if not data['columns']['image'] %}qc-hide{% endif %}">
+            <a rel="qc-popup" data-help='<img src="{{ product['image'] }}" />'  href="{{ product['href'] }}">
+              <img src="{{ product['thumb'] }}" />
+            </a>
+            <i rel="tooltip" data-help="{{ field['tooltip'] }}"></i>
+          </td>
+          <td class="qc-name  {% if not data['columns']['name'] %}qc-hide{% endif %}">
+            <a href="{{ product['href'] }}" {% if not data['columns']['image'] %}rel="popup" data-help='<img src="{{ product['image'] }}"/>'{% endif %}>
+              
+              {{ product['name'] }} {% if not product['stock'] %}<span class="out-of-stock">***</span>{% endif %}
+            </a>
+            {% for option in product['option'] %}
+              <div> &nbsp;<small> - {{ option['name'] }}: {{ option['value'] }}</small> </div>
+            {% endfor %}
+
+            {% if product['main_price'] %}
+            <div>
+               - <small>{{ lang('main_price') }} : {{ product['main_price'] }} </small><br/>
+            </div>
+            {% endif %}
+            {% if product['remaining_amount'] %}
+            <div>
+              - <small>{{ lang('remaining_amount') }} : {{ product['remaining_amount'] }} </small><br/>
+            </div>
+            {% endif %}
+              {% if product['rentData'] %}
+                <div>
+                    {{ lang('product_for_rent_from') }}
+                    {{ product['rentData']['range']['from'] }}
+                    {{ lang('product_for_rent_to') }}
+                    {{ product['rentData']['range']['to'] }}
+                    {{ lang('product_for_rent_for') }}
+                    {{ product['rentData']['diff'] }}
+                    {{ lang('text_day') }}
+                </div>
+              {% endif %}
+              {% if product['pricePerMeterData'] %}
+              <div>
+                  {% if product['pricePerMeterData']['skirtings_status']  == 1 %}
+                  &nbsp;<small> - <small>{{ lang('text_skirtings') }}: {{ product['pricePerMeterData']['skirtings'] }} {{ lang('text_meter') }}</small><br/>
+                  {% endif %}
+                  {% if product['pricePerMeterData']['metalprofile_status']  == 1 %}
+                  &nbsp;<small> - <small>{{ lang('text_metalprofiles') }}: {{ product['pricePerMeterData']['doorsWidth'] }} {{ lang('text_meter') }}</small><br/>
+                  {% endif %}
+                  &nbsp;<small> - {{ lang('text_materials') }}: {{ product['pricePerMeterData']['dimention'] }} {{ lang('text_meter') }}<span style="font-size: 11px;vertical-align: top;">2</span></small><br/>
+              </div>
+              {% endif %}
+            <div class="qc-name-model {% if not data['columns']['model'] %}qc-hide{% endif %}"><span class="title">{{ column_model }}:</span> <span class="text">{{ product['model'] }}</span></div>
+            <div class="qc-name-price {% if not data['columns']['price'] or (config('config_customer_price') and not is_logged) %}qc-hide{% endif %}"><span class="title">{{ column_price }}:</span> <span class="text">{{ product['price'] }}</span></div>
+          </td>
+          <td class="qc-model {% if not data['columns']['model'] %}qc-hide{% endif %}">{{ product['model'] }}</td>
+          <td class="qc-quantity  {% if not data['columns']['quantity'] %}qc-hide{% endif %}">
+            <span class="qc-icon-minus-circle decrease" data-product="{{ product['product_id'] }}"></span>
+            <input type="text" value="{{ product['quantity'] }}" class="qc-product-qantity" name="cart[{{ product['product_id'] }}]"  data-refresh="2" readonly="readonly"/>
+            <span class="qc-icon-plus-circle increase" data-product="{{ product['product_id'] }}"></span></td>
+          <td class="qc-price {% if (not data['columns']['price'] or (config('config_customer_price') and not is_logged)) %}qc-hide{% endif %} ">{{ product['price'] }}</td>
+          <td class="qc-total {% if (not data['columns']['total'] or (config('config_customer_price') and not is_logged)) %}qc-hide{% endif %} ">{{ product['total'] }}</td>
+      
+        </tr>
+        {% endfor %}
+        
+        {% for itemvoucher in vouchers %}
+        <tr>
+          <td class="qc-name {% if not data['columns']['image'] %}qc-hide{% endif %}"></td>
+          <td class="qc-name {% if not data['columns']['name'] %}qc-hide{% endif %} ">{{ itemvoucher['description'] }}</td>
+          <td class="qc-model {% if not data['columns']['model'] %}qc-hide{% endif %} "></td>
+          <td class="qc-quantity {% if not data['columns']['quantity'] %}qc-hide{% endif %} ">{{ itemvoucher['quantity'] }}</td>
+          <td class="qc-price {% if (not data['columns']['price'] or (config('config_customer_price') and not is_logged)) %}qc-hide{% endif %} ">{{ itemvoucher['amount'] }}</td>
+          <td class="qc-total {% if (not data['columns']['total'] or (config('config_customer_price') and not is_logged)) %}qc-hide{% endif %} ">{{ itemvoucher['amount'] }}</td>
+        </tr>
+        {% endfor %}
+        
+        <!-- Subscription Item -->
+        {% if subscription is defined and subscription is not empty %}        
+        <tr>
+          <td class="qc-name"><a href="{{ link('checkout/cart/removeSubscriptionPlan') }}">X</a></td>
+          <td class="qc-name {% if not data['columns']['name'] %}qc-hide{% endif %} ">{{ subscription['title'] }}</td>
+          <td class="qc-model {% if not data['columns']['model'] %}qc-hide{% endif %} "></td>
+          <td class="qc-quantity {% if not data['columns']['quantity'] %}qc-hide{% endif %} ">1</td>
+          <td class="qc-price {% if (not data['columns']['price'] or (config('config_customer_price') and not is_logged)) %}qc-hide{% endif %} ">{{ subscription['amount'] }}</td>
+          <td class="qc-total {% if (not data['columns']['total'] or (config('config_customer_price') and not is_logged)) %}qc-hide{% endif %} ">{{ subscription['amount'] }}</td>
+        </tr>
+        {% endif %}
+        <!-- /Subscription Item -->
+
+
+      </tbody>
+    </table>
+    <!-- Total Products Prices --->
+    <div class="qc-table qc-summary {% if config('config_customer_price') and not is_logged %}qc-hide{% endif %}">   
+            <div class="qc-row qc-totals">
+            <div class="qc-col qc-text" >{{ lang('text_total') }}
+            </div><div class="qc-col qc-total">{{products_prices[idx] }}</div>
+             <div class="qc-col qc-text" >{{selectedShippingMethodName[idx]}}
+            </div><div class="qc-col qc-total">{{selectedShippingMethodValue[idx] }}</div>
+             <div class="qc-col qc-text" >{{ lang('text_total') }}
+            </div><div class="qc-col qc-total">{{totalAfterShippingCost[idx] }}</div>
+            </div>
+            
+
+        </div>
+ 
+   <!--/ Total Products Prices -->
+  <!-- Seller Shipping Methods -->
+        <div class="box box-border">
+        <div class="box-heading ">
+            <span class="wrap">
+                <span class="qc-icon-shipping-method"></span>
+            </span> 
+            <span class="text">{{ lang('text_shipping_method') }}</span>
+            
+        </div>
+        </br> 
+      {% if addressArea %}
+        {% if seller_shipping_methods[idx] %}
+{% for shipping_method in seller_shipping_methods[idx] %}
+
+        <div class="title">{{ shipping_method['title'] }}</div>
+        
+    {% if not shipping_method['error'] %}
+        {% for quote in shipping_method['quote'] %}
+            <div class="radio-input">
+                {% if quote['code'] == code or not code %}
+                    {% set code = quote['code'] %}
+                    <input type="radio" {% if selectedShippingMethod[idx] == quote['code'] ~ '_'~ idx  %} checked="checked" {% endif %} name="shipping_method_{{idx}}" value="{{ quote['code'] }}_{{idx}}" id="{{ quote['code'] }}_{{idx}}"   data-refresh="5" class="styled"/>
+                {% else %}
+                    <input type="radio"{% if selectedShippingMethod[idx] == quote['code'] ~ '_'~ idx  %} checked="checked" {% endif %} name="shipping_method_{{idx}}" value="{{ quote['code'] }}_{{idx}}" id="{{ quote['code'] }}_{{idx}}"  data-refresh="5" class="styled"/>
+                {% endif %}
+                <label for="{{ quote['code'] }}_{{idx}}"><span class="text">{{ quote['title'] }}</span><span class="price">{{ quote['text'] }}</span></label>
+            </div>
+        {% endfor %}
+    {% else %}
+    	<div class="error alert alert-danger">{{ shipping_method['error'] }}</div>
+    {% endif %}
+{% endfor %}
+ {% else %}
+    	<div class="error alert alert-danger">{{ lang('text_no_delivery') }}</div>
+  {% endif %}
+{% else %}
+<div class="error alert alert-warning">{{ lang('text_select_area') }}</div>
+ {% endif %}
+</div>
+  <!-- /Seller Shipping Methods -->
+</br>
+  <div class="clear"></div>
+     {% endfor %}

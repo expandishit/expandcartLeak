@@ -1,0 +1,23 @@
+<?php
+$_['heading_title']  = 'ZOHO Inventory';
+$_['text_settings']  = 'Settings';
+$_['text_status']  = 'Status';
+$_['entry_status_help']  = 'ZOHO Inventory App Status.';
+$_['text_multiseller_not_active']  = 'ZOHO Inventory Application not Installed!';
+$_['text_success']  = 'Success: You have modified settings!';
+$_['text_enabled']  = 'Enabled';
+$_['text_disabled']  = 'Disabled';
+$_['entry_organization_id'] = "Organization ID";
+$_['entry_authtoken'] = "Authtoken";
+$_['error_invalid_authtoken'] = 'Authtoken field is required!';
+$_['error_warning'] = 'Warning: Please make sure to review incorrect or required fields';
+$_['button_sync_products'] = 'Sync Products';
+$_['text_success_sync_products'] = 'Success: You have synced products!';
+$_['entry_client_id'] = "Client ID";
+$_['entry_client_id_help'] = "You can get it by clicking on this <a target=\"_blank\" href=\"https://api-console.zoho.com/\">link</a> and creating a new Server-based Applications client";
+$_['entry_client_secret'] = "Client Secret";
+$_['entry_client_secret_help'] = "You can get it by clicking on this <a target=\"_blank\" href=\"https://api-console.zoho.com/\">link</a> and creating a new Server-based Applications client";
+$_['entry_home_url'] = "Homepage URL";
+$_['entry_redirect_url'] = "Authorized Redirect URI";
+$_['text_settings_waiting'] = 'You will be directed to the verification page';
+$_['text_settings_error'] = 'Warning: Please make sure to review incorrect or required fields';

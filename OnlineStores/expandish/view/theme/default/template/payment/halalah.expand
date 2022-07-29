@@ -1,0 +1,97 @@
+{% if currency != 'SAR' %}
+
+	<input type="button" value="{{ lang('button_continue') }}"  class="btn btn-inline" style="display: none;" onclick="loadhalala()"/>
+
+	<div class="qr_code_hide" style="text-align: center;display: none;">
+	
+	    <h3>{{ lang('text_qr') }}</h3>
+	    <p>{{ lang('text_qr_note') }}</p>
+	    <img src="index.php?route=payment/halalah/getqrcode" />
+	    <br/>
+	    {{ lang('text_mobile_browser') }} <a href="{{ deeplink }}"><strong>{{ lang('text_clickhere') }}</strong></a> {{ lang('text_wallet') }}
+
+	</div>
+	<div class="card">
+	    <h3 class="card-header qr_code_hide" style="display: none;">{{ lang('text_pay_status') }}</h3>
+	    <div class="card-body">
+	        <h5 id="halalah_payment_status" class="qr_code_hide" style="display: none;">{{ lang('text_waiting') }}</h5>
+	        <div id="halalah_payment_details" style="display: none;">
+	        <br>
+	            <div><label>{{ lang('text_billnumber') }}</label>: <span id="billNumber" class="val"></span></div>
+	            <div><label>{{ lang('text_orderid') }}</label>: <span id="orderID" class="val"></span></div>
+	            <div><label>{{ lang('text_amount') }}</label>: <span id="amount" class="val"></span> {{ lang('text_sar') }} </div>
+	            <div><label>{{ lang('text_trxdate') }}</label>: <span id="trxDate" class="val"></span></div>
+	            <div><label>{{ lang('text_trxref') }}</label>: <span id="trxRef" class="val"></span></div>
+	            <br/>
+	            <a href="{{ continue }}" id="halalah_continue" style="display: none;">{{ lang('button_continue') }}</a>	            
+	        </div>
+	    </div>
+	</div>
+	<span style="color: #f5625a;font-weight: bold;display: none;" id="auth_error">Halalah Authentication Error!</span>
+
+	<script type="text/javascript">
+	function loadhalala(){
+		var h_token = '';
+		var myTimer = null;
+		$.ajax({
+            type: 'get',
+            url: 'index.php?route=payment/halalah/h_login',
+            cache: false,
+            success: function(response) {
+            	let res = JSON.parse(response);
+                if(res.access_token){
+                	h_token = res.access_token;
+                	myTimer = setInterval(checkPay, 5000);
+                	$('.qr_code_hide').fadeIn();
+	    			$('#qc_confirm_order').fadeOut();
+                }else{
+			    	$('#auth_error').fadeIn();
+			    	return;
+			    }
+            }
+        });
+	    //https://app.halalah.sa:4486/api/emv/check/hlla1547138796625
+	    //https://apigw.halalah.sa/Orders/v1/Order/ORDERID
+	    
+
+	    function checkPay() {
+		  $.ajax({
+	            type: 'get',
+	            url: 'index.php?route=payment/halalah/billstatus',
+	            cache: false,
+	            // beforeSend: function() {
+	            //     $('#button-confirm').button('loading');
+	            // },
+	            // complete: function() {
+	            //     $('#button-confirm').button('reset');
+	            // },
+	            success: function(response) {
+	            	let result = JSON.parse(response);
+	                if(result.status == '0' && result.message == 'Ok'){
+	                	$.ajax({
+				            type: 'get',
+				            url: 'index.php?route=payment/halalah/confirm',
+				            cache: false,
+				            success: function(response) {
+				            	$('#halalah_payment_status').fadeOut();
+				            	$('#halalah_payment_details').fadeIn();
+			                	$('#billNumber').text(result.data.billNumber);
+			                	$('#orderID').text(result.data.orderID);
+			                	$('#amount').text(result.data.amount);
+			                	$('#trxDate').text(result.data.trxDate);
+			                	$('#trxRef').text(result.data.trxRef);
+				                $('#halalah_continue').addClass('btn btn-inline');
+				                $('#halalah_continue').fadeIn();
+				            }
+				        });
+
+	                	clearInterval(myTimer);
+	                }
+	            }
+	        });
+		}
+	}
+	</script>
+{% else %}
+	<span style="color: #f5625a;font-weight: bold;">{{ lang('text_sar_support') }}</span>
+{% endif %}

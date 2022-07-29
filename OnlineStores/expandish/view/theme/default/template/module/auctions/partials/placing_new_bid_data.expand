@@ -1,0 +1,213 @@
+{% set minimum_next_bid = auction.current_bid ? ( auction.current_bid + auction.increment ) : auction.starting_bid_price %}
+
+<style type="text/css">
+	.part{
+		border: 1px solid black;
+		border-radius: 3px;
+		padding: 6px;
+		text-align: center;
+		margin-left: 8px;
+	}
+	.part .value{
+		font-weight: 900;
+	}
+</style>
+
+<div class="col-md-4">
+
+	<div class="form-group">
+		<label for="bid_amount">{{ lang('text_bid_amount') }}</label>
+		<div class="row">
+				<div class="col-md-12">
+					<div class="input-group">
+	 			 		<input type="text" name="bid_amount" id="bid_amount" value="{{ minimum_next_bid }}" class="form-control">
+						<span class="input-group-btn">
+							<button id="place_bid_button" class="btn btn-default">{{ lang('text_place_your_bid') }}</button>
+						</span>
+					</div><!-- /input-group -->
+				</div><!-- /.col-lg-6 -->
+		</div><!-- /.row -->
+		<p style="color: red;" id="invalid_bid_error"></p>
+	</div>
+
+
+
+	<div class="form-group">
+		<label for="close_datetime">{{ lang('text_ends_at') }}</label>
+        <div class="row" style="padding: 0 10px; position: relative;" data-countdown="{{ auction.close_datetime }}">
+        	<div class="col-md-3" style="padding: 0px;">
+        		<div class="part">
+        			<p class="value" id="day"></p>
+					<p class="text-muted">{{ lang('text_day')}}</p>
+        		</div>
+        	</div>
+        	<div class="col-md-3" style="padding: 0px;">
+        		<div class="part">
+        			<p class="value" id="hour"></p>
+        			<p class="text-muted">{{ lang('text_hour')}}</p>
+        		</div>
+        	</div>
+
+        	<div class="col-md-3" style="padding: 0px;">
+        		<div class="part">
+        			<p class="value" id="minute"></p>
+        			<p class="text-muted">{{ lang('text_minute')}}</p>
+        		</div>
+        	</div>
+
+        	<div class="col-md-3" style="padding: 0px;">
+        		<div class="part">
+        			<p class="value" id="second"></p>
+        			<p class="text-muted">{{ lang('text_second')}}</p>
+        		</div>
+        	</div>
+        </div>
+        <div class="row">
+        	<div class="col-md-12">
+        		<p id="auction_expired" style="color: red; font-weight: bold; text-align: center; padding: 7px;"></p>
+        	</div>
+        </div>
+	</div>
+</div>
+
+
+<div class="col-md-2">
+	<div class="form-group">
+		<label for="min_deposit">{{ lang('text_min_deposit') }}</label>
+		<input type="text" id="min_deposit" class="form-control text-center" value="{{ auction.min_deposit }}" readonly>
+	</div>
+
+	<div class="form-group">
+		<label for="purchase_valid_days">{{ lang('text_purchase_valid_days') }}</label>
+		<input type="text" id="purchase_valid_days" class="form-control text-center" value="{{ auction.purchase_valid_days }}" readonly>
+	</div>
+</div>
+
+<div class="col-md-2">
+	<div class="form-group">
+		<label for="opening_price">{{ lang('text_opening_price') }}</label>
+		<input type="text" id="opening_price" class="form-control text-center" value="{{ auction.starting_bid_price }}" readonly>
+	</div>
+
+	<div class="form-group">
+		<label for="minimum_next_bid">{{ lang('text_minimum_next_bid') }}</label>
+		<input type="text" id="minimum_next_bid" class="form-control text-center" value="{{ minimum_next_bid }}" readonly>
+	</div>
+</div>
+
+
+
+<div class="col-md-4">
+	<div class="form-group">
+		<label for="current_bid">{{ lang('text_current_bid') }}</label>
+		<textarea id="current_bid" class="form-control text-center" style="   
+			-moz-box-sizing: border-box;
+		    resize: none;
+		    font-size: 3.11rem;
+		    line-height: 2.81429;
+		    width: 325px;
+		    height:108px;
+		    overflow: hidden;
+		    		    
+		    white-space: normal;
+    		text-align: justify;
+    		-moz-text-align-last: center; /* Firefox 12+ */
+    		text-align-last: center;
+
+		    border: 5px solid #555;" readonly>
+
+
+		{{ auction.current_bid ? (default_currency ~ ' ' ~ 	auction.current_bid|number_format(2, '.', ',') ) : 'N/A' }}
+		</textarea>
+	</div>
+</div>
+
+
+{{ include('default/template/module/auctions/partials/auction_subscribe_modal.expand') }}
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery.countdown/2.2.0/jquery.countdown.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.26.0/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.31/moment-timezone.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.31/moment-timezone-with-data.min.js"></script>
+
+<script type="text/javascript">
+
+
+
+	$(()=>{
+		//Background Worker
+		var worker = new Worker('{{ jslink("../default/js/modules/auctions/sse_bids_updates_worker.js") }}');
+		worker.addEventListener('message', function(e) {
+			if(e.data.error){
+				console.log(e.data.error); return;
+			}
+			$('#current_bid').val(e.data.bid ? (e.data.bid + ' ' + '{{ default_currency }}') : "N/A");
+			$('#bid_amount').val(e.data.next_minimum_allowed_bid);
+	    	$('#minimum_next_bid').val(e.data.next_minimum_allowed_bid);
+	    	//update bidders list
+	    	refresh_bidders_list(e.data.bidders);
+
+		}, false);
+		worker.postMessage({'url' : "{{ sse_updates_action }}"});	
+
+		const refresh_bidders_list = (data) => {
+			$('ul.bidders_list li').remove();
+			var items = [];
+
+			$.each(data, function(i, item) {
+			  items.push('<li class="bidder"><span class="bidder_name">' + item.bidder_name + '</span><span class="biding_amount pull-right">' + item.amount + ' ' + '{{default_currency}}</span><p class="bidding_datetime">' +  item.created_at + '</p></li>');
+			}); // close each()
+
+			$('ul.bidders_list').append(items.join(''));
+		};
+
+		$('#place_bid_button').click(function(){
+	     	$('#invalid_bid_error').html('');
+
+			$.ajax({
+		        url: '{{ place_bid_action }}',
+		        method: "POST",
+		        data: { 'bid_amount' : $('#bid_amount').val() }
+		      }).done(function(data){
+		     	$('#invalid_bid_error').html('');
+
+		        let response = JSON.parse(data);
+					        
+		        if(response['redirect']){
+		          window.location = response['redirect'];
+		        }
+		        else if(response['is_subscribed'] == '0'){
+		        	$('#subscribe_in_auction_modal').modal('show');
+		        }
+		        else if(response['success'] == '0'){
+		        	$('#invalid_bid_error').text('Invalid Bid');
+		        }
+		    });
+		});
+
+
+	    $('[data-countdown]').each(function() {
+	        var $this = $(this), finalDate = $(this).data('countdown');
+	        $this.countdown(moment.tz(finalDate, "{{ auctions_timezone }}").toDate(), function(event) {
+	            $this.find('#day').html(event.strftime('%D'));
+	            $this.find('#hour').html(event.strftime('%H'));
+	            $this.find('#minute').html(event.strftime('%M'));
+	            $this.find('#second').html(event.strftime('%S'));
+	        });
+	       	$this.on('finish.countdown', function(event) {
+	        	// 1- Close the live updates channel.
+	        	worker.terminate();
+
+	        	// 2- Disable placing a new bid
+	        	$('#place_bid_button').prop('disabled', true);
+	        	$('#place_bid_button').off('click');
+	        	$('#bid_amount').prop('disabled', true);
+
+	        	// 3- Display Expired word
+	        	$('#auction_expired').html('AUCTION EXPIRED!');
+
+	        	// 4- Calculate Winner (mail to him, store in DB, count valid days to move to next winner if not purchase)
+	        });
+	    });
+	});
+</script>

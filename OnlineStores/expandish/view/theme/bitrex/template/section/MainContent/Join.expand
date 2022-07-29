@@ -1,0 +1,97 @@
+{% if landing_page %}
+<div class="CategorySec text-center" id="secCategory">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12 titleSection">
+                
+                <h4>{{fields.sectiontitle.field_value}}</h4>
+                
+                
+                    <p>{{fields.viewallText.field_value}}</p>
+                    <a href="#" role="button"  data-toggle="modal" data-target="#formsModal" class="btn btn-block mt-4 mb-5 theme-btn">{{fields.BtnText.field_value}}</a>
+            </div>
+        </div>
+      
+        
+           
+    </div>
+</div>
+<div class="modal fade" id="formsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div id="joinNotifications"></div>
+    
+                <form  method="post" enctype="multipart/form-data" id="joinForm">
+                    <div class="form-group upload-img">
+                        <img id="output" src="{{ asset('image/upload.png') }}" />	
+                        <input type="file" onchange="loadFile(event)" class="image-input" accept="image/png, image/jpeg, image/jpg" name="fattachments[]">
+                        <p style="color: grey;" class="mb-4 text-center">{{ lang('upload_photo') }}</p>
+                    </div>
+                    <div class="form-group">
+                      <label>{{ lang('resume') }}</label>
+                      <input type="file" class="form-control" name="fattachments[]" required>
+                    </div>
+                    <div class="form-group">
+                        <label>{{ lang('full_name') }}</label>
+                        <input type="text" class="form-control" name="name">
+                    </div>
+                    <div class="form-group">
+                        <label>{{ lang('email') }}</label>
+                        <input type="email" class="form-control" name="email">
+                    </div>
+                    <div class="form-group text-center mt-3">
+                    <a href="#" class="btn btn-block mt-4 mb-5 theme-btn" id="joinBtn">{{ lang('apply') }}</a>
+    
+                </div>
+                  </form>
+                
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    var loadFile = function(event) {
+        var image = document.getElementById('output');
+        image.src = URL.createObjectURL(event.target.files[0]);
+    };
+    $(document).ready(function(){
+      $("#joinBtn").click(function(e){
+        //$("#joinForm").submit();
+        var link = "{{ link('information/contact/join', '', 'SSL') }}";
+        e.preventDefault();
+        var formData = new FormData($('#joinForm')[0]); // You need to use standard javascript object here
+        console.log(formData);
+        $.ajax({
+            url: link,
+            type: 'post',
+            data: formData,
+            dataType: 'json',
+            contentType: false,
+            processData: false,
+            success: function(json) {
+                $('.alert-success, .alert-warning, .alert-attention, .alert-information').remove();
+                            
+                if (json['success']) {
+                    $('#notification').html('<br><div class="alert alert-success alert-dismissible" style="display: none;" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>' + json['success'] + '</div>');
+                        $('.alert-success').fadeIn('slow');
+                        $('#formsModal').modal('hide');
+                    $('html, body').animate({ scrollTop: 0 }, 'slow');
+                }
+                // errors
+                if(json['error']){
+                  var error = '';
+                  $.each( json['error'], function( i, l ){
+                    $( "#" + i ).addClass('error');
+                    error = l;
+                  });
+                  $('#joinNotifications').after('<br><div class="alert alert-danger alert-dismissible" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>' + error + '</div>')
+                }
+                  
+            }
+        });             
+      });
+    });
+
+</script>
+{% endif %}

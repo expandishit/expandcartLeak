@@ -1,0 +1,251 @@
+{% import 'controls/uploader.expand' as uploader %}
+<style type="text/css">
+.separator {display: flex;align-items: center;text-align: center; color: #999999;margin-bottom: 15px;}.separator::before, .separator::after {content: '';flex: 1;border-bottom: 1px solid #e8e8e8;}.separator::before {margin-right: .25em;}.separator::after {margin-left: .25em;}
+</style>
+<!-- Start Form -->
+<form class="form" action="{{ action }}" method="POST">
+    <div class="row">
+        <!-- Status -->
+        <div class="col-md-3">
+            <div class="panel panel-white">
+                <div class="panel-heading">
+                    <h6 class="panel-title"><span class="text-bold">{{ lang('entry_status') }}</span></h6>
+                    <div class="heading-elements not-collapsible">
+                        <ul class="icons-list">
+                            <li><a data-action="collapse" class=""></a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="collapse in" id="panel1">
+
+                        <!-- Status -->
+                        <div class="form-group">
+                            <label class="control-label">{{ lang('entry_status') }}</label>
+                            <div class="checkbox checkbox-switchery">
+                                <label>
+                                    <input type="checkbox" onchange="changeStatus(this);" name="tamara[status]" class="switchery" {{ tamara.status not in ['0', 0, 'off'] or tamara.status is null ? 'checked' }}>
+                                    <span class="switchery-status">{{ tamara.status not in ['0', 0, 'off'] or tamara.status is null ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                </label>
+                            </div>
+                        </div>
+                        <!-- /Status -->
+
+
+                        <hr style="width: 100%; border: 1px solid #e8e8e8;">
+
+
+                        {# Debugging Mode #}
+                        <div class="form-group">
+                            <label class="control-label">{{ lang('entry_debugging_mode') }}</label>
+                            <div class="checkbox checkbox-switchery">
+                                <label>
+                                    <input type="checkbox" onchange="changeStatus(this);" name="tamara[debugging_mode]" class="switchery" {{ tamara['debugging_mode'] not in ['0', 0, 'off'] or tamara['debugging_mode'] is null ? 'checked' }}>
+                                    <span class="switchery-status">{{ tamara['debugging_mode'] not in ['0', 0, 'off'] or tamara['debugging_mode'] is null ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                </label>
+                            </div>
+                        </div>
+                        {# /Debugging Mode #}
+
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+        <!-- End of Status -->
+
+
+
+
+
+        <!-- Fields -->
+        <div class="col-md-9">
+            <div class="panel panel-white">
+                <div class="panel-heading">
+                    <h6 class="panel-title"><span class="text-bold">{{ lang('settings') }}</span></h6>
+                    <div class="heading-elements not-collapsible">
+                        <ul class="icons-list">
+                            <li><a data-action="collapse" class=""></a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="collapse in" id="fields-panel">
+                        <div class="row">
+                            <!-- api_token -->
+                            <div class="form-group col-md-12">
+                                <label for="api_token" class="control-label">{{ lang('entry_tamaraـapi_token') }} <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="api_token" name="tamara[api_token]" value="{{ tamara.api_token }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /api_token -->
+                        </div>
+                        
+                        <div class="row">
+                            <!-- notification_token -->
+                            <div class="form-group col-md-12">
+                                <label for="api_token" class="control-label">{{ lang('entry_tamaraـnotification_token') }} <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="notification_token" name="tamara[notification_token]" value="{{ tamara.notification_token }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /notification_token -->
+                        </div>
+
+                        <div class="row">
+                            <!-- callback URL -->
+                            <div class="form-group col-md-12" id="tamara_callback_url-group">
+                                <label for="tamara_callback_url" class="control-label">{{ lang('entry_callback') }}  <small>({{  lang('entry_callback_hint') }}) </small></label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="tamara_callback_url" value="{{ tamara_callback }}" disabled>
+                                    <span class="input-group-btn">
+                                        <button class="btn btn-default btn-clipboard" data-clipboard-text="{{ tamara_callback }}" type="button"><i class="icon-copy3 position-left"></i> Copy</button>
+                                    </span>
+                                    <span class="help-block"></span>
+                                </div>
+                            </div>
+                            <!-- /callback URL -->
+                        </div>
+
+
+                        <div class="row">
+                            <!-- Geo Zone -->
+                            <div class="form-group col-md-6" id="tamara-group">
+                                <label for="tamara_geo_zone" class="control-label">{{ lang('entry_geo_zone') }}</label>
+                                <select name="tamara[geo_zone_id]" id="tamara_geo_zone" class="form-control">
+                                    <option value="0">{{ lang('text_all_zones') }}</option>
+                                    {% for geo_zone in geo_zones %}
+                                        <option value="{{ geo_zone['geo_zone_id'] }}" {% if tamara.geo_zone == geo_zone['geo_zone_id'] %} selected {% endif %}>
+                                            {{ geo_zone['name'] }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Geo Zone -->
+                        {# </div> #}
+
+
+                       {#  <div class="row"> #}
+                          {#   <!-- Complete Order Status -->
+                            <div class="form-group col-md-6">
+                                <label for="tamara_complete_status_id" class="control-label">{{ lang('entry_complete_status') }}</label>
+                                <select name="tamara[complete_status_id]" id="tamara_complete_status_id" class="form-control">
+                                    {% for order_status in order_statuses %}
+                                        <option value="{{ order_status['order_status_id'] }}" {% if tamara.complete_status_id == order_status['order_status_id'] %} selected {% endif %}>
+                                            {{ order_status['name'] }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Complete Order Status --> #}
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+
+
+    {# Status Mapping #}
+    <div class="col-md-9 pull-right">
+        <div class="panel panel-white">
+                <div class="panel-heading">
+                <h6 class="panel-title"><span class="text-bold">{{ lang('tamara_statuses_mapping') }}</span></h6>
+                <div class="heading-elements not-collapsible">
+                    <ul class="icons-list">
+                        <li><a data-action="collapse" class=""></a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="collapse in" id="fields-panel">
+                    
+                    {# Adding All statuses button/Link #}
+                    {% if not tamara_are_statuses_added %}
+                    <div class="form-group col-md-12">
+                        <label for="add_all_statuses">{{ lang('lbl_add_all_statuses') }}</label>
+                        <a href="{{ link('payment/tamara/addAllStatuses') }}" class="btn btn-primary" id="add_all_statuses"> {{ lang('text_add_all_statuses') }}</a>
+                        <span class="help-block">{{ lang('text_add_all_statuses_help') }}</span>
+                    </div>
+                    
+                    <div class="separator" style="width: 100%;"> {{ lang('text_or') }} </div>                    
+                    {% endif %}
+                    
+
+
+                    <div style="margin-bottom: 15px;"><small>{{ lang('tamara_statuses_help_text')}}</small></div>
+
+                    {% for key , status in tamara_statuses %}
+                    <input type="hidden" name="tamara_statuses[{{key}}][code]" value="{{ status['code']}}">
+                    <input type="hidden" name="tamara_statuses[{{key}}][name_en]" value="{{ status['name_en']}}">
+                    <input type="hidden" name="tamara_statuses[{{key}}][name_ar]" value="{{ status['name_ar']}}">
+                    <!-- After Shipping Status -->
+                    <div class="form-group col-md-6">
+                        <label for="tamara_after_creation_status" class="control-label">{{ loop.index }}  -  {{ lang == 'ar' ? status['status_ar'] : status['name_en']}}</label>
+                        <select name="tamara_statuses[{{key}}][expandcartid]" id="tamara_after_creation_status" class="form-control">
+                            {% for order_status in order_statuses %}
+                                <option value="{{ order_status['order_status_id'] }}" {{ status['expandcartid'] == order_status['order_status_id'] ? 'selected' :'' }}> 
+                                    {{ order_status['name'] }} 
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <span class="help-block"></span>
+                    </div>
+                    <!-- /After Shipping Status -->
+                    {% endfor %}
+                
+                </div>
+            </div>
+        </div>
+    </div>
+    {# /Status Mapping #}
+
+
+
+
+
+    </div>
+</form>
+    <!-- End of Fields -->
+
+{% block scripts %}
+<script type="text/javascript">
+    $(document).ready(function() {
+        $('select').select2();
+
+        presentation_checking();
+
+        $('#tamara_presentation_type').change( ()=>{
+            presentation_checking();
+        });
+
+        
+    });
+
+    const changeStatus = checkbox => {
+        $(checkbox).siblings('.switchery-status').html(
+            $(checkbox).is(':checked') ? "{{ lang('text_enabled') }}" : "{{ lang('text_disabled') }}"
+            );
+    };
+
+    const presentation_checking = ()=>{
+         if($('#tamara_presentation_type').find(":selected").val() == 'text'){
+            $('#text_presentation_block').show();
+            $('#image_presentation_block').hide();
+        }
+        else{
+            $('#text_presentation_block').hide();
+            $('#image_presentation_block').show();
+        }
+    };
+</script>
+{% endblock %}
+
+
+
+

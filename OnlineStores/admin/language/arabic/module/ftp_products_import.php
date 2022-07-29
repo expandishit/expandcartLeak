@@ -1,0 +1,92 @@
+<?php
+$_['heading_title']  = 'إستيراد المنتجات عبر FTP';
+$_['text_settings']  = 'الإعدادات';
+$_['text_status']  = 'الحالة';
+$_['entry_status_help']  = 'حالة التطبيق.';
+$_['extension_not_active']  = 'حالة التطبيق غير فعال';
+$_['text_success']  = 'تم التعديل بنجاح!';
+$_['entry_authtoken'] = "رمز المصادقة";
+$_['error_invalid_authtoken'] = 'حقل رمز المصادقة مطلوب!';
+$_['error_warning'] = 'تحذير: يرجى التأكد من مراجعة الحقول غير الصحيحة أو المطلوبة';
+$_['button_import_new_products'] = 'مزامنة المنتجات الجديدة';
+$_['text_success_import_new_products'] = 'تم مزامنة المنتجات الجديدة بنجاح';
+
+
+$_['text_enabled']  = 'فعال';
+$_['text_disabled']  = 'غير فعال';
+
+$_['entry_products_credentials_server'] = 'الخادم';
+$_['error_invalid_products_credentials_server'] = 'حقل الخادم مطلوب!';
+$_['entry_products_credentials_user'] = 'اسم المستخدم';
+$_['error_invalid_products_credentials_user'] = 'حقل اسم المستخدم مطلوب!';
+$_['entry_products_credentials_password'] = 'كلمة المرور';
+$_['error_invalid_products_credentials_password'] = 'حقل كلمة المرور مطلوب!';
+$_['entry_products_credentials_port'] = 'رقم المنفذ';
+$_['error_invalid_products_credentials_port'] = 'حقل رقم المنفذ مطلوب!';
+$_['entry_products_credentials_ssl'] = 'اتصال آمن';
+$_['error_invalid_products_credentials_ssl'] = 'حقل اتصال آمن مطلوب!';
+$_['entry_products_credentials_document_root'] = 'جذر المستند';
+$_['error_invalid_products_credentials_document_root'] = 'حقل جذر المستند مطلوب!';
+$_['entry_products_credentials_sync_path'] = 'اسم الدليل';
+$_['error_invalid_products_credentials_sync_path'] = 'حقل اسم الدليل مطلوب!';
+
+$_['entry_images_credentials_server'] = 'الخادم';
+$_['error_invalid_images_credentials_server'] = 'حقل الخادم مطلوب!';
+$_['entry_images_credentials_user'] = 'اسم المستخدم';
+$_['error_invalid_images_credentials_user'] = 'حقل اسم المستخدم مطلوب!';
+$_['entry_images_credentials_password'] = 'كلمة المرور';
+$_['error_invalid_images_credentials_password'] = 'حقل كلمة المرور مطلوب!';
+$_['entry_images_credentials_port'] = 'رقم المنفذ';
+$_['error_invalid_images_credentials_port'] = 'حقل رقم المنفذ مطلوب!';
+$_['entry_images_credentials_ssl'] = 'اتصال آمن (SSL)';
+$_['error_invalid_images_credentials_ssl'] = 'حقل اتصال آمن مطلوب!';
+$_['entry_images_credentials_document_root'] = 'جذر المستند';
+$_['error_invalid_images_credentials_document_root'] = 'حقل جذر المستند مطلوب!';
+$_['entry_images_credentials_sync_path'] = 'اسم الدليل';
+$_['error_invalid_images_credentials_sync_path'] = 'حقل اسم الدليل مطلوب!';
+
+$_['entry_products_credentials_heading'] = 'بيانات اعتماد اتصال خادم المنتج';
+$_['entry_images_credentials_heading'] = 'بيانات اعتماد اتصال خادم الصور';
+$_['entry_enable_ssl'] = 'فعال';
+$_['entry_disable_ssl'] = 'غير فعال';
+
+$_['button_ftp_import_products'] = 'ابدأ استيراد المنتجات';
+
+$_['error_warning'] = 'تحذير: يرجى التأكد من مراجعة الحقول غير الصحيحة أو المطلوبة';
+$_['text_success_imported_products'] = 'نجاح: لقد قمت باستيراد منتجات!';
+$_['entry_file_schema_heading'] = 'مخطط حقول الملف';
+$_['error_invalid_products_credentials_filename_extensions'] = 'يجب ان يكون الملف من نوع';
+$_['error_invalid_products_credentials_filename'] = 'حقل اسم الملف مطلوب!';
+$_['entry_products_credentials_filename'] = 'اسم الملف';
+$_['entry_images_credentials_save_image_path'] = 'مسار حفظ الصور ';
+$_['entry_images_credentials_save_image_path_help'] = 'المسار الذى سيتم حفظ الصور بداخله داخل الخادم';
+$_['entry_file_schema_file_columns_map_required_name_ar'] = 'اسم المنتج (عربي)';
+$_['error_invalid_file_schema_file_columns_map_required_name_ar'] = 'حقل اسم المنتج مطلوب!';
+$_['entry_file_schema_file_columns_map_required_name_en'] = 'اسم المنتج (English)';
+$_['error_invalid_file_schema_file_columns_map_required_name_en'] = 'حقل اسم المنتج مطلوب!';
+$_['entry_file_schema_file_columns_map_required_description_ar'] = 'وصف المنتج (عربى)';
+$_['error_invalid_file_schema_file_columns_map_required_description_ar'] = 'حقل وصف المنتج مطلوب!';
+$_['entry_file_schema_file_columns_map_required_description_en'] = 'وصف المنتج (English)';
+$_['error_invalid_file_schema_file_columns_map_required_description_en'] = 'حقل وصف المنتج مطلوب!';
+$_['entry_file_schema_file_columns_map_required_sku'] = 'SKU';
+$_['error_invalid_file_schema_file_columns_map_required_sku'] = 'حقل SKU مطلوب !';
+$_['entry_file_schema_file_columns_map_required_barcode'] = 'باركود';
+$_['error_invalid_file_schema_file_columns_map_required_barcode'] = 'حقل باركود مطلوب!';
+$_['entry_file_schema_file_columns_map_required_model'] = 'الموديل';
+$_['error_invalid_file_schema_file_columns_map_required_model'] = 'حقل الموديل مطلوب!';
+$_['entry_file_schema_file_columns_map_required_price'] = 'السعر';
+$_['error_invalid_file_schema_file_columns_map_required_price'] = 'حقل السعر مطلوب';
+$_['entry_file_schema_file_columns_map_required_quantity'] = 'الكمية';
+$_['error_invalid_file_schema_file_columns_map_required_quantity'] = 'حقل الكمية مطلوب';
+$_['entry_file_schema_file_columns_map_required_product_category'] = 'معرفات الأقسام (ID\'s)';
+$_['entry_file_schema_file_columns_map_required_product_category_help'] = 'فى حاله العديد من الأقسام قم بفصلهم بعلامة ,';
+$_['error_invalid_file_schema_file_columns_map_required_category'] = 'حقل معرفات الأقسام مطلوب!';
+$_['entry_file_schema_file_columns_map_required_image'] = 'الصورة الرئيسية';
+$_['error_invalid_file_schema_file_columns_map_required_image'] = 'حقل الصورة الرئيسية مطلوب!';
+$_['entry_file_schema_file_columns_map_required_status'] = 'الحالة';
+$_['error_invalid_file_schema_file_columns_map_required_status'] = 'حقل الحالة مطلوب!';
+$_['entry_file_schema_file_columns_map_optional_product_image'] = 'صور إضافية';
+$_['entry_file_schema_file_columns_map_optional_product_image_help'] = 'للمزيد من الصور قم بفصلهم بعلامة ,';
+$_['error_invalid_file_schema_file_columns_map_optional_product_image'] = 'حقل صور إضافية مطلوب!';
+$_['entry_file_schema_identifier_name'] = 'اسم المعرف';
+$_['text_wait'] = 'هذا الإجراء يإخذ بعض الوقت يرجى الإنتظار...';

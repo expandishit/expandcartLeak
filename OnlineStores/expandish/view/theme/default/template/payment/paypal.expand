@@ -1,0 +1,462 @@
+
+<style>
+    .loader {
+
+        position: relative;
+        left: 40%;
+        top: 50%;
+        border: 16px solid #f3f3f3;
+        border-radius: 50%;
+        border-top: 16px solid #3498db;
+        width: 80px;
+        height: 80px;
+        -webkit-animation: spin 2s linear infinite; /* Safari */
+        animation: spin 2s linear infinite;
+    }
+
+    /* Safari */
+    @-webkit-keyframes spin {
+        0% { -webkit-transform: rotate(0deg); }
+        100% { -webkit-transform: rotate(360deg); }
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+
+{% if isUserLoggedIn > 0 %}
+
+    <script defer>
+
+    //    window.onload =  function () {
+
+            $(document).ready(function() {
+
+                $("#payment_address_exists_0").change(function() {
+
+
+                    $(document).ajaxComplete(function(event,xhr,options){
+                        if(options.url == 'index.php?route=module/quickcheckout/refresh_step2'  && $("#payment_address_exists_0").is(":checked") && $("#paypal").is(':checked')) {
+                            $("#telephone_input").removeClass("qc-hide");
+                            $("#payment_address_telephone").attr("data-require", "require");
+                            $("#postcode_input").removeClass("qc-hide");
+                            $("#payment_address_postcode").attr("data-require", "require");
+                            $("#payment_address_postcode").attr("data-refresh", "0");
+                        }
+                    });
+                });
+
+
+                var script = document.createElement("script");
+
+                script.setAttribute("id", "paypalSdkScript");
+                script.setAttribute("data-partner-attribution-id", "ExpandCart_Cart_MEA");
+                script.setAttribute("data-namespace", "PayPalSdk");
+                script.setAttribute("src", "{{ paypalUrl }}");
+                document.head.appendChild(script);
+
+                $("#payment_methods_options").insertAfter("label[for='paypal']").fadeIn();
+
+
+                document.querySelectorAll('input[name=payment_method]')
+                    .forEach(function (el) {
+                        el.addEventListener('change', function (event) {
+
+                            // If PayPal is selected, show the PayPal button
+                            var showPayPal = (event.target.value === 'paypal') ? 'block' : 'none';
+                            if (showPayPal == "none") {
+                                $("#payment_methods_options").empty();
+                            }
+
+                        });
+                    });
+
+                script.onload = () => {
+                    PayPalSdk.Buttons({
+                        createOrder: function () {
+                            function createOrder() {
+                                return fetch('index.php?route=payment/paypal/createOrder', {
+                                    method: 'post',
+                                    headers: {
+                                        'content-type': 'application/json'
+                                    }
+                                }).then(function (res) {
+                                    return res.json();
+                                }).then(function (data) {
+                                    if (!data.id) {
+
+                                        var errorMessage = (data.details[0].value) ? data.details[0].value + ": " : "";
+
+                                        errorMessage += data.details[0].description;
+
+                                        if (data.details[0].field.indexOf("national_number") != -1) {
+                                            errorMessage = "phone number is not in correct format";
+                                        }
+
+                                        $("label[for='paypal']").after("<span class='btn-danger paypal-error' style='display: block; margin-bottom: 5px;'>" + errorMessage + "</span>")
+                                        return;
+                                    } else {
+                                        $(".paypal-error").remove();
+                                    }
+                                    return data.id;
+                                });
+                            }
+                            
+                            // checkout v2 hook before send request to paypal/createOrder.
+                            if (typeof validateChackoutData === "function") {
+                                return validateChackoutData(/*callback*/ createOrder);
+                            }
+                            return createOrder();
+                        },
+                        onApprove: function (data, actions) {
+                            if ($(".loader").length == 0) {
+
+                                $("#payment_method_wrap .box-content").prepend("<div  class='loader'></div>");
+
+                            }
+                            return fetch('index.php?route=payment/paypal/approveOrder', {
+                                method: 'POST',
+                                headers: {
+                                    'content-type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    orderID: data.orderID
+                                })
+                            }).then(function (res) {
+                                return res.json();
+                            }).then(function (res) {
+                                if (res.details != null && res.details.details != null) {
+                                    var errorDetail = Array.isArray(res.details.details) && res.details.details[0];
+
+                                    if (errorDetail && errorDetail.issue === 'INSTRUMENT_DECLINED') {
+                                        return actions.restart(); // Recoverable state, per:
+                                        // https://developer.paypal.com/docs/checkout/integration-features/funding-failure/
+                                    } else {
+                                        location.href = res.redirectTo;
+                                    }
+                                } else {
+
+                                    location.href = res.redirectTo;
+
+                                }
+                            });
+                        },
+                        style: {
+                            label: 'paypal',
+                            size: 'responsive',
+                            shape: 'rect',
+                            layout: 'vertical',
+                            color: "{{ paypal_button_color }}"
+                        }
+                    }).render('#payment_methods_options');
+                }
+
+            });
+        //}
+
+
+    </script>
+
+    <div id="payment_methods_options" ></div>
+
+
+{% else %}
+
+{#    <div id="payment_methods_options" ></div>#}
+
+<script >
+    var paypal_button_color = '{{ paypal_button_color }}',
+        payPalSdkUrl = '{{ paypalUrl }}';
+
+     $("#payment_address_telephone").attr("data-require", "require");
+    $("#postcode_input").removeClass("qc-hide");
+    $("#payment_address_postcode").attr("data-require", "require");
+    $("#payment_address_postcode").attr("data-refresh", "0");
+
+    $(document).ready(function() {
+        
+
+
+        var script = document.createElement("script");
+
+        script.setAttribute("id", "paypalSdkScript");
+        script.setAttribute("data-partner-attribution-id", "ExpandCart_Cart_MEA");
+        script.setAttribute("data-namespace", "PayPalSdk");
+        script.setAttribute("src", "{{ paypalUrl }}");
+        document.head.appendChild(script);
+
+        $("#payment_methods_options").insertAfter("label[for='paypal']").fadeIn();
+
+
+        document.querySelectorAll('input[name=payment_method]')
+            .forEach(function (el) {
+                el.addEventListener('change', function (event) {
+
+                    // If PayPal is selected, show the PayPal button
+                    var showPayPal = (event.target.value === 'paypal') ? 'block' : 'none';
+                    if (showPayPal == "none") {
+                        $("#payment_methods_options").empty();
+                    }
+
+                });
+            });
+
+        script.onload = () => {
+            PayPalSdk.Buttons({
+                createOrder:  async function () {
+
+                    var error = false;
+
+                     await $.ajax({
+                        url: 'index.php?route=module/quickcheckout/validate_all_fields',
+                        type: 'post',
+                        data:  $('#quickcheckout input[data-require=require], #quickcheckout select[data-require=require],#quickcheckout textarea[data-require=require]'),
+                        dataType: 'json',
+                        beforeSend: function() {
+                        },
+                        complete: function() {
+                        },
+                        success: function(json) {
+                            console.log(json)
+                            isPhoneVerified=json['phoneverified'];
+                            isPhoneVerifiedWhats=json['phoneverifiedWhats'];
+                            $('.error, .warning').remove()
+                            $('.highlight-error').removeClass('highlight-error')
+
+                            if("error" in json){
+                                if ($('#payment_address').is(':visible')  && json['error']['payment_address']) {
+                                    $.each(json['error']['payment_address'], function(key, value){
+                                        console.log(key, value);
+                                        $('#payment_address_wrap [name=\'payment_address\['+key+'\]\']').parents('[class*=-input]').addClass('highlight-error').after('<div class="error">' + value + '</div>');
+                                    });
+                                    error = true;
+                                }
+                                if ($('#shipping_address').is(':visible') && json['error']['shipping_address'] ) {
+                                    $.each(json['error']['shipping_address'], function(key, value){
+                                        console.log(key, value);
+                                        $('#shipping_address_wrap [name=\'shipping_address\['+key+'\]\']').parents('[class*=-input]').addClass('highlight-error').after('<div class="error">' + value + '</div>');
+                                    });
+                                    error = true;
+                                }
+
+                                if ($('#shipping_method_wrap').is(':visible') && json['error']['shipping_method'] ) {
+                                    $.each(json['error']['shipping_method'], function(key, value){
+                                        console.log(key, value);
+                                        $('#shipping_method_wrap ').prepend('<div class="error">' + value + '</div>');
+                                    });
+                                    error = true;
+                                }
+
+                                if ($('#payment_method_wrap').is(':visible') && json['error']['payment_method'] ) {
+                                    $.each(json['error']['payment_method'], function(key, value){
+                                        console.log(key, value);
+                                        $('#payment_method_wrap ').prepend('<div class="error">' + value + '</div>');
+                                    });
+                                    error = true;
+                                }
+
+                                if ($('#confirm_wrap').is(':visible') && json['error']['confirm'] ) {
+                                    error = true;
+                                    $.each(json['error']['confirm'], function(key, value){
+                                        if(key == 'error_warning'){
+                                            $.each(json['error']['confirm']['error_warning'], function(key, value){
+                                                $('#confirm_wrap .checkout-product').prepend('<div class="error">' + value + '</div>');
+                                            });
+                                        }else{
+                                            console.log(key, value);
+                                            $('#confirm_wrap [name=\'confirm\['+key+'\]\']').parents('[class*=-input]').addClass('highlight-error').after('<div class="error">' + value + '</div>');
+                                        }
+                                    });
+
+                                }
+                                
+                                if ($('#cart_wrap').is(':visible') && json['error']['stock_forecasting'] ) {
+                                    $.each(json['error']['stock_forecasting'], function(key, value){
+                                        console.log(key, value);
+                                        $('#cart_wrap div.qc-checkout-product').prepend('<div class="error alert alert-danger">' + value + '</div>');
+                                    });
+                                    error = true;
+                                }
+
+                            }
+
+
+                            if(error == true){
+                                $('html,body').animate({
+                                        scrollTop: $(".error").offset().top-60},
+                                    'slow');
+
+                            }
+
+
+
+                        },
+                        error: function(xhr, ajaxOptions, thrownError) {
+                            console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                        }
+                    });
+
+                    if($(".error").length > 0) {
+                        return;
+                    }
+
+                    return fetch('index.php?route=payment/paypal/createOrder', {
+                        method: 'post',
+                        headers: {
+                            'content-type': 'application/json'
+                        }
+                    }).then(function (res) {
+                        return res.json();
+                    }).then(function (data) {
+
+                        if (!data.id) {
+
+                            var errorMessage = (data.details[0].value) ? data.details[0].value + ": " : "";
+
+                            errorMessage += data.details[0].description;
+
+                            if (data.details[0].field.indexOf("national_number") != -1) {
+                                errorMessage = "phone number is not in correct format";
+                            }
+
+                            $("label[for='paypal']").after("<span class='btn-danger paypal-error' style='display: block; margin-bottom: 5px;'>" + errorMessage + "</span>")
+                            return;
+                        } else {
+                            $(".paypal-error").remove();
+                        }
+                        return data.id;
+                    });
+
+
+                },
+                onApprove: function (data, actions) {
+                    if ($(".loader").length == 0) {
+
+                        $("#payment_method_wrap .box-content").prepend("<div  class='loader'></div>");
+
+                    }
+                    return fetch('index.php?route=payment/paypal/approveOrder', {
+                        method: 'POST',
+                        headers: {
+                            'content-type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            orderID: data.orderID
+                        })
+                    }).then(function (res) {
+                        return res.json();
+                    }).then(function (res) {
+                        if (res.details != null && res.details.details != null) {
+                            var errorDetail = Array.isArray(res.details.details) && res.details.details[0];
+
+                            if (errorDetail && errorDetail.issue === 'INSTRUMENT_DECLINED') {
+                                return actions.restart(); // Recoverable state, per:
+                                // https://developer.paypal.com/docs/checkout/integration-features/funding-failure/
+                            } else {
+                                location.href = res.redirectTo;
+                            }
+                        } else {
+
+                            location.href = res.redirectTo;
+
+                        }
+                    });
+                },
+                style: {
+                    label: 'paypal',
+                    size: 'responsive',
+                    shape: 'rect',
+                    layout: 'vertical',
+                    color: "{{ paypal_button_color }}"
+                }
+            }).render('#payment_methods_options');
+        }
+
+    });
+
+
+    {#$(document).ready(function () {#}
+
+
+    {#    let  paymentMethodsOptions =  "<div id='payment_methods_options'></div>";#}
+    {#    //$("#payment_methods_options"),#}
+    {#        confirmOrderButton = $('#qc_confirm_order');#}
+
+    {#    document.querySelectorAll('input[name=payment_method]')#}
+    {#        .forEach(function (el) {#}
+    {#            el.addEventListener('change', function (event) {#}
+
+
+    {#                // If PayPal is selected, show the PayPal button#}
+    {#                var showPayPal = (event.target.value === 'paypal') ? 'block' : 'none';#}
+
+
+    {#                if(showPayPal === 'none') {#}
+    {#                    $("#payment_address_telephone").attr("data-require", "");#}
+    {#                    $("#postcode_input").addClass("qc-hide");#}
+    {#                    $("#payment_address_postcode").attr("data-require", "");#}
+
+    {#                } else {#}
+    {#                    $("#payment_address_telephone").attr("data-require", "require");#}
+    {#                    $("#postcode_input").removeClass("qc-hide");#}
+    {#                    $("#payment_address_postcode").attr("data-require", "require");#}
+
+    {#                }#}
+
+    {#                document.body.querySelector('#payment_methods_options')#}
+    {#                    .style.display = `${showPayPal}`;#}
+
+
+
+    {#            });#}
+    {#        });#}
+
+
+
+    {#    function renderButtons() {#}
+    {#        var selectedOption = ($('#paypal').is(':checked')) ? 'paypal' : '';#}
+    {#        if (selectedOption && $(".error").length == 0 && $("#payment_methods_options").length == 0) {#}
+
+    {#                if($("#paypalSdkScript").length > 0) {#}
+    {#                    $("#paypalSdkScript").remove();#}
+    {#                    $("#paypalButtonsScript").remove();#}
+    {#                    $("#payment_methods_options").empty();#}
+
+    {#                }#}
+
+    {#                var paypalScript = document.createElement("script");#}
+    {#                paypalScript.setAttribute("id", "paypalSdkScript");#}
+    {#                paypalScript.setAttribute("data-partner-attribution-id", "ExpandCart_Cart_MEA");#}
+    {#                paypalScript.setAttribute("data-namespace", "PayPalSdk");#}
+    {#                paypalScript.setAttribute("src", "{{ paypalUrl }}");#}
+    {#                document.head.appendChild(paypalScript);#}
+    {#            $("label[for='paypal']").after(paymentMethodsOptions);#}
+    {#            //paymentMethodsOptions.insertAfter("label[for='paypal']").fadeIn();#}
+
+    {#                paypalScript.onload = () => {#}
+    {#                    var script = document.createElement('script');#}
+    {#                    script.setAttribute('type', 'text/javascript');#}
+    {#                    script.setAttribute("id", "paypalButtonsScript");#}
+    {#                    script.src = "expandish/view/theme/default/js/payment/paypal/paypalSdk.js";#}
+    {#                    $('#paypalSdkScript').after(script);#}
+    {#                }#}
+
+    {#        }#}
+    {#    }#}
+
+    {#    $(document).ajaxComplete(function(event,xhr,options){#}
+    {#        if(options.url == 'index.php?route=module/quickcheckout/confirm_order'  && $("#paypal").is(':checked')) {#}
+
+    {#            renderButtons();#}
+    {#        }#}
+    {#    });#}
+    {#});#}
+
+</script>
+
+    <div id="payment_methods_options" ></div>
+
+{% endif %}
+

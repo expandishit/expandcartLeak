@@ -1,0 +1,170 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% import 'controls/uploader.expand' as uploader %}
+{% set dualMenuEnabled = true %}
+
+{% block title %}
+    {{ lang('ms_config_subscriptions_plans') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block secondarymenu %}
+    {% include 'multiseller/menu.expand' with {'active': '#subscriptions'} %}
+{% endblock secondarymenu %}
+
+{% block headelements %}
+      {% include "includes/buttons_top.expand" with {'cancel': link('multiseller/subscriptions')} %}
+{% endblock headelements %}
+
+{% block content %}
+
+    <form class="form" action="{{ links['submit'] }}" method="POST">
+        <div class="col-md-9">
+            <div class="panel panel-flat">
+                <div class="panel-body">
+                    <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                        <div class="tab-content">
+                            {% for lng in languages %}
+
+                                {% set details = plan['details'][lng['language_id']] %}
+
+                                <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}"
+                                     id="langTab{{ lng['language_id'] }}">
+                                    <div class="form-group"
+                                         id="name-group_{{ lng['language_id'] }}">
+                                        <label class="control-label">
+                                            {{ lang('ms_plan_title') }} <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text" class="form-control"
+                                               id="name_{{ lng['language_id'] }}"
+                                               name="ms_plan[details][{{ lng['language_id'] }}][title]"
+                                               value="{{ details['title'] }}"
+                                        >
+                                        <span class="help-block"></span>
+                                        <span class="text-muted"></span>
+                                    </div>
+
+                                    <div class="form-group"
+                                         id="description-group_{{ lng['language_id'] }}">
+                                        <label class="control-label">
+                                            {{ lang('ms_plan_description') }}
+                                        </label>
+                                        <textarea
+                                                name="ms_plan[details][{{ lng['language_id'] }}][description]"
+                                                id="description_{{ lng['language_id'] }}"
+                                                class="form-control summernote"
+                                        >{{ details['description'] }}</textarea>
+                                        <span class="help-block"></span>
+                                        <span class="text-muted"></span>
+                                    </div>
+
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                            {% for language in languages %}
+                                <li class="{{ loop.first ? 'active' : '' }}">
+                                    <a href="#langTab{{ language['language_id'] }}" data-toggle="tab"
+                                       aria-expanded="false">
+                                        <img src="view/image/flags/{{ language['image'] }}"
+                                             title="{{ language['name'] }}" class="pull-right">
+                                        <div> {{ language['name'] }}</div>
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <div class="col-md-3">
+            <div class="panel panel-flat">
+                <div class="panel-body">
+                    <div class="form-group" id="status-group">
+                        <label class="control-label">{{ lang('entry_status') }}</label>
+                        <div class="checkbox checkbox-switchery">
+                            <label>
+                                <input type="checkbox" value="1" name="ms_plan[plans][status]"
+                                       class="switchery" {{ plan['plan_status'] == 1 ? 'checked' : '' }}>
+                                <span class="switchery-status">{{ plan['plan_status'] in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group" id="plan_price-group">
+                        <label for="plan_price" class="control-label">
+                            {{ lang('ms_plan_price') }}
+                        </label>
+                        <input type="text" class="form-control datepicker"
+                               id="plan_price" name="ms_plan[plans][price]"
+                               value="{{ plan['price'] }}">
+                        <span class="help-block"></span>
+                        <span class="text-muted"></span>
+                    </div>
+
+                    <div class="form-group" id="plan_price-group">
+                        <label for="plan_price" class="control-label">
+                            {{ lang('ms_plan_max_products') }}
+                        </label>
+                        <input type="text" class="form-control"
+                               id="plan_maximum_products" name="ms_plan[plans][maximum_products]"
+                               value="{{ plan['maximum_products'] }}">
+                        <span class="help-block"></span>
+                        <span class="text-muted"></span>
+                    </div>
+
+                    <div class="form-group" id="plan_period-group">
+                        <label for="plan_period" class="control-label">
+                            {{ lang('ms_conf_subscriptions_payment_format') }}
+                        </label>
+
+                        <div class="col-md-12">
+                            <div class="col-md-4">
+                                <input type="text" name="ms_plan[plans][period]"
+                                       id="plan_period" class="form-control" value="{{ plan['period'] }}" />
+                            </div>
+                            <div class="col-md-8">
+                                <select class="form-control" name="ms_plan[plans][format]">
+                                    <option {{ plan['format'] == 1 ? 'selected' : '' }}
+                                            value="1">{{ lang('day') }}</option>
+                                    <option {{ plan['format'] == 2 ? 'selected' : '' }}
+                                            value="2">{{ lang('month') }}</option>
+                                    <option {{ plan['format'] == 3 ? 'selected' : '' }}
+                                            value="3">{{ lang('year') }}</option>
+                                </select>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <input type="hidden" name="ms_plan[actionType]" value="{{ actionType }}" />
+    </form>
+
+    {% include "includes/buttons_bottom.expand" %}
+
+    <script>
+        $(document).ready(function () {
+            $('select').select2({
+                minimumResultsForSearch: 10
+            });
+        });
+    </script>
+
+{% endblock %}
+
+{% block scripts %}
+
+    {{ parent() }}
+
+
+
+{% endblock %}

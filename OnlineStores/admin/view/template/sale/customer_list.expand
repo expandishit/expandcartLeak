@@ -1,0 +1,732 @@
+
+
+
+    <div class="list-wrapper customer-list">
+        <div class="">
+            <div class="inner-settings-title mb-10">
+                <h4 class="fb-app-title">
+                    {{lang("mn_sub_customers")}}
+                </h4>
+                <div class="btns">
+                    <a href="{{ link('tool/w_export_tool') }}" class="text-dt-btn {{ base.plan_trial_id == '3' ? 'plan-lock-btn' : '' }}">{% if base.plan_trial_id == "3" %}<i class="fas fa-lock gray-lock"></i>{% endif %} {{ lang('button_export', 'tool/product_import') }}</a>
+                    <a href="{{ link('tool/w_import_tool') }}" class="text-dt-btn {{ base.plan_trial_id == '3' ? 'plan-lock-btn' : '' }}">{% if base.plan_trial_id == "3" %}<i class="fas fa-lock gray-lock"></i>{% endif %} {{ lang('button_import', 'tool/product_import') }}</a>
+                    <a href="{{ link('sale/customer/insert') }}" class="theme-btn rounded-primary-btn">{{ lang('btn_new_customer') }}</a>
+                </div>
+            </div>
+            <form id="group_filter" class="customer-group-filter">
+                <i class="fas fa-chevron-left hide slider-icon left"></i>
+                <div class="track">
+                    <div class="stage">
+                        <button class="customer-group-box active" type="reset">
+                            <span class="title">
+                                {{lang('btnt_all_cutomers')}}
+                            </span>
+                        </button>
+
+                        {% if newsletter_subscribers is not empty %}
+                        <div class="customer-group-box">
+                            <label>
+                                <input type="radio" class="hide" name="filter[customer_group_id][]" value="-1">
+                                <span class="title">
+                                    {{ lang('btnt_newsletter_subscribers') }}
+                                </span>
+                            </label>
+                        </div>
+                        {% endif %}
+
+                        {% for group in customer_groups %}
+                        <div class="customer-group-box">
+                            <label>
+                                <input type="radio" class="hide" name="filter[customer_group_id][]" value="{{group.customer_group_id}}">
+                                <span class="title">
+                                    {{group.name}}
+                                </span>
+                            </label>
+                            <a href="{{link('sale/customer_group/update?customer_group_id=') ~ group.customer_group_id}}" class="edit">
+                                <i class="icon-pencil"></i>
+                            </a>
+                        </div>
+                        {% endfor %}
+                        <a href="{{ link('sale/customer_group/insert') }}" class="customer-group-box">
+                            <span class="title add-btn {{ base.plan_trial_id == '3' ? 'plan-lock-btn' : '' }}">
+                                {% if base.plan_trial_id == "3" %}
+                                    <i class="fas fa-lock gray-lock-btn"></i>
+                                {% else %}
+                                    <i class="fas fa-plus"></i>
+                                {% endif %}
+                                {{lang('btn_add_group')}}
+                            </span>
+                        </a>
+                    </div>
+                </div>
+                <i class="fas fa-chevron-right hide slider-icon right"></i>
+            </form>
+            <div class="page-tabs-container">
+                {# end navigation-tabs #}
+				<div class="tabs-content-wrapper">
+					<div class="page-loader">
+						<div class="blocks">
+							<div class="block orange"></div>
+							<div class="block blue"></div>
+						</div>
+					</div>
+                    <!-- Detached content -->
+                    <div>
+                        {% include "sale/customer/list.expand" %}
+                    </div>
+                    <!-- /detached content -->
+				</div>
+            </div>
+        </div>
+		<div class="table-guide">
+			<i class="fas fa-info-circle"></i> {{lang('text_learn_more_about')}}&nbsp;<a href="{{ lang('link_learn_more_about') }}">{{lang('text_customers')}} <i class="fas fa-external-link-alt"></i></a>
+		</div>
+    </div>
+
+<!-- Detached sidebar -->
+{% include "sale/customer/filter.expand" %}
+<!-- /detached sidebar -->
+<div class="row">
+    <div id="modal_insert" class="modal">
+        <div class="modal-dialog modal-full">
+            <div class="modal-content">
+
+                <div class="modal-body"></div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block endScripts %}
+    <script>
+        let parentEl = $('.customer-group-filter .track');
+        let parentWidth = parentEl.width();
+
+        let trackEl = $('.customer-group-filter .stage');
+        let trackWidth = trackEl.width();
+
+        let leftIcoon = $('.customer-group-filter .slider-icon.left');
+        let rightIcoon = $('.customer-group-filter .slider-icon.right');
+
+        if(trackWidth > parentWidth) {
+            rightIcoon.removeClass("hide");
+        }
+        rightIcoon.click(function() {
+            let parentOffset = parentEl.offset().left;
+            let parentPos = parentEl.scrollLeft();
+
+            let trackOffset = trackEl.offset().left;
+            let trackPos = trackEl.scrollLeft();
+            
+            leftIcoon.removeClass("hide")
+            parentEl.stop().animate({scrollLeft: parentPos + 150}, 300, function() {
+                if( ( (parentEl.offset().left - trackEl.offset().left) + parentWidth) > trackWidth ) {
+                    rightIcoon.addClass("hide")
+                }
+            });
+        })
+        leftIcoon.click(function() {
+            let parentOffset = parentEl.offset().left;
+            let parentPos = parentEl.scrollLeft();
+
+            let trackOffset = trackEl.offset().left;
+            let trackPos = trackEl.scrollLeft();
+            
+            rightIcoon.removeClass("hide")
+            parentEl.stop().animate({scrollLeft: parentPos - 150}, 300, function() {
+                if((parentEl.offset().left == trackEl.offset().left)) {
+                    leftIcoon.addClass("hide")
+                }
+            });
+        })
+    </script>
+{% endblock %}
+
+{% block scripts %}
+    {% import _self as dtControls %}
+    <script>
+
+
+    $(document).ready(function() {
+        $.extend($.fn.dataTable.defaults, {
+            autoWidth: false,
+            dom: '<"datatable-header"fB><"datatable-scroll-wrap"t><"datatable-footer"lip>',
+            // "dom": '<"top"i>rt<"bottom"flp><"clear">',
+            language: locales['dt_language'],
+            lengthMenu: [[10, 25, 50, 100, 200], [10, 25, 50, 100, 200]]
+        });
+
+        $('#resetList').click(function () {
+
+            $(':input', '#filter')
+            .not(':button, :submit, :reset, :hidden')
+            .val('')
+            .prop('checked', false)
+            .prop('selected', false);
+
+            $('#filter').find('select').each(function () {
+                this.value = '';
+            }).trigger('change');
+
+            $('#filter').find('.noui-slider-primary').each(function () {
+                $(this).data('ionRangeSlider').reset();
+            });
+
+            dt.on('preXhr.dt', function (e, settings, data) {
+                return $.extend(data, {filter: null});
+            });
+
+            dt.ajax.reload();
+            /*$.ajax({
+                url: listLink,
+                method: 'get',
+                success: function (response) {
+                    $('#product-grid').html(response);
+                }
+            });*/
+        });
+    });
+    function toggleFilter(el) {
+        //debugger;
+        var isFilterHidden = $('body').hasClass('sidebar-detached-hidden');
+
+        if(isFilterHidden) $(el).children('a').children('span').text('{{ lang('lbl_hide_filter') }}');
+        else $(el).children('a').children('span').text('{{ lang('lbl_filter') }}');
+    }
+    var dt;
+        $(document).ready(function() {
+            {# $(window).resize(function() { 
+                var browserZoomLevel = Math.round(window.devicePixelRatio * 100); 
+                if(browserZoomLevel > 125 && browserZoomLevel < 188) {
+                    document.querySelector('.page-header').style.width = browserZoomLevel-25+'%';
+                    document.querySelector('.panel').style.width = browserZoomLevel-25+'%';
+                    document.querySelector('.sidebar').classList.remove('sidebar-fixed')
+                }else {
+                    document.querySelector('.page-header').style.width = '100%';
+                    document.querySelector('.panel').style.width = '100%';
+                    document.querySelector('.sidebar').classList.remove('sidebar-fixed')
+                }
+            }); #}
+                dt = $('#datatable-language').DataTable({
+                processing: true,
+                serverSide: true,
+                stateSave: true,
+                rowId: "customer_id",
+                language: {
+                    ...locales['dt_language'],
+                    search: ''
+                },
+                select: {
+                    style: 'multi',
+                    selector: 'td:first-child'
+                },
+                "ajax": {
+                    url: '{{ link('sale/customer/dtHandler') }}',
+                    type: "post",
+                    complete: function(res) {
+                        res.responseJSON.recordsTotal == 0 ? location.reload() : '';
+                    },
+                    error: function (e,m,l) {
+                        $(".datatables_country-error").html("");
+                        $("#datatables_country").append('<tbody class="datatables_country-error"><tr><th colspan="3">No data found in the server</th></tr></tbody>');
+                        $("#datatables_country_processing").css("display", "none");
+                    }
+                },
+                drawCallback: function () {
+                    $(this).find('tbody tr').slice(-3).find('.dropdown, .btn-group').addClass('dropup');
+                },
+                preDrawCallback: function() {
+                    $(this).find('tbody tr').slice(-3).find('.dropdown, .btn-group').removeClass('dropup');
+                },
+                buttons: [
+                    {
+                        extend: 'colvis',
+                        text: `<i class="fas fa-columns"></i> {{lang('dtb_custom_col')}}`,
+                        className: 'dt-menu dt-list btn-colvis',
+                        columns: [1,2,3,4,5,6]
+                    },// cols
+                    {
+                        text: "<i class='far fa-trash-alt'></i> {{lang('dtb_delete')}}",
+                        className: 'dt-menu bulk-delete disabled',
+                        action: function(e, dt, node, config) {
+                            var selectedRows = dt.rows('.selected').data();
+                            var selectedIds = [];
+                            var unregisteredSelectedIds = [];
+                            selectedRows.each(function(item) {                                
+                                if(item.is_registered == 'unregistered'){
+                                    unregisteredSelectedIds.push(item.newsletter_subscriber_id);
+                                }
+                                else
+                                    selectedIds.push(item.customer_id);
+                            });
+
+                            if (selectedIds.length > 0){
+                                confirmMessage(function () {
+                                    $.ajax({
+                                        url: '{{ link('sale/customer/dtDelete') }}',
+                                        type: 'post',
+                                        data: {id: selectedIds},
+                                        success: function(res){
+                                            if(unregisteredSelectedIds.length > 0){
+                                                $.ajax({
+                                                    url: '{{ link("sale/newsletter/subscriber/dtDelete") }}',
+                                                    type: 'post',
+                                                    data: {id: unregisteredSelectedIds},                                          
+                                                });
+                                            }
+                                            reloadDT();
+                                        }
+                                    });
+                                });
+                            }
+                            else if(unregisteredSelectedIds.length > 0){
+                                confirmMessage(function () {
+                                    $.ajax({
+                                        url: '{{ link("sale/newsletter/subscriber/dtDelete") }}',
+                                        type: 'post',
+                                        data: {id: unregisteredSelectedIds},
+                                        success: function(res){
+                                            reloadDT();
+                                        }
+                                    });
+                                });
+                            }                        
+                        }
+                    },// delete
+                    {# {
+                        extend: 'collection',
+                        text: '<i class="fas fa-file-download"></i>',
+                        className: 'btn btn-default btn-export',
+                        buttons: [
+                            {
+                                extend: 'copyHtml5',
+                                text: locales['buttons']['copy'],
+                                exportOptions: {
+                                    columns: ':visible'
+                                }
+                            },
+                            {
+                                extend: 'csvHtml5',
+                                text: locales['buttons']['export2csv'],
+                                fieldSeparator: ',',
+                                extension: '.csv',
+                                bom: "true",
+                                exportOptions: {
+                                    columns: ':visible'
+                                }
+                            },
+                            {
+                                extend: 'excelHtml5',
+                                text: locales['buttons']['export2excel'],
+                                exportOptions: {
+                                    columns: ':visible'
+                                }
+                            },
+                            {
+                                extend: 'pdfHtml5',
+                                text: locales['buttons']['export2pdf'],
+                                exportOptions: {
+                                    columns: ':visible'
+                                }
+                            }
+                        ]
+                    }, #}
+                ],
+
+                columns: [
+                    {
+                        title:`<input type="checkbox" class="styled" onchange='toggleSelectAll(this);'>`,
+                        orderable: false,
+                        data: "customer_id",
+                        width: "50px",
+                        render: function (data, type, row) {
+                            return `<input data-id="${row['customer_id']}" type="checkbox" class="select-checkbox">`;
+                        }
+                    },
+                    {
+                        data: 'name',
+                        render: function (data, type, row) {
+                            var customerName = (row['name'] || '').trim();
+
+                            if(row['is_registered'] == 'unregistered'){
+                                return `${customerName.length ? customerName : '<span class="text-muted">{{lang("text_empty_customer_name")}}</span>' }`;
+                            }
+
+                            return `<a href="{{ link('sale/customer/update?customer_id=') }}${row['customer_id']}">
+                                ${customerName.length ? customerName : '<span class="text-muted">{{lang("text_empty_customer_name")}}</span>' }</a>`;                    
+                        },
+                    },
+                    {data: "email"},
+                    {data: "telephone"},
+                    {data: "customer_group"},
+                    {#{#}
+                    {#    data: 'status',#}
+                    {#    render: function(data, whatever, row) {#}
+                    {#        var status = (row['status'] == '1' || row['status'] == 1 ? 'checked="checked"' : '');#}
+                    {#        return `<div class="checkbox checkbox-switchery  no-margin">#}
+                    {#                    <label>#}
+                    {#                        <input type="checkbox" data-on-text="{{ lang('text_enabled') }}" data-off-text="{{ lang('text_disabled') }}" onchange="changeStatus(${row['customer_id']}, this.checked);" class="switchery" ` + status + `>#}
+                    {#                        <span class="switchery-status">` + (status ? '{{ lang('text_enabled') }}' : '{{ lang('text_disabled') }}') + `</span>#}
+                    {#                    </label>#}
+                    {#                </div>`;#}
+                    {#    }#}
+                    {#},#}
+                    // {
+                    //     data: 'approved',
+                    //     render: function(data, whatever, row) {
+                    //         if ( row['approved'] == '1' || row['approved'] == 1 ) {
+                    //             return '<span class="label label-success">' + row['approved_text'] + '</span>';
+                    //         } else if (row['approved'] == '2' || row['approved'] == 2) {
+                    //             return `<span class="label label-danger">
+                    //                 <i alt="${row['approved_text']}" title="${row['approved_text']}"
+                    //                 class="fa fa-question-circle" style="font-size: 15px;"></i></span>`;
+                    //         } else if (row['approved'] == '3' || row['approved'] == 3) {
+                    //             return `<span class="label label-danger">
+                    //                 <i alt="${row['approved_text']}" title="${row['approved_text']}"
+                    //                 class="fa fa-question-circle" style="font-size: 15px;"></i></span>`;
+                    //         } else {
+                    //             return '<span class="label label-danger">' + row['approved_text'] + '</span>';
+                    //         }
+                    //     }
+                    // },
+                    {data: 'ip'},
+                    {data: 'date_added'}
+                ],
+                "order": [[1, "asc"]],
+                columnDefs: [
+                    {
+                        targets: 7,
+                        orderable: false,
+                        render: function (data, type, row) {
+                            let returned_value = "";
+                            if(row.hasOwnProperty('profile_completed') && !row['profile_completed']) returned_value="<span class='status-label pending-status uncompleted-status'>{{lang('text_not_completed')}}</span>";
+                            else if (row['is_registered'] == 'unregistered') returned_value="<span class='status-label'></span>";                            
+                            else if (row['approved'] != 1) returned_value="<span class='status-label pending-status'>{{lang('text_pending')}}</span>";
+                            else if (row['status']== 1) returned_value="<span class='status-label active-status'>{{lang('text_active')}}</span>";
+                            else if (row['status']== 0) returned_value="<span class='status-label inactive-status'>{{lang('text_inactive')}}</span>";
+                            return returned_value;
+                            {#return `<ul class="icons-list pull-right">#}
+                            {#        <li class="dropdown">#}
+                            {#            <a href="#" class="dropdown-toggle" data-toggle="dropdown">#}
+                            {#                <i class="icon-menu9"></i>#}
+                            {#            </a>#}
+                            {#            <ul class="dropdown-menu dropdown-menu-right">#}
+                            {#                <li><a href='{{ link('sale/customer/update') }}?customer_id=${row['customer_id']}'><i class='icon-pencil7'></i> ${locales['button_edit']}</a></li>#}
+                            {#                <li><a onclick="removeItem(${row['customer_id']})"><i class='far fa-trash-alt'></i> ${locales['button_delete']}</a></li>#}
+                            {#            </ul>#}
+                            {#        </li>#}
+                            {#    </ul>#}
+                            {#`;#}
+                        }
+                    },
+                    {
+                        targets: 4,
+                        visible: false,
+                    },
+                    // {
+                    //     targets: 6,
+                    //     visible: false,
+                    // },
+                    {
+                        targets: 5,
+                        visible: false,
+                    },
+                    {
+                        targets: 6,
+                        visible: false,
+                    },
+                ]
+            });
+
+            
+            $('.dt-buttons').prepend(`<a href="#" id="btn-deactivate" class="disabled"><i class="fas fa-ban"></i>{{lang('dtb_deactive')}}</a>`)// deactive
+            $('.dt-buttons').prepend(`<a href="#" id="btn-activate" class="disabled"><i class="fas fa-check"></i>{{lang('dtb_active')}}</a>`)// active
+            $('.dt-buttons').prepend(`<a href="#" id="btn-approve" class="disabled"><i class="fas fa-user-check"></i>{{lang('dtb_approve')}}</a>`)// approve
+    
+    
+            $('.dataTables_filter').append(`<a onclick="toggleFilter(this)" class="sidebar-detached-hide more-filters">{{lang('more_filters')}} </a>`)
+
+
+            $('[data-popup="tooltip"]').tooltip();
+            $('[data-toggle="tooltip"]').tooltip();
+
+            // On each draw, loop over the `detailRows` array and show any child rows
+            dt.on('draw', function () {
+                $(".switch").bootstrapSwitch();
+                $(".styled, .multiselect-container input").uniform({
+                    radioClass: 'choice'
+                });
+
+                if (Array.prototype.forEach) {
+                    var elems = Array.prototype.slice.call(document.querySelectorAll('.switchery'));
+                    elems.forEach(function(html) {
+                        var switchery = new Switchery(html);
+                        //debugger;
+                    });
+                }
+                else {
+                    var elems = document.querySelectorAll('.switchery');
+                    for (var i = 0; i < elems.length; i++) {
+                        var switchery = new Switchery(elems[i]);
+                    }
+                }
+                $('.switchery').on("change" , function(e) {
+                    if(this.checked) {
+                        if($(this).data('on-text')) $(this).parent().children(".switchery-status").text($(this).data('on-text'));
+                    } else {
+                        if($(this).data('off-text')) $(this).parent().children(".switchery-status").text($(this).data('off-text'));
+                    }
+                });
+            });
+
+            function ifContainsUnregisteredCustomers(selectedRows){
+                var selectedRows = selectedRows;
+                var unregisteredSelectedIds = [];
+
+                selectedRows.each(function(item) {
+                    if(item.is_registered == 'unregistered'){
+                        unregisteredSelectedIds.push(item.customer_id);
+                    }
+                });
+                return unregisteredSelectedIds.length > 0;
+            }
+
+            //deactivate buttons in case of unregistered newsletter subscribers
+            dt.on( 'select', function ( e, objDT, type, indexes ) {
+                if ( dt.rows( '.selected' ).any() ) {
+                    if(!ifContainsUnregisteredCustomers(dt.rows('.selected').data()))
+                        $("#btn-approve, #btn-activate, #btn-deactivate").removeClass('disabled');
+                    else
+                        $("#btn-approve, #btn-activate, #btn-deactivate").addClass('disabled');
+
+                    $(".bulk-delete").removeClass('disabled');
+                }
+                else $(".bulk-delete, #btn-approve, #btn-activate, #btn-deactivate").addClass('disabled');
+            })
+            .on( 'deselect', function ( e, objDT, type, indexes ) {
+                if ( dt.rows( '.selected' ).any() ) {
+                    if(!ifContainsUnregisteredCustomers(dt.rows('.selected').data()))
+                        $("#btn-approve, #btn-activate, #btn-deactivate").removeClass('disabled');
+                    else
+                        $("#btn-approve, #btn-activate, #btn-deactivate").addClass('disabled');
+
+                    $(".bulk-delete").removeClass('disabled');
+                }
+                else $(".bulk-delete, #btn-approve, #btn-activate, #btn-deactivate").addClass('disabled');
+            })
+            .on( 'search.dt', function (e, objDT) {
+//                console.log(e);
+//                dt.columns(':visible').search(e);
+                if ( dt.rows( '.selected' ).any() ) {
+                    if(!ifContainsUnregisteredCustomers(dt.rows('.selected').data()))
+                        $("#btn-approve, #btn-activate, #btn-deactivate").removeClass('disabled');
+                    else
+                        $("#btn-approve, #btn-activate, #btn-deactivate").addClass('disabled');
+
+                    $(".bulk-delete").removeClass('disabled');
+                }
+                else $(".bulk-delete, #btn-approve, #btn-activate, #btn-deactivate").addClass('disabled');
+            });
+
+            $('.dataTables_length select').select2({
+                minimumResultsForSearch: Infinity,
+                width: 'auto'
+            });
+            $(".styled, .multiselect-container input").uniform({
+                radioClass: 'choice'
+            });
+
+//            $(".bulk-delete").on('click', function() {
+//                console.log(dt.rows('.selected').data());
+//            });
+
+            $('#modal_insert').on('show.bs.modal', function () {
+                $(this).find('.modal-body').load('sale/customer/insert', function () {
+                    $('select').select2();
+
+                    $('.zones').select2({
+                        ajax: {
+                            url: 'sale/customer/country',
+                            data: function (params) {
+
+                                var $geoZones = $(this).parents('.geoZones');
+
+                                var $countries = $('.countries', $geoZones);
+
+                                var $value = $countries.val();
+
+                                return {
+                                    country_id: $value
+                                };
+                            },
+                            dataType: 'json',
+                            processResults: function (data) {
+                                return {
+                                    results: $.map(data.zone, function (item, index) {
+                                        return {
+                                            id: item.zone_id,
+                                            text: item.name
+                                        };
+                                    })
+                                };
+                            },
+                            cache: true
+                        }
+                    });
+
+                    $.fn.stepy.defaults.backLabel = '<i class="icon-arrow-left13 position-left"></i> {{ lang('button_prev') }}';
+                    $.fn.stepy.defaults.nextLabel = '{{ lang('button_next') }} <i class="icon-arrow-left13 position-right"></i>';
+                    $(".customerForm").stepy();
+                    $('.customerForm').find('.button-next').addClass('btn btn-primary');
+                    $('.customerForm').find('.button-back').addClass('btn btn-default');
+
+                    $(".switch").bootstrapSwitch();
+
+                    $('.customerForm').submit(function (event) {
+                        event.preventDefault();
+
+                        var $formData = $(this).serialize();
+                        var $action = $(this).attr('action');
+
+                        $.ajax({
+                            url: $action,
+                            method: 'POST',
+                            dataType: 'JSON',
+                            data: $formData,
+                            success: function (response) {
+
+                                $('.help-block', $formGroup).text('');
+                                $('.form-group').removeClass('has-error');
+
+                                if (response.status == 'error') {
+                                    for (error in response.errors) {
+                                        var $formGroup = $('#' + error).parents('.form-group');
+                                        $formGroup.addClass('has-error');
+                                        $('.help-block', $formGroup).text(response.errors[error]);
+                                    }
+                                }
+
+                                if (response.status == 'success') {
+                                    window.location.href = '{{ link('sale/customer') }}';
+                                }
+                            }
+                        });
+                    });
+                });
+            });
+
+            $('#btn-approve').on('click', function(e) {
+                e.preventDefault();
+
+                var selectedRows = dt.rows('.selected').data();
+                var selectedIds = [];
+                selectedRows.each(function(item) {
+                    selectedIds.push(item.customer_id);
+                });
+                if (selectedIds.length > 0){
+                    $('#approve_txt').text("{{ lang('text_wait') }}");
+                    ajax('{{ link('sale/customer/approve') }}', {selected: selectedIds}, function(res){
+                        $('#approve_txt').text("{{ lang('button_approve') }}");
+                        try {
+                            var response = JSON.parse(res);
+                            if (response.status == 'success') {
+                                new PNotify({
+                                    title: response.title,
+                                    text: response.message,
+                                    addclass: 'bg-success stack-top-right',
+                                    stack: {"dir1": "down", "dir2": "right", "push": "top"}
+                                });
+                            } else {
+                                for (error in response.errors) {
+                                    new PNotify({
+                                        title: response.title,
+                                        text: response.errors[error],
+                                        addclass: 'bg-danger stack-top-right',
+                                        stack: {"dir1": "down", "dir2": "right", "push": "top"}
+                                    });
+                                }
+                            }
+                            reloadDT();
+                        } catch(e) {
+                            // 
+                        }
+                    });
+                }
+            });
+            
+            $("#btn-activate").on('click', function(e) {
+                e.preventDefault();
+                
+                var selectedRows = dt.rows('.selected').data();
+                var selectedIds = [];
+                selectedRows.each(function(item) {
+                    selectedIds.push(item.customer_id);
+                });
+                changeStatus(selectedIds, true);
+            });
+            
+            $("#btn-deactivate").on('click', function(e) {
+                e.preventDefault();
+                
+                var selectedRows = dt.rows('.selected').data();
+                var selectedIds = [];
+                selectedRows.each(function(item) {
+                    selectedIds.push(item.customer_id);
+                });
+                changeStatus(selectedIds, false);
+            });
+        });
+
+        function removeItem(id) {
+            //alert(clientId);
+            confirmMessage(function() {
+                ajax("{{ link("sale/customer/dtDelete") }}", {id: id}, function (res) {
+                    reloadDT();
+                });
+            });
+        }
+
+        function reloadDT() {
+            dt.ajax.reload();
+        }
+
+        function toggleSelectAll(checkbox) {
+            if (checkbox.checked == true) {
+                dt.rows().select();
+            } else {
+                dt.rows().deselect();
+            }
+        }
+        function changeStatus(id, status) {
+            console.log(id, status);
+            var newStatus = (status ? 1 : 0);
+            $.ajax({
+                url: '{{ link('sale/customer/changeStatus') }}',
+                data: {customer_id: id, status: newStatus},
+                dataType: 'JSON',
+                method: 'POST',
+                success: function (response) {
+                    if (response.status == 'success') {
+                        new PNotify({
+                            title: response.title,
+                            text: response.message,
+                            addclass: 'bg-success stack-top-right',
+                            stack: {"dir1": "down", "dir2": "right", "push": "top"}
+                        });
+                        dt.ajax.reload();
+                    } else {
+                        for (error in response.errors) {
+                            new PNotify({
+                                title: response.title,
+                                text: response.errors[error],
+                                addclass: 'bg-danger stack-top-right',
+                                stack: {"dir1": "down", "dir2": "right", "push": "top"}
+                            });
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+{% endblock scripts %}

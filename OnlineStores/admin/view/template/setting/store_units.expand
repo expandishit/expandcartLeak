@@ -1,0 +1,581 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block secondarymenu %}
+    {% include 'setting/settingmenu.expand' with {'expand': '#lang&region', 'active': '#units'} %}
+{% endblock secondarymenu %}
+
+{% block title %}
+    {{ lang('mn_setting_menu_units') }}
+{% endblock title %}
+
+{% block styles %}
+	{% if base.direction == "ltr" %}
+    <link href="view/assets/css/LTR/icons/icomoon2/style.css" rel="stylesheet" type="text/css">
+	{% else %}
+    <link href="view/assets/css/RTL/icons/icomoon2/style.css" rel="stylesheet" type="text/css">
+	{% endif %}	
+{% endblock styles %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block content %}
+    <style>
+        .page-header-default {
+            background-color: transparent;
+        }
+        .page-header-content + .breadcrumb-line {
+            border: 0;
+        }
+    </style>
+    <style>
+        textarea
+        {
+            resize:vertical;
+        }
+
+        .modal-content
+        {
+            width: 100%;
+        }
+
+        .modal-dialog
+        {
+            width: 90%;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%) !important;
+        }
+    </style>
+    
+    <div class="container">
+    <!-- Length  -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="panel panel-white">
+                <div class="panel-heading">
+                    <h6 class="panel-title"><span class="text-bold">{{ lang('heading_title', 'localisation/length_class') }}</span></h6>
+                    <div class="heading-elements not-collapsible">
+                        <ul class="icons-list">
+                            <li><a data-action="collapse" class=""></a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="collapse in" id="panel-language">
+                    <table id="datatable-length" class="table table-hover datatable-highlight">
+                        <thead>
+                        <tr>
+                            <th></th>
+                            <th>{{ lang('column_title') }}</th>
+                            <th>{{ lang('column_unit') }}</th>
+                            <th>{{ lang('column_value') }}</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+    <!-- /Length -->
+
+    {#  ########################################################################## #}
+
+    <!-- Weight -->
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h6 class="panel-title"><span class="text-bold">{{ lang('heading_title', 'localisation/weight_class') }}</span></h6>
+                    <div class="heading-elements not-collapsible">
+                        <ul class="icons-list">
+                            <li><a data-action="collapse" class=""></a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="collapse in" id="panel-language">
+                    <table id="datatable-weight" class="table table-hover datatable-highlight">
+                        <thead>
+                        <tr>
+                            <th></th>
+                            <th>{{ lang('column_title', 'localisation/weight_class') }}</th>
+                            <th>{{ lang('column_unit', 'localisation/weight_class') }}</th>
+                            <th>{{ lang('column_value', 'localisation/weight_class') }}</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+<!-- /Weight -->
+</div>
+{#  ########################################################################## #}
+
+{% endblock content %}
+
+{% block scripts %}
+    {{ parent() }}
+    {% import _self as dtControls %}
+    <script>
+        $(document).ready(function() {
+            $.extend($.fn.dataTable.defaults, {
+                autoWidth: false,
+                dom: '<"datatable-header"fB><"datatable-scroll-wrap"t><"datatable-footer"lip>',
+                language: locales['dt_language'],
+                lengthMenu: [[10, 25, 50, 100, 200], [10, 25, 50, 100, 200]]
+            });
+        });
+
+        var dt;
+        $(document).ready(function()
+        {
+
+            // length datatable
+            length_dt = $('#datatable-length').DataTable({
+                processing: true,
+                serverSide: true,
+                stateSave: true,
+                language: locales['dt_language'],
+                select: {
+                    style: 'multi',
+                    selector: 'td:first-child'
+                },
+                drawCallback: function () {
+                    $(this).find('tbody tr').slice(-3).find('.dropdown, .btn-group').addClass('dropup');
+                },
+                preDrawCallback: function() {
+                    $(this).find('tbody tr').slice(-3).find('.dropdown, .btn-group').removeClass('dropup');
+                },
+                "ajax": {
+                    url: '{{ link('setting/store_units/lengthDTHandler') }}',
+                    type: "post",
+                    error: function (e,m,l) {
+                        $(".datatables_country-error").html("");
+                        $("#datatables_country").append('<tbody class="datatables_country-error"><tr><th colspan="3">No data found in the server</th></tr></tbody>');
+                        $("#datatables_country_processing").css("display", "none");
+                    }
+                },
+                buttons: [
+                    {
+                        text: "<i class='icon-plus3'></i>",
+                        className: 'btn btn-default btn-insert',
+                        action: function(event)
+                        {
+                            window.location.href = "{{ link('localisation/length_class/insert') }}";
+                        }
+                    },
+                    {
+                        text: "<i class='icon-trash'></i>",
+                        className: 'btn btn-default bulk-delete disabled',
+                        action: function(e, dt, node, config) {
+                            var selectedRows = length_dt.rows('.selected').data();
+                            var selectedIds = [];
+                            selectedRows.each(function(item) {
+                                selectedIds.push(item.length_class_id);
+                            });
+
+                            if (selectedIds.length > 0)
+                            {
+                                confirmMessage(function ()
+                                {
+                                    $.ajax({
+                                        url: '{{ link('setting/store_units/lengthDTDelete') }}',
+                                        type: 'POST',
+                                        data: { id: selectedIds },
+                                        success: function(res)
+                                        {
+                                            notify('Success', 'success', res.success_msg);
+                                            reloadDT();
+                                        }
+                                    });
+                                });
+                            }
+                        }
+                    },
+                    {
+                        extend: 'collection',
+                        text: '<i class="icon-drawer-out"></i>',
+                        className: 'btn btn-default btn-export',
+                        buttons: [
+                            {
+                                extend: 'copyHtml5',
+                                text: locales['buttons']['copy'],
+                                exportOptions: {
+                                    columns: ':visible'
+                                }
+                            },
+                            {
+                                extend: 'csvHtml5',
+                                text: locales['buttons']['export2csv'],
+                                fieldSeparator: ',',
+                                extension: '.csv',
+                                bom: "true",
+                                exportOptions: {
+                                    columns: ':visible'
+                                }
+                            },
+                            {
+                                extend: 'excelHtml5',
+                                text: locales['buttons']['export2excel'],
+                                exportOptions: {
+                                    columns: ':visible'
+                                }
+                            },
+                            {
+                                extend: 'pdfHtml5',
+                                text: locales['buttons']['export2pdf'],
+                                exportOptions: {
+                                    columns: ':visible'
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        extend: 'colvis',
+                        text: '<i class="icon-grid3"></i>',
+                        className: 'btn btn-default btn-colvis',
+                        columns: [1, 2, 3]
+                    }
+                ],
+
+                columns: [
+                    {
+                        title:`<input type="checkbox" class="styled" onchange='toggleSelectAll(this);'>`,
+                        orderable: false,
+                        data: "length_class_id",
+                        width: "50px",
+                        render: function (data, type, row)
+                        {
+                            return `<input type="checkbox" class="select-checkbox">`;
+                        }
+                    },
+                    {
+                        data: "title",
+                        render: function (data, type, row) {
+                            return `<a href="{{ link('localisation/length_class/update') }}?length_class_id=${row['length_class_id']}">${row['title']}</a>`;
+                        }
+                    },
+                    {data: "unit"},
+                    {data: "value"},
+                ],
+                "order": [[1, "asc"]],
+                columnDefs: [
+                    {
+                        targets: 4,
+                        orderable: false,
+                        render: function (data, type, row) {
+                            return `<ul class="icons-list pull-right">
+                                    <li class="dropdown">
+                                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                            <i class="icon-menu9"></i>
+                                        </a>
+                                        <ul class="dropdown-menu dropdown-menu-right">
+                                            <li><a href="{{ link('localisation/length_class/update') }}?length_class_id=${row['length_class_id']}"><i class='icon-pencil7'></i> ${locales['button_edit']}</a></li>
+                                            <li><a onclick="removeItem(${row['length_class_id']})"><i class='icon-trash'></i> ${locales['button_delete']}</a></li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            `;
+                        }
+                    },
+                ]
+            });
+
+            $(".bulk-delete").attr({
+                "data-popup": "tooltip",
+                "title": locales['button_delete']
+            });
+            $(".btn-export").attr({
+                "data-popup": "tooltip",
+                "title": locales['button_export']
+            });
+            $(".btn-colvis").attr({
+                "data-popup": "tooltip",
+                "title": locales['button_colvis']
+            });
+
+            $(".btn-insert").attr({
+                "data-popup": "tooltip",
+                "title": locales['button_insert']
+            });
+
+            $('[data-popup="tooltip"]').tooltip();
+
+            // On each draw, loop over the `detailRows` array and show any child rows
+            length_dt.on('draw', function () {
+                $(".switch").bootstrapSwitch();
+            });
+
+            length_dt.on( 'select', function ( e, objDT, type, indexes ) {
+                if ( length_dt.rows( '.selected' ).any() ) $(".bulk-delete").removeClass('disabled');
+                else $(".bulk-delete").addClass('disabled');
+            })
+            .on( 'deselect', function ( e, objDT, type, indexes ) {
+                if ( length_dt.rows( '.selected' ).any() ) $(".bulk-delete").removeClass('disabled');
+                else $(".bulk-delete").addClass('disabled');
+            })
+            .on( 'search.dt', function (e, objDT) {
+                if ( length_dt.rows( '.selected' ).any() ) $(".bulk-delete").removeClass('disabled');
+                else $(".bulk-delete").addClass('disabled');
+            });
+
+            $('.dataTables_length select').select2({
+                minimumResultsForSearch: Infinity,
+                width: 'auto'
+            });
+            $(".styled, .multiselect-container input").uniform({
+                radioClass: 'choice'
+            });
+
+    {# ---------------------------------------------------------- #}
+
+    // weight datatable
+    weight_dt = $('#datatable-weight').DataTable({
+        processing: true,
+        serverSide: true,
+        stateSave: true,
+        language: locales['dt_language'],
+        select: {
+            style: 'multi',
+            selector: 'td:first-child'
+        },
+        drawCallback: function () {
+                    $(this).find('tbody tr').slice(-3).find('.dropdown, .btn-group').addClass('dropup');
+                },
+                preDrawCallback: function() {
+                    $(this).find('tbody tr').slice(-3).find('.dropdown, .btn-group').removeClass('dropup');
+                },
+        "ajax": {
+            url: "{{ link('setting/store_units/weightDTHandler') }}",
+            type: "post",
+            error: function (e,m,l) {
+                $(".datatables_country-error").html("");
+                $("#datatables_country").append('<tbody class="datatables_country-error"><tr><th colspan="3">No data found in the server</th></tr></tbody>');
+                $("#datatables_country_processing").css("display", "none");
+            }
+        },
+        buttons: [
+            {
+                text: "<i class='icon-plus3'></i>",
+                className: 'btn btn-default btn-insert',
+                action: function(event)
+                {
+                    window.location.href = "{{ link('localisation/weight_class/insert') }}";
+                }
+            },
+            {
+                text: "<i class='icon-trash'></i>",
+                className: 'btn btn-default bulk-delete disabled',
+                action: function(e, weight_dt, node, config) {
+                    var selectedRows = weight_dt.rows('.selected').data();
+                    var selectedIds = [];
+                    selectedRows.each(function(item) {
+                        selectedIds.push(item.weight_class_id);
+                    });
+                    // console.log(selectedIds);
+                    if (selectedIds.length > 0){
+                        confirmMessage(function () {
+                            $.ajax({
+                                url: '{{ link("setting/store_units/weightDTDelete") }}',
+                                type: 'post',
+                                data: {id: selectedIds},
+                                success: function(resp)
+                                {
+                                    reloadDT();
+                                }
+                            });
+                        });
+                    }
+                }
+            },
+            {
+                extend: 'collection',
+                text: '<i class="icon-drawer-out"></i>',
+                className: 'btn btn-default btn-export',
+                buttons: [
+                    {
+                        extend: 'copyHtml5',
+                        text: locales['buttons']['copy'],
+                        exportOptions: {
+                            columns: ':visible'
+                        }
+                    },
+                    {
+                        extend: 'csvHtml5',
+                        text: locales['buttons']['export2csv'],
+                        fieldSeparator: ',',
+                        extension: '.csv',
+                        bom: "true",
+                        exportOptions: {
+                            columns: ':visible'
+                        }
+                    },
+                    {
+                        extend: 'excelHtml5',
+                        text: locales['buttons']['export2excel'],
+                        exportOptions: {
+                            columns: ':visible'
+                        }
+                    },
+                    {
+                        extend: 'pdfHtml5',
+                        text: locales['buttons']['export2pdf'],
+                        exportOptions: {
+                            columns: ':visible'
+                        }
+                    }
+                ]
+            },
+            {
+                extend: 'colvis',
+                text: '<i class="icon-grid3"></i>',
+                className: 'btn btn-default btn-colvis',
+                columns: [1, 2, 3]
+            }
+        ],
+
+        columns: [
+            {
+                title:`<input type="checkbox" class="styled" onchange='toggleSelectAllCities(this);'>`,
+                orderable: false,
+                data: "weight_class_id",
+                width: "50px",
+                render: function (data, type, row)
+                {
+                    return `<input type="checkbox" class="select-checkbox">`;
+                }
+            },
+            {
+                data: "title",
+                render: function (data, type, row) {
+                    return `<a href="{{ link('localisation/weight_class/update') }}?weight_class_id=${row['weight_class_id']}">${row['title']}</a>`;
+                }
+            },
+            {data: "unit"},
+            {data: "value"},
+        ],
+        "order": [[1, "asc"]],
+        columnDefs: [
+            {
+                targets: 4,
+                orderable: false,
+                render: function(data, type, row) {
+                    return `<ul class="icons-list pull-right">
+                            <li class="dropdown">
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                    <i class="icon-menu9"></i>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-right">
+                                    <li><a href="{{ link('localisation/weight_class/update') }}?weight_class_id=${row['weight_class_id']}"><i class='icon-pencil7'></i> ${locales['button_edit']}</a></li>
+                                    <li><a onclick="removeCity(`+row['weight_class_id']+`)"><i class='icon-trash'></i> ${locales['button_delete']}</a></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    `;
+                }
+            }
+        ]
+    });
+
+    $(".bulk-delete").attr({
+        "data-popup": "tooltip",
+        "title": locales['button_delete']
+    });
+    $(".btn-export").attr({
+        "data-popup": "tooltip",
+        "title": locales['button_export']
+    });
+    $(".btn-colvis").attr({
+        "data-popup": "tooltip",
+        "title": locales['button_colvis']
+    });
+
+    $(".btn-insert").attr({
+        "data-popup": "tooltip",
+        "title": locales['button_insert']
+    });
+
+    $('[data-popup="tooltip"]').tooltip();
+
+    // On each draw, loop over the `detailRows` array and show any child rows
+    weight_dt.on('draw', function () {
+        $(".switch").bootstrapSwitch();
+    });
+
+    weight_dt.on( 'select', function ( e, objDT, type, indexes ) {
+        if ( weight_dt.rows( '.selected' ).any() ) $(".bulk-delete").removeClass('disabled');
+        else $(".bulk-delete").addClass('disabled');
+    })
+    .on( 'deselect', function ( e, objDT, type, indexes ) {
+        if ( weight_dt.rows( '.selected' ).any() ) $(".bulk-delete").removeClass('disabled');
+        else $(".bulk-delete").addClass('disabled');
+    })
+    .on( 'search.dt', function (e, objDT) {
+        if ( weight_dt.rows( '.selected' ).any() ) $(".bulk-delete").removeClass('disabled');
+        else $(".bulk-delete").addClass('disabled');
+    });
+
+    $('.dataTables_length select').select2({
+        minimumResultsForSearch: Infinity,
+        width: 'auto'
+    });
+
+    $(".styled, .multiselect-container input").uniform({
+        radioClass: 'choice'
+    });
+});
+
+    $(document).on('submit', '.form', function(){
+        reloadDT();
+    });
+
+    function removeItem(id) {
+        confirmMessage(function() {
+            ajax("{{ link('setting/store_units/lengthDTDelete') }}", {id: id}, function (res)
+            {
+                reloadDT();
+            });
+        });
+    }
+
+    function removeCity(id) {
+        confirmMessage(function() {
+            ajax("{{ link('setting/store_units/weightDTDelete') }}", {id: id}, function (res) {
+                reloadDT();
+            });
+        });
+    }
+
+    function reloadDT() {
+        length_dt.ajax.reload();
+        weight_dt.ajax.reload();
+    }
+
+    function toggleSelectAll( checkbox )
+    {
+        if ( checkbox.checked == true )
+        {
+            length_dt.rows().select();
+        }
+        else
+        {
+            length_dt.rows().deselect();
+        }
+    }
+
+    function toggleSelectAllCities( checkbox )
+    {
+        if ( checkbox.checked == true )
+        {
+            weight_dt.rows().select();
+        } else {
+            weight_dt.rows().deselect();
+        }
+    }
+
+</script>
+{% endblock scripts %}
+

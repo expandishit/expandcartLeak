@@ -1,0 +1,92 @@
+<div class="row">
+    <div class="col-md-12">
+        <div class="panel panel-white">
+            <div class="panel-body">
+                <div class="table-responsive">
+                    <table id="amazon-attribute" class="table table-striped table-bordered table-hover">
+                        <thead>
+                            <tr>
+                            <td class="text-left">{{ entry_amazon_specification }}</td>
+                            <td class="text-left">{{entry_amazon_specification_value }}</td>
+                            <td></td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% set amazon_attribute_row = 0 %}
+                        {% if amazon_product_specifications %}
+                        {% for amazon_product_specification in amazon_product_specifications %}
+                        <tr id="amazon-attribute-row{{amazon_attribute_row}}">
+                            <td class="text-left" style="width: 40%;"><input type="text" name="amazon_product_specification[{{amazon_attribute_row}}][name]" value="{{amazon_product_specification['name']}}" placeholder="{{entry_attribute}}" class="form-control" />
+                            <input type="hidden" name="amazon_product_specification[{{amazon_attribute_row}}][attribute_id]" value="{{amazon_product_specification['attribute_id']}}" /></td>
+                            <td class="text-left">
+                            {% for language in languages %}
+                            <div class="input-group"><span class="input-group-addon"><img src="view/image/flags/{{language['image']}}" title="{{language['name']}}" /></span>
+                                <textarea name="amazon_product_specification[{{amazon_attribute_row}}][product_attribute_description][{{language['language_id']}}][text]" rows="5" placeholder="{{entry_text}}" class="form-control">{{ amazon_product_specification['product_attribute_description'][language['language_id']] ? amazon_product_specification['product_attribute_description'][language['language_id']]['text'] : '' }}</textarea>
+                            </div>
+                            {% endfor %}
+                            </td>
+                            <td class="text-left"><button type="button" onclick="$('#amazon-attribute-row{{amazon_attribute_row}}').remove();" data-toggle="tooltip" title="{{button_remove}}" class="btn btn-danger"><i class="fa fa-minus-circle"></i></button></td>
+                        </tr>
+                        {% set amazon_attribute_row=amazon_attribute_row+1 %}
+                        {% endfor %}
+                        {% endif %}
+                        </tbody>
+                        <tfoot>
+                        <tr>
+                            <td colspan="2"></td>
+                            <td class="text-left"><button type="button" onclick="addAmazonAttribute();" data-toggle="tooltip" title="{{button_attribute_add}}" class="btn btn-primary"><i class="fa fa-plus-circle"></i></button></td>
+                        </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    var amazon_attribute_row = {{amazon_attribute_row}};
+    function addAmazonAttribute() {
+        html  = '<tr id="amazon-attribute-row' + amazon_attribute_row + '">';
+        html += '   <td class="text-left" style="width: 20%;"><input type="text" name="amazon_product_specification[' + amazon_attribute_row + '][name]" value="" placeholder="{{entry_attribute}}" class="form-control" /><input type="hidden" name="amazon_product_specification[' + amazon_attribute_row + '][attribute_id]" value="" /></td>';
+        html += '  <td class="text-left">';
+        {% for language in languages %}
+            html += '<div class="input-group"><span class="input-group-addon"><img src="view/image/flags/{{language['image']}}" title="{{language['name']}}" /></span><textarea name="amazon_product_specification[' + amazon_attribute_row + '][product_attribute_description][{{language['language_id']}}][text]" rows="5" placeholder="{{entry_text}}" class="form-control"></textarea></div>';
+        {% endfor %}
+        html += '  </td>';
+        html += '  <td class="text-left"><button type="button" onclick="$(\'#amazon-attribute-row' + amazon_attribute_row + '\').remove();" data-toggle="tooltip" title="{{button_remove}}" class="btn btn-danger"><i class="fa fa-minus-circle"></i></button></td>';
+        html += '</tr>';
+
+        $('#tab-amazon-specification tbody').append(html);
+
+        amazonAttributeAutocomplete(amazon_attribute_row);
+
+        amazon_attribute_row++;
+    }
+    function amazonAttributeAutocomplete(amazon_attribute_row) {
+    $('input[name=\'amazon_product_specification[' + amazon_attribute_row + '][name]\']').autocomplete({
+        'source': function(request, response) {
+        $.ajax({
+            url: '{{ link("amazon/amazon_map/product/attributeAutocomplete")}}?filter_name=' +  encodeURIComponent(request['term']),
+            dataType: 'json',
+            success: function(json) {
+            response($.map(json, function(item) {
+                return {
+                category: item.attribute_group,
+                label: item.name,
+                value: item.attribute_id
+                }
+            }));
+            }
+        });
+        },
+        'select': function(event,item) {
+            event.preventDefault();
+            $('input[name=\'amazon_product_specification[' + amazon_attribute_row + '][name]\']').val(item.item.label);
+            $('input[name=\'amazon_product_specification[' + amazon_attribute_row + '][attribute_id]\']').val(item.item.value);
+        }
+    });
+    }
+    $('#amazon-attribute tbody tr').each(function(index, element) {
+        amazonAttributeAutocomplete(index);
+    });
+</script>

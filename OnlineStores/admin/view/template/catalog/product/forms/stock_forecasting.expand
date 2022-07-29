@@ -1,0 +1,171 @@
+<div class="panel panel-flat">
+    <div class="panel-heading">
+        <h6 class="panel-title">
+            <div class="title">
+                <span>
+                    <span class="text-bold">{{ lang('text_stock_forecasting') }}</span>
+                </span>
+            </div>
+            <a class="heading-elements-toggle"><i class="icon-more"></i></a>
+        </h6>
+        <div class="heading-elements not-collapsible">
+            <ul class="icons-list">
+                <li><a data-action="collapse" class=""></a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="panel-body">
+        {# <form action="#" class="stock_forecasting_form"> #}
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="row">
+                        <label class="control-label col-md-5">{{ lang('entry_product_limit_quantity') }}</label>                    
+                        <label class="control-label col-md-5">{{ lang('text_day') }}</label>                    
+                    </div>
+                    <div class="row">
+                        <div class="col-md-5">
+                            <div class="form-group" id="stock_forecasting_quantity-group">
+                                <input type='number' class="form-control" min="1" name="stock_forecasting_quantity" id="stock_forecasting_quantity" value="1" />
+                                <span class="help-block"></span>
+                            </div>
+                        </div>
+
+                        <div class="col-md-5">
+                            <div class="form-group">
+                                <select class="form-control" id="stock_forecasting_day">
+                                    <option value="">{{ lang('text_select_day') }}</option>
+                                    <option value="SUNDAY" {{ 'SUNDAY'  in disabled_days ? 'disabled':'' }}>{{ lang('text_sunday') }}</option>
+                                    <option value="MONDAY" {{ 'MONDAY'  in disabled_days ? 'disabled':'' }}>{{ lang('text_MONDAY') }}</option>
+                                    <option value="TUESDAY" {{ 'TUESDAY'  in disabled_days ? 'disabled':'' }}>{{ lang('text_TUESDAY') }}</option>
+                                    <option value="WEDNESDAY" {{ 'WEDNESDAY'  in disabled_days ? 'disabled':'' }}>{{ lang('text_WEDNESDAY') }}</option>
+                                    <option value="THURSDAY" {{ 'THURSDAY'  in disabled_days ? 'disabled':'' }}>{{ lang('text_THURSDAY') }}</option>
+                                    <option value="FRIDAY" {{ 'FRIDAY'  in disabled_days ? 'disabled':'' }}>{{ lang('text_FRIDAY') }}</option>
+                                    <option value="SATURDAY" {{ 'SATURDAY'  in disabled_days ? 'disabled':'' }}>{{ lang('text_SATURDAY') }}</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <a class="button btn btn-primary " id="stock_forecasting_add_button">{{ lang('text_add_quantity') }}</a> 
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="alert alert-danger hidden" id="stock_forecasting_error"></div>
+                        </div>
+                    </div>
+
+
+                    {# Product Quantities Table #}
+                    <div id="product-quantities" class="hidden">
+                        <table class="table" id="product-quantities-table">
+                            <thead>
+                                {# <th>{{ lang('#') }}</th>         #}
+                                <th>{{ lang('text_quantity') }}</th>
+                                <th>{{ lang('text_day') }}</th>
+                                <th></th>
+                            </thead>
+                            <tbody>
+                               {% for row in product_stock_forecasting %}
+                                <tr>
+                                    <td class="quantity">{{ row.available_quantity }}</td>
+                                    <td class="day">{{ row.day }}</td>
+                                    <td><button class="delete-row-btn">X</button></td>
+                                </tr>
+                               {% endfor %}
+                            </tbody>
+                        </table> 
+                        <br/>
+                    </div>
+                    {# /Product Quantities Table #}
+
+
+
+                </div>    
+            </div>
+        {# </form> #}
+    </div>
+</div>
+
+<script type="text/javascript">
+    $(document).ready(function(){
+        checkTableVisability(); 
+        updateHiddenArray();
+
+        $("#stock_forecasting_day").select2('destroy');    
+
+        //Add new stock day row
+        $('#stock_forecasting_add_button').click(()=>{
+            $('#stock_forecasting_error').addClass('hidden');
+
+            let quantity = $('#stock_forecasting_quantity').val();
+            let day      = $('#stock_forecasting_day').val();
+            
+            //Validate inputs
+            if( !day || !quantity || quantity <= 0){
+                $('#stock_forecasting_error').html('Please check day & quantity value');
+                $('#stock_forecasting_error').removeClass('hidden');
+                return;
+            }
+
+            //if valid, add new entry
+            $('#product-quantities-table tbody').append(
+                `<tr>
+                    <td class="quantity">${quantity}</td>
+                    <td class="day">${day}</td>
+                    <td><button class="delete-row-btn">X</button></td>
+                </tr>`
+            );
+
+            //Show Table of quantities..
+            checkTableVisability();
+            //Update the form hidden array
+            updateHiddenArray();
+            //Disable this day  
+            $('#stock_forecasting_day option[value="' + day + '"]').attr('disabled', 'disabled');            
+            //Clear day, so user cannot add same day twice
+            $('#stock_forecasting_day').prop('selectedIndex', 0);      
+        });
+
+
+        // Close Button
+        $('#product-quantities-table tbody').on('click', '.delete-row-btn' , function(){
+            let item = $(this).closest('tr').find('td.day').html();
+            $('#stock_forecasting_day option[value="' + item + '"]').removeAttr('disabled');
+            $(this).closest('tr').remove();
+            checkTableVisability();
+            updateHiddenArray(); 
+        });
+
+        function checkTableVisability(){
+            if($('#product-quantities-table tbody tr').length <= 0){
+                $('#product-quantities').addClass('hidden');
+            }else{
+                $('#product-quantities').removeClass('hidden');                
+            }
+        }
+
+        function updateHiddenArray(){
+           $('.before-submit').remove();
+
+            $('#product-quantities-table tbody tr').each(function (index) {  
+                $('<input>').attr({
+                    type: 'hidden',
+                    name: 'stock_forecasting['+index+'][quantity]',
+                    value: $(this).find('td.quantity').html(),
+                    class: 'before-submit'
+                }).appendTo($('.combined_inputs_form'));
+
+                $('<input>').attr({
+                    type: 'hidden',
+                    name: 'stock_forecasting['+index+'][day]',
+                    value: $(this).find('td.day').html(),
+                    class: 'before-submit'
+                }).appendTo($('.combined_inputs_form'));
+            });        
+        }
+
+    });
+</script>

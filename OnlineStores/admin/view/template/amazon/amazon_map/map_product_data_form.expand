@@ -1,0 +1,152 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% set dualMenuEnabled = true %}
+
+{% block title %}
+{{ lang('heading_title') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+{{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+
+{% block secondarymenu %}
+    {% include 'module/amazon_connector/menu.expand' with {'active': '#am_product_map'} %}
+{% endblock secondarymenu %}
+
+{% block headelements %}
+    {% include "includes/buttons_top.expand" %}
+{% endblock headelements %}
+
+
+{% block content %}
+
+{% if error_warning!= "" %}
+<div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> {{ error_warning }}
+  <button type="button" class="close" data-dismiss="alert">&times;</button>
+</div>
+{% endif %}
+{% if success != "" %}
+<div class="alert alert-success"><i class="fa fa-check-circle"></i> {{ success }}
+  <button type="button" class="close" data-dismiss="alert">&times;</button>
+</div>
+{% endif %}
+
+<form action="{{ action }}" method="post" enctype="multipart/form-data" id="form-module" class="form">
+    <div class="row">
+      <div class="col-md-12">
+          <div class="panel panel-white">
+              <div class="panel-body">
+
+                  <div class="form-group">
+                      <label class="col-sm-2 control-label" for="input-product_name"><span data-toggle="tooltip" title="{{ lang('entry_product_name') }}">{{ lang('entry_product_name') }}</span></label>
+                      <div class="col-sm-10">
+                        <input type="text" name="product_name" value="{{ product_name ? product_name : '' }}"  id="input-related" class="form-control" />
+                        <input type="hidden" name="product_id" value="{{ product_id ? product_id:'' }}">
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </div>
+    </div>
+    <div class="panel panel-default">
+        <ul class="nav nav-tabs nav-tabs-highlight nav-justified nav-tabs-top top-divided" style="margin-bottom: 0">
+            {% if amazon_connector_status is defined and amazon_connector_status != "" %}
+  						<li class="active"><a href="#tab-amazon-authorization" data-toggle="tab">{{ lang('tab_amazon_authorization') }}</a></li>
+              {% if getAmazonSpecification is defined and getAmazonSpecification != "" %}
+                <li><a href="#tab-amazon-specification" data-toggle="tab">{{ lang('tab_amazon_specification') }}</a></li>
+              {% endif %}
+              {% if getAmazonVariation is defined and getAmazonVariation !="" and getAmazonVariation['option_values'] != "" %}
+                <li><a href="#tab-amazon-variation" data-toggle="tab">{{ lang('tab_amazon_variation') }}</a></li>
+              {% endif %}
+            {% endif %}
+            
+        </ul>
+    </div>
+
+
+    <div class="tab-content">
+        <!-- BEGIN Authorization TAB -->
+        <div class="tab-pane active" id="tab-amazon-authorization">
+            {% include "amazon/amazon_map/map_product/authorization.expand" %}
+        </div>
+        <!-- END Authorization TAB -->
+        {% if getAmazonSpecification is defined and getAmazonSpecification != "" %}
+        <!-- BEGIN Specification TAB -->
+        <div class="tab-pane" id="tab-amazon-specification">
+            {% include "amazon/amazon_map/map_product/specification.expand" %}
+        </div>
+        <!-- END Specification TAB -->
+        {% endif %}
+        {% if getAmazonVariation is defined and getAmazonVariation !="" and getAmazonVariation['option_values'] != "" %}  
+        <!-- BEGIN Variation TAB -->
+        <div class="tab-pane" id="tab-amazon-variation">
+            {% include "amazon/amazon_map/map_product/variation.expand" %}
+        </div>
+        <!-- END Variation TAB -->
+        {% endif %}
+    </div>
+</form>
+
+<div id="content">
+  <div class="page-header">
+    <div class="container-fluid">
+      <div class="pull-right">
+        <a href="<?php echo $back; ?>"  data-toggle="tooltip" title="" class="btn btn-primary" data-original-title="">Back</a>
+<a href="javascript:;" onclick="$('#form-map').submit();" data-toggle="tooltip" title="" class="btn btn-primary" data-original-title="">Submit</a>
+      </div>
+      <h1><?php echo $heading_title; ?></h1>
+      <ul class="breadcrumb">
+        <?php foreach ($breadcrumbs as $breadcrumb) { ?>
+        <li><a href="<?php echo $breadcrumb['href']; ?>"><?php echo $breadcrumb['text']; ?></a></li>
+        <?php } ?>
+      </ul>
+    </div>
+    <div class="container-fluid">
+      <?php if (isset($error_warning) && $error_warning) { ?>
+      <div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> <?php echo $error_warning; ?>
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+      </div>
+      <?php } ?>
+      <?php if (isset($success) &&  $success) { ?>
+      <div class="alert alert-success"><i class="fa fa-check-circle"></i> <?php echo $success; ?>
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+      </div>
+      <?php } ?>
+
+{% endblock content %}
+{% block scripts %}
+
+{% if add_action %}
+<script type="text/javascript">
+$(document).ready(function(){
+  $('input[name=\'product_name\']').autocomplete({
+    'source': function(request, response) {
+
+      $.ajax({
+        url: '{{ link("amazon/amazon_map/map_product_data/autocomplete") }}?filter_name=' +  encodeURIComponent(request['term']),
+        dataType: 'json',
+        success: function(json) {
+          response($.map(json, function(item) {
+            return {
+              label: item['name'],
+              value: item['product_id']
+            }
+          }));
+        }
+      });
+    },
+    'select': function(event,item) {
+      event.preventDefault();
+      $('input[name=\'product_name\']').val(item.item.label);
+      $('input[name=\'product_id\']').val(item.item.value);
+
+    }
+  });
+});
+</script>
+{% endif %}
+
+{% endblock scripts %}

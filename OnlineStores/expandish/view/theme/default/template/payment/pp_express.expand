@@ -1,0 +1,64 @@
+<div class="d-inline-block pt-2 pd-2 w-100">
+
+{% if error_pp_express %}
+    PayPal Express Error:<br/>
+    <div class="alert alert-danger"><button type="button" class="close" data-dismiss="alert">x</button>{{ error_pp_express }}</div>
+{% endif %}
+
+<div class="float-right pp-checkout-button-container">
+  <div id="confirm_txt" style="display: none;padding-bottom: 5px">{{ lang('button_confirm') }}:</div>
+  <div id="pp-checkout-button"></div>
+</div>
+</div>
+
+<script type="text/javascript">
+    //console.log(paypalButton);
+   function loadPaypalCheckoutBtn(){
+        paypal.Button.render({
+            env: '{{ paypal_environment }}',
+            payment: function(data, actions) {
+                return paypal.request.get("{{ continue }}", {
+                    headers: {
+                        'Accept': 'application/paypal-json-token',
+                    }
+                })
+                    .then(function(response) {
+                        if (!response || !response.token) {
+                            console.log(response);
+                            throw new Error('There was an error fetching the PayPal token, pls review console for more details');
+                        }
+                        return response.token;
+                    })
+                    .catch(function(err) {
+                        throw err;
+                    });
+            },
+            onAuthorize: function(data, actions) {
+                return actions.redirect();
+            },
+            onCancel: function(data, actions) {
+                return actions.redirect();
+            },
+            onError: function(error) {
+                $('.pp-checkout-button-container').empty().html('<div class="alert alert-danger">' + error + '</div>');
+                return;
+            }
+        }, '#pp-checkout-button');
+    }
+    setTimeout(function(){
+        $('#qc_confirm_order').fadeOut();
+        $("#pp-checkout-button").empty();
+        if (document.getElementById('paypal-express-checkout') === null){
+            var script = document.createElement('script');
+            script.onload = function () {
+                loadPaypalCheckoutBtn();
+            };
+            script.src = 'https://www.paypalobjects.com/api/checkout.js';
+            script.id = 'paypal-express-checkout';
+
+            document.head.appendChild(script);
+        }else {
+            loadPaypalCheckoutBtn();
+        }
+    }, 2000);
+</script>

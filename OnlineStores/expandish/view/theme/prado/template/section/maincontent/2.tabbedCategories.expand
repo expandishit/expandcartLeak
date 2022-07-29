@@ -1,0 +1,92 @@
+{% set allFeaturedCategories = getFeaturedCategories(fields['categories']['field_value'], 500, 500) %}
+{% set items_count = allFeaturedCategories|length %}
+
+{% set perRow = fields.productsPerRow.field_value %}
+{% set perCol = fields.productsPerCol.field_value %}
+
+
+
+{% if items_count > 0 %}
+<div class="product-box1" id="section-{{ section_id }}">
+    {% if fields.displaysectiontitle.field_value == '1' %}
+    <div class="intro-box1 text-center">
+        <h2 class="title30 font-bold title-underline"><span>{{ fields.sectiontitle.field_value }}</span></h2>
+        <p class="desc">{{ fields.biref.field_value }}</p>
+    </div>
+    {% endif %}
+    <div class="title-tab1">
+        <ul class="list-inline-block text-center">
+            {% for item_category in allFeaturedCategories %}
+            <li class="{% if loop.index0 == 0 %} active {% endif %}"><a href="#{{item_category['category_id']}}{{ section_id }}" class="title14 black link-btn " data-toggle="tab">{{item_category.name}}</a></li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="tab-content">
+        {% for item_category in allFeaturedCategories %}
+        {% set categoryProducts = getProductsByCategoryId(item_category['category_id'], items , 600, 600) %}
+        {% set items_products = categoryProducts|chunk(perCol) %}
+        <div id="{{item_category['category_id']}}{{ section_id }}" class="tab-pane fade in {% if loop.index0 == 0 %} active {% endif %}">
+            <div class="product-slider">
+                <div class="wrap-item navi-bottom" data-pagination="false" data-navigation="true" data-itemscustom="[[0,1],[480,2],[990,3],[1200,{{perRow}}]]">
+                    {% for row_products in items_products %}
+                    <div class="item">
+                        {% for item_product in row_products %}
+                        <div class="item-product text-center">
+                            {% if item_product.special != '' %}
+                            <span class="product-label new-label">-{{ item_product.saving }}%</span>
+                            {% endif %}
+                            {% set statuses = config("config_stock_status_display_badge") %}
+                            {% if item_product.quantity <= 0 and item_product.stock_status_id in statuses %}
+                            <span class="product-label new-label stockLabel">{{ item_product.stock_status }}</span>
+                            {% endif %}
+                            <div class="product-thumb">
+                                <a href="{{ item_product.href }}" class="product-thumb-link zoom-thumb">
+                                    <img src="{{ item_product.thumb }}" alt="{{ item_product.name }}" />
+                                </a>
+                                <div class="product-extra-link">
+                                    <a href="#" class="wishlist-link"  onclick="event.preventDefault(); addToWishList('{{ item_product.product_id }}',1); return false;" title="{{lang('button_wishlist')}}"></a>
+                                     {% if customer.isCustomerAllowedToAdd_cart and ( config('config_hide_add_to_cart') != 1 or item_product.quantity > 0 )  %}
+                                    <a href="#" class="addcart-link" onclick="event.preventDefault(); addToCart({{ item_product.product_id }},1, {{ ('-1' in item_product.price) or ('-1' in item_product.special) ? 'true' : 'false' }}); return false;">{{ ('-1' in item_product.price) or ('-1' in item_product.special) ? lang('button_req_quote') : lang('button_cart') }}</a>
+                                    {% endif %}
+                                    <a href="#" class="compare-link" onclick="event.preventDefault(); addToCompare('{{ item_product.product_id }}',1); return false;" title="{{lang('button_compare')}}"></a>
+                                </div>
+                                <a href="{{ item_product.href }}" class="quickview-link title14">{{lang('button_view')}}</a>
+                            </div>
+                            <div class="product-info">
+                                <h3 class="product-title title14"><a href="{{ item_product.href }}">{{ item_product.name }}</a></h3>
+                                {% if config('show_brands') and item_product.manufacturer %}
+                                <h6 class="product-title title12"><a href="{{ item_product.manufacturer_href }}" id="brand_sections" alt"{{ item_product.manufacturer }}">{{ item_product.manufacturer }}</a></h6>
+                                {% endif %}
+                                {% if ('-1' in item_product.price) or ('-1' in item_product.special) %}
+                                <div class="product-price">
+                                    <ins><span class="clickable" onclick="contact_us('{{ item_product.product_id }}');">{{ lang('button_req_quote') }}</span></ins>
+                                    <div id="enquiry-{{ item_product.product_id }}"  style="display:none">{{ item_product.name }}</div>
+                                </div>
+                                {% else %}
+                                    <div class="product-price">
+                                    {% if item_product.special != '' %}
+                                    <del><span class="title14 silver">{{ item_product.price }}</span></del>
+                                    <ins><span class="title14 color">{{ item_product.special }}</span></ins>
+                                    {% else %}
+                                    <ins><span class="title14 color">{{ item_product.price }}</span></ins>
+                                    {% endif %}
+                                    </div>
+                                {% endif %}
+                                {% if config('config_review_status') == '1'  %}
+                                <div class="product-rate">
+                                    <div class="product-rating"><img src="{{ asset('images/stars-' ~ item_product.rating ~ '.png') }}" alt="{{ lang('text_reviews')|format(reviews_count) }}"/> </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+<!-- End Product Box -->

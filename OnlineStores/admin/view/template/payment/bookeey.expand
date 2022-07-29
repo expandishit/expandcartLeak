@@ -1,0 +1,203 @@
+{#{% extends "base.expand" %}#}
+{#{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}#}
+{#{% import "controls/forms.expand" as forms %}#}
+
+{#{% block title %}#}
+{#    {{ lang('heading_title') }}#}
+{#{% endblock title %}#}
+
+{#{% block breadcrumb %}#}
+{#    {{ breadcrumb(breadcrumbs) }}#}
+{#{% endblock breadcrumb %}#}
+
+{#{% block headelements %}#}
+{#    {% include "includes/buttons_top.expand" %}#}
+{#{% endblock headelements %}#}
+
+{#{% block content %}#}
+   <!-- Start Form -->
+    <form class="form" action="{{ action }}" method="POST">
+        <!-- Status -->
+        <div class="col-md-3">
+            <div class="panel panel-white">
+                <div class="panel-heading">
+                    <h6 class="panel-title"><span class="text-bold">{{ lang('entry_status')|trim(':') }}</span></h6>
+                    <div class="heading-elements not-collapsible">
+                        <ul class="icons-list">
+                            <li><a data-action="collapse" class=""></a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="collapse in" id="panel1">
+
+                        <!-- Status -->
+                        <div class="form-group col-md-12">
+                            <label class="control-label">{{ lang('entry_status') }}</label>
+                            <div class="checkbox checkbox-switchery">
+                                <label>
+                                    <input type="checkbox" onchange="changeStatus(this);" name="bookeey_status" class="switchery" {{ bookeey_status not in ['0', 0, 'off'] or bookeey_status is null ? 'checked' }}>
+                                    <span class="switchery-status">{{ bookeey_status not in ['0', 0, 'off'] or bookeey_status is null ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                </label>
+                            </div>
+                        </div>
+                        <!-- /Status -->
+
+                        <!-- Live/Demo -->
+                        <div class="form-group col-md-12">
+                            <label class="control-label">{{ lang('entry_live_mode') }}</label>
+                            <div class="checkbox checkbox-switchery">
+                                <label>
+                                    <input type="checkbox" onchange="changeStatus(this);" name="bookeey_live_mode" class="switchery" {{ bookeey_live_mode not in ['0', 0, 'off'] or bookeey_live_mode is null ? 'checked' }}>
+                                    <span class="switchery-status">{{ bookeey_live_mode not in ['0', 0, 'off'] or bookeey_live_mode is null ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                </label>
+                            </div>
+                        </div>
+                        <!-- /LiveOrDemo -->
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End of Status -->
+
+
+
+
+
+        <!-- Fields -->
+        <div class="col-md-9">
+            <div class="panel panel-flat">
+                <div class="panel-body">
+                    <div class="collapse in" id="fields-panel">
+
+
+                        <!-- bookeey Merchant ID -->
+                        <div class="form-group col-md-6">
+                            <label for="bookeey_merchant_id" class="control-label">{{ lang('entry_merchant_id') }}</label>
+                            <input type="text" class="form-control" id="bookeey_merchant_id" name="bookeey_merchant_id" value="{{ bookeey_merchant_id }}">
+                            <span class="help-block"></span>
+                        </div>
+                        <!-- /bookeey Merchant ID  -->
+
+
+
+
+                        <!-- bookeey Secret Key -->
+                        <div class="form-group col-md-6">
+                            <label for="bookeey_secret_key" class="control-label">{{ lang('entry_secret_key') }}</label>
+                            <input type="text" class="form-control" id="bookeey_secret_key" name="bookeey_secret_key" value="{{ bookeey_secret_key }}">
+                            <span class="help-block"></span>
+                        </div>
+                        <!-- /bookeey Secret Key  -->
+
+
+
+
+
+                        <!-- Geo Zone -->
+                        <div class="form-group col-md-6">
+                            <label for="bookeey_geo_zone_id" class="control-label">{{ lang('entry_geo_zone') }}</label>
+                            <select name="bookeey_geo_zone_id" id="bookeey_geo_zone_id" class="form-control">
+                                <option value="0">{{ lang('text_all_zones') }}</option>
+                                {% for geo_zone in geo_zones %}
+                                    <option value="{{ geo_zone['geo_zone_id'] }}"
+                                            {{ quick_ship_geo_zone_id == geo_zone['geo_zone_id'] ? 'selected' : '' }}>
+                                        {{ geo_zone['name'] }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <!-- /Geo Zone -->
+
+                        <!-- Complete Order Status -->
+                        <div class="form-group col-md-6" id="bookeey-group">
+                            <label for="bookeey_complete_status_id" class="control-label">{{ lang('entry_complete_status') }}</label>
+                            <select name="bookeey_complete_status_id" id="bookeey_complete_status_id" class="form-control">
+                                {% for order_status in order_statuses %}
+                                    <option value="{{ order_status['order_status_id'] }}" {% if bookeey_complete_status_id == order_status['order_status_id'] %} selected {% endif %}>
+                                        {{ order_status['name'] }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <span class="help-block"></span>
+                        </div>
+                        <!-- /Complete Order Status -->
+
+
+
+
+
+
+
+                        {# Modes name Block #}
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <lable>{{ lang('entry_payment_modes') }}</lable><br/><br/>
+                                <div class="tabbable nav-tabs-vertical nav-tabs-left">
+                                    <ul class="nav nav-tabs nav-tabs-highlight">
+                                        {% for mode in bookeey_payment_modes %}
+                                            <li class="{{ loop.first ? 'active' : ''}}" >
+                                                <a href="#tab_{{ mode['code'] }}" data-toggle="tab">
+                                                    <i class="icon-menu7 position-left"></i> {{ mode['code'] }}
+                                                </a>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                    <div class="tab-content">
+                                        {% for key, mode in bookeey_payment_modes %}
+                                            <div class="tab-pane has-padding {{ loop.first ? 'active' : ''}}" id="tab_{{ mode['code'] }}">
+                                                <div class="form-group">
+                                                    <label for="bookeey_mode_{{ mode['code']}}"
+                                                           class="control-label">{{ lang('entry_name') }}</label>
+                                                    <input type="hidden" name="bookeey_payment_modes[{{key}}][code]" value="{{mode['code']}}">
+                                                    <input class="form-control" name="bookeey_payment_modes[{{key}}][name]"
+                                                       value="{{ mode['name'] }}"
+                                                       id="bookeey_mode_{{mode['code']}}">
+                                                    
+                                                    <label class="control-label">{{ lang('entry_status') }}</label>
+                                                    <div class="checkbox checkbox-switchery">
+                                                        <label>
+                                                            <input type="checkbox" onchange="changeStatus(this);" name="bookeey_payment_modes[{{key}}][status]" class="switchery" {{ bookeey_payment_modes[key]['status'] not in ['0', 0, 'off'] or bookeey_payment_modes[key]['status'] is null ? 'checked' }}>
+                                                            <span class="switchery-status">{{ bookeey_payment_modes[key]['status'] not in ['0', 0, 'off'] or bookeey_payment_modes[key]['status'] is null ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                                        </label>
+                                                    </div>
+
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                        {# /Modes Block #}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+        <!-- End of Fields -->
+
+{#{% endblock %}#}
+{% block scripts %}
+<script type="text/javascript">
+    $(document).ready(function() {
+        $('select').select2();
+    });
+    function changeStatus(checkbox){
+        var self = $(checkbox);
+        var switch_status = self.siblings('.switchery-status');
+
+        if ( self.is(':checked') )
+        {
+            switch_status.html("{{ lang('text_enabled') }}");
+        }
+        else
+        {
+            switch_status.html("{{ lang('text_disabled') }}");
+        }
+    }
+</script>
+
+{% endblock %}

@@ -1,0 +1,27 @@
+<?php
+
+$_ = [
+    'heading_title' => 'Firebase Notifications',
+    'firebase_notifications' => 'Firebase Notifications',
+    'notification_title' => 'Title',
+    'notification_type' => 'Type',
+    'options' => 'Options',
+    'add_new_notification' => 'Insert new notification',
+    'entry_name' => 'Name',
+    'entry_topic' => 'Topic',
+    'entry_title' => 'Title',
+    'entry_type' => 'Type',
+    'entry_body' => 'Body',
+    'notification_details' => 'Notification details',
+    'view_details' => 'View Details',
+    'text_all' => 'All',
+    'text_android' => 'Android',
+    'text_ios' => 'IOS',
+    'entry_additional_data' => 'Attach data',
+    'addtional_none' => 'None',
+    'addtional_deal' => 'Deal',
+    'addtional_product' => 'Product',
+    'addtional_category' => 'Category',
+    'entry_product_data' => 'Select Product',
+    'entry_category_data' => 'Select Category',
+];

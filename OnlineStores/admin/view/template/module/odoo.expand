@@ -1,0 +1,420 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block title %}
+{{ lang('heading_title') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+{{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+{% include "includes/buttons_top.expand" %}
+{% endblock headelements %}
+
+{% block content %}
+<style>
+.odoo{
+    background-color: #ffffff;
+    padding-top: 15px;
+    padding-bottom: 16px;
+    padding-right: 10px;
+    padding-left: 20px;
+    border: 1px solid #e0ddef;
+    box-shadow: 0px 0px 1px #888888;    
+}
+legend {
+font-size: 14px;
+text-transform: none;
+}
+</style>
+{% if settings is defined %}
+<!-- form app settings -->
+<form action="{{ action }}" method="post" class="form">
+    {# status #}
+    <div class="col-md-3">
+        <div class="panel panel-flat">
+            <div class="panel-body">
+                <fieldset>
+                    <legend class="text-semibold">
+                        <i class="fas fa-check-circle fa-lg position-left"></i>
+                        {{ lang('text_status') }}
+                        <a class="control-arrow" data-toggle="collapse" data-target="#panel1">
+                            <i class="icon-circle-down2"></i>
+                        </a>
+                    </legend>
+                    <div class="collapse in" id="panel1" style="text-align:center;">
+                        <div class="form-group">
+                            <label class="control-label">
+                                {{ lang('text_status') }}
+                            </label>
+                            <div class="checkbox checkbox-switchery no-margin">
+                                <label>
+                                    <input type="checkbox" onchange="changeStatus(this);" name="status"
+                                        class="switchery" {{ settings['status'] == '1' ? 'checked' }}>
+                                    <span class="switchery-status">
+                                        {% if settings['status'] == '1' %}
+                                        {{ lang('text_enabled') }}
+                                        {% else %}
+                                        {{ lang('text_disabled') }}
+                                        {% endif %}
+                                    </span>
+                                </label>
+                            </div>
+                            <span class="help-block"></span>
+                            <span class="text-muted">{{ langempty('entry_status_help') }}</span>
+                        </div>
+                    </div>
+                </fieldset>
+            </div>
+        </div>
+    </div>
+    {# /status #}
+    <div class="col-md-9">
+    
+        {# settings  #}
+        <div class="panel panel-flat">
+            <div class="panel-body">
+                <fieldset>
+                    <legend class="text-semibold">
+                        <i class="fas fa-cogs fa-lg position-left"></i>
+                        {{ lang('entry_settings_heading') }}
+                        <a class="control-arrow" data-toggle="collapse" data-target="#panel2">
+                            <i class="icon-circle-down2"></i>
+                        </a>
+                    </legend>
+                    <div class="collapse in" id="panel2">
+                        <div class="row">
+                            <!-- url -->
+                            <div class="col-md-6">
+                                <div class="form-group" id="url-group">
+                                    <label for="url" class="control-label">{{ lang('entry_url') }}&nbsp;<span
+                                            class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="url" name="url"
+                                        value="{{ settings['url'] }}" placeholder="{{ lang('entry_url') }}">
+                                    <span class="text-muted">{{ langempty('entry_url_help') }}</span>
+                                    <span class="help-block"></span>
+                                </div>
+                            </div>
+                            <!-- /url -->
+                            <!-- database -->
+                            <div class="col-md-6">
+                                <div class="form-group" id="database-group">
+                                    <label for="database" class="control-label">{{ lang('entry_database') }}&nbsp;<span
+                                            class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="database" name="database"
+                                        value="{{ settings['database'] }}" placeholder="{{ lang('entry_database') }}">
+                                    <span class="help-block"></span>
+                                    <span class="text-muted">{{ langempty('entry_database_help') }}</span>
+                                </div>
+                            </div>
+                            <!-- /database -->
+                            <div class="clearfix"></div>
+                            <!-- username -->
+                            <div class="col-md-6">
+                                <div class="form-group" id="username-group">
+                                    <label for="username" class="control-label">{{ lang('entry_username') }}&nbsp;<span
+                                            class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="username" name="username"
+                                        value="{{ settings['username'] }}" placeholder="{{ lang('entry_username') }}">
+                                    <span class="help-block"></span>
+                                    <span class="text-muted">{{ langempty('entry_username_help') }}</span>
+                                </div>
+                            </div>
+                            <!-- /username -->
+                            <!-- password -->
+                            <div class="col-md-6">
+                                <div class="form-group" id="password-group">
+                                    <label for="password" class="control-label">{{ lang('entry_password') }}&nbsp;<span
+                                            class="text-danger">*</span></label>
+                                    <input type="password" class="form-control" id="password" name="password"
+                                        value="{{ settings['password'] }}" placeholder="{{ lang('entry_password') }}">
+                                    <span class="help-block"></span>
+                                    <span class="text-muted">{{ langempty('entry_password_help') }}</span>
+                                </div>
+                            </div>
+                            <!-- /password -->
+                            <div class="clearfix"></div>
+                            <!-- version -->
+                             <div class="col-md-6">
+                                <div class="form-group" id="version-group">
+                                    <label for="version" class="control-label">{{ lang('entry_version') }}&nbsp;</label>
+                                    <select class="select form-control" name="version" id="version">
+                                        {% for version in settings['available_versions'] %}
+                                        <option value="{{ version }}"
+                                            {{ version == settings['version'] ? "selected" : "" }}>{{ version }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                    <span class="help-block"></span>
+                                    <span class="text-muted">{{ langempty('entry_version_help') }}</span>
+                                </div>
+                            </div>
+                            <!-- /version -->
+                        </div>
+                    </div>
+                </fieldset>
+            </div>
+              <div class="row">
+           
+            <!-- Start_order_status_trigger-->
+            <div class="col-md-12 panel-body" style="padding-top: 20px; padding-bottom: 10px;">
+            
+             <legend class="text-semibold">
+                        <i class="fa fa-list-alt  fa-lg position-left"></i>
+                        {{ lang('entry_odoo_integration_modules') }}
+                        <a class="control-arrow" data-toggle="collapse" data-target="#panel2">
+                            <i class="icon-circle-down2"></i>
+                        </a>
+                    </legend>
+             <!-- customers_integrate -->
+            <div class="col-md-4">
+                <div class="switch-line-group odoo">
+                    <div class="switch-line">
+                        <label class="control-label"> {{ lang('entry_customers_module') }} </label>
+                        <div class="checkbox checkbox-switchery">
+                            <label>
+                            <input type="checkbox" onchange="changeCustomerStatus(this);" name="customers_integrate"
+                            class="switchery" {{ settings['customers_integrate'] == '1' ? 'checked' }}>
+                            <span class="switchery-status">
+                            {% if settings['customers_integrate'] == '1' %}
+                            {{ lang('text_enabled') }}
+                            {% else %}
+                            {{ lang('text_disabled') }}
+                            {% endif %}
+                            </span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                     <!-- sync new customers button -->
+           <button type="button" id="customerSyncBtn" {{ settings['customers_integrate'] != '1' ? "disabled" }} class="btn btn-primary btn-ladda btn-ladda-spinner bottom-save-button"
+            data-style="zoom-in" data-url="{{odoo['sync_customers_url']}}"
+            onclick="syncNewCustomers(this.getAttribute('data-url'));">
+            <i class="fas fa-sync-alt fa-lg position-left"></i>
+            {{ lang('button_sync_customers') }}</button>
+           <!-- sync new customers button -->
+            </div>
+              <!-- /customers_integrate -->
+
+           <!-- products_integrate -->
+            <div class="col-md-4">
+                <div class="switch-line-group odoo">
+                    <div class="switch-line">
+                        <label class="control-label"> {{ lang('entry_products_module') }} </label>
+                        <div class="checkbox checkbox-switchery">
+                            <label>
+                            <input type="checkbox" onchange="changeProductStatus(this);" name="products_integrate"
+                            class="switchery" {{ settings['products_integrate'] == '1' ? 'checked' }}>
+                            <span class="switchery-status">
+                            {% if settings['products_integrate'] == '1' %}
+                            {{ lang('text_enabled') }}
+                            {% else %}
+                            {{ lang('text_disabled') }}
+                            {% endif %}
+                            </span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                 <!-- sync new products button -->
+           <button type="button" id="productSyncBtn"{{ settings['products_integrate'] != '1' ? "disabled" }} class="btn btn-primary btn-ladda btn-ladda-spinner bottom-save-button"
+            data-style="zoom-in" data-url="{{odoo['sync_products_url']}}"
+            onclick="syncNewProducts(this.getAttribute('data-url'));">
+            <i class="fas fa-sync-alt fa-lg position-left"></i>
+            {{ lang('button_sync_products') }}</button>
+           <!-- sync new products button -->
+            </div>
+            
+            <!-- /products_integrate -->
+             <!-- orders_integrate -->
+            <div class="col-md-4">
+                <div class="switch-line-group odoo">
+                <div class="switch-line">
+                    <label class="control-label">{{ lang('entry_orders_module') }} </label>
+                    <div class="checkbox checkbox-switchery">
+                        <label>
+                        <input type="checkbox" onchange="changeOrderStatus(this);" name="orders_integrate"
+                        class="switchery" {{ settings['orders_integrate'] == '1' ? 'checked' }}>
+                        <span class="switchery-status">
+                        {% if settings['orders_integrate'] == '1' %}
+                        {{ lang('text_enabled') }}
+                        {% else %}
+                        {{ lang('text_disabled') }}
+                        {% endif %}
+                        </span>
+                        </label>
+                    </div>
+                </div>
+                 
+          </div>
+           <!-- sync new orders button -->
+           
+           <button  type="button" id="orderSyncBtn" {{ settings['orders_integrate'] != '1' ? "disabled" }} class="btn btn-primary btn-ladda btn-ladda-spinner  bottom-save-button"
+            data-style="zoom-in" data-url="{{odoo['sync_orders_url']}}"
+            onclick="syncNewOrders(this.getAttribute('data-url'));" >
+            <i class="fas fa-sync-alt fa-lg position-left"></i>
+            {{ lang('button_sync_orders') }}</button>
+           <!-- sync new orders button -->
+              <!-- /orders_integrate -->
+           
+        </div>
+             <div class="col-md-12 text-right">
+            <hr />
+            <a href="{{ cancel }}" class="btn btn-default bottom-cancel-button">
+                {{ lang('button_cancel') }}</a> 
+
+            <button type="button" id="subMit" class="btn btn-primary btn-ladda btn-ladda-spinner bottom-save-button"
+                data-style="zoom-in" onclick="$('.form').submit();"><i
+                    class="far fa-save fa-lg position-left"></i> {{ lang('button_save') }}</button>
+        </div>
+        </div>
+         
+        {# /settings  #}
+          
+                      
+    </div>
+</form>
+<!-- /form app settings -->
+{% else %}
+<div class="alert alert-warning"><i class="fa fa-exclamation-circle"></i>
+    {{ lang('extension_not_active') }}
+</div>
+{% endif %}
+<script type="text/javascript">
+
+$(document).ready(() => {
+  $('#subMit').click(()=>{
+     location.reload();
+  });
+});
+    function changeProductStatus(checkbox) {
+       
+        var self = $(checkbox);
+        var switch_status = self.siblings('.switchery-status');
+        if (self.is(':checked')) {
+             $("#productSyncBtn").removeAttr('disabled');
+            switch_status.html("{{ lang('text_enabled') }}");
+        }
+        else {
+            switch_status.html("{{ lang('text_disabled') }}");
+             $("#productSyncBtn").prop("disabled", true);
+        }
+    }
+
+     function syncNewProducts(url) {
+         $("#orderSyncBtn").removeClass( "btn-ladda btn-ladda-spinner" );
+        $("#customerSyncBtn").removeClass( "btn-ladda btn-ladda-spinner" );
+        $("#orderSyncBtn").prop("disabled", true);
+        $("#customerSyncBtn").prop("disabled", true);
+        $("#subMit").prop("disabled", true);
+      //  Ladda.startAll();
+        $.ajax({
+            url: url,
+            type: "POST",
+            data: null,
+            dataType: "json",
+            success: function (returnResult) {
+                Ladda.stopAll();
+                if(returnResult.success == '1') notify("", "success", returnResult.success_msg);
+                else if(returnResult.invalidAuth == '1') notify('Error', 'warning', returnResult.invalidAuth_msg);
+                else displayErrors(returnResult.errors.warning);
+                
+                  $("#orderSyncBtn" ).addClass( "btn-ladda btn-ladda-spinner" );
+                $("#customerSyncBtn" ).addClass( "btn-ladda btn-ladda-spinner" );
+            },
+            error: function () {
+                Ladda.stopAll();
+                  $("#orderSyncBtn").addClass( "btn-ladda btn-ladda-spinner" );
+                 $("#customerSyncBtn").addClass( "btn-ladda btn-ladda-spinner" );
+            },
+        });
+    }
+     function changeCustomerStatus(checkbox) {
+        var self = $(checkbox);
+        var switch_status = self.siblings('.switchery-status');
+        if (self.is(':checked')) {
+             $("#customerSyncBtn").removeAttr('disabled');
+            switch_status.html("{{ lang('text_enabled') }}");
+        }
+        else {
+            switch_status.html("{{ lang('text_disabled') }}");
+             $("#customerSyncBtn").prop("disabled", true);
+        }
+    }
+     function syncNewCustomers(url) {
+         $("#orderSyncBtn").removeClass( "btn-ladda btn-ladda-spinner" );
+        $("#productSyncBtn").removeClass( "btn-ladda btn-ladda-spinner" );
+        $("#orderSyncBtn").prop("disabled", true);
+        $("#productSyncBtn").prop("disabled", true);
+         $("#subMit").prop("disabled", true);
+       // Ladda.startAll();
+        $.ajax({
+            url: url,
+            type: "POST",
+            data: null,
+            dataType: "json",
+            success: function (returnResult) {
+                Ladda.stopAll();
+                if(returnResult.success == '1') notify("", "success", returnResult.success_msg);
+                else if(returnResult.invalidAuth == '1') notify('Error', 'warning', returnResult.invalidAuth_msg);
+                else displayErrors(returnResult.errors.warning);
+                 $( "#orderSyncBtn" ).addClass( "btn-ladda btn-ladda-spinner" );
+                $( "#productSyncBtn" ).addClass( "btn-ladda btn-ladda-spinner" );
+            },
+            error: function () {
+                Ladda.stopAll();
+                 $( "#orderSyncBtn" ).addClass( "btn-ladda btn-ladda-spinner" );
+                $( "#productSyncBtn" ).addClass( "btn-ladda btn-ladda-spinner" );
+            },
+        });
+    }
+     function changeOrderStatus(checkbox) {
+       
+        var self = $(checkbox);
+      
+        var switch_status = self.siblings('.switchery-status');
+        if (self.is(':checked')) {
+             $("#orderSyncBtn").removeAttr('disabled');
+            switch_status.html("{{ lang('text_enabled') }}");
+        }
+        else {
+            switch_status.html("{{ lang('text_disabled') }}");
+             $("#orderSyncBtn").prop("disabled", true);
+        }
+    }
+     function syncNewOrders(url) {
+
+        $("#customerSyncBtn").removeClass( "btn-ladda btn-ladda-spinner" );
+        $( "#productSyncBtn").removeClass( "btn-ladda btn-ladda-spinner" );
+        $("#customerSyncBtn").prop("disabled", true);
+        $("#productSyncBtn").prop("disabled", true);
+         $("#subMit").prop("disabled", true);
+      //  Ladda.startAll();
+        $.ajax({
+            url: url,
+            type: "POST",
+            data: null,
+            dataType: "json",
+            success: function (returnResult) {
+                Ladda.stopAll();
+                if(returnResult.success == '1') notify("", "success", returnResult.success_msg);
+                else if(returnResult.invalidAuth == '1') notify('Error', 'warning', returnResult.invalidAuth_msg);
+                else displayErrors(returnResult.errors.warning);
+
+                $( "#customerSyncBtn" ).addClass( "btn-ladda btn-ladda-spinner" );
+                $( "#productSyncBtn" ).addClass( "btn-ladda btn-ladda-spinner" );
+               
+            },
+            error: function () {
+                Ladda.stopAll();
+                 $( "#customerSyncBtn" ).addClass( "btn-ladda btn-ladda-spinner" );
+                $( "#productSyncBtn" ).addClass( "btn-ladda btn-ladda-spinner" );
+               
+            },
+        });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,23 @@
+<?php
+$_['heading_title']   = 'Zoho Inventory'; 
+$_['text_settings']   = 'Mîhengan'; 
+$_['text_status']   = 'Cî'; 
+$_['entry_status_help']   = 'Zoho Inventory App Status.'; 
+$_['text_multiseller_not_active']   = 'Serîlêdana Serhedê ya Zoho nehat saz kirin!'; 
+$_['text_success']   = 'Serkeftin: We mîhengên guhartinê kiriye!'; 
+$_['text_enabled']   = 'Enabled'; 
+$_['text_disabled']   = 'Bêmecel'; 
+$_['entry_organization_id']  = "Nasnameya Rêxistinê"; 
+$_['entry_authtoken']  = "Authtoken"; 
+$_['error_invalid_authtoken']  = 'Zeviya Authtoken hewce ye!'; 
+$_['error_warning']  = 'Hişyarî: Ji kerema xwe binirxînin ku hûn zeviyên çewt an hewce binirxînin'; 
+$_['button_sync_products']  = 'Hilberên Sync'; 
+$_['text_success_sync_products']  = 'Serkeftin: Hûn hilberên hevdu hene!'; 
+$_['entry_client_id']  = "ID Client"; 
+$_['entry_client_id_help'] = "You can get it by clicking on this <a target=\"_blank\" href=\"https://api-console.zoho.com/\">link</a> and creating a new Server-based Applications client";
+$_['entry_client_secret'] = "Client Secret";
+$_['entry_client_secret_help'] = "You can get it by clicking on this <a target=\"_blank\" href=\"https://api-console.zoho.com/\">link</a> and creating a new Server-based Applications client";
+$_['entry_home_url']  = "URL-ya Malperê"; 
+$_['entry_redirect_url']  = "Destpêka URI red kir"; 
+$_['text_settings_waiting']  = 'Hûn ê li rûpelê verastkirinê werin rêve kirin'; 
+$_['text_settings_error']  = 'Hişyarî: Ji kerema xwe binirxînin ku hûn zeviyên çewt an hewce binirxînin'; 

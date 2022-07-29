@@ -1,0 +1,71 @@
+<!-- featured products -->
+{% set products_per_item = 1 %}
+
+{% if fields.FeauredProducts_Select.field_value != '' %}
+	{% set FeaturedProducts = getFeaturedProducts(fields.FeauredProducts_Select.field_value, 595, 738) %}
+{% else %}
+	{% set FeaturedProducts = getLatestProducts(10, 595, 738) %}
+{% endif %}
+
+{% set items_products = FeaturedProducts|chunk(products_per_item) %}
+{% set items_count = items_products|length %}
+
+
+<div class="product-box10" id="section-{{ section_id }}">
+    <div class="container">
+        <div class="box-intro9 text-center">
+            <h3 class="title30">{{ fields.FeauredProducts_Title.field_value }}</h3>
+            <p class="desc">{{ fields.FeauredProducts_Desc.field_value }}</p>
+        </div>
+    </div>
+    <div class="product-slider10">
+        <div class="wrap-item long-arrow" data-pagination="false" data-navigation="true" data-itemscustom="[[0,2],[480,2],[768,3],[980,4],[1200,5],[1366,6]]">
+
+
+
+            {% for product in FeaturedProducts %}
+			<div class="item-product none-shadow">
+				<div class="product-thumb">
+					<a href="{{ product.href }}" class="product-thumb-link"><img class="img-responsive" src="{{ product.thumb }}" alt=""></a>
+					<div class="product-extra-link">
+						<a href="#" class="compare-link" onclick="addToCompare({{ product.product_id }}, 1); return false;"><i class="fa fa-file-o" aria-hidden="true"></i></a>
+						{% if ('-1' in product.price) or ('-1' in product.special) %}
+							<a class="clickable addcart-link" onclick="contact_us('{{ product.product_id }}');"><i class="fa fa-opencart" aria-hidden="true"></i></a>
+						{% else %}
+						 {% if customer.isCustomerAllowedToAdd_cart and ( config('config_hide_add_to_cart') != 1 or product.quantity >0 )  %}
+							<a href="#" class="addcart-link" onclick="addToCart({{ product.product_id }}, 1); return false;"><i class="fa fa-opencart" aria-hidden="true"></i></a>
+						{% endif %}
+						{% endif %}
+						<a href="#" class="wishlist-link" onclick="addToWishList({{ product.product_id }}); return false;"><i class="fa fa-heart-o" aria-hidden="true"></i></a>
+					</div>
+					<a href="{{ product.href }}" class="quickview-link"><i class="fa fa-search" aria-hidden="true"></i></a>
+					<div class="product-rate">
+						<div class="product-rating" style="width:100%"></div>
+					</div>
+				</div>
+				<div class="product-info">
+				{% if config('show_brands') %}
+				<h3 class="product-title"><a href="{{ product.manufacturer_href }}">{{ product.manufacturer }}</a></h3>
+				{% endif %}
+					<h3 class="product-title"><a href="{{ product.href }}">{{ product.name }}</a></h3>
+					<div class="product-price">
+						{% if ('-1' in product.price) or ('-1' in product.special) %}
+						    <ins><span class="clickable" onclick="contact_us('{{ product.product_id }}');">{{ lang('button_req_quote') }}</span></ins>
+						    <div id="enquiry-{{ product.product_id }}"  style="display:none">{{ product.name }}:</div>
+						{% elseif product.special %}
+						    <span class="del">{{ product.price }}</span>
+						    <ins><span>{{ product.special }}</span></ins>
+						{% else %}
+						    <ins><span>{{ product.price }}</span></ins>
+						{% endif %}
+					</div>
+				</div>
+			</div>
+			{% endfor %}
+
+
+
+        </div>
+    </div>
+</div>
+<!-- End Product Box -->

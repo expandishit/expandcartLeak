@@ -1,0 +1,54 @@
+{% macro image(object) %}
+
+    {% set browseLabel = (object['browseLabel'] is defined ? object['browseLabel'] : lang('text_browse')) %}
+    {% set clearLabel = (object['clearLabel'] is defined ? object['clearLabel'] : lang('text_clear')) %}
+    {% set noImage = (object['noImage'] is defined ? object['noImage'] : null) %}
+    {% set imageName = (object['name'] is defined ? object['name'] : 'image') %}
+    {% set imageID = (object['ID'] is defined ? object['ID'] : random(random(random())) ) %}
+
+    {% set hasErrors = true %}
+    {% if object['error'] is defined %}
+        {% set hasErrors = true %}
+    {% endif %}
+
+    <div class="form-group image {{ hasErrors == true ? 'has-error stopscroll' : '' }}">
+        <div class="btn-group" style="width: 151px;">
+            <a onclick="uploadImage('image{{ imageID }}', 'thumb{{ imageID }}');" class="btn btn-default" style="width:50%; border-bottom-left-radius: 0; border-bottom-right-radius: 0;">{{ browseLabel }}</a>
+            <a onclick="$('#thumb{{ imageID }}').attr('src', '{{ noImage }}'); $('#image{{ imageID }}').attr('value', '');" class="btn btn-default" style="width:50%; border-bottom-left-radius: 0; border-bottom-right-radius: 0;">{{ clearLabel }}</a>
+        </div>
+        <br>
+        <img src="{{ object['thumbPath'] }}" alt="" id="thumb{{ imageID }}" style="border-radius: 3px; width: 150px; border: 1px solid #ddd; border-top: 0px; border-top-right-radius: 0; border-top-left-radius: 0;"/>
+        <input type="hidden" name="{{ imageName }}" value="{{ object['imagePath'] }}" id="image{{ imageID }}"/>
+        {% if hasErrors == true %}
+            <span class="help-block">{{ object['error'] }}</span>
+        {% endif %}
+    </div>
+
+    <script>
+        function uploadImage(field, thumb) {
+            $.startImageManager(field, thumb);
+        };
+    </script>
+    <script src="view/javascript/cube/dropzone.min.js"></script>
+
+    <script type="text/javascript" src="view/javascript/cube/scripts.js"></script>
+{% endmacro image %}
+
+{#
+
+How to use?
+
+There are no required parameters, but as a good practice you should add `name` element as a unique name.
+
+{% import "controls/uploader.expand" as uploader %}
+
+{{ uploader.image({
+    'name': 'the name of input to be used in server side, by default it will be "image"',
+    'browseLabel': 'the browse label string, by default it will be the text_browse language string value',
+    'clearLabel': 'the clear label string, by default it will be the text_clear language string value',
+    'thumbPath': 'the thump path provided from the controller that will use the macro, if empty no_image will be shown',
+    'imagePath': 'the image path provided from the controller that will use the macro, if empty no_image will be shown',
+    'error': 'error string to be passed if any error had been occured'
+}) }}
+
+#}

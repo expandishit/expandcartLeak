@@ -1,0 +1,319 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+
+{% block title %}
+    {{ lang('heading_title') }}
+{% endblock title %}
+
+{% set dualMenuEnabled = true %}
+{% block secondarymenu %}
+    {% include 'aliexpress/menu.expand' with {'active': '#tab-pricingrule'} %}
+{% endblock secondarymenu %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+<button class="btn btn-primary" id="toogle-pricerule-modal" type="button" data-toggle="tooltip"
+    title="{{ lang('button_add_rule') }} ">
+    <i class="fa fa-plus-square"></i> {{ lang('button_add_rule') }}
+</button>
+<button class="btn btn-danger" id="delete-rule" type="button" data-toggle="tooltip" title="{{ lang('button_remove') }}">
+    <i class="fa fa-trash"></i> {{ lang('button_remove') }}
+</button>
+{% endblock headelements %}
+
+{% block content %}
+<form id="rule-delete-form" action="{{ link('aliexpress/pricingrule/delete') }}" method="post">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-white">
+                <div class="panel-heading">
+                    <h6 class="panel-title">
+                        <span class="text-bold">
+                            <i class="fa fa-cog"></i>
+                            <span>{{ lang('heading_title') }}</span>
+                        </span>
+                    </h6>
+                    <div class="heading-elements not-collapsible">
+                        <ul class="icons-list">
+                            <li><a data-action="collapse" class=""></a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="panel-body">
+                    <table class="table table-bordered table-hover">
+                        <thead>
+                            <tr>
+                                <td class="text-center" style="width:1px">
+                                    <input type="checkbox" name="selected[]"
+                                        onclick="$('input[name*=\'selected\']').prop('checked', this.checked)" />
+                                </td>
+                                <td class="text-left">{{ lang('entry_rule_name') }}</td>
+                                <td class="text-left">{{ lang('entry_channel') }}</td>
+                                <td class="text-left">{{ lang('text_from') }}</td>
+                                <td class="text-left">{{ lang('text_to') }}</td>
+                                <td class="text-left">{{ lang('entry_amount_type') }}</td>
+                                <td class="text-left">{{ lang('entry_amount') }}</td>
+                                <td class="text-center">{{ lang('entry_action') }}</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if priceRules is defined and priceRules %}
+                            {% for priceRule in priceRules %}
+                            <tr>
+                                <td class="text-left">
+                                    <input type="checkbox" value="{{ priceRule.rule_id }} " name="selected[]" />
+                                </td>
+                                <td class="text-left">
+                                    {{ priceRule.name }}
+                                </td>
+                                <td class="text-left">
+                                    {{ channelType[priceRule.channel] }}
+                                </td>
+                                <td class="text-left">
+                                    {{ priceRule.price_from }}
+                                </td>
+                                <td class="text-left">
+                                    {{ priceRule.price_to }}
+                                </td>
+                                <td class="text-left">
+                                    {{ methodType[priceRule.method_type] }}
+                                </td>
+                                <td class="text-left">
+                                    {{ priceRule.amount }}
+                                </td>
+                                <td class="text-center">
+                                    <button type="button" class="btn btn-primary edit-rule" data-rule-id="{{ priceRule.rule_id }} ">
+                                        <i class="fa fa-edit"></i>
+                                    </button>
+                                </td>
+                                {% endfor %}
+                                {% else %}
+                                <tr>
+                                    <td class="text-center" colspan="9">
+                                        {{ lang('text_no_record') }}
+                                    </td>
+                                </tr>
+                                {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<div class="modal fade" id="pricerule-modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title">{{ lang('heading_title') }} </h4>
+            </div>
+            <div class="modal-body">
+                <form id="pricerule-form">
+                    <input type="hidden" name="pricerule_rule_id" value="0" />
+                    <div class="form-group required">
+                        <label class="control-label">
+                            {{ lang('entry_rule_name') }}
+                        </label>
+                        <input type="text" name="pricerule_name" class="form-control" />
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label">
+                            {{ lang('entry_channel') }}
+                        </label>
+                        <select class="form-control" name="pricerule_channel">
+                            <option value="m">{{ lang('text_manual') }} </option>
+                            <option value="ali">{{ lang('text_aliexpress') }} </option>
+                        </select>
+                    </div>
+                    <input type="hidden" name="pricerule_category" value="0" />
+                    <div class="form-group required">
+                        <label class="control-label">
+                            {{ lang('entry_price_range') }}
+                        </label>
+                        <div class="row">
+                            <div class="col-sm-5">
+                                <div class="input-group">
+                                    <input type="text" name="pricerule_price_range_from" class="form-control"
+                                        onkeypress="return isNumber(event,$(this))" />
+                                    <span class="input-group-addon" />$</span>
+                                </div>
+                            </div>
+                            <div class="col-sm-2 text-center">
+                                <div style="line-height:2.5"><b>{{ lang('text_price') }}</b></div>
+                            </div>
+                            <div class="col-sm-5">
+                                <div class="input-group">
+                                    <input type="text" name="pricerule_price_range_to" class="form-control"
+                                        onkeypress="return isNumber(event,$(this))" />
+                                    <span class="input-group-addon" />$</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label">
+                            {{ lang('entry_operation_type') }}
+                        </label>
+                        <select class="form-control" name="pricerule_operation_type">
+                            <option value="+">+</option>
+                            <option value="-">-</option>
+                            <option value="*">*</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label">
+                            {{ lang('entry_amount_type') }}
+                        </label>
+                        <select class="form-control" name="pricerule_amount_type">
+                            <option value="f">{{ lang('text_fixed') }} </option>
+                            <option value="p">{{ lang('text_per') }} </option>
+                        </select>
+                    </div>
+                    <div class="form-group required">
+                        <label class="control-label">
+                            {{ lang('entry_amount') }}
+                        </label>
+                        <input type="text" name="pricerule_amount" class="form-control"
+                            onkeypress="return isNumber(event,$(this))" />
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer text-left">
+                <button type="button" class="btn btn-danger pull-left" data-dismiss="modal">
+                    {{ lang('button_close') }}
+                </button>
+                <button type="button" class="btn btn-primary save-rule">
+                    {{ lang('button_save') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function () {
+    $('select').select2({
+        minimumResultsForSearch: -1,
+    });
+});
+$('#delete-rule').on('click', function(){
+    confirmation = confirm("{{ lang('text_confirmation') }} ");
+    if(confirmation) {
+        $('#rule-delete-form').submit();
+    }
+});
+
+$('#toogle-pricerule-modal').on('click', function() {
+    $('input[name=\'pricerule_rule_id\']').val(0)
+    $("#pricerule-form")[0].reset();
+    $('#pricerule-modal').modal();
+});
+
+errors = [];
+errors['pricerule_name'] = "{{ lang('entry_rule_name') }} ";
+errors['pricerule_category'] = "{{ lang('entry_category') }} ";
+errors['pricerule_amount'] = "{{ lang('entry_amount') }} ";
+errors['pricerule_price_range_from'] = "{{ lang('text_from') }} ";
+errors['pricerule_price_range_to'] = "{{ lang('text_to') }} ";
+
+$('.edit-rule').on('click', function() {
+    rule_id = $(this).data('rule-id');
+    $.ajax({
+        url: 'aliexpress/pricingrule/getRule',
+        data: {
+            rule_id: rule_id,
+        },
+        dataType: 'json',
+        method: 'post',
+        beforeSend: function() {
+            $('select[name="pricerule_category"] option').removeAttr('selected');
+            $('select[name="pricerule_category_relation"] option').removeAttr('selected');
+            $('select[name="pricerule_channel"] option').removeAttr('selected');
+            $('select[name="pricerule_operation_type"] option').removeAttr('selected');
+            $('select[name="pricerule_amount_type"] option').removeAttr('selected');
+            $('input[name="pricerule_rule_id"]').val('');
+            $('input[name="pricerule_name"]').val('');
+            $('input[name="pricerule_price_range_to"]').val('');
+            $('input[name="pricerule_price_range_from"]').val('');
+            $('input[name="pricerule_amount"]').val('');
+        },
+        success: function(response) {
+            $('select[name="pricerule_category"] option[value="'+response.data.category_id+'"]').prop('selected', true);
+            $('select[name="pricerule_category_relation"] option[value="'+response.data.category_relation+'"]').prop('selected', true);
+            $('select[name="pricerule_channel"] option[value="'+response.data.channel+'"]').prop('selected', true);
+            $('select[name="pricerule_operation_type"] option[value="'+response.data.operation_type+'"]').prop('selected', true);
+            $('select[name="pricerule_amount_type"] option[value="'+response.data.method_type+'"]').prop('selected', true);
+            $('input[name="pricerule_rule_id"]').val(response.data.rule_id);
+            $('input[name="pricerule_name"]').val(response.data.name);
+            $('input[name="pricerule_price_range_to"]').val(response.data.price_to);
+            $('input[name="pricerule_price_range_from"]').val(response.data.price_from);
+            $('input[name="pricerule_amount"]').val(response.data.amount);
+            $('#pricerule-modal').modal();
+        }
+    })
+});
+
+$('.save-rule').on('click', function() {
+    $('.alert').remove();
+    var $inputs = $('#pricerule-form :input');
+    Error = '';
+    var values = {};
+    $.each($inputs, function(i,v) {
+        values[this.name] = $(this).val();
+        if($(this).val() == '') {
+            Error = this.name;
+            return false;
+        }
+    });
+
+    if(Error != '') {
+        html = '<div class="alert alert-danger text-left"><button class="close" type="button" data-dismiss="alert" aria-label="Close" >&times;</button>Warning: '+errors[Error]+' should not be blank!</div>';
+        $('.modal-footer').prepend(html);
+    } else {
+        $.ajax({
+            url: 'aliexpress/pricingrule/addPriceRule',
+            method: 'post',
+            dataType: 'json',
+            data: { priceRule : values },
+            beforeSend: function() {
+                $('.save-rule').html('<i class="fa fa-spin fa-spinner" ></i>');
+            },
+            complete : function() {
+              $('.save-rule').html('{{ button_save }}');
+            },
+            success: function(response) {
+                if(response.success) {
+                    html = '<div class="alert alert-success"><button class="close" type="button" data-toggle="alert">&times;</button>'+response.success+'</div>';
+                    $('.panel').before(html);
+                    $('#pricerule-modal').modal('toggle');
+                    location.reload();
+                } else {
+                  $.each(response.error, function(i,v){
+                    html = '<div class="alert alert-danger text-left"><button class="close" type="button" data-toggle="alert">&times;</button>'+v+'</div>';
+                    $('.modal-footer').prepend(html);
+                  });
+                }
+            }
+        })
+    }
+})
+function isNumber(evt,elem) {
+  var data = $(elem).val();
+  if((evt.charCode>= 48 && evt.charCode <= 57) || evt.charCode== 46 ||evt.charCode == 0){
+    if(data.indexOf('.') > -1){
+      if(evt.charCode== 46)
+        evt.preventDefault();
+    }
+  }else
+    evt.preventDefault();
+}
+</script>
+{% endblock %}

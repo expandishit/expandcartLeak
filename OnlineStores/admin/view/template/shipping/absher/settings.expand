@@ -1,0 +1,309 @@
+{% import "controls/forms.expand" as forms %}
+{% set dualMenuEnabled = false %}
+
+ 	{# Start Form #}
+    <form id="form-absher" class="form" action="{{ action }}" method="POST">
+
+        {# Status #}
+        <div class="col-md-3">
+            <div class="panel panel-white">
+                <div class="panel-heading">
+                    <h6 class="panel-title"><span class="text-bold">{{ lang('entry_status')|trim(':') }}</span></h6>
+                    <div class="heading-elements not-collapsible">
+                        <ul class="icons-list">
+                            <li><a data-action="collapse" class=""></a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="collapse in" id="panel1">
+
+
+                        <div class="form-group col-md-12">
+                            <label class="control-label">{{ lang('entry_status') }}</label>
+                            <div class="checkbox checkbox-switchery">
+                                <label>
+                                    <input type="checkbox" onchange="changeStatus(this);" name="absher_status" class="switchery" {{ absher_status not in ['0', 0, 'off'] or absher_status is null ? 'checked' }}>
+                                    <span class="switchery-status">{{ absher_status not in ['0', 0, 'off'] or absher_status is null ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                </label>
+                            </div>
+                        </div>
+
+
+                        {#<div class="form-group col-md-12">
+                            <label class="control-label">{{ lang('entry_debugging_mode') }}</label>
+                            <div class="checkbox checkbox-switchery">
+                                <label>
+                                    {% set absher_debugging_mode = (absher_debugging_mode is not null ? absher_debugging_mode : 0 ) %}
+                                    <input type="checkbox" onchange="changeStatus(this);" name="absher_debugging_mode" class="switchery" {{ absher_debugging_mode not in ['0', 0, 'off'] or absher_debugging_mode is null ? 'checked' }}>
+                                    <span class="switchery-status">{{ absher_debugging_mode not in ['0', 0, 'off'] or absher_debugging_mode is null ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                </label>
+                            </div>
+                        </div>#}
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        {# End of Status #}
+
+
+
+        <div class="col-md-9">
+            <div class="panel panel-white">
+            	<div class="panel-heading">
+                    <h6 class="panel-title"><span class="text-bold">{{ lang('text_settings') }}</span></h6>
+                    <div class="heading-elements not-collapsible">
+                        <ul class="icons-list">
+                            <li><a data-action="collapse" class=""></a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="collapse in" id="fields-panel">
+
+                    	{# absher email #}
+                        <div class="form-group col-md-6">
+                            <label for="email" class="control-label">{{ lang('entry_email') }} <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" id="email" name="absher_email" value="{{ absher_email }}">
+                            <span class="help-block"></span>
+                        </div>
+                        {# /absher email #}
+
+
+                        {# absher Password #}
+                        <div class="form-group col-md-6">
+                            <label for="password" class="control-label">{{ lang('entry_password') }} <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="password" name="absher_password" value="{{ absher_password }}">
+                            <span class="help-block"></span>
+                        </div>
+                        {# /absher Password #}
+
+
+                        {# Account Currency #}
+                        <div class="form-group col-md-6">
+                            <label for="absher_account_currency" class="control-label">{{ lang('entry_account_currency') }}</label>
+                            <select name="absher_account_currency" id="absher_account_currency" class="form-control">
+                                <option value="SAR" {{ absher_account_currency == 'SAR' ? 'selected' :'' }}>SAR</option>
+                            </select>
+                            <span class="help-block"></span>
+                        </div>
+                        {# /Account Currency #}
+
+
+
+                        {# After Shipping Status #}
+                        <div class="form-group col-md-6">
+                            <label for="absher_after_creation_status" class="control-label">{{ lang('entry_after_creation_status') }}</label>
+                            <select name="absher_after_creation_status" id="absher_after_creation_status" class="form-control">
+                                {% for order_status in order_statuses %}
+                                    <option value="{{ order_status['order_status_id'] }}" {{ absher_after_creation_status == order_status['order_status_id'] ? 'selected' :'' }}>
+                                        {{ order_status['name'] }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <span class="help-block"></span>
+                        </div>
+                        {# /After Shipping Status #}
+
+
+                        {# Tax Classes #}
+                        <div class="form-group col-md-6">
+                            <label for="absher_tax_class_id" class="control-label">{{ lang('entry_tax_class') }}</label>
+                            <select name="absher_tax_class_id" id="absher_tax_class_id" class="form-control">
+                                <option value="0">{{ lang('text_none') }}</option>
+                                {% for tax_class in tax_classes %}
+                                    <option value="{{ tax_class['tax_class_id'] }}"
+                                            {{ absher_tax_class_id == tax_class['tax_class_id'] ? 'selected' : '' }}>
+                                        {{ tax_class['title'] }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <span class="help-block"></span>
+                            <span class="text-muted">{{ langempty('entry_tax_class_help') }}</span>
+                        </div>
+                        {# /Tax Classes #}
+
+
+
+
+                        {# Geo Zone #}
+                        <div class="form-group col-md-6">
+                            <label for="absher_geo_zone_id" class="control-label">{{ lang('entry_geo_zone') }}</label>
+                            <select name="absher_geo_zone_id" id="absher_geo_zone_id" class="form-control">
+                                <option value="0">{{ lang('text_all_zones') }}</option>
+                                {% for geo_zone in geo_zones %}
+                                    <option value="{{ geo_zone['geo_zone_id'] }}"
+                                            {{ absher_geo_zone_id == geo_zone['geo_zone_id'] ? 'selected' : '' }}>
+                                        {{ geo_zone['name'] }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {# /Geo Zone #}
+
+
+
+                        {# Cost Block #}
+                        <div class="col-md-12">
+                            <div class="panel panel-white">
+                                <div class="panel-heading">
+                                    <h6 class="panel-title"><span class="text-bold">{{ lang('head_global_settings') }}</span></h6>
+                                    <div class="heading-elements not-collapsible">
+                                        <ul class="icons-list">
+                                            <li><a data-action="collapse" class=""></a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="panel-body">
+                                    <div class="collapse in" id="panel2">
+                                        <div class="form-group">
+                                            <div class="tabbable nav-tabs-vertical nav-tabs-left">
+                                                <ul class="nav nav-tabs nav-tabs-highlight">
+                                                    <li class="active">
+                                                        <a href="#tab_general" data-toggle="tab">
+                                                            <i class="icon-menu7 position-left"></i> {{ lang('tab_general') }}
+                                                        </a>
+                                                    </li>
+                                                    {% for zone in geo_zones %}
+                                                        <li>
+                                                            <a href="#tab_{{ zone['geo_zone_id'] }}" data-toggle="tab">
+                                                                <i class="icon-menu7 position-left"></i> {{ zone['name'] }}
+                                                            </a>
+                                                        </li>
+                                                    {% endfor %}
+                                                </ul>
+                                                <div class="tab-content">
+                                                    <div class="tab-pane active has-padding active" id="tab_general">
+                                                        <div class="form-group" id="weight_tax_class_id-group">
+                                                            <label for="absher_weight_general_rate"
+                                                                   class="control-label">{{ lang('entry_general_price') }}</label> <span class="text-danger">*</span>
+                                                            <input class="form-control" name="absher_price[absher_weight_general_rate]"
+                                                                   value="{{ absher_price['absher_weight_general_rate'] }}"
+                                                                   id="absher_weight_general_rate">
+                                                            <span class="help-block">{{ lang('entry_general_price_note') }}</span>
+                                                        </div>
+                                                    </div>
+
+                                                    {% for zone in geo_zones %}
+                                                        {% set rate = absher_price['absher_weight_' ~ zone['geo_zone_id'] ~ '_rate'] %}
+                                                        {% set status = absher_price['absher_weight_' ~ zone['geo_zone_id'] ~ '_status'] %}
+                                                        <div class="tab-pane has-padding"
+                                                             id="tab_{{ zone['geo_zone_id'] }}">
+                                                            <div class="form-group"
+                                                                 id="weight_{{ zone['geo_zone_id'] }}_rate-group">
+                                                                <label for="absher_weight_{{ zone['geo_zone_id'] }}_rate"
+                                                                       class="control-label">{{ lang('entry_rate') }}</label>
+
+                                                                <textarea name="absher_price[absher_weight_{{ zone['geo_zone_id'] }}_rate]"
+                                                                          cols="40" class="form-control"
+                                                                          id="absher_weight_{{ zone['geo_zone_id'] }}_rate"
+                                                                          rows="5">{{ rate }}</textarea>
+                                                                <span class="help-block"></span>
+                                                                <span class="text-muted">{{ langempty('entry_rate_help') }}</span>
+                                                            </div>
+
+                                                            <div class="form-group"
+                                                                 id="weight_{{ zone['geo_zone_id'] }}_status-group">
+                                                                <label for="weight_{{ zone['geo_zone_id'] }}_status"
+                                                                       class="control-label">{{ lang('entry_status') }}</label>
+                                                                <!-- Switchery -->
+                                                                <div class="checkbox checkbox-switchery">
+                                                                    <label>
+                                                                        <input type="checkbox" onchange="changeStatus(this);" name="absher_price[absher_weight_{{ zone['geo_zone_id'] }}_status]" class="switchery" {{ status in [1, '1', 'on'] ? 'checked' }}>
+                                                                        <span class="switchery-status">{{ status in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                                                    </label>
+                                                                </div>
+                                                                <!-- /Switchery -->
+                                                            </div>
+                                                        </div>
+                                                    {% endfor %}
+
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {# /Cost Block #}
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+     	<!-- Gateway Presentation Fields -->
+        <div class="col-md-9 col-md-offset-3">
+            <div class="panel panel-white">
+                <div class="panel-heading">
+                    <h6 class="panel-title"><span class="text-bold">{{ lang('entry_presentation') }}</span></h6>
+                    <div class="heading-elements not-collapsible">
+                        <ul class="icons-list">
+                            <li><a data-action="collapse" class=""></a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="collapse in" id="fields-panel">
+
+                        {# Payment Method Title #}
+ 						<div class="col-md-12">
+                            <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                                <div class="tab-content">
+                                    {% for lng in languages %}
+                                        <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}" id="absher_display_name_{{ lng['language_id'] }}">
+                                            <div class="form-group col-md-6">
+                                                <label for="absher_display_name" class="control-label">{{ lang('entry_display_name') }}</label>
+                                                <input type="text" class="form-control" id="absher_display_name" name="absher_display_name[{{ lng['language_id'] }}]" value="{{ absher_display_name[lng['language_id']] }}" >
+                                                <span class="help-block">{{ lang('text_display_name_help') }}</span>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+
+                                <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                                    {% for language in languages %}
+                                        <li class="{{ loop.first ? 'active' : '' }}">
+                                            <a href="#absher_display_name_{{ language['language_id'] }}" data-toggle="tab" aria-expanded="false">
+                                                <img src="view/image/flags/{{ language['image'] }}"
+                                                    title="{{ language['name'] }}" class="pull-right">
+                                                <div> {{ language['name'] }}</div>
+                                            </a>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+						{# /Payment Method Title #}
+
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Gateway Presentation -->
+
+    </form>
+    {# End Form #}
+
+
+    <script type="text/javascript">
+
+    $('select').select2();
+
+    function changeStatus(checkbox){
+        var self = $(checkbox);
+        var switch_status = self.siblings('.switchery-status');
+
+        if ( self.is(':checked') )
+        {
+            switch_status.html("{{ lang('text_enabled') }}");
+        }
+        else
+        {
+            switch_status.html("{{ lang('text_disabled') }}");
+        }
+    }
+    </script>

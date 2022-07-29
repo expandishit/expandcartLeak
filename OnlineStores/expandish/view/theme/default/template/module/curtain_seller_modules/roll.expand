@@ -1,0 +1,82 @@
+{# Selling Type #}
+<input type="hidden" name="curtain_seller[selling_type]" value="roll">
+{# /Selling Type #}
+
+{% set no_size_field = false %}
+
+{% if curtain_seller['product']['product_roll_widths']|length > 1 %}
+{# Roll Width #}
+<div class="form-group col-md-12 col-lg-4">
+    <label for="curtain_seller_roll_width_select">{{ lang('text_roll_width') }}</label>
+    <select name="curtain_seller[roll_width]" class="form-control" id="curtain_seller_roll_width_select">
+        {% for index, data in curtain_seller['product']['product_roll_widths'] %}
+            <option value="{{ index }}">{{ data['width'] }} {{ lang('text_cm') }}</option>
+        {% endfor %}
+    </select>
+</div>
+{# /Roll Width #}
+{% else %}
+    <input type="hidden" id="curtain_seller_roll_width_select" name="curtain_seller[roll_width]" value="{{ curtain_seller['product']['product_roll_widths']|keys[0] }}">
+    {% set no_size_field = true %}
+{% endif %}
+
+{# Room Width #}
+<div class="form-group col-md-12 col-lg-{{ no_size_field == true ? '6' : '4' }}">
+    <label for="curtain_seller_roll_room_width_input">{{ lang('text_width_size') }} ( {{ lang('text_cm') }} )</label>
+    <input type="text" class="form-control" name="curtain_seller[room_width]" id="curtain_seller_roll_room_width_input">
+</div>
+{# /Room Width #}
+
+{# Room Height #}
+<div class="form-group col-md-12 col-lg-{{ no_size_field == true ? '6' : '4' }}">
+    <label for="curtain_seller_roll_room_height_input">{{ lang('text_room_height') }} ( {{ lang('text_cm') }} )</label>
+    <input type="text" class="form-control" name="curtain_seller[room_height]" id="curtain_seller_roll_room_height_input">
+</div>
+{# /Room Height #}
+
+<div class="form-group col-md-12" id="calculatedText"></div>
+
+<script>
+    function calculateCurtainSellerCost(callback) {
+        let data = {
+            product_id: parseInt("{{ product_id }}"),
+            selling_type: "roll",
+            roll_index: $('#curtain_seller_roll_width_select').val(),
+            room_width: $('#curtain_seller_roll_room_width_input').val(),
+            room_height: $('#curtain_seller_roll_room_height_input').val()
+        };
+
+        var cost = 0.00;
+
+        if(data.room_width == null || data.room_width == '' || data.room_height == null || data.room_height == ''){
+            alert('من فضلك قم بإدخال العرض والارتفاع لحساب المساحة');
+        }else{
+            $.ajax({
+                url: "{{ curtain_seller_calculate_cost_link }}",
+                type: "POST",
+                data: data,
+                success: function(resp) {
+                    resp = JSON.parse(resp);
+                    cost = resp.data.cost;
+                    data.cost = cost;
+                    data.cost_display = resp.data.cost_display;
+
+                    data.form_options = {
+                        room_height: data.room_height,
+                        room_final_height: data.room_height,
+                        room_width: data.room_width,
+                        roll_index: data.roll_index,
+                        selling_type: data.selling_type,
+                        room_final_width: resp.data.final_width
+                    };
+
+                    $('#calculatedText').html('<p> العرض * الارتفاع * سعر الخامة <br><span dir="rtl">'+resp.data.width+'م *'+resp.data.height+'م *'+resp.data.roll_price+' = '+resp.data.cost+'</span></p>');
+                    console.log(resp);
+
+                    callback(data);
+                }
+            });
+        }
+
+    }
+</script>

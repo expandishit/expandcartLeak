@@ -1,0 +1,290 @@
+{% import "controls/forms.expand" as forms %}
+{% set dualMenuEnabled = false %}
+<style type="text/css">
+.separator {display: flex;align-items: center;text-align: center; color: #999999;margin-bottom: 15px;}.separator::before, .separator::after {content: '';flex: 1;border-bottom: 1px solid #e8e8e8;}.separator::before {margin-right: .25em;}.separator::after {margin-left: .25em;}
+</style>
+{# Start Form #}
+<form id="form-parcel" class="form" action="{{ link('shipping/parcel/save', '' , 'SSL') }}" method="POST">
+  <div class="row">
+    {# Status #}
+    <div class="col-md-3">
+        <div class="panel panel-white">
+            <div class="panel-heading">
+                <h6 class="panel-title"><span class="text-bold">{{ lang('entry_status')|trim(':') }}</span></h6>
+                <div class="heading-elements not-collapsible">
+                    <ul class="icons-list">
+                        <li><a data-action="collapse" class=""></a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="collapse in" id="panel1">
+
+
+                    <div class="form-group col-md-12">
+                        <label class="control-label">{{ lang('entry_status') }}</label>
+                        <div class="checkbox checkbox-switchery">
+                            <label>
+                                <input type="checkbox" onchange="changeStatus(this);" name="parcel[status]" class="switchery" {{ parcel.status not in ['0', 0, 'off'] or parcel.status is null ? 'checked' }}>
+                                <span class="switchery-status">{{ parcel.status not in ['0', 0, 'off'] or parcel.status is null ? lang('text_enabled') : lang('text_disabled') }}</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <hr style="width: 100%; border: 1px solid #e8e8e8;">
+
+                    <div class="form-group col-md-12">
+                        <label class="control-label">{{ lang('entry_debugging_mode') }}</label>
+                        <div class="checkbox checkbox-switchery">
+                            <label>
+                                <input type="checkbox" onchange="changeStatus(this);" name="parcel[debugging_mode]" class="switchery" {{ parcel.debugging_mode not in ['0', 0, 'off'] or parcel.debugging_mode is null ? 'checked' }}>
+                                <span class="switchery-status">{{ parcel.debugging_mode not in ['0', 0, 'off'] or parcel.debugging_mode is null ? lang('text_enabled') : lang('text_disabled') }}</span>
+                            </label>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="panel panel-white">
+            <div class="panel-heading">
+                <h6 class="panel-title"><span class="text-bold">{{ lang('entry_contact_parcel') }}</span></h6>
+                <div class="heading-elements not-collapsible">
+                    <ul class="icons-list">
+                        <li><a data-action="collapse" class=""></a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel-body">
+                <a href="http://www.tryparcel.com/en/parcelservices/" target="blank">
+                  <img style="width: 100%" src="view/image/shipping/parcel.png">
+                </a>
+            </div>
+        </div>
+    </div>
+    {# End of Status #}
+
+
+
+    <div class="col-md-9">
+        <div class="panel panel-white">
+        	<div class="panel-heading">
+                <h6 class="panel-title"><span class="text-bold">{{ lang('text_settings') }}</span></h6>
+                <div class="heading-elements not-collapsible">
+                    <ul class="icons-list">
+                        <li><a data-action="collapse" class=""></a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="collapse in" id="fields-panel">
+
+                	{# parcel Client ID #}
+                    <div class="form-group col-md-12">
+                        <label for="client_id" class="control-label">{{ lang('entry_client_id') }} <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="client_id" name="parcel[client_id]" value="{{ parcel.client_id }}">
+                        <span class="help-block"></span>
+                    </div>
+                    {# /parcel Client ID #}
+
+
+                    {# parcel Client Secret #}
+                    <div class="form-group col-md-12">
+                        <label for="client_secret" class="control-label">{{ lang('entry_client_secret') }} <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="client_secret" name="parcel[client_secret]" value="{{ parcel.client_secret }}">
+                        <span class="help-block"></span>
+                    </div>
+                    {# /parcel Client Secret #}
+
+
+                    {# After Shipping Status #}
+                    <div class="form-group col-md-6">
+                        <label for="parcel_after_creation_status" class="control-label">{{ lang('entry_after_creation_status') }}</label>
+                        <select name="parcel[after_creation_status]" id="parcel_after_creation_status" class="form-control">
+                            {% for order_status in order_statuses %}
+                                <option value="{{ order_status['order_status_id'] }}" {{ parcel.after_creation_status == order_status['order_status_id'] ? 'selected' :'' }}>
+                                    {{ order_status['name'] }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <span class="help-block"></span>
+                    </div>
+                    {# /After Shipping Status #}
+
+
+                    {# Tax Classes #}
+                    <div class="form-group col-md-6">
+                        <label for="parcel_tax_class_id" class="control-label">{{ lang('entry_tax_class') }}</label>
+                        <select name="parcel[tax_class_id]" id="parcel_tax_class_id" class="form-control">
+                            <option value="0">{{ lang('text_none') }}</option>
+                            {% for tax_class in tax_classes %}
+                                <option value="{{ tax_class['tax_class_id'] }}"
+                                        {{ parcel.tax_class_id == tax_class['tax_class_id'] ? 'selected' : '' }}>
+                                    {{ tax_class['title'] }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <span class="help-block"></span>
+                        <span class="text-muted">{{ langempty('entry_tax_class_help') }}</span>
+                    </div>
+                    {# /Tax Classes #}
+
+
+                    {# Cost Block #}
+                    <div class="col-md-12">
+                        <div class="panel panel-white">
+                            <div class="panel-heading">
+                                <h6 class="panel-title"><span class="text-bold">{{ lang('head_global_settings') }}</span></h6>
+                                <div class="heading-elements not-collapsible">
+                                    <ul class="icons-list">
+                                        <li><a data-action="collapse" class=""></a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="panel-body">
+                                <div class="collapse in" id="panel2">
+                                    <div class="form-group">
+                                        <div class="tabbable nav-tabs-vertical nav-tabs-left">
+                                            <ul class="nav nav-tabs nav-tabs-highlight">
+                                                <li class="active">
+                                                    <a href="#tab_general" data-toggle="tab">
+                                                        <i class="icon-menu7 position-left"></i> {{ lang('tab_general') }}
+                                                    </a>
+                                                </li>
+                                                {% for zone in geo_zones %}
+                                                    <li>
+                                                        <a href="#tab_{{ zone['geo_zone_id'] }}" data-toggle="tab">
+                                                            <i class="icon-menu7 position-left"></i> {{ zone['name'] }}
+                                                        </a>
+                                                    </li>
+                                                {% endfor %}
+                                            </ul>
+                                            <div class="tab-content">
+                                                <div class="tab-pane active has-padding active" id="tab_general">
+                                                    <div class="form-group" id="weight_tax_class_id-group">
+                                                        <label for="parcel_general_rate"
+                                                               class="control-label">{{ lang('entry_general_price') }}</label> <span class="text-danger">*</span>
+                                                        <input class="form-control" name="parcel[price][parcel_general_rate]"
+                                                               value="{{ parcel['price']['parcel_general_rate'] }}"
+                                                               id="parcel_general_rate">
+                                                        <span class="help-block">{{ lang('entry_general_price_note') }}</span>
+                                                    </div>
+                                                </div>
+
+                                                {% for zone in geo_zones %}
+
+                                                    {% set rate = parcel['price']['parcel_geo_zone_id_' ~ zone['geo_zone_id'] ~ '_rate'] %}
+                                                    {% set status =  parcel['price']['parcel_geo_zone_id_' ~ zone['geo_zone_id'] ~ '_status'] %}
+                                                    <div class="tab-pane has-padding"
+                                                         id="tab_{{ zone['geo_zone_id'] }}">
+                                                        <div class="form-group"
+                                                             id="weight_{{ zone['geo_zone_id'] }}_rate-group">
+                                                            <label for="parcel_geo_zone_id_{{ zone['geo_zone_id'] }}_rate"
+                                                                   class="control-label">{{ lang('entry_rate') }}</label>
+
+                                                            <textarea name="parcel[price][parcel_geo_zone_id_{{ zone['geo_zone_id'] }}_rate]"
+                                                                      cols="40" class="form-control"
+                                                                      id="parcel_geo_zone_id_{{ zone['geo_zone_id'] }}_rate"
+                                                                      rows="5">{{ rate }}</textarea>
+                                                            <span class="help-block"></span>
+                                                            <span class="text-muted">{{ langempty('entry_rate_help') }}</span>
+                                                        </div>
+
+                                                        <div class="form-group"
+                                                             id="weight_{{ zone['geo_zone_id'] }}_status-group">
+                                                            <label for="weight_{{ zone['geo_zone_id'] }}_status"
+                                                                   class="control-label">{{ lang('entry_status') }}</label>
+                                                            <!-- Switchery -->
+                                                            <div class="checkbox checkbox-switchery">
+                                                                <label>
+                                                                    <input type="checkbox" onchange="changeStatus(this);" name="parcel[price][parcel_geo_zone_id_{{ zone['geo_zone_id'] }}_status]" class="switchery" {{ status in [1, '1', 'on'] ? 'checked' }}>
+                                                                    <span class="switchery-status">{{ status in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                                                </label>
+                                                            </div>
+                                                            <!-- /Switchery -->
+                                                        </div>
+                                                    </div>
+                                                {% endfor %}
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {# /Cost Block #}
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+ 	<!-- Gateway Presentation Fields -->
+    <div class="col-md-9 col-md-offset-3">
+        <div class="panel panel-white">
+            <div class="panel-heading">
+                <h6 class="panel-title"><span class="text-bold">{{ lang('entry_presentation') }}</span></h6>
+                <div class="heading-elements not-collapsible">
+                    <ul class="icons-list">
+                        <li><a data-action="collapse" class=""></a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="collapse in" id="fields-panel">
+
+                    {# Shipping Method Title #}
+					<div class="col-md-12">
+                        <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                            <div class="tab-content">
+                                {% for lng in languages %}
+                                    <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}" id="parcel_display_name_{{ lng['language_id'] }}">
+                                        <div class="form-group col-md-6">
+                                            <label for="parcel_display_name" class="control-label">{{ lang('entry_display_name') ~ ' (' ~ lng['name'] ~ ')'}}</label>
+                                            <input type="text" class="form-control" id="parcel_display_name" name="parcel[display_name][{{ lng['language_id'] }}]" value="{{ parcel['display_name'][lng['language_id']] }}" >
+                                            <span class="help-block">{{ lang('text_display_name_help') }}</span>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+
+                            <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                                {% for language in languages %}
+                                    <li class="{{ loop.first ? 'active' : '' }}">
+                                        <a href="#parcel_display_name_{{ language['language_id'] }}" data-toggle="tab" aria-expanded="false">
+                                            <img src="view/image/flags/{{ language['image'] }}"
+                                                title="{{ language['name'] }}" class="pull-right">
+                                            <div> {{ language['name'] }}</div>
+                                        </a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+					{# /Shipping Method Title #}
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Gateway Presentation -->
+
+  </div>
+</form>
+{# End Form #}
+
+
+
+<script type="text/javascript">
+
+    $('select').select2();
+
+    const changeStatus = checkbox => {
+        $(checkbox).siblings('.switchery-status').html( $(checkbox).is(':checked') ? "{{ lang('text_enabled') }}" : "{{ lang('text_disabled') }}" );
+    };
+
+</script>

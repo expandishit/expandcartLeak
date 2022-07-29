@@ -1,0 +1,567 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block title %}
+   {{lang('title_whatsapp_chat') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+
+
+{% block content %}
+  <link rel="stylesheet" href="view/stylesheet/modules/whatsapp/whatsapp_chat.css">
+  <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
+
+<div class="container">
+    <!-- Content wrapper start -->
+    <div class="">
+        <!-- Row start -->
+        <div class="row gutters">
+            <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12" style='background: rgb(247 241 236);'>
+                <div class="card m-0">
+                    <!-- Row start -->
+                    <div class="row no-gutters" style=' background: linear-gradient(rgb(247 241 236 / 95%),rgb(247 241 236 / 95%)), url(view/image/whatsapp/chat_background.png)'>
+                        <div class="col-xl-4 col-lg-4 col-md-4 col-sm-3 col-3" style="margin: 0px;padding: 0px;    background: #fff;">
+                            <div class="chats-container">
+                                <div class="chat-search-box" >
+                                        <input class="form-control" id='search-contacts' placeholder="{{lang('text_search')}}">
+                                </div>
+								
+                                <ul class="chats" id="chats_cont">
+								    <li class='text-center'> <img src='view/image/whatsapp/loading.gif' id='contacts-loader' width="70px"> </li>           
+                                </ul>
+                            </div>
+                        </div>
+						{% if current_chat != '' %}
+							<div class="col-xl-8 col-lg-8 col-md-8 col-sm-9 col-9" style="padding:0px;">
+								<div class="selected-user text-center">
+									<!--<span>To:</span>-->
+									<span class="name">{{profile_name}}</span>
+								</div>
+								<div class="chat-container" id="messages" >
+									<div style='text-align:center'> 
+										<img src='view/image/whatsapp/loading.gif' id='old-loader' width="70px">
+									</div>
+									<ul class="chat-box chatContainerScroll" id='messages_cont'>
+											<!-- message here -->
+									</ul>
+								</div>
+								<div id='chat_footer'>
+								
+                                    <textarea class="form-control" id="message_text" rows="3" placeholder="{{ lang('text_type_your_message_here')}}" style=""></textarea>
+                                </div>
+                            </div>
+						{% else %}
+							<div class="col-xl-8 col-lg-8 col-md-8 col-sm-9 col-9" style="padding:0px;">
+								<div class="selected-user">
+								<p class="name" style="font-weight: 800;text-align: center;">   {{ lang('text_no_contact_selected') }}</p>
+								</div>
+								<div class="chat-box text-center"> 
+								<p class="name mt-20 mb-20 text-center" style="font-weight: 800;color:#999999"> {{ lang('text_chat_start_desc') }} </p>
+									<img src="view/image/whatsapp/whatsapp_no_chat_selected.png" style="opacity:0.5">
+								</div>
+							</div>
+						{% endif %}
+                        </div>
+                    </div>
+                    <!-- Row end -->
+            </div>
+
+
+        </div>
+        <!-- Row end -->
+
+    </div>
+    <!-- Content wrapper end -->
+
+</div>
+
+<script >
+//
+$('#old-loader').hide();
+
+//global vars 
+var current_chat 		= "{{current_chat}}";
+var page 				= 1 ;
+var no_more_old 		= false;
+var date_li_count 		= 1;
+var today_set 			= false;
+var today_string 		= 'Today';
+var yesterday_string 	= 'Yesterday';
+var sent_symbol 		= ' &#10004;'; 
+var recieved_symbol 	= ' &#10004;&#10004;'; 
+var readed_symbol 		= ' <span class="readed">&#10004;&#10004;</span>'; 
+var not_sent_symbol		= '&#33;'; 
+var last_id 			= 0;
+var last_from_me 		= false;
+var last_sent_status 	= 0;
+var load_more_inprogress = false;
+
+//global updates 
+function pageInc() {
+    return page++;
+}
+function changeLastId(id) {
+  last_id = id ;
+}
+function changeLastFromMe(status) {
+  last_from_me = (status == 1)? true : false;
+}
+function changeLastSentStatus(status) {
+  last_sent_status = status;
+}
+
+
+//scroll up should load more old messages 
+$(document).ready(function(){
+	
+
+	//work around to chank back button behavior 
+	//to go to static location instead of history back 
+	$('.page-title h5 a').first().removeAttr("onclick");
+	$('.page-title h5 a').first().attr("href","{{back}}");
+	
+	
+	//if no chat selected dont sent message ajax requests 
+	if(current_chat != ''){
+	loadMessages();
+	setTimeout(function(){ $('#messages').scrollTop($('#messages')[0].scrollHeight); }, 1000);
+	setTimeout(function(){refreshMessages();}, 5000);
+	setTimeout(function(){goToEnd();}, 1000);
+	//setTimeout(function(){lastMessageStatus();}, 8000);
+	}
+	getChats();
+	
+	$('#messages').scroll(function(){
+		var position = $('#messages').scrollTop();
+		
+		if(position == 0 ){
+	
+			$('#old-loader').show();
+		  //load old messages 
+		   var first_message_id = $( "#messages_cont li:first-child" ).attr("id");
+		  //console.log($( "#messages_cont li:first-child" ));
+		  //console.log('first_message_id',first_message_id);
+		  if(load_more_inprogress)return ;
+				
+		  loadMessages();
+		  
+		  
+		 // $('#messages_cont').prepend(x);
+			var first_element_pos  = $('#'+first_message_id).position().top;
+			//console.log('first_element_pos',first_element_pos);
+			$('#messages').scrollTop(first_element_pos);
+			//messages_count++;
+		}
+	 });
+ 
+});
+
+function refreshMessages(){
+	 $.ajax({
+			url: '{{ link('module/whatsapp/new_messages') }}',
+			type: 'get',
+			data: {to: "{{current_chat}}",last_id : last_id },
+			success: function(data){
+					var new_messages =  JSON.parse(data);
+					if (new_messages != 'undefined'  && new_messages != null ){
+					
+						if(new_messages.length > 0 ){
+							var last_element = new_messages[new_messages.length -1 ];
+							//console.log('@last_element',last_element);
+							//console.log('@last_element id',last_element._id);
+							//console.log('last_id',last_id);
+							changeLastId(parseInt(last_element._id));
+							changeLastFromMe(last_element.key_from_me);
+							if(last_element.key_from_me == 1){
+							changeLastSentStatus(last_element.status);
+							}
+							//console.log('last_id',last_id);
+							setTimeout(function(){goToEnd();}, 1000);
+						}else {
+						   if(last_from_me && last_sent_status != 13){   //13 readed 
+						    lastMessageStatus();
+							}
+						}
+					var messages_groups= dataGrouping(new_messages);
+					//console.log('messages_groups',messages_groups);
+					var messages_html= renderMessages (messages_groups,true);
+					//var messages_html = new_messages_ui (new_messages);
+					$("#messages_cont").append(messages_html);
+					 }
+					  setTimeout(function(){refreshMessages();}, 3000);
+				},
+			error: function(){
+			
+				}
+	});
+	
+
+   // $('div.feedback-box').html(feedback);
+}
+
+function getChats(){
+	 $.ajax({
+			url: '{{ link('module/whatsapp/get_chats') }}',
+			type: 'get',
+			data: {to: "{{current_chat}}",last_id : last_id },
+			success: function(data){
+					var chats =  JSON.parse(data);
+					if(chats.length > 0){
+//					console.log('chats',chats);
+					var chats_html = renderChat(chats);
+					$("#chats_cont").html(chats_html);
+					filter_chats ();
+					setTimeout(function(){getChats();}, 3000);
+					}else {
+						var not_found = "<h2>{{ lang('text_no_chat_found') }}</h2>";
+						$("#chats_cont").html(not_found);
+					}
+			 }
+	});
+}
+
+function loadMessages(){
+	oldMessages(function(new_messages){
+	    //loop throw new_message to create messages_html 
+		var messages_groups= dataGrouping(new_messages);
+		
+		//var messages_html = new_messages_ui (new_messages);
+		//console.log('@page',page);
+		//console.log('@page',page);
+		//fo no more old messages stop requesting ajax 
+		if(new_messages.length < 1 ){
+			no_more_old = true;
+			$('#old-loader').hide();
+		}
+		
+		var messages_html= renderMessages (messages_groups);
+		//last message at the init 
+		if(page == 1){
+			//console.log('@new_messages',new_messages);
+			//console.log('@new_messages length',new_messages.length);
+			if(new_messages.length > 0 ){
+			var last_element = new_messages[new_messages.length -1 ];
+			//console.log('@last_element',last_element);
+			//console.log('@last_element id',last_element._id);
+			//console.log('last_id',last_id);
+			changeLastId(parseInt(last_element._id));
+			changeLastFromMe(last_element.key_from_me);
+			if(last_element.key_from_me == 1){
+							changeLastSentStatus(last_element.status);
+							}
+			//console.log('last_id',last_id);
+			}
+			
+			$("#messages_cont").html(messages_html);
+			
+			// setTimeout(function(){ $('#messages').scrollTop($('#messages')[0].scrollHeight); }, 3000);
+		}else {
+			$("#messages_cont").prepend(messages_html);
+		}
+		pageInc();
+	});
+	
+}
+
+function sendMessage() {
+  var message = $('#message_text').val();
+  $.ajax({
+			url: '{{ link('module/whatsapp/send_message') }}',
+			type: 'post',
+			data: {to: "{{current_chat}}", message : message},
+			success: function(json_data){
+					//var data = JSON.parse(json_data);
+					//var new_id =data.messages[0].id;
+					//var message_element= '<li class="chat-right" id="'+new_id+'"><div class="chat-text chat-text2" ><div class="chat-name">you</div> '+message+'</div></div></li>';
+						 
+					//$('#messages_cont').append(message_element);
+					//$('#messages').scrollTop($('#messages')[0].scrollHeight);
+			 }
+	});
+	
+	$('#message_text').val(null);								
+};
+
+function oldMessages(handleData) {
+
+  var messages = [];
+   //console.log('no_more_old',no_more_old);
+  if(no_more_old){
+    return [];
+	
+  }
+  $('#old-loader').show();
+	load_more_inprogress=true;
+  $.ajax({
+			url: '{{ link('module/whatsapp/get_messages') }}',
+			type: 'get',
+			data: {to: "{{current_chat}}", page : page},
+			success: function(json_data){
+					$('#old-loader').hide();
+					//console.log(JSON.parse(json_data).length);
+					//var data = JSON.parse(json_data);
+					
+					handleData(JSON.parse(json_data));
+					load_more_inprogress = false;
+			},
+			error: function(){
+				  load_more_inprogress = false;
+			}
+	});
+	return messages;
+							
+};
+
+function lastMessageStatus(){
+		$.ajax({
+			url: '{{ link('module/whatsapp/get_message') }}',
+			type: 'get',
+			data: {id : last_id },
+			success: function(data){
+					var message =  JSON.parse(data);
+					//console.log('message',message);
+					if(message.status != last_sent_status){
+						 updateLastStatus (message);
+						 last_sent_status = message.status;
+					}
+			 }
+	});
+	
+}
+
+function readMessages(){
+		$.ajax({
+			url: '{{ link('module/whatsapp/read_messages') }}',
+			type: 'get',
+			data: {to: "{{current_chat}}" },
+			success: function(data){
+					
+					}
+		});
+
+}
+
+
+//render UI 
+function renderMessages (messages_groups,is_new=false){
+	
+	var all_messages_html = '';
+	//groups are sorted DESC 
+	for (let i= 0 ; i <  messages_groups.length; i++){
+	  var group = messages_groups[i];
+	  var date = group.date;
+	  var messages = group.messages ;
+	 //console.log('date',date);
+	  //console.log('today_string',today_string);
+	  //console.log('date == today_string',(date == today_string));
+	  //console.log('date',date);
+	  var messages_html ='';
+	       if(date == today_string && is_new){
+			   if(!today_set){
+			    messages_html = '<li id="date-'+date_li_count+'"> <div class="date_cont"><span class="date_span">'+date+'</span> </div></li>';
+				today_set = true;
+			   }
+			
+			}else{
+			 messages_html = '<li id="date-'+date_li_count+'"> <div class="date_cont"><span class="date_span">'+date+'</span> </div></li>';
+			}
+			  date_li_count++;
+			  for (let j = 0 ; j < messages.length ; j++){
+			var message = messages[j];
+					var from_me = message.key_from_me;
+					var ele_classes = (from_me==1)? "chat-right" : "chat-left";
+					var chat_text2 = (from_me==1)? "chat-text2" : "";
+					const date = new Date(parseInt(message.timestamp));
+					var hours = date.getHours();
+					var minutes = "0" + date.getMinutes();
+					var seconds = "0" + date.getSeconds();
+					var formattedTime = hours + ':' + minutes.substr(-2) ;
+					messages_html += '<li id="'+message.key_id+'" class="'+ele_classes+'">';
+					var status ='';
+					if(from_me ==1 && message.status == 7){
+						  //unknown symbol 
+						   status = '<span id="status_'+message._id+'_not_sent" class="not_sent" >'+not_sent_symbol+'</span>';
+						}
+						
+					messages_html += status + '<div class="chat-text '+chat_text2+'" >';
+										
+					if (from_me != 1){
+							messages_html += '<div class="chat-name">'+message.from_name+'</div>';
+					}else {
+							messages_html += '<div class="chat-name">you</div>';
+					}
+					
+					if (message.data != null ){
+						messages_html += '<p>'+message.data+'</p>'
+					}
+					if (message.hsm != null ){
+						
+					//	messages_html += '<p>'+message.hsm+'</p>'
+						//console.log('message.hsm',message.hsm);
+						//var  jsonString = JSON.stringify({blob: message.hsm_64});
+						//var  jsonString2 = JSON.stringify({blob: message.hsm});
+						//var  deocded_str = decodeURIComponent(message.hsm);
+						//var  unicodeString = message.hsm;
+					}
+					if (message.media_id != null ){
+						messages_html += 	'<p><div class="thumbnail"><img src="data:'+message.mime_type+';base64,'+message.thumb_data+'" alt="media" >';
+						
+						if (message.media_caption != null){
+							messages_html +='<div class="caption"><p>'+message.media_caption+'</p></div>';
+						}
+						messages_html += 	'</div></p>';
+					}
+					var status ='<span id="status_'+message._id+'"></span>';
+					
+					if(from_me== 1 && message.status>0){
+						
+						var status_symbol =  statusSymbol (message.status);
+						status ='<span id="status_'+message._id+'">'+status_symbol+'</span>'
+						//console.log('statusss',status);
+					}
+					
+					messages_html += '<div class="chat-time">'+formattedTime+  status +'</div>';
+					
+				messages_html += 	'</div></li>';
+				
+				}
+				all_messages_html += messages_html;
+	}
+	return all_messages_html;
+}
+function renderChat (chats){
+	var chats_html = ''
+	for (let i = 0 ; i < chats.length ; i++){
+		var chat = chats[i];
+		var key_remote_jid= chat.key_remote_jid;
+		var active = key_remote_jid  == current_chat ? 'active' : '';
+		var profile_name = (chat.profile_name)? chat.profile_name : key_remote_jid.replace("@s.whatsapp.net", "");
+		chats_html += '<a href="{{ link("module/whatsapp/chat?id=") }}'+key_remote_jid+'">';			
+		chats_html += '<li class="person '+active+'" data-chat="person1">';			
+		chats_html += '<div class="user"><img src="view/image/whatsapp/profile.png" alt="contact"></div>';			
+		chats_html += '<p class="name-time"><span>'+profile_name+'</span>'  ;			
+		
+		if(chat.unread_count>0){
+			chats_html += '<span class="badge badge-success">'+chat.unread_count+'</span>';
+		}
+		
+		chats_html += '</p></li></a>';
+	}
+			
+	return chats_html;
+}
+function updateLastStatus (message){
+	if(last_sent_status == 7 ){
+		$('#status_'+last_id+'_not_sent').remove();
+	}
+	if(message.status == 7){
+	  $('#'+message.key_id).prepend('<span id="status_'+message._id+'_not_sent" class="not_sent" >'+not_sent_symbol+'</span>');	
+	}
+	  $('#status_'+last_id).html(statusSymbol(message.status));
+}
+
+function filter_chats (){
+		 var value = $("#search-contacts").val().toLowerCase();
+		$("#chats_cont li").filter(function() {
+		$(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+    });
+}
+
+$('#message_text').click(function() {
+	readMessages();
+});
+
+$('.submit').click(function() {
+	sendMessage();
+});
+
+$(window).on('keydown', function(e) {
+  if (e.which == 13) {
+    sendMessage();
+    return false;
+  }
+}
+);
+
+//helper functions 
+function statusSymbol (status){
+	var result='';
+	
+	if(status == 4){	
+		result = sent_symbol; 
+	}else if(status == 5){			
+		result = recieved_symbol;
+	}else if(status == 13){
+		result = readed_symbol;
+	}else {
+		//unknown symbol 
+	}
+	return result;
+}
+function goToEnd(){
+setTimeout(function(){ $('#messages').scrollTop($('#messages')[0].scrollHeight); }, 700);
+}	
+function dataGrouping(data){
+
+// this gives an object with dates as keys
+const groups = data.reduce((groups, message) => {
+  const date_object = new Date(parseInt(message.timestamp));
+ var date ='';
+  if(isToday(date_object)){
+    date = today_string;
+  }
+  else if(isYesterday(date_object)){
+    date = yesterday_string;
+  }else { 
+   date = date_object.toDateString();
+  }
+  if (!groups[date]) {
+    groups[date] = [];
+  }
+  groups[date].push(message);
+  return groups;
+}, {});
+
+// Edit: to add it in the array format instead
+const groupArrays = Object.keys(groups).map((date) => {
+  return {
+    date,
+    messages: groups[date]
+  };
+});
+
+return groupArrays;
+}
+const isToday = (someDate) => {
+  const today = new Date()
+  return someDate.getDate() == today.getDate() &&
+    someDate.getMonth() == today.getMonth() &&
+    someDate.getFullYear() == today.getFullYear()
+}
+const isYesterday = (someDate) => {
+  var yesterday = new Date();
+   yesterday.setDate(yesterday.getDate() - 1);
+   
+  return someDate.getDate() == yesterday.getDate() &&
+    someDate.getMonth() == yesterday.getMonth() &&
+    someDate.getFullYear() == yesterday.getFullYear()
+}
+
+//# sourceURL=pen.js
+</script>
+
+<script>
+$(document).ready(function(){
+
+  $("#search-contacts").on("keyup", function() {
+   filter_chats ();
+  });
+
+});
+</script>
+{% endblock %}

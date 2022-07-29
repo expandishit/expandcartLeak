@@ -1,0 +1,435 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% import 'controls/uploader.expand' as uploader %}
+{% set dualMenuEnabled = true %}
+
+{% block title %}
+    {{ lang('ms_attribute_create') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block secondarymenu %}
+    {% include 'multiseller/menu.expand' with {'active': '#attribute'} %}
+{% endblock secondarymenu %}
+
+{% block headelements %}
+    <a href="{{ link('multiseller/attribute') }}" class="btn btn-default"> {{ lang('button_cancel') }}</a>
+    <a class="btn btn-primary" onclick="$('#form').submit();"><i
+                class="far fa-save fa-lg position-left"></i> {{ lang('button_save') }}</a>
+{% endblock headelements %}
+
+{% block scripts %}
+
+    <script>
+        $(document).ready(function () {
+            $('select').select2({
+                minimumResultsForSearch: 10
+            });
+
+            $('select[name="attribute_type"]').bind('change', function () {
+                if (
+                    this.value == '1' ||
+                    this.value == '6' ||
+                    this.value == '7' ||
+                    this.value == '5'
+                ) {
+                    $('#attribute-value').show();
+                } else {
+                    $('#attribute-value').hide();
+                }
+
+                if (this.value == '9' || this.value == '8') {
+                    $('.textlabels').show();
+                } else {
+                    $('.textlabels').hide();
+                }
+            }).change();
+
+            $('body').delegate("a.ffClone", "click", function () {
+                var lastRow = $(this).parents('table').find('tbody tr:last input:last').attr('name');
+                if (typeof lastRow == "undefined") {
+                    var newRowNum = 1;
+                } else {
+                    var newRowNum = parseInt(lastRow.match(/[0-9]+/)) + 1;
+                }
+
+                var newRow = $(this).parents('table').find('tbody tr.ffSample').clone();
+                newRow.find('input,select').attr('name', function (i, name) {
+                    return name.replace('[0]', '[' + newRowNum + ']');
+                });
+
+                // %!@#$!!
+                newRow.find('input[id^="field"]').attr('id', function (i, id) {
+                    return id.replace('0', newRowNum);
+                });
+
+                newRow.html(newRow.html().replace(/option_value\[0]\[image]/, 'option_value[' + newRowNum + '][image]'));
+                newRow.html(newRow.html().replace(/image__/g, 'image__' + newRowNum + '_image'));
+                newRow.html(newRow.html().replace(/thumb__/g, 'thumb__' + newRowNum + '_image'));
+
+                $(this).parents('table').find('tbody').append(newRow.removeAttr('class'));
+            });
+
+            $("body").delegate(".ms-button-delete", "click", function () {
+                $(this).parents('tr').remove();
+            });
+
+            $('#form').submit(function (e) {
+                e.preventDefault();
+
+                var $data = $('#form').serialize();
+                $('.help-block').html('');
+                $('.form-group').removeClass('has-error');
+
+                $.ajax({
+                    type: "POST",
+                    dataType: "json",
+                    url: '{{ link('multiseller/attribute/jxSubmitAttribute') }}',
+                    data: $data,
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        $('.warning').text(textStatus).show();
+                    },
+                    success: function (jsonData) {
+                        if (!jQuery.isEmptyObject(jsonData.errors)) {
+                            for (error in jsonData.errors) {
+                                $('[name="' + error + '"]').parents('.form-group').addClass('has-error');
+                                $('[name="' + error + '"]').parents('.form-group').find('.help-block').html(
+                                    jsonData.errors[error]
+                                );
+                            }
+                            window.scrollTo(0, 0);
+                        } else {
+                            window.location = '{{ link('multiseller/attribute') }}';
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+
+{% endblock scripts %}
+
+{% block content %}
+
+    <style>
+        .ffSample {
+            display: none;
+        }
+    </style>
+
+    <form id="form" action="{{ links['submit'] }}" method="POST">
+        <div class="col-md-8">
+            <div class="panel">
+                <div class="panel-body">
+                    <div class="form-group col-md-6" id="attribute_group_id-group">
+                        <label for="attribute_group_id" class="control-label text-semibold">
+                            {{ lang('ms_attribute_group') }}
+                        </label>
+
+                        <select name="attribute_group_id" class="form-control" id="attribute_group_id">
+                            {% for ag in attribute_groups %}
+                                <option {{ ag['attribute_group_id'] == attribute['attribute_group_id'] ? 'selected' : '' }}
+                                        value="{{ ag['attribute_group_id'] }}">
+                                    {{ ag['name'] }}
+                                </option>
+                            {% endfor %}
+                        </select>
+
+                        <span class="help-block"></span>
+                        <span class="text-muted"></span>
+                    </div>
+
+                    <div class="form-group col-md-6" id="enabled-group">
+                        <label for="enabled" class="control-label text-semibold">
+                            {{ lang('ms_enabled') }}
+                        </label>
+
+                        <select name="enabled" class="form-control" id="enabled">
+                            <option {{ attribute['enabled'] == 1 ? 'selected' : '' }} value="1">
+                                {{ lang('text_yes') }}
+                            </option>
+                            <option {{ attribute['enabled'] != 1 ? 'selected' : '' }} value="0">
+                                {{ lang('text_no') }}
+                            </option>
+                        </select>
+
+                        <span class="help-block"></span>
+                        <span class="text-muted"></span>
+                    </div>
+
+                    <div class="form-group col-md-6" id="required-group">
+                        <label for="required" class="control-label text-semibold">
+                            {{ lang('ms_attribute_required') }}
+                        </label>
+
+                        <select name="required" class="form-control" id="required">
+                            <option {{ attribute['required'] == 1 ? 'selected' : '' }} value="1">
+                                {{ lang('text_yes') }}
+                            </option>
+                            <option {{ attribute['required'] != 1 ? 'selected' : '' }} value="0">
+                                {{ lang('text_no') }}
+                            </option>
+                        </select>
+
+                        <span class="help-block"></span>
+                        <span class="text-muted"></span>
+                    </div>
+
+                    <div class="form-group col-md-6" id="sort_order-group">
+                        <label for="sort_order" class="control-label text-semibold">
+                            {{ lang('ms_sort_order') }}
+                        </label>
+
+                        <input type="text" name="sort_order" id="sort_order" class="form-control"
+                               value="{{ attribute['sort_order'] }}"/>
+
+                        <span class="help-block"></span>
+                        <span class="text-muted"></span>
+                    </div>
+
+                    <div class="clearfix"></div>
+
+                    <div class="form-group" id="attribute_type-group">
+                        <label for="attribute_type" class="control-label text-semibold">
+                            {{ lang('ms_type') }}
+                        </label>
+
+                        <select name="attribute_type" class="form-control" id="attribute_type">
+                            {% for key, value in attribute_types %}
+                                <option {{ key == attribute['attribute_type'] ? 'selected' : '' }}
+                                        value="{{ key }}">
+                                    {{ value }}
+                                </option>
+                            {% endfor %}
+                        </select>
+
+                        <span class="help-block"></span>
+                        <span class="text-muted"></span>
+                    </div>
+
+
+                    <div class="textlabels">
+                        <div class="form-group col-md-6" id="text_type-group">
+                            <label for="text_type" class="control-label text-semibold">
+                                {{ lang('ms_attribute_text_type') }}
+                            </label>
+
+                            <select name="text_type" class="form-control" id="text_type">
+                                <option {{ attribute['multilang'] == false and attribute['number'] == false ? 'selected' : '' }}
+                                        value="normal">
+                                    {{ lang('ms_attribute_normal') }}
+                                </option>
+                                <option {{ attribute['multilang'] ? 'selected' : '' }} value="multilang">
+                                    {{ lang('ms_attribute_multilang') }}
+                                </option>
+                            </select>
+
+                            <span class="help-block"></span>
+                            <span class="text-muted"></span>
+                        </div>
+
+                        <div class="form-group col-md-6" id="enabled-group">
+                            <label for="enabled" class="control-label text-semibold">
+                                {{ lang('ms_attribute_tab_display') }}
+                            </label>
+
+                            <select name="tab_display" class="form-control" id="enabled">
+                                <option {{ attribute['tab_display'] is defined and attribute['tab_display'] == 1 ? 'selected' : '' }}
+                                        value="1">
+                                    {{ lang('text_yes') }}
+                                </option>
+                                <option {{ attribute['tab_display'] is not defined or attribute['tab_display'] != 1 ? 'selected' : '' }}
+                                        value="0">
+                                    {{ lang('text_no') }}
+                                </option>
+                            </select>
+
+                            <span class="help-block"></span>
+                            <span class="text-muted"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel" id="attribute-value">
+                <div class="panel-body">
+                    <table id="attributes" class="table table-hover datatable-highlight">
+                        <thead>
+                        <tr>
+                            <th>{{ lang('ms_attribute_value') }}</th>
+                            <th>{{ lang('ms_image') }}</th>
+                            <th>{{ lang('ms_sort_order') }}</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr class="ffSample">
+                            <td>
+                                <input type="hidden" name="attribute_value[0][attribute_value_id]"
+                                       value="{{ attribute_value['attribute_value_id'] }}"/>
+                                {% for language in languages %}
+                                    {% set lid = language['language_id'] %}
+                                    <div class="input-group mb-5">
+                                        <input type="text" class="form-control"
+                                               name="attribute_value[0][attribute_value_description][{{ lid }}][name]"
+                                               value="{{ attribute_value['attribute_value_description'][lid]['name'] }}"/>
+                                        <span class="input-group-addon">
+                                                    <img src="view/image/flags/{{ language['image'] }}"
+                                                         title="{{ language['name'] }}"/>
+                                                </span>
+                                    </div>
+                                {% endfor %}
+                            </td>
+                            <td class="imageHolder">
+                                {{ uploader.image({
+                                    'name': 'attribute_value[0][image]',
+                                    'thumbPath': attribute_value['thumb'],
+                                    'imagePath': attribute_value['image'],
+                                    'noImage': no_image,
+                                    'ID': '__'
+                                }) }}
+                            </td>
+                            <td>
+                                <input name="attribute_value[0][sort_order]"
+                                       class="form-control" value="{{ attribute_value['sort_order'] }}"/>
+                            </td>
+                            <td>
+                                <a class="ms-button-delete">
+                                    <i class='icon-trash'></i> {{ lang('ms_delete') }}
+                                </a>
+                            </td>
+                        </tr>
+                        {% if attribute['attribute_values'] is defined %}
+                            {% set key = 1 %}
+                            {% for attribute_value in attribute['attribute_values'] %}
+                                <tr>
+                                    <td>
+                                        <input type="hidden" name="attribute_value[{{ key }}][attribute_value_id]"
+                                               value="{{ attribute_value['attribute_value_id'] }}"/>
+                                        {% for language in languages %}
+                                            {% set lid = language['language_id'] %}
+                                            <div class="input-group mb-5">
+                                                <input type="text" class="form-control"
+                                                       name="attribute_value[{{ key }}][attribute_value_description][{{ lid }}][name]"
+                                                       value="{{ attribute_value['attribute_value_description'][lid]['name'] }}"/>
+                                                <span class="input-group-addon">
+                                                    <img src="view/image/flags/{{ language['image'] }}"
+                                                         title="{{ language['name'] }}"/>
+                                                </span>
+                                            </div>
+                                        {% endfor %}
+                                    </td>
+                                    <td class="imageHolder">
+                                        {{ uploader.image({
+                                            'name': 'attribute_value['~ key ~'][image]',
+                                            'thumbPath': attribute_value['thumb'],
+                                            'imagePath': attribute_value['image'],
+                                            'noImage': no_image
+                                        }) }}
+                                    </td>
+                                    <td>
+                                        <input name="attribute_value[{{ key }}][sort_order]"
+                                               class="form-control" value="{{ attribute_value['sort_order'] }}"/>
+                                    </td>
+                                    <td>
+                                        <a class="ms-button-delete">
+                                            <i class='icon-trash'></i> {{ lang('ms_delete') }}
+                                        </a>
+                                    </td>
+                                </tr>
+
+                                {% set key = key + 1 %}
+                            {% endfor %}
+                        {% endif %}
+                        </tbody>
+                        <tfoot>
+                        <tr>
+                            <td colspan="5" class="text-center">
+                                <a class="btn btn-primary ffClone" id="newAttribute">
+                                    <i class="far fa-save fa-lg position-left"></i>
+                                    {{ lang('ms_add_attribute_value') }}
+                                </a>
+                            </td>
+                        </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="panel panel-flat">
+                <div class="panel-body">
+                    <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                        <div class="tab-content">
+                            {% for lng in languages %}
+
+                                {% set row = attribute['attribute_description'][lng['language_id']] %}
+
+                                <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}"
+                                     id="langTab{{ lng['language_id'] }}">
+                                    <div class="form-group"
+                                         id="name-group_{{ lng['language_id'] }}">
+                                        <label class="control-label">
+                                            {{ lang('ms_plan_title') }} <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text" class="form-control"
+                                               id="name_{{ lng['language_id'] }}"
+                                               name="attribute_description[{{ lng['language_id'] }}][name]"
+                                               value="{{ row['name'] }}"
+                                        >
+                                        <span class="help-block"></span>
+                                        <span class="text-muted"></span>
+                                    </div>
+
+                                    <div class="form-group"
+                                         id="description-group_{{ lng['language_id'] }}">
+                                        <label class="control-label">
+                                            {{ lang('ms_plan_description') }}
+                                        </label>
+                                        <textarea
+                                                name="attribute_description[{{ lng['language_id'] }}][description]"
+                                                id="description_{{ lng['language_id'] }}"
+                                                class="form-control"
+                                        >{{ row['description'] }}</textarea>
+                                        <span class="help-block"></span>
+                                        <span class="text-muted"></span>
+                                    </div>
+
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                            {% for language in languages %}
+                                <li class="{{ loop.first ? 'active' : '' }}">
+                                    <a href="#langTab{{ language['language_id'] }}" data-toggle="tab"
+                                       aria-expanded="false">
+                                        <img src="view/image/flags/{{ language['image'] }}"
+                                             title="{{ language['name'] }}" class="pull-right">
+                                        <div> {{ language['name'] }}</div>
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <input type="hidden" name="attribute_id" value="{{ attribute['attribute_id'] }}" />
+    </form>
+
+    <div class="row">
+        <div class="col-md-12 text-right">
+            <hr/>
+            <a href="{{ link('multiseller/attribute') }}" class="btn btn-default"> {{ lang('button_cancel') }}</a>
+            <a class="btn btn-primary" onclick="$('#form').submit();"><i
+                        class="far fa-save fa-lg position-left"></i> {{ lang('button_save') }}</a>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,690 @@
+{% extends "base.expand" %}
+{% import "controls/forms.expand" as forms %}
+
+{% set bodyClasses = "has-detached-right sidebar-detached-hidden" %}
+{% set hideHeader = true %}
+
+{% block content %}
+
+<style>
+    textarea
+    {
+        resize: vertical;
+    }
+</style>
+<div class="list-wrapper order-list">
+    <div class="">
+
+        <div class="inner-settings-title mb-10 orders-title">
+            <h4 class="fb-app-title">
+                <a href="{{ link('sale/order') }}"><i class="icon-arrow-left52 position-left text-default"></i></a>
+                {{lang("heading_title")}}
+            </h4>
+            <div class="btns">
+                <a href="{{ link('sale/return/insert') }}" class="theme-btn rounded-primary-btn">{{ lang('btn_new_return') }}</a>
+            </div>
+        </div>
+        <div class="panel">
+            <div class="panel-body pt-0 pb-0">
+                <div class="card-body">
+                    <div class="tabbable">
+                        <div class="tab-content">
+                            <div class="tab-pane fade in active" id="gridView">
+                                <!-- Advanced legend -->
+                                <div class="features-table-container">
+                                    <div class="collapse in">
+                                        <table id="datatable-language" class="table table-hover datatable-highlight">
+                                            <thead>
+                                                <tr>
+                                                    <th></th>
+                                                    <th>{{ lang('column_return_id') }}</th>
+                                                    <th>{{ lang('column_order_id') }}</th>
+                                                    <th>{{ lang('column_customer') }}</th>
+                                                    <th>{{ lang('column_status') }}</th>
+                                                    <th> {{ lang('column_date_added') }}</th>
+                                                    <th> {{ lang('column_date_modified') }}</th>
+                                                    <th></th>
+                                                </tr>
+                                            </thead>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-guide">
+        <i class="fas fa-info-circle"></i>
+        {{lang('text_learn_more_about')}}&nbsp;
+        {%  set url = "https://support.expandcart.com/returns" %}
+        <a href="{{ url }}">{{lang('text_orders')}} <i class="fas fa-external-link-alt"></i></a>
+    </div>
+</div>
+
+<!-- Modal  -->
+<div id="processing-modal" class="modal fade">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h5 class="modal-title">{{ lang('confirm_order_status') }}</h5>
+            </div>
+
+            <hr>
+
+            <div class="text-center">
+                <label class="label label-warning" id="old-order-status"></label> <i class="fa fa-arrow-right"></i> <label class="label label-success" id="new-order-status"></label>
+            </div>
+
+            <form class="form" id='change-order-status-form' method='post' action="">
+                <div class="modal-body">
+                    <input type="hidden" id="order-status-id-hidden-value" name="order_status_id">
+                    <!-- Notify Customer -->
+                    <div class="form-group" id="xd-group">
+                        <label class="control-label">{{ lang('entry_notify') }}</label>
+                        <div class="checkbox checkbox-switchery">
+                            <label>
+                                <input type="checkbox" onchange="changeStatus(this);" name="notify" class="switchery" {{ notify in ['1', 1, 'on'] ? 'checked' }}>
+                                <span class="switchery-status">{{ notify in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                            </label>
+                        </div>
+                    </div>
+                    <!-- /Notify Customer -->
+                    <!-- Comment -->
+                    <div class="form-group">
+                        <div class="form-group col-md-12" id="xd-group">
+                            <label for="comment" class="control-label">{{ lang('entry_comment') }}</label>
+                            <textarea name="comment" id="comment" rows="5" cols="30" class="form-control" style="margin-bottom:20px;"></textarea>
+                        </div>
+                    </div>
+                    <!-- /Comment -->
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link" data-dismiss="modal">{{ lang('text_close') }}</button>
+                    <button type="submit" id="submit-change-order-status-form" class="btn btn-primary">{{ lang('button_save') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- /Modal -->
+
+<!-- filter Modal -->
+<div id="filter-modal" class="modal fade">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h5 class="modal-title">{{ lang('filter_columns') }}</h5>
+            </div>
+            <form class="form" id='change-order-status-form' method='post' action="">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>{{ lang('lbl_kanban_status') }}</label>
+                        <select name="filter-order-statuses" id="filter-order-statuses" multiple>
+                            {% for os in return_statuses %}
+                                <option value="{{ os['return_status_id'] }}" {{ os['return_status_id'] in selected_statuses or os['return_status_id'] in default_selected_order_statuses ? 'selected' }}>{{ os['name'] }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- /filter Modal -->
+
+{% endblock content %}
+
+
+{% block scripts %}
+    
+    {% import _self as dtControls %}
+    <script>
+        $('.orders-title .btns').prepend(`<a href="{{ insert }}" class="theme-btn rounded-primary-btn">{{ lang('btn_new_return') }}</a>`)
+    </script>
+    <script>
+
+        function changeStatus(checkbox)
+        {
+            var self = $(checkbox);
+            var switch_status = self.siblings('.switchery-status');
+
+            if ( self.is(':checked') )
+            {
+                switch_status.html("{{ lang('text_enabled') }}");
+            }
+            else
+            {
+                switch_status.html("{{ lang('text_disabled') }}");
+            }
+        }
+
+        $(document).ready(function() {
+
+            $('.hide-on-grid-view').hide();
+
+            $.extend($.fn.dataTable.defaults, {
+                autoWidth: false,
+                dom: '<"datatable-header"fBl><"datatable-scroll-wrap"t><"datatable-footer"ip>',
+                language: locales['dt_language'],
+                lengthMenu: [[10, 25, 50, 100, 200], [10, 25, 50, 100, 200]]
+            });
+        });
+
+        var dt;
+
+        Array.prototype.remove = function(item)
+        {
+            // index will have -1 if item does not exist
+            // else it will have the index of 1st item found in array
+            var index = this.indexOf(item); 
+
+            if (index > -1)
+            {
+                // splice() method is used to add/remove items(s) in array
+                this.splice(index, 1); 
+            }
+
+            return index;
+        }
+
+        var selectedIds = [];
+        $(document).ready(function(){
+            // showHideOrderStatuses();
+
+            $('select').select2({dropdownAutoWidth : true});
+
+            dt = $('#datatable-language').DataTable({
+                processing: true,
+                serverSide: true,
+                stateSave: true,
+                dom: '<"datatable-header"fB><"datatable-scroll-wrap"t><"datatable-footer"lip>',
+                language: {
+                    ...locales['dt_language'],
+                    search: ""
+                },
+                select: {
+                    style: 'multi',
+                    selector: 'td:first-child'
+                },
+                drawCallback: function () {
+                    $(this).find('tbody tr').slice(-3).find('.dropdown, .btn-group').addClass('dropup');
+                },
+                preDrawCallback: function() {
+                    $(this).find('tbody tr').slice(-3).find('.dropdown, .btn-group').removeClass('dropup');
+                },
+                "ajax": {
+                    url: '{{ link('sale/return/dtHandler') }}',
+                    type: "post",
+                    complete: function(res) {
+                        res.responseJSON.recordsTotal == 0 ? location.reload() : '';
+                    },
+                    error: function (e,m,l) {
+                        $(".datatables_country-error").html("");
+                        $("#datatables_country").append('<tbody class="datatables_country-error"><tr><th colspan="3">No data found in the server</th></tr></tbody>');
+                        $("#datatables_country_processing").css("display", "none");
+                    }
+                },
+                buttons: [
+                    {
+                        text: "<i class='icon-trash'></i>",
+                        className: 'btn btn-default bulk-delete disabled',
+                        action: function(e, dt, node, config) {
+                            var selectedRows = dt.rows('.selected').data();
+                            selectedRows.each(function(item) {
+                                selectedIds.push(item.return_id);
+                            });
+                            if (selectedIds.length > 0){
+                                confirmMessage(function () {
+                                    $.ajax({
+                                        url: '{{ link('sale/return/dtDelete') }}',
+                                        type: 'post',
+                                        data: {id: selectedIds},
+                                        success: function(){
+                                            reloadDT();
+                                        }
+                                    });
+                                });
+                            }
+                        }
+                    },
+                    {
+                        extend: 'collection',
+                        text: '<i class="icon-drawer-out"></i>',
+                        className: 'btn btn-default btn-export {{ base.currentplan == 3 ? "disabled plan-lock-btn" : ""}}',
+                        buttons: [
+                            {
+                                extend: 'copyHtml5',
+                                text: locales['buttons']['copy'],
+                                exportOptions: {
+                                    columns: ':visible'
+                                }
+                            },
+                            {
+                                extend: 'csvHtml5',
+                                text: locales['buttons']['export2csv'],
+                                fieldSeparator: ',',
+                                extension: '.csv',
+                                bom: "true",
+                                exportOptions: {
+                                    columns: ':visible'
+                                }
+                            },
+                            {
+                                extend: 'excelHtml5',
+                                text: locales['buttons']['export2excel'],
+                                exportOptions: {
+                                    columns: ':visible'
+                                }
+                            },
+                            {
+                                extend: 'pdfHtml5',
+                                text: locales['buttons']['export2pdf'],
+                                exportOptions: {
+                                    columns: ':visible'
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        extend: 'colvis',
+                        text: '<i class="icon-grid3"></i>',
+                        className: 'btn btn-default btn-colvis',
+                        columns: [1,2,3,6]
+                    }
+                ],
+
+                columns: [
+                    {
+                        title:`<input type="checkbox" class="styled" onchange='toggleSelectAll(this);'>`,
+                        orderable: false,
+                        width: "50px",
+                        render: function (data, type, row) {
+                            return `<input type="checkbox" class="select-checkbox">`;
+                        }
+                    },
+                    {
+                        data: "return_id",
+                        render: function (data, type, row) {
+                            return `<a href="{{ link('sale/return/info?return_id=') }}${row['return_id']}"> {{ lang('text_return_number') }} ${row['return_id']}</a>`;
+                        }
+                    },
+                    {
+                        data: 'order_id',
+                        render: function (data, type, row) {
+                            return `<a target="_blank" href="{{ link('sale/order/info?order_id=')}}${row['order_id']}" class="text-semibold">${row['order_id']}</a>`;
+                        }
+                    },
+                    {
+                        data: "customer",
+                        render: function (data, type, row) {
+                            if ( row['customer_id'] )
+                            {
+                                return `<a target="_blank" href="{{ link('sale/customer/update?customer_id=')}}${row['customer_id']}" class="text-semibold">${row['customer']}</a>`;
+                            }
+                            else
+                            {
+                                return `<span title="{{ lang('customer_not_in_db') }}">${row['customer']}</span>`;
+                            }
+                        }
+                    },
+                    // {
+                    //     data: "product",
+                    //     render: function (data, type, row) {
+                    //         var pid = row['product_id'];
+                    //         return `<a target="_blank", href="{{ link('catalog/product/update?product_id=') }} ` + pid + `">${row['product']}</a>`;
+                    //     }
+                    // },
+                    // {data: 'model'},
+                    {
+                        data: 'status',
+                        render: function (data, type, row) {
+                            return `<label class="label label-success">${row['status']}</label>`;
+                        }
+                    },
+                    {data: 'date_added'},
+                    {data: 'date_modified'}
+                ],
+                "order": [[1, "asc"]],
+                columnDefs: [
+                    {
+                        targets: 7,
+                        orderable: false,
+                        render: function (data, type, row) {
+                            return `<ul class="icons-list pull-right">
+                                    <li class="dropdown">
+                                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                            <i class="icon-menu9"></i>
+                                        </a>
+                                        <ul class="dropdown-menu dropdown-menu-right">
+                                            <li><a href="{{ link('sale/return/info') }}?return_id=${row['return_id']}"><i class="fas fa-eye fa-lg"></i> ${locales['button_view']}</a></li>
+                                            <li><a href='{{ link('sale/return/update') }}?return_id=${row['return_id']}'><i class='icon-pencil7'></i> ${locales['button_edit']}</a></li>
+                                            <li><a onclick="removeItem(${row['return_id']})"><i class='icon-trash'></i> ${locales['button_delete']}</a></li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            `;
+                        }
+                    }
+                ]
+            });
+
+            $(".bulk-delete").attr({
+                "data-popup": "tooltip",
+                "title": locales['button_delete']
+            });
+            $(".btn-export").attr({
+                "data-popup": "tooltip",
+                "title": locales['button_export']
+            });
+            $(".btn-colvis").attr({
+                "data-popup": "tooltip",
+                "title": locales['button_colvis']
+            });
+
+            {# $('.dt-buttons').append(`<a href="{{ insert }}" class="btn btn-success btn-labeled btn-xs"><b><i class="icon-plus3"></i></b> {{ lang('btn_new_return') }}</a>`) #}
+
+            $('[data-popup="tooltip"]').tooltip();
+
+            // On each draw, loop over the `detailRows` array and show any child rows
+            dt.on('draw', function () {
+                $(".switch").bootstrapSwitch();
+            });
+
+            dt.on( 'select', function ( e, objDT, type, indexes ) {
+                if ( dt.rows( '.selected' ).any() ) $(".bulk-delete").removeClass('disabled');
+                else $(".bulk-delete").addClass('disabled');
+
+                if ( $('.selected').length >= 2 ) $('.merge-orders').removeClass('disabled')
+                else $('.merge-orders').addClass('disabled')
+
+            })
+            .on( 'deselect', function ( e, objDT, type, indexes ) {
+                if ( dt.rows( '.selected' ).any() ) $(".bulk-delete").removeClass('disabled');
+                else $(".bulk-delete").addClass('disabled');
+
+                if ( $('.selected').length >= 2 ) $('.merge-orders').removeClass('disabled')
+                else $('.merge-orders').addClass('disabled')
+            })
+            .on( 'search.dt', function (e, objDT) {
+                if ( dt.rows( '.selected' ).any() ) $(".bulk-delete").removeClass('disabled');
+                else $(".bulk-delete").addClass('disabled');
+            });
+
+            $('.dataTables_length select').select2({
+                minimumResultsForSearch: Infinity,
+                width: 'auto'
+            });
+            $(".styled, .multiselect-container input").uniform({
+                radioClass: 'choice'
+            });
+        });
+
+        function mergeOrders( ids )
+        {
+            $.ajax({
+                url: "{{ mergeOrders }}",
+                type: "POST",
+                data: {selected: ids},
+                success: function (resp)
+                {
+                    reloadDT();
+                }
+            });
+        }
+
+        function removeItem(id)
+        {
+            confirmMessage(
+                function ()
+                {
+                    $.ajax({
+                        url: "{{ link('sale/return/dtDelete') }}",
+                        type: "post",
+                        data: { id: id },
+                        success: function ( resp )
+                        {
+                            reloadDT();
+                        }
+                    });
+                }
+            );
+        }
+
+        function reloadDT()
+        {
+            dt.ajax.reload();
+            // loadKanbanCards();
+        }
+
+        function loadKanbanCards()
+        {
+            $.ajax({
+                url: "{{ link('sale/return/getKanbanCards') }}",
+                type: "post",
+                success: function ( resp )
+                {
+                    $('.kanban-cards-area').html('');
+
+                    resp = JSON.parse(resp);
+                    $.each( resp.order_statuses, function ( index, value ) {
+                        $.each( value.orders, function( oindex, ovalue ) {
+                            drawKanbanCard ( value, ovalue );
+                        });
+                    });
+                }
+            });
+        }
+
+        function drawKanbanCard( return_status, zreturn )
+        {
+            var kanban_col = $('.order-status-col-' + return_status.return_status_id);
+            var kanban_body = kanban_col.find('.kanban-cards-area');
+
+            html = '';
+
+            html += '<div id="' + zreturn.return_id + '">';
+            html += `<div class="panel border-left-lg border-left-warning invoice-grid timeline-content cursor-move kanban-entry grab" id="order-num-`+ zreturn.return_id +`" draggable="true" data-order-id="` + zreturn.return_id + `" data-os-id="` + return_status.return_status_id + `">`;
+
+            html += '<div class="panel-heading">';
+            html += `<h6 class="panel-title"> # <a href="{{ link('sale/order/update?order_id=') }}"` + zreturn.return_id + `>` + zreturn.return_id + `</a></h6>`;
+            html += '<div class="heading-elements">';
+            html += '<ul class="icons-list">';
+            html += `<li><label class="label label-primary text-right">` + zreturn.return_reason + `</label></li>`;
+            html += '<li><a class="collapsy"><i class="fa fa-caret-down"></i></a></li>';
+            html += '<li><a data-action="move"></a></li>';
+            html += '</ul></div></div>';
+
+            html += '<div class="panel-body kanban-card-content" style="display:none;">';
+            html += '<div class="row">';
+            html += '<div class="col-sm-12">';
+            html += '<h6 class="text-semibold no-margin-top">';
+
+            if ( zreturn.customer_id )
+            {
+                html += `<a target="_blank" href="{{ link('sale/customer/update?customer_id=') }}` + zreturn.customer_id + `" class="text-semibold">` + zreturn.customer + `</a>`;
+            }
+            else
+            {
+                html += `<span title="{{ lang('customer_not_in_db') }}">` + zreturn.customer + `</span>`;
+            }
+
+            html += '</h6>';
+            html += '<ul class="list list-unstyled">';
+            html += `<li> {{ lang('column_date_added') }} <span class="text-semibold">` + zreturn.date_added + `</span></li>`;
+            html += '</ul></div></div></div>';
+
+            html += '<div class="panel-footer panel-footer-condensed" style="display:none;"><a class="heading-elements-toggle"><i class="icon-more"></i></a><a class="heading-elements-toggle"><i class="icon-more"></i></a>';
+            html += '<div class="heading-elements">';
+            html += '<span class="heading-text">';
+            html += `<span class="status-mark border-danger position-left"></span> {{ lang('column_date_modified') }} <span class="text-semibold">` + zreturn.date_modified + `</span>`;
+            html += '</span></div></div></div></div>';
+
+            kanban_body.append( html );
+            return;
+        }
+
+        function toggleSelectAll(checkbox)
+        {
+            if (checkbox.checked == true) {
+                dt.rows().select();
+            } else {
+                dt.rows().deselect();
+            }
+        }
+
+        $(document).on('click', '.selectable', function() {
+            var order_id = $(this).attr('data-id');
+            var self = $(this);
+
+            if ( self.hasClass('selected-row') )
+            {
+                self.removeClass('selected-row');
+                selected_ids.remove(order_id);
+            }
+            else
+            {
+                self.addClass('selected-row');
+                selected_ids.push(order_id);
+            }
+
+        }).on('click', '#filter-button', function(e) {
+            e.preventDefault();
+            $('#filter-modal').modal('show');
+        }).on('click', '#grid-view-button', function() {
+            $('.hide-on-grid-view').hide();
+            $('.show-on-grid-view').show();
+        }).on('click', '#kanban-view-button', function() {
+            $('.hide-on-kanban-view').hide();
+            $('.show-on-kanban-view').show();
+        }).on('change', '#filter-order-statuses', function() {
+            showHideOrderStatuses();
+        });
+
+        function update_selected_rows()
+        {
+            var selectedRows = dt.rows('.selected').data();
+            selectedRows.each(function(item) {
+                selectedIds.push(item.order_id);
+            });
+        }
+
+
+        function showHideOrderStatuses()
+        {
+            $('.order-status-col').hide();
+
+            $('#filter-order-statuses option:selected').each(function() {
+                var order_status_id = $(this).attr('value');
+                $('.order-status-col-' + order_status_id).show();
+            });
+
+        }
+
+        function draggableInit()
+        {
+            var order_id;
+            var original_order_status_id;
+            var new_order_status_id;
+
+            $(document).on('dragstart', '[draggable=true]', function (event) {
+                order_id = $(this).attr('data-order-id');
+                original_order_status_id = $(this).attr('data-os-id');
+                event.originalEvent.dataTransfer.setData("text/plain", event.target.getAttribute('id'));
+            });
+
+            $('#sortableKanbanBoards .kanban-drop-zone').bind('dragover', function (event) {
+                event.preventDefault();
+            });
+
+            $('#sortableKanbanBoards .col-md-3 .kanban-drop-zone').bind('drop', function (event)
+            {
+                var self = $(this);
+                new_order_status_id = self.attr('data-os-id');
+
+                if ( original_order_status_id != new_order_status_id )
+                {
+                    var elementId = event.originalEvent.dataTransfer.getData("text/plain");
+                    var elem = $('#' + elementId);
+
+                    var modal = $('#processing-modal');
+                    var form = $('#change-order-status-form');
+                    var order_id = elem.attr('data-order-id');
+                    var new_order_status_name = $('.order-status-col-' + new_order_status_id + ' span.order-status-name').text();
+                    var old_order_status_name = $('.order-status-col-' + original_order_status_id + ' span.order-status-name').text();
+
+                    form.attr('action', '{{ link("sale/return/history?return_id=") }}' + order_id);
+
+                    modal.find('label#new-order-status').text(new_order_status_name);
+                    modal.find('label#old-order-status').text(old_order_status_name);
+
+                    $('#processing-modal').modal('show');
+
+                    $(document).on('click', '#submit-change-order-status-form', function(event) {
+                        event.preventDefault();
+                        startLoadingScreen();
+                        var notify;
+                        if ( modal.find('[name=notify]').is(':checked') ) { notify = 1; } else { notify = 0; }
+
+                        var comment = modal.find('[name=comment]').text();
+
+                        $.ajax({
+                            url: form.attr('action'),
+                            type: "post",
+                            data: {notify: notify, comment: comment, return_status_id: parseInt(new_order_status_id)},
+                            success: function (resp) {
+                                reloadDT();
+                                removeLoadingScreen();
+                                $('#processing-modal').modal('hide');
+                            }
+                        });
+
+                    });
+                }
+            });
+        }
+
+        $(document).ready(function() {
+            reloadDT();
+            draggableInit();
+        }).on('click', '.collapsy', function() {
+            var panel_body = $(this).closest('.panel').find('.kanban-card-content');
+            var panel_footer = $(this).closest('.panel').find('.panel-footer');
+
+            if ( panel_body.hasClass('opened') )
+            {
+                panel_body.slideUp('fast').removeClass('opened');
+                panel_footer.slideUp('fast').removeClass('opened');
+                $(this).html('<i class="fa fa-caret-down"></i>');
+                return;
+            }
+            else
+            {
+                panel_body.slideDown('fast').addClass('opened');
+                panel_footer.slideDown('fast').addClass('opened');
+                $(this).html('<i class="fa fa-caret-up"></i>');
+                return;
+            }
+        });
+
+    </script>
+
+{% endblock scripts %}
+
+{% macro btnEditItem(id) %}
+    <a class='btn btn-primary btn-xs' href='{{ link('sale/return/update') }}?return_id={{ id }}'><i class='icon-pencil7'></i></a>
+{% endmacro btnEditItem %}
+
+{% macro btnDeleteItem(id) %}
+    <button class='btn btn-danger btn-xs' onclick="removeItem({{ id }})"><i class='icon-trash'></i></button>
+{% endmacro btnDeleteItem %}
+
+{% macro itemSelector(id) %}
+    <input  type='checkbox' class='select-checkbox' name='country_id[]' value='{{ id }}' />
+{% endmacro itemSelector %}

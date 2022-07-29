@@ -1,0 +1,384 @@
+<div class="row">
+    <div class="col-md-12">
+        <!-- Advanced legend -->
+        <div class="features-table-container rounded">
+            <div class="collapse in" id="panel-language">
+                <table id="datatable-language" class="table table-hover datatable-highlight">
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th>{{ lang('column_image') }}</th>
+                        <th>{{ lang('column_name') }}</th>
+                        <th>{{ lang('column_status') }}</th>
+                        <th>{{ lang('column_product_count') }}</th>
+                        <th>{{ lang('column_active_product_count') }}</th>
+                        <th></th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+        <!-- /a legend -->
+    </div>
+</div>
+
+{% include 'catalog/product/modals/main-category.expand' with {categories: categories} %}
+{% include 'catalog/product/modals/apply_tax_class.expand' with {tax_classes: tax_classes} %}
+
+<script>
+    var data = '{{ categories|json_encode }}';
+</script>
+
+{% block scripts %}
+
+    {% import _self as dtControls %}
+    <script>
+        $(document).ready(function () {
+            $.extend($.fn.dataTable.defaults, {
+                autoWidth: false,
+                dom: '<"datatable-header"fB><"datatable-scroll-wrap"t><"datatable-footer"lip>',
+                language: locales['dt_language'],
+                lengthMenu: [[10, 25, 50, 100, 200], [10, 25, 50, 100, 200]]
+            });
+        });
+
+        var dt;
+        $(document).ready(function () {
+
+            dt = $('#datatable-language').DataTable({
+                processing: true,
+                serverSide: true,
+                stateSave: false,
+                language: {
+                    ...locales['dt_language'],
+                    search: ""
+                },
+                select: {
+                    style: 'multi',
+                    selector: 'td:first-child'
+                },
+                "ajax": {
+                    url: '{{ link('catalog/category/dtHandler') }}',
+                    type: "post",
+                    error: function (e, m, l) {
+                        $(".datatables_country-error").html("");
+                        $("#datatables_country").append('<tbody class="datatables_country-error"><tr><th colspan="3">No data found in the server</th></tr></tbody>');
+                        $("#datatables_country_processing").css("display", "none");
+                    }
+                },
+                drawCallback: function () {
+                    $(this).find('tbody tr').slice(-3).find('.dropdown, .btn-group').addClass('dropup');
+                },
+                preDrawCallback: function() {
+                    $(this).find('tbody tr').slice(-3).find('.dropdown, .btn-group').removeClass('dropup');
+                },
+                buttons: [
+                    {
+                        text: `<i class="far fa-edit"></i> {{lang("dtb_edit")}}`,
+                        className: 'btn-category disabled',
+                        action: function (e, dt, node, congig) {
+                            var selectedRows = dt.rows('.selected').data();
+                            table_selected_ids = [];
+                            selectedRows.each(function (item) {
+                                table_selected_ids.push(item.category_id);
+                            });
+
+                            $('#main-category-modal').modal('show');
+                        }
+                    },// edit
+                    {
+                        text: `<i class="fas fa-percentage"></i> {{lang('dtb_tax')}}`,
+                        className: 'btn-tax',
+                        action: function (e, dt, node, congig) {
+                            var selectedRows = dt.rows('.selected').data();
+                            var form = $('#apply-tax-class-form');
+                            $('#apply-tax-class-total-selected').html(selectedRows.length);
+                            $('#apply-tax-class-entity-type').html('{{ lang("categories") }}' + ': ');
+                            $('#apply-tax-class-switch-div').addClass('hidden');
+
+                            selectedRows.each(function (item) {
+                                $('<input>').attr({
+                                    type: 'hidden',
+                                    name: 'selected_products_ids[]',
+                                    value: item.category_id
+                                }).appendTo(form);
+                            });
+
+                            $('#apply-tax-class-modal').modal('show');
+                        }
+                    },// tax
+                    {
+                        extend: 'colvis',
+                        text: `<i class="fas fa-columns"></i> {{lang('dtb_custom_col')}}`,
+                        className: 'dt-menu dt-list btn-colvis',
+                        columns: [1, 2, 3]
+                    },// cols
+                    {
+                        extend: 'collection',
+                        text: '<i class="fas fa-file-download"></i> {{lang("dtb_export_table")}}',
+                        className: 'dt-menu dt-list btn-export {{ base.currentplan == 3 ? "disabled plan-lock-btn" : ""}}',
+                        buttons: [
+                            {
+                                extend: 'copyHtml5',
+                                text: locales['buttons']['copy'],
+                                exportOptions: {
+                                    columns: ':visible'
+                                }
+                            },
+                            {
+                                extend: 'csvHtml5',
+                                text: locales['buttons']['export2csv'],
+                                fieldSeparator: ',',
+                                extension: '.csv',
+                                bom: "true",
+                                exportOptions: {
+                                    columns: ':visible'
+                                }
+                            },
+                            {
+                                extend: 'excelHtml5',
+                                text: locales['buttons']['export2excel'],
+                                exportOptions: {
+                                    columns: ':visible'
+                                }
+                            },
+                            {
+                                extend: 'pdfHtml5',
+                                text: locales['buttons']['export2pdf'],
+                                exportOptions: {
+                                    columns: ':visible'
+                                }
+                            }
+                        ]
+                    },// export
+                    {
+                        text: "<i class='far fa-trash-alt'></i> {{lang('dtb_delete')}}",
+                        className: 'dt-menu bulk-delete disabled',
+                        action: function (e, dt, node, config) {
+                            var selectedRows = dt.rows('.selected').data();
+                            var selectedIds = [];
+                            selectedRows.each(function (item) {
+                                selectedIds.push(item.category_id);
+                            });
+                            //console.log(selectedIds);
+                            if (selectedIds.length > 0) {
+                                confirmMessage(function () {
+                                    $.ajax({
+                                        url: '{{ link('catalog/category/dtDelete') }}',
+                                        type: 'post',
+                                        data: {ids: selectedIds},
+                                        success: function () {
+                                            reloadDT();
+                                        }
+                                    });
+                                });
+                            }
+                        }
+                    },// delete
+                ],
+                columns: [
+                    {
+                        title: `<input type="checkbox" class="styled" onchange='toggleSelectAll(this);'>`,
+                        data: "category_id",
+                        width: "50px"
+                    },
+                    {
+                        data: "image",
+                        render: function (data, type, row) {
+                            return `<img src="${row['image']}" height="50px">`;
+                        },
+                        width: "100px"
+                    },
+                    {
+                        data: "name",
+                        orderable: true,
+                        render: function (data, type, row) {
+                            return `<a href="{{ link('catalog/category/update?category_id=') }}${row['category_id']}">${row['name']}</a>`;
+                        }
+                    },
+                    {
+                        data: "cstatus",
+                        width: "30px"
+                    },
+                    {
+                        data: "product_count",
+                        width: "30px"
+                    },
+                    {
+                        data: "active_product_count",
+                        width: "30px"
+                    },
+                    {
+                        width: "30px",
+                        data: "category_id"
+                    },
+                    {
+                        width: "10px",
+                        data: "category_id"
+                    },
+                ],
+                "order": [[2, "asc"]],
+                columnDefs: [
+                    {
+                        targets: 1,
+                        orderData: 2,
+                    },
+                    {
+                        targets: 2,
+                        orderable: true,
+                    },
+                    {
+                        orderable: false,
+                        className: 'select-checkbox',
+                        targets: 0
+                    },
+                    {
+                        targets: 3,
+                        render: function (data, type, row) {
+                            var status = (data == "1" ? 'checked="checked"' : '');
+                            return statusSwitch(row.category_id, status);
+                        }
+                    },
+                    {
+                        targets: 4,
+                        render: function (data, type, row) {
+                            return '<a href="/admin/catalog/product?category='+row['category_id']+'">'+data+'</a>';
+                        }
+                    },
+                    {
+                        targets: 5,
+                        render: function (data, type, row) {
+                            return '<a href="/admin/catalog/product?category='+row['category_id']+'">'+data+'</a>';
+                        }
+                    },
+                    {
+                        targets: 6,
+                        orderable: false,
+                        selectable: false,
+                        visible: true,
+                        render: function (data, type, row) {
+                            return `<a data-popup="tooltip" title="${locales['text_preview']}" target="_blank" href="{{ linkfront('product/category', 'path=') }}${row['category_id']}" class='text-default'><i class='fa fa-eye fa-lg valign-middle'></i></a>`;
+                        }
+                    },
+                    {
+                        targets: 7,
+                        orderable: false,
+                        render: function (data, type, row) {
+                            return `<ul class="icons-list pull-right">
+                                    <li class="dropdown">
+                                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                            <i class="icon-menu9"></i>
+                                        </a>
+                                        <ul class="dropdown-menu dropdown-menu-right">
+                                            <li><a href='{{ link('catalog/category/update') }}?category_id=${row['category_id']}'><i class='icon-pencil7'></i> ${locales['button_edit']}</a></li>
+                                            <li><a onclick="removeItem(${row['category_id']})"><i class='far fa-trash-alt'></i> ${locales['button_delete']}</a></li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            `;
+                        }
+                    }
+                ]
+            });
+
+            $('.product-list .product-list-title .btns').prepend(`<a href="{{ link('catalog/category/insert') }}" class="theme-btn rounded-primary-btn">{{ lang('btn_new_category') }}</a>`)
+
+
+            $('[data-popup="tooltip"]').tooltip();
+    $('[data-toggle="tooltip"]').tooltip();
+
+            // On each draw, loop over the `detailRows` array and show any child rows
+            dt.on('draw', function () {
+                if (Array.prototype.forEach) {
+                    var elems = Array.prototype.slice.call(document.querySelectorAll('.switchery'));
+                    elems.forEach(function(html) {
+                        var switchery = new Switchery(html);
+                        //debugger;
+                    });
+                }
+                else {
+                    var elems = document.querySelectorAll('.switchery');
+                    for (var i = 0; i < elems.length; i++) {
+                        var switchery = new Switchery(elems[i]);
+                    }
+                }
+                $(".switchery").on('change', function(e) {
+                    var status = this.checked ? locales['switch_text_enabled'] : locales['switch_text_disabled'];
+                    $(this).parent().children(".switchery-status").text(status);
+                });
+
+                $('[data-popup="tooltip"]').tooltip();
+    $('[data-toggle="tooltip"]').tooltip();
+            });
+
+            dt.on('select', function (e, objDT, type, indexes) {
+                if (dt.rows('.selected').any()) $(".bulk-delete, .btn-category").removeClass('disabled');
+                else $(".bulk-delete, .btn-category").addClass('disabled');
+            })
+                .on('deselect', function (e, objDT, type, indexes) {
+                    if (dt.rows('.selected').any()) $(".bulk-delete, .btn-category").removeClass('disabled');
+                    else $(".bulk-delete, .btn-category").addClass('disabled');
+                })
+                .on('search.dt', function (e, objDT) {
+    //                console.log(e);
+    //                dt.columns(':visible').search(e);
+                    if (dt.rows('.selected').any()) $(".bulk-delete, .btn-category").removeClass('disabled');
+                    else $(".bulk-delete, .btn-category").addClass('disabled');
+                });
+
+            $('.dataTables_length select').select2({
+                minimumResultsForSearch: Infinity,
+                width: 'auto'
+            });
+            $(".styled, .multiselect-container input").uniform({
+                radioClass: 'choice'
+            });
+
+    //            $(".bulk-delete").on('click', function() {
+    //                console.log(dt.rows('.selected').data());
+    //            });
+        });
+
+        function changeStatus(id, status) {
+            //alert(clientId + ": " + (status ? 1 : 0));
+            var newStatus = (status ? 1 : 0);
+            ajax("{{ link("catalog/category/dtChangeStatus") }}", {id: id, status: newStatus}, function() {
+                // reloadDT();
+            });
+        }
+
+        function removeItem(id) {
+            //alert(clientId);
+            confirmMessage(function () {
+                ajax("{{ link("catalog/category/dtDelete") }}", {ids: [id]}, function (res) {
+                    reloadDT();
+                });
+            });
+        }
+
+        function reloadDT() {
+            dt.ajax.reload();
+        }
+
+        function toggleSelectAll(checkbox) {
+            if (checkbox.checked == true) {
+                dt.rows().select();
+            } else {
+                dt.rows().deselect();
+            }
+        }
+
+
+        function statusSwitch(id, status)
+        {
+            return `<div class="checkbox checkbox-switchery  no-margin">
+                    <label>
+                        <input type="checkbox" onchange="changeStatus(` + id + `, this.checked);" class="switchery" ` + status + `>
+                        <span class="switchery-status">` + (status ? locales['switch_text_enabled'] : locales['switch_text_disabled']) + `</span>
+                    </label>
+                </div>`;
+        }
+
+    </script>
+{% endblock scripts %}

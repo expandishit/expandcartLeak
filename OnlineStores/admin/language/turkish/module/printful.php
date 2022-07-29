@@ -1,0 +1,26 @@
+<?php
+
+$_ = [ 
+    'printful_heading_title'  => 'Yazdırılıyor', 
+    'printful_status'  => 'Durum', 
+    'variant_id'  => 'Varyant Kimliği', 
+    'printful_image'  => 'Tasarım Resmi', 
+    'heading_title_printful'  => 'Yazdırılıyor', 
+    'heading_title'  => 'Yazdırılıyor', 
+    'text_import'  => 'İçe Aktar', 
+    'text_settings'  => 'Ayarlar', 
+    'api_key'  => 'API Anahtarı', 
+    'text_module'  => 'Uygulamalar', 
+    'mn_setting_menu_register'  => 'Önce bu bağlantıdan Printful\'a kayıt olmalısınız', 
+    'register_now'  => 'Şimdi Kaydolun', 
+    'job_started_message'  => 'İçe aktarma işlemi başarıyla başlatıldı, lütfen bunun zaman ve kaynak tüketen bir süreç olduğunu ve biraz zaman aldığını unutmayın. İçe aktarılan ürünlerin sayısını görmek için birkaç dakika sonra bu sayfayı yenilemeyi deneyin veya ürünleriniz bölümünü kontrol edin. ', 
+    'total_products'  => 'Printful hesabınızdaki toplam ürünler:', 
+    'total_products_imported'  => 'Toplam ithal edilen ürünler:', 
+    'import_all_products'  => 'Tüm ürünleri içe aktar', 
+    'no_apikey'  => 'Lütfen ayarlara Printful API Key ekleyin.', 
+    'printful_title'  => 'Printful\'dan ürünleri içe aktar', 
+    'printful_rand'  => 'İthal ürünlerin rastgele bir örneği', 
+    'col_image'  => 'Resim', 
+    'col_name'  => 'İsim', 
+    'no_imported_alert'  => 'Herhangi bir ürünü ithal etmediniz', 
+];

@@ -1,0 +1,316 @@
+{% if avaliableModules %}
+    <div class="modal fade" id="modal-disable-ps">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger">
+                    <button type="button" class="close" data-dismiss="modal">×</button>
+                    <h4 class="modal-title">{{ lang('text_uninstall') }} <span id="ps-title"></span></h4>
+                </div>
+                <div class="modal-body">
+                    <p>{{ lang('confirm_uninstallation') }}</p>
+                </div>
+                <div class="modal-footer">
+                    <span class="server-loading" style="display:none;"><i class="fa fa-refresh fa-spin"></i></span>
+                    <button type="button" class="btn btn-danger" extension = "" psid="" id="disable-ps">{{ lang('text_uninstall') }}</button>
+                    <button type="button" class="btn btn-link" onclick="$('#modal-disable-ps').modal('toggle');">{{ lang('text_modal_trial_cancel') }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal fade" id="modal-enable-ps">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary">
+                    <button type="button" class="close" data-dismiss="modal">×</button>
+                    <h4 class="modal-title">{{ lang('text_install') }} <span id="ps-title"></span></h4>
+                </div>
+                <div class="modal-body">
+                    <p>{{ lang('confirm_installation') }}</p>
+                </div>
+                <div class="modal-footer">
+                    <span class="server-loading" style="display:none;"><i class="fa fa-refresh fa-spin"></i></span>
+                    <button type="button" class="btn btn-primary" extension = "" psid="" id="enable-ps">{{ lang('text_install') }}</button>
+                    <button type="button" class="btn btn-link" onclick="$('#modal-enable-ps').modal('toggle');">{{ lang('text_modal_trial_cancel') }}</button>
+                </div>
+            </div>
+        </div>
+    </div>            
+                
+    <div class="ship-by-type">
+        <!-- List -->
+        {% if not lookup  and remove_recommended_services == false %}
+        <section class="recomended-shipping">
+            <p class="title">
+                {{ lang('text_recomended_services') }}
+            </p>
+            <div class="grid">
+                {% for recommend in recommended_apps_and_services %}
+                    <a  href="{{ link('marketplace/app') }}?id={{ recommend['id'] }}" class="recomend-box">
+                    <img src="{{recommend.image}}" alt="{{recommend.image_alt}}" class="img">
+                        <div class="info">
+                            <p class="recomend-title">
+                                {{recommend.name}}
+                                {# <span>Free</span> #}
+                            </p>
+                            <div class="recomend-desc">
+                                {{recommend.desc|striptags}}
+                            </div>
+                        </div>
+                        <span class="special-sticker {{recommend.special_rate == 1 ? 'active' : ''}}">
+                    {{ lang('btn_special_rates') }}
+                </span>
+                    </a>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        <p class="title">
+            {{ lang('text_all_apps') }}
+        </p>
+        <div class="grid">
+            {% for module in avaliableModules %}
+                <a href="{{ link('marketplace/app') }}?id={{ module['id'] }}" class="ship-box">
+                    <p class="img">
+                        <img src="{{ module['image'] }}" class="" alt="">
+                    </p>
+                    <div class="info">
+                    {# <pre>
+                        {{ dump(module) }}
+                    </pre> #}
+                        <p class="ship-title mb-5">{{ module['name'] }}</p>
+                        <p class="ship-desc">
+                        
+                            {{ module['desc'] }}
+                            <br>
+                        </p>
+                        <p class="ship-desc">
+                            {% if module['freeplan'] == '-1' and not module['purchased'] %}
+                                <span class="text-danger-300 text-semibold">{{ lang('text_contactus') }}&nbsp;&nbsp;&nbsp;</span>
+                            {% else %}
+                                {% if module['price'] != '$0' %}
+                                    <span class="gray-color text-semibold">{{ module['price'] }}
+                                        {% if module['recurring']   %} / {{ lang('text_month')}}
+                                        {% else %}
+                                            {{ lang('text_for_one_time')}}
+                                        {% endif %}
+                                    </span>
+                                {% endif %}
+                            {% endif %}
+                            <br>
+                            {% if module['freeplan'] == '3' %}
+                                {{ lang('text_free_all') }}
+                            {% elseif module['freeplan'] == '53' %}
+                                {{ lang('text_free_business') }}
+                            {% elseif module['freeplan'] == '6' %}
+                                {{ lang('text_free_ultimate') }}
+                            {% elseif module['freeplan'] == '8' %}
+                                {{ lang('text_free_enterprise') }}
+                            {% endif %}
+
+                            {% if module['moduleType'] == '2' %}
+                                {% if module['freepaymentterm'] == 'y' %}
+                                    {{ lang('text_yearly_only') }}
+                                {% endif %}
+                            {% endif %}
+                        </p>
+                        <div class="">
+                            <span class="label label-info">{{ module['moduleType'] == 1 ? lang('label_app') : lang('label_service') }}</span>
+                            {% if module['moduleType'] != 1 and module['recurring'] == '0' %}
+                                <span class="label label-success">{{ lang('text_rec_once') }}</span>
+                            {% endif %}
+                            {% if module['installed'] %}
+                                <span class="label label-success">{{ lang('text_installed') }}</span>
+                            {% endif %}
+                            {% if module['isnew'] %}
+                                <span class="badge badge-flat border-danger text-danger-600">{{ lang('text_new') }}</span>
+                            {% endif %}
+                            {% if module['purchased'] %}
+                                <span class="badge badge-flat border-danger text-danger-600">{{ lang('text_purchased') }}</span>
+                            {% endif %}
+
+                            {% if not module['installed'] and not module['purchased'] %}
+                                {% if module['isTrial'] == 1 %}
+                                    <span class="label label-warning">{{ lang('text_trial') }}</span>
+                                {% endif %}
+                                {% if module['isTrial'] == 2 %}
+                                    <span class="label label-warning">{{ lang('text_trial_done') }}</span>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Basic modal -->
+    <div id="modal_default" class="modal fade">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h5 class="modal-title">{{ lang('text_choose_plans') }}</h5>
+                </div>
+
+                <div class="modal-body">
+                    <span>{{ lang('text_choose_plans_text') }}</span>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="sign-up" onclick="goToPackages();">{{ lang('text_explore_plans') }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- /basic modal -->
+
+    <div class="modal fade" id="modal-trial">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary">
+                    <button type="button" class="close" data-dismiss="modal">×</button>
+                    <h4 class="modal-title">{{ lang_printf('text_modal_x_trial_title',maxTrialDays) }}  <span id="ps-title"></span></h4>
+                </div>
+                <div class="modal-body">
+                    <p>{{ trial_model_description }}</p>
+                </div>
+                <div class="modal-footer">
+                    <span class="server-loading" style="display:none;"><i class="fa fa-refresh fa-spin"></i></span>
+                    <button type="button" class="btn btn-primary" id="trialbtn">{{ lang_printf('text_modal_x_trial_confirm',maxTrialDays) }}</button>
+                    <button type="button" class="btn btn-link" onclick="$('#modal-trial').modal('toggle');">{{ lang('text_modal_trial_cancel') }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // slide up shipping boxes that over than 3 in first render
+        $('.ship-box.ship-collapse').slideUp(0)
+
+        // slide toggle shipping boxes that over than 3 on click
+        $('.ship-type-head .see-all').click(function() {
+            let targetBoxs = $(this).data('target')
+            $(this).toggleClass('active')
+            $('.ship-box.ship-collapse.target' + targetBoxs).slideToggle(0)
+        })
+    </script>
+
+    <script>
+
+        {#function createMyApp() {#}
+            {#var isTrial = "{{ isTrial }}";#}
+            {#//debugger;#}
+            {#if (isTrial == "0") {#}
+                {#window.location = "{{ htmlEntityDecode(buylink) }}";#}
+            {#}#}
+        {#}#}
+
+        function goToPackages() {
+            window.location = "{{ htmlEntityDecode(packageslink) }}";
+            return false;
+        }
+
+        $(document).on("click", "#open-trial-modal", function () {
+            var href = $(this).data('href');
+            $('#trialbtn').on('click', function(){
+                window.location = href;
+                return false;
+            });
+            //$("#modal-trial .modal-body #bookId").val( myBookId );
+            // As pointed out in comments,
+            // it is unnecessary to have to manually call the modal.
+            // $('#addBookDialog').modal('show');
+        });
+    </script>
+
+        <script>
+            var disableURL = '/admin/marketplace/home/uninstall';
+            var enableURL = '/admin/marketplace/home/install';
+        </script>
+        
+        <script>
+        $( document ).ready(function() {
+            {# applyInfiniteScroll(); #}
+            $("#modal-disable-ps").on('show.bs.modal', function (ev) {
+                let r = $(ev.relatedTarget), c = $(ev.currentTarget);
+                $('#modal-disable-ps').find('#disable-ps').attr('psid', r.attr('psid'));
+                $('#modal-disable-ps').find('#disable-ps').attr('extension', r.attr('extension'));
+                $('#modal-disable-ps').find('#ps-title').html(r.attr('ps-title'));
+            });
+
+            $("#modal-enable-ps").on('show.bs.modal', function (ev) {
+                let r = $(ev.relatedTarget), c = $(ev.currentTarget);
+                $('#modal-enable-ps').find('#enable-ps').attr('psid', r.attr('psid'));
+                $('#modal-enable-ps').find('#enable-ps').attr('extension', r.attr('extension'));
+                $('#modal-enable-ps').find('#ps-title').html(r.attr('ps-title'));
+
+                $('#enable-ps').attr('extension')
+
+            });
+        });
+            
+       $("#enable-ps").click(function () {
+       $('#enable-ps').parent().find('.server-loading').show();
+
+        $.ajax({
+            type: 'get',
+            url: enableURL,
+            dataType: 'json',
+            data: {extension:$('#enable-ps').attr('extension')},
+            async: true,
+            success: function(json) {
+       
+                if (json.success == "true") {
+                    
+                    location.reload();
+                }
+                else {
+                    displayErrors(json.error);
+
+                    $('#enable-ps').parent().find('.server-loading').hide();
+
+                    $('#modal-enable-ps').modal('toggle');
+                }
+            }
+        });
+    });
+    
+        $("#disable-ps").click(function () {
+        $('#disable-ps').parent().find('.server-loading').show();
+
+        $.ajax({
+            type: 'get',
+            url: disableURL,
+            dataType: 'json',
+            data: {extension:$('#disable-ps').attr('extension')},
+            async: true,
+            success: function(json) {
+                if (json.success == "true") {
+                    location.reload();
+                }
+                else {
+                    displayErrors(json.error);
+
+                    $('#disable-ps').parent().find('.server-loading').hide();
+
+                    $('#modal-disable-ps').modal('toggle');
+                }
+            }
+        });
+    });
+    
+            
+        </script>
+
+
+
+{% else %}
+
+    <h2 class="text-center">
+        <i class="far fa-frown fa-2x"></i> <br>
+        {{ lang('no_search_result') }}
+    </h2>
+
+{% endif %}

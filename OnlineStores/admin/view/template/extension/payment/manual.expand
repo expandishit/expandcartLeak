@@ -1,0 +1,145 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block secondarymenu %}
+    {% include 'setting/settingmenu.expand' with {'expand': '#store', 'active': '#payment'} %}
+{% endblock secondarymenu %}
+
+{% set bodyClasses = "has-detached-right" %}
+
+
+{% block title %}
+    {{ lang('payments_providers') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+{% endblock headelements %}
+
+{% block content %}
+    <style>
+        .content-wrapper {
+            background-color: #f8f9ff;;
+        }
+        .page-title {
+            max-width: 1200px;
+            margin-right: auto;
+            margin-left: auto;
+        }
+    </style>
+    <div class="list-wrapper">
+        <div class="content-inner">
+            {# <p class="intro-video-head">
+                {{lang('text_shipping_intro')}}
+                <a id="open_tutorial_modal"><i class="icon-play position-left"></i> {{ lang('open_tutorial_button') }}</a>
+            </p> #}
+
+            {% if payment_enabled != 1 %}
+            <p class="first-ship-alert">
+                <i class="fa fa-exclamation" aria-hidden="true"></i>
+                <span class="w-100">{{lang('text_first_shipping_alert')}}</span>
+                <i class="fa fa-times" aria-hidden="true"></i>
+            </p>
+            {% endif %}
+
+            {% include 'includes/tutorial_modal_snippet.expand' with {
+            tutorial_link: 'https://www.youtube.com/embed/h0ZeNZYcbTk',
+            tutorial_header: lang('tutorial_heading')
+            } %}
+
+            <!-- EP-4 - start Payment Apps List Restructuring  -->
+
+
+            <!-- EP-4 - end Payment Apps List Restructuring  -->
+            <!-- shipping filters -->
+            <!-- Detached content -->
+            <div class="container-detached">
+                <div class="shipping-container">
+                    {% if payment_methods|length > 0 %}
+                    <section class='ship-by-type'>
+                        <div class="ship-type-head">
+                            <p class="title">
+                                {{ lang('text_manual_type') }} <span>({{ lang_printf('text_appe_length', payment_methods|length) }})</span>
+                            </p>
+                            {% if payment_methods|length > 3 %}
+                            <button class="see-all" data-target="3">
+                                <span class="more">{{ lang('btn_see_all') }}</span>
+                                <span class="less">{{ lang('btn_see_less') }}</span>
+                                <i class="fa fa-chevron-down" aria-hidden="true"></i>
+                            </button>
+                            {% endif %}
+                        </div>
+                        <div class="grid">
+                            {% for payment in payment_methods %}
+                                {% if payment.installed == 1 %}
+                                <a href="{{ link('extension/payment/activate', 'code=' ~ payment.code ~ '&activated=1' ~ '&payment_company=' ~ (payment.type != "offline_methods" ? 1 : 0)) }}" class="ship-box {{loop.index > 3 ? 'ship-collapse target3'}}">
+                                {% else %}
+                                <a href="{{ link('extension/payment/install', 'extension=' ~ payment.code ~ '&payment_company=' ~ (payment.type != "offline_methods" ? 1 : 0)) }}" class="ship-box {{loop.index > 3 ? 'ship-collapse target3'}}">
+                                {% endif %}
+                                    <img src="{{payment.image}}" alt="{{payment.image_alt}}" class="img">
+                                    <div class="info">
+                                        <p class="ship-title">
+                                            {{payment.title}}
+                                        </p>
+                                        <div class="ship-desc">
+                                            {{ lang('text_price') }}:
+                                            {% if payment.price %}
+                                                {{payment.price}}
+                                            {% else %}
+                                                {{ lang('text_free') }}
+                                            {% endif %}
+                                        </div>
+                                        {% if (payment.special_rate == true) and (payment.installed != true) %}
+                                        <span class="rate-label active">
+                                            {{ lang('btn_special_rates') }}
+                                        </span>
+                                        {% endif %}
+                                        {% if payment.installed == true %}
+                                            {% if payment.status == 1 %}
+                                            <span class="activated-label">
+                                                <i class="fa fa-check" aria-hidden="true"></i>
+                                                {{ lang('label_enabled') }}
+                                            </span>
+                                            {% else %}
+                                            <span class="disable-label">
+                                                <i class="fa fa-ban" aria-hidden="true"></i>
+                                                {{ lang('label_disabled') }}
+                                            </span>
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    </section>
+
+
+
+                </div>
+            </div>
+            <!-- /detached content -->
+
+        </div>
+    </div>
+    <script>
+        // slide up shipping boxes that over than 3 in first render
+        // $('.ship-box.ship-collapse').slideUp(0);
+        
+        // to open all collapse
+        $('.ship-box.ship-collapse').slideDown(0);
+        $('.ship-type-head .see-all').addClass('active');
+
+        // slide toggle shipping boxes that over than 3 on click
+        $('.ship-type-head .see-all').click(function() {
+            let targetBoxs = $(this).data('target')
+            $(this).toggleClass('active')
+            $('.ship-box.ship-collapse.target' + targetBoxs).slideToggle(0)
+        })
+    </script>
+
+{% endblock content %}

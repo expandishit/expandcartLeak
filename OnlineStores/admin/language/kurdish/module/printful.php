@@ -1,0 +1,26 @@
+<?php
+
+$_  = [ 
+    'printful_heading_title'  => 'Printful', 
+    'printful_status'  => 'Rewş', 
+    'variant_id'  => 'Variant ID', 
+    'printful_image'  => 'Wênekirina sêwirandinê', 
+    'heading_title_printful'  => 'Printful', 
+    'heading_title'  => 'Printful', 
+    'text_import'  => 'Import', 
+    'text_settings'  => 'Mîhengên', 
+    'api_key'  => 'Keyeya API', 
+    'text_module'  => 'Apps', 
+    'mn_setting_menu_register'  => 'Divê hûn di çapê de ji vê girêdanê çap bikin', 
+    'register_now'  => 'Naha qeyd bikin', 
+    'job_started_message'  => 'Pêvajoya importê bi serfirazî hate dest pê kirin, ji kerema xwe vê yekê binihêrin ku ev pêvajoyek dem û çavkaniyê ye û ew hinek dem digire. Biceribînin ku piştî çend hûrdeman vê rûpelê nûve bikin da ku hejmara hilberên imported bibînin an beşa hilberên xwe kontrol bikin. ', 
+    'total_products'  => 'Berhemên Total Di Hesabê Weya çapkirî de:', 
+    'total_products_imported'  => 'Berhemên tevahî yên Importandî:', 
+    'import_all_products'  => 'Hemî hilberan import', 
+    'no_apikey'  => 'Ji kerema xwe di mîhengan de bişkoja Api çapê zêde bikin.', 
+    'printful_title'  => 'Berhemên ji çapkirinê dakêşin', 
+    'printful_rand'  => 'Nimûneyek rasthatî ya hilberên imported', 
+    'col_image'  => 'Wêne', 
+    'col_name'  => 'Navê', 
+    'no_imported_alert'  => 'We hilberên xwe nexende', 
+];

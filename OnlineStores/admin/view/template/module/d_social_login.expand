@@ -1,0 +1,382 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% import 'controls/uploader.expand' as uploader %}
+
+{% block title %}
+    {{ lang('heading_title', 'module/d_social_login') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+    {% include "includes/buttons_top.expand" %}
+{% endblock headelements %}
+
+{% block content %}
+    
+    <!-- Start Form -->
+
+
+    <form id="setting-payment" class="form" action="{{ action }}">
+        <!-- Status -->
+        <div class="col-md-3">
+            <div class="panel panel-flat">
+                <div class="panel-body">
+                    <fieldset>
+                        
+                        <legend class="text-semibold">
+                            <i class="fas fa-check-circle fa-lg position-left"></i>
+                            {{ lang('entry_status')|trim(':') }}
+                            <a class="control-arrow" data-toggle="collapse" data-target="#panel1">
+                                <i class="icon-circle-down2"></i>
+                            </a>
+                        </legend>
+
+                        <div class="collapse in text-center" id="panel1">
+                            <div class="form-group">
+                                <label class="control-label">{{ lang('entry_status') }}</label>
+                                <div class="checkbox checkbox-switchery">
+                                    <label>
+                                        <input type="checkbox" onchange="changeStatus(this);" name="d_social_login_settings[status]" class="switchery" {{ setting['status'] in ['1', 1, 'on'] ? 'checked' }}>
+                                        <span class="switchery-status">{{ setting['status'] in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                    </label>
+                                </div>
+                                <span class="help-block"></span>
+                            </div>
+                        </div>
+                    </fieldset>
+                </div>
+            </div>
+        </div>
+        <!-- End of Status -->
+
+        <!-- Providers -->
+
+
+        <div class="col-md-9">
+            <div class="panel panel-flat">
+                <div class="panel-body">
+                    <fieldset>
+                        
+                        <legend class="text-semibold">
+                            <i class="fas fa-check-circle fa-lg position-left"></i>
+                            {{ lang('tab_providers') }}
+                            <a class="control-arrow" data-toggle="collapse" data-target="#providers-panel">
+                                <i class="icon-circle-down2"></i>
+                            </a>
+                        </legend>
+
+                            {% for key, provider in providers %}
+                                <div class="collapse in row" id="providers-panel">
+                                <!-- Hidden Field -->
+                                <input type="hidden" name="d_social_login_settings[providers][{{ key }}][id]" value="{{ provider['id'] }}" {{ provider['id'] == 'linkedin' or provider['id'] == 'yahoo' ? 'style="display: none;"' : '' }} />
+                                <!-- /Hidden Field -->
+
+                                <!-- Title -->
+                                <h5 {{ provider['id'] == 'linkedin' or provider['id'] == 'yahoo' ? 'style="display: none;"' : '' }} class="text-center"><i class="icon-{{ provider['id'] }}"></i> {{ lang('text_' ~ provider['id']) }} {{ lang('text_app_settings') }} </h5>
+                                <!-- /Title -->
+
+                                {% for k, v in provider['keys'] %}
+
+                                    <div {{ provider['id'] == 'linkedin' or provider['id'] == 'yahoo' ? 'style="display: none;"' : '' }} class="form-group col-md-6 text-center">
+                                        <label for="{{ provider['id'] ~ k }}" class="control-label"> {{ lang('text_app_' ~ k) }}</label>
+                                        <input type="text" class="form-control" id="{{ provider['id'] ~ k }}" name="d_social_login_settings[providers][{{ key }}][keys][{{ k }}]" value="{{ v }}">
+                                    </div>
+                                {% endfor %}
+
+                                {% if provider['scope'] %}
+                                    <div {{ provider['id'] == 'linkedin' or provider['id'] == 'yahoo' ? 'style="display: none;"' : '' }} class="form-group col-md-6 text-center">
+                                        <label for="{{ provider['id'] }}_scope" class="control-label"> {{ lang('text_app_scope') }}</label>
+                                        <input type="text" class="form-control" id="{{ provider['id'] }}_scope" name="{{ id }}_settings[providers][{{ key }}][scope]" value="{{ provider['scope'] }}">
+                                    </div>
+                                {% endif %}
+
+                                </div>
+                                <hr {{ provider['id'] == 'linkedin' or provider['id'] == 'yahoo' ? 'style="display: none;"' : '' }} style="border: 1px solid #e8e8e8; width: 100%;">
+                            {% endfor %}
+                    </fieldset>
+                </div>
+            </div>
+        </div>
+        <!-- /Providers -->
+
+        <!-- Fields -->
+        <div class="col-md-9 col-md-offset-3">
+            <div class="panel panel-flat">
+                <div class="panel-body">
+                    <fieldset>
+                        
+                        <legend class="text-semibold">
+                            <i class="fas fa-check-circle fa-lg position-left"></i>
+                            {{ lang('tab_basic') }}
+                            <a class="control-arrow" data-toggle="collapse" data-target="#fields-panel">
+                                <i class="icon-circle-down2"></i>
+                            </a>
+                        </legend>
+
+                        <div class="collapse in" id="fields-panel">
+                            <!-- Newsletter -->
+                            <div class="form-group col-md-6 text-center">
+                                <label class="control-label">{{ lang('entry_newsletter') }}</label>
+                                <div class="checkbox checkbox-switchery">
+                                    <label>
+                                        <input type="checkbox" onchange="changeStatus(this);" name="d_social_login_settings[newsletter]" class="switchery" {{ setting['newsletter'] in ['1', 1, 'on'] ? 'checked' }}>
+                                        <span class="switchery-status">{{ setting['newsletter'] in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                    </label>
+                                </div>
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Newsletter -->
+                            <!-- Customer Group -->
+                            <div class="form-group col-md-6">
+                                <label for="d_social_login_settings[customer_group]" class="control-label">{{ lang('entry_customer_group') }}</label>
+                                <select name="d_social_login_settings[customer_group]" id="d_social_login_settings[customer_group]" class="form-control">
+                                    {% for customer_group in customer_groups %}
+                                        <option value="{{ customer_group['customer_group_id'] }}" {% if setting['customer_group'] == customer_group['customer_group_id'] %} selected {% endif %}> 
+                                            {{ customer_group['name'] }} 
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Customer Group -->
+                            <!-- Return Page URL-->
+                            <div class="form-group col-md-6">
+                                <label class="control-label">{{ lang('entry_return_page_url') }}</label>
+                                <input type="text" class="form-control" name="{{ id }}_settings[return_page_url]" value="{{ setting['return_page_url'] }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Return Page URL-->
+                            <!-- Background image-->
+                            <div class="form-group col-md-6">
+                                <label class="control-label">{{ lang('text_background_img') }}</label>
+                                {{ uploader.image({ 'imageName': 'd_social_login_settings[background_img]', 'imagePath': setting['background_img'], 'thumbPath': background_img_thumb }) }}
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Background image-->
+                        </div>
+                    </fieldset>
+                </div>
+            </div>
+        </div>
+        <!-- End of Fields -->
+
+        <!-- Buttons -->
+        <div class="col-md-9 col-md-offset-3">
+            <div class="panel panel-flat">
+                <div class="panel-body">
+                    <fieldset>
+                        
+                        <legend class="text-semibold">
+                            <i class="fas fa-check-circle fa-lg position-left"></i>
+                            {{ lang('tab_buttons') }}
+                            <a class="control-arrow" data-toggle="collapse" data-target="#buttons-panel">
+                                <i class="icon-circle-down2"></i>
+                            </a>
+                        </legend>
+
+                        <style type="stylesheet">
+
+                            .dbl{
+
+                                display:block;
+                            }
+
+                        </style>
+
+                        <div class="collapse in" id="buttons-panel">
+                            {% for key, provider in providers %}
+                            <div class="sortable row dbl" {{ provider['id'] == 'linkedin' or provider['id'] == 'yahoo' ? 'style="display: none;"' : '' }}>
+                                <!-- Provider Icon -->
+                                    <div class="form-group col-md-3">
+                                        <h5><label for="d_social_login_settings_providers_{{ key }}_enabled"><i class="icon-{{ provider['id'] }}"></i> &nbsp; {{ provider['id']|capitalize }}</label></h5>
+                                        <span class="help-block"></span>
+                                    </div>
+                                    <!-- /Provider Icon -->
+                                    <!-- Provider Status -->
+                                    <div class="form-group col-md-8" style="padding-top: 15px;">
+                                        <div class="checkbox checkbox-switchery">
+                                            <label>
+                                                <input type="checkbox" onchange="changeStatus(this);" name="d_social_login_settings[providers][{{ key }}][enabled]" class="switchery" {{ provider['enabled'] in ['1', 1, 'on'] ? 'checked' }}>
+                                                <span class="switchery-status">{{ provider['enabled'] in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                            </label>
+                                        </div>
+                                        <span class="help-block"></span>
+                                    </div>
+                                    <!-- /Provider Status -->
+                                    <!-- Button Color -->
+                                    <div class="form-group col-md-3" style="padding-top: 10px; display: none;">
+                                        <label>{{ lang('text_background_color') }}</label>
+                                        <input type="hidden" name="d_social_login_settings[providers][{{ key }}][background_color]" class="color-picker" value="{{ provider['background_color'] }}">
+                                        <label>{{ lang('text_background_color_active') }}</label>
+                                        <input type="hidden" name="d_social_login_settings[providers][{{ key }}][background_color_active]" class="color-picker" value="{{ provider['background_color_active'] }}">
+                                    </div>
+                                    <!-- /Button Color -->
+                                    <!-- Icons text -->
+                                    <div class="form-group col-md-4" style="padding-top: 10px; display: none;">
+                                        <input type="text" name="d_social_login_settings[providers][{{ key }}][icon]" value="{{ provider['icon'] }}" class="form-control">
+                                        <span class="help-block"></span>
+                                    </div>
+                                    <!-- /Icons text -->
+                                    <!-- Sort -->
+                                    <div class="form-group col-md-1 text-right" style="padding-top: 15px;">
+                                        <span class="icon-three-bars sort-item"></span>
+                                    </div>
+                                    <!-- /Sort -->
+
+                                </div>
+                                <hr style="border: 1px solid #e8e8e8; width: 100%; {{ provider['id'] == 'linkedin' or provider['id'] == 'yahoo' ? 'display: none;' : '' }} " >
+                            {% endfor %}
+                        </div>
+                    </fieldset>
+                </div>
+            </div>
+        </div>
+        <!-- /Buttons -->
+
+        <!-- Social Fields -->
+        <div class="col-md-9 col-md-offset-3">
+            <div class="panel panel-flat">
+                <div class="panel-body">
+                    <fieldset>
+                        
+                        <legend class="text-semibold">
+                            <i class="fas fa-check-circle fa-lg position-left"></i>
+                            {{ lang('tab_fields') }}
+                            <a class="control-arrow" data-toggle="collapse" data-target="#social-fields-panel">
+                                <i class="icon-circle-down2"></i>
+                            </a>
+                        </legend>
+
+                        <div class="collapse in" id="social-fields-panel">
+                            {% for key, field in fields %}
+                                <div class="sortable row" style="display:block;">
+                                    <!-- Field Name -->
+                                    <div class="form-group col-md-3">
+                                        <h6 class="control-label"> <label for="status_{{ key }}">{{ lang('text_' ~ key) }}</label> </h6>
+                                    </div>
+                                    <!-- /Field Name -->
+
+                                    <!-- Status -->
+                                    <div class="form-group col-md-4" style="padding-top: 15px;">
+                                        <div class="checkbox checkbox-switchery">
+                                            <label>
+                                                <input type="checkbox" id="status_{{ key }}" onchange="changeStatus(this);" name="d_social_login_settings[fields][{{ key }}][enabled]" class="switchery" {{ field['enabled'] in ['1', 1, 'on'] ? 'checked' }}>
+                                                <span class="switchery-status">{{ field['enabled'] in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                            </label>
+                                        </div>
+                                        <span class="help-block"></span>
+                                    </div>
+                                    <!-- /Status -->
+
+                                    <!-- Mask -->
+                                    <div class="form-group col-md-4" style="padding-top: 10px;">
+                                        {% if field['mask'] %}
+                                            <input type="text" name="d_social_login_settings[fields][{{ key }}][mask]" value="{{ field['mask'] }}" class="form-control" data-popup="tooltip" title="{{ lang('text_mask') }}">
+                                        {% endif %}
+                                    </div>
+                                    <!-- /Mask -->
+
+                                    <!-- Sort -->
+                                    <div class="form-group col-md-1 text-right" style="padding-top: 15px;">
+                                        <span class="icon-three-bars sort-item"></span>
+                                    </div>
+                                    <!-- /Sort -->
+
+                                    <!-- Hidden Fields ? -->
+                                    <input type="hidden" name="d_social_login_settings[fields][{{ key }}][sort_order]" class="sort-value" value="{{ field['sort_order'] }}" />
+                                    <input type="hidden" name="d_social_login_settings[fields][{{ key }}][type]"  value="{{ field['type'] }}" />
+                                    <input type="hidden" name="d_social_login_settings[fields][{{ key }}][id]"   value="{{ key }}" />
+                                    <!-- /Hidden Fields ? -->
+
+                                </div>
+                                
+                                <hr style="border: 1px solid #e8e8e8; width: 100%;">
+    
+                            {% endfor %}
+                        </div>
+                    </fieldset>
+                </div>
+            </div>
+        </div>
+        <!-- /Social Fields -->
+
+    </form>
+    <!-- End Form -->
+
+<!-- Lower Buttons -->
+{% include "includes/buttons_bottom.expand" %}
+<!-- End Lower Buttons -->
+<script>
+    $(document).ready(function() {
+        $('select').select2();
+        $('.touchspinney').TouchSpin({
+            'postfix': '{{ current_currency_code }}',
+            'decimals': 2,
+        });
+
+        $('#buttons-panel, #social-fields-panel').sortable({
+            placeholder: "ui-state-highlight",
+            helper:'clone'
+        });
+
+        switchery();
+        $('.color-picker').colorpicker({
+            parts: 'simple',
+            showOn: 'both',
+            buttonColorize: true,
+            showNoneButton: true,
+            alpha: true,
+            colorFormat: '#HEX'
+        });
+
+        $("#status_zone_id").change(function(){
+        if($(this).is(":checked") && !($("#status_country_id").is(":checked"))){
+                    $("#status_country_id").click();
+                    $("#status_country_id").attr("checked","checked");
+                }
+        });
+
+
+    });
+</script>
+<script>
+    function switchery()
+    {
+        if (Array.prototype.forEach)
+        {
+            var elems = Array.prototype.slice.call(document.querySelectorAll('.switchery'));
+            elems.forEach(function(html) {
+                var switchery = new Switchery(html);
+            });
+        }
+        else {
+            var elems = document.querySelectorAll('.switchery');
+            for (var i = 0; i < elems.length; i++) {
+                var switchery = new Switchery(elems[i]);
+            }
+        }
+
+        // $('.switch').bootstrapSwitch();
+        $('[data-popup="tooltip"]').tooltip();
+    }
+
+    function changeStatus(checkbox)
+    {
+        var self = $(checkbox);
+        var switch_status = self.siblings('.switchery-status');
+
+        if ( self.is(':checked') )
+        {
+            switch_status.html("{{ lang('text_enabled') }}");
+        }
+        else
+        {
+            switch_status.html("{{ lang('text_disabled') }}");
+        }
+    }
+</script>
+{% endblock %}

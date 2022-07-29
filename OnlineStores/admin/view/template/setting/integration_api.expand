@@ -1,0 +1,189 @@
+<table id="datatable-api" class="table">
+    <thead>
+    <tr>
+        <th></th>
+        <th>UserId</th>
+        <th>Creation Date</th>
+        <th>Status</th>
+        <th></th>
+    </tr>
+    </thead>
+</table>
+
+<script>
+    var dt;
+    $(document).ready(function() {
+
+        dt = $('#datatable-api').DataTable({
+            buttons: [
+            ],
+            ajax: '{{ link('setting/integration/api') }}',
+            language: locales['dt_language'],
+            columns: [
+                {
+                    class: "details-control",
+                    orderable: false,
+                    data: null,
+                    width: "50px",
+                    defaultContent: "<button class='btn btn-default'><i class='fa fa-eye position-left'></i> Show Token</button>"
+                },
+                {data: "client_id"},
+                {data: "creation_date"},
+                {
+                    data: "client_status",
+                    width: "30px"
+                },
+                {
+                    //orderable: false,
+                    data: "id",
+                    width: "50px",
+                    //defaultContent: "<button class='btn btn-danger'><i class='fa fa-trash'></i> Remove</button>"
+                },
+            ],
+            "order": [[2, "desc"]],
+        columnDefs: [{
+            targets: 3,
+            orderable: false,
+            render: function (data, type, row) {
+                //console.log(row);
+                    return `<div class="checkbox checkbox-switchery  no-margin">
+                        <label>
+                            <input type="checkbox" onchange="updateApiClientStatus('` + row.id + `', this.checked);" class="switchery" `+ (data == '1' ? 'checked' : '') +`>
+                            <span class="switchery-status">` + (data == '1' ? locales['switch_text_enabled'] : locales['switch_text_disabled']) + `</span>
+                        </label>
+                    </div>`;
+                }
+            },
+            {
+                targets: 4,
+                orderable: false,
+                render: function (data, type, row) {
+                    //console.log(row);
+                    return `<button class='btn btn-default' onclick="removeApiClient('` + data + `')"><i class='fa fa-trash position-left'></i> Remove</button>`;
+                    }
+            }]
+        });
+
+        var detailRows = [];
+        $('#datatable-api tbody').on('click', 'tr td.details-control', function () {
+            var tr = $(this).closest('tr');
+            var row = dt.row(tr);
+            var idx = $.inArray(tr.attr('id'), detailRows);
+
+            if (row.child.isShown()) {
+                tr.removeClass('details');
+                row.child.hide();
+
+                // Remove from the 'open' array
+                detailRows.splice(idx, 1);
+            }
+            else {
+                tr.addClass('details');
+                row.child(format(row.data())).show();
+
+                // Add to the 'open' array
+                if (idx === -1) {
+                    detailRows.push(tr.attr('id'));
+                }
+            }
+        });
+
+        // On each draw, loop over the `detailRows` array and show any child rows
+        dt.on('draw', function () {
+            $.each(detailRows, function (i, id) {
+                $('#' + id + ' td.details-control').trigger('click');
+            });
+
+            $(".switch").bootstrapSwitch();
+            if (Array.prototype.forEach) {
+                var elems = Array.prototype.slice.call(document.querySelectorAll('.switchery'));
+                elems.forEach(function(html) {
+                    var switchery = new Switchery(html);
+                    //debugger;
+                });
+            }
+            else
+            {
+                var elems = document.querySelectorAll('.switchery');
+                for (var i = 0; i < elems.length; i++) {
+                    var switchery = new Switchery(elems[i]);
+                }
+            }
+
+            $(".switchery").on('change', function(e) {
+                var status = this.checked ? locales['switch_text_enabled'] : locales['switch_text_disabled'];
+                $(this).parent().children(".switchery-status").text(status);
+            });
+
+        });
+
+        function format(d) {
+            var ret = `<div class="form-group">
+                        <label class="control-label col-lg-2">ClientId</label>
+                        <div class="col-lg-10">
+                            <div class="input-group">
+                                <input type="text" class="form-control" onClick="this.setSelectionRange(0, this.value.length)" style="text-align: left; direction: ltr;" readonly="readonly" value="` + d.client_id + `">
+                                <span class="input-group-btn">
+                                    <button class="btn btn-default btn-clipboard" data-clipboard-text="` + d.client_id + `" type="button"><i class="icon-copy3 position-left"></i> Copy</button>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label col-lg-2">Token</label>
+                        <div class="col-lg-10">
+                            <div class="input-group">
+                                <input type="text" class="form-control" onClick="this.setSelectionRange(0, this.value.length)" style="text-align: left; direction: ltr;" readonly="readonly" value="` + d.client_secret + `">
+                                <span class="input-group-btn">
+                                    <button class="btn btn-default btn-clipboard" data-clipboard-text="` + d.client_secret + `" type="button"><i class="icon-copy3 position-left"></i> Copy</button>
+                                </span>
+                            </div>
+                        </div>
+                    </div>`;
+            return ret;
+        }
+
+        $('.dataTables_length select').select2({
+            minimumResultsForSearch: Infinity,
+            width: 'auto'
+        });
+    });
+
+    function updateApiClientStatus(clientId, status) {
+        //alert(clientId + ": " + (status ? 1 : 0));
+        var newStatus = (status ? 1 : 0);
+        ajax("{{ link("setting/integration/api_updateTokenStatus") }}", {clientId: clientId, status: newStatus});
+    }
+
+    function removeApiClient(clientId) {
+        //alert(clientId);
+        confirmMessage(function() {
+            ajax("{{ link("setting/integration/api_removeToken") }}", {clientId: clientId}, function (res) {
+                reloadApiDT();
+            });
+        });
+    }
+
+    function reloadApiDT() {
+        dt.ajax.reload();
+    }
+
+    function generateToken() {
+        ajax("{{ link("setting/integration/api_generateToken") }}", {}, function(res) {
+            reloadApiDT();
+        });
+    }
+    function update_webhook()
+    {
+        let config_webhook_url = $("#config_webhook_url").val();
+        let order_webhook_url = $("#order_webhook_url").val();
+        ajax(
+            "{{ link("setting/integration/update_webhook_url") }}",
+            {
+                config_webhook_url: config_webhook_url,
+                order_webhook_url: order_webhook_url
+            },
+            function (res) {reloadApiDT();}
+        );
+    }
+</script>

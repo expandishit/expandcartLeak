@@ -1,0 +1,36 @@
+<?php
+
+$_['page_title'] = 'Checkout';
+$_['heading_title'] = 'Checkout';
+$_['upgrade_to'] = 'Upgrade to';
+$_['billed_title'] = 'How do you like to be billed?';
+$_['hint_monthly'] = 'M';
+$_['billed_monthly'] = 'To be Billed monthly';
+$_['monthly'] = 'Monthly';
+$_['hint_yearly'] = 'Y';
+$_['billed_yearly'] = 'When billed yearly';
+$_['yearly_offer'] = 'save up to';
+$_['yearly'] = 'Yearly';
+$_['billed_once'] = 'Billed Once';
+$_['pay_title'] = 'How do you want to pay?';
+$_['credit_title'] = 'Credit or debit card';
+$_['read_terms'] = 'By continuing you agree to the';
+$_['terms_of_services'] = 'Terms of Services';
+$_['terms_link'] = 'https://expandcart.com/en/terms-of-service/';
+$_['have_discount_code'] = 'Have discount code?';
+$_['code_placeholder'] = 'Enter your discount code';
+$_['btn_pay'] = 'Pay';
+$_['btn_pay_now'] = 'Pay Now';
+$_['enter_discount_code'] = 'Enter your discount code';
+$_['money_back'] = '7 days money-back guranteed';
+$_['btn_apply'] = 'Apply';
+$_['submit_disabled'] = 'please accept terms of service first';
+$_['click_to_continue'] = 'Please Click here to continue';
+$_['money_back_guarantee'] = 'Unconditional money-back guarantee for 7 days';
+$_['details'] = 'Details';
+$_['grow_your_business'] = 'To grow your online business';
+$_['everything_in'] = 'Everything in';
+$_[',_and'] = ', and';
+$_['you_will_charged'] = 'you will be charged';
+$_['starting_from'] = 'starting from';
+$_['to'] = 'to';

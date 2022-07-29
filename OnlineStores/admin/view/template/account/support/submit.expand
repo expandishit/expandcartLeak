@@ -1,0 +1,80 @@
+
+<div class="modal fade" id="new-ticket-modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{lang('insert_new_ticket')}}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="new-ticket-modal-errors"></div>
+                <form id="new-ticket-form" class="form" action="{{ action }}">
+                    <div class="form-group" id="ticket_subject">
+                        <label for="ticket_subject" class="control-label text-semibold">
+                            {{ lang('ticket_subject') }}
+                        </label>
+                        <input class="form-control" name="ticket[subject]" />
+                        <span class="help-block"></span>
+                        <span class="text-muted"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ticket_content" class="control-label text-semibold">
+                            {{ lang('ticket_content') }}
+                        </label>
+                        <textarea class="form-control" name="ticket[content]"></textarea>
+                        <span class="help-block"></span>
+                        <span class="text-muted"></span>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="image_link_cancel" type="button" class="btn btn-secondary" data-dismiss="modal">{{lang('button_cancel')}}</button>
+                <button id="submit-new-ticket" type="button" class="btn btn-primary">{{lang('button_save')}}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    let submissionTrigger = $('#submit-new-ticket');
+    var newTicketModal = $('#new-ticket-modal');
+    let newTicketForm = $('#new-ticket-form');
+    let newTicketModalErrors = $('#new-ticket-modal-errors');
+
+    submissionTrigger.click(() => {
+
+        newTicketModalErrors.html('');
+        submissionTrigger.attr('disabled', true);
+
+        $.ajax({
+            url: newTicketForm.attr('action'),
+            data: newTicketForm.serialize(),
+            method: 'POST',
+            dataType: 'JSON',
+            success: (r) => {
+                if (typeof r.status != 'undefined' && r.status == 'OK') {
+                    window.location.reload();
+                    return;
+                }
+
+                for (er of r.errors) {
+                    newTicketModalErrors.append(`<div class="alert alert-danger">${er}</div>`);
+                }
+
+                submissionTrigger.attr('disabled', false);
+            },
+            error: (r) => {
+                for (er of r.responseJSON.errors) {
+                    newTicketModalErrors.append(`<div class="alert alert-danger">${er}</div>`);
+                }
+
+                submissionTrigger.attr('disabled', false);
+            }
+        });
+    });
+});
+</script>

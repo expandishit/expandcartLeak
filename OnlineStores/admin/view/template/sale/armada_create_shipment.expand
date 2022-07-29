@@ -1,0 +1,294 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block title %}
+    {{ lang('armada_create_shipment') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+    {% if shipment_details is not defined %}
+        <a onclick="$('#armada-shipment').submit()" class="button btn btn-primary">{{ lang('armada_create_shipment') }}</a>
+    {% endif %}
+{% endblock headelements %}
+
+{% block content %}
+    <form enctype="multipart/form-data" method="post" class="form" id="armada-shipment" novalidate="novalidate">
+
+        <div class="row">
+            <!-- Customer Details -->
+            <div class="col-md-6">
+                <div class="panel panel-white">
+                    <div class="panel-heading">
+                        <h6 class="panel-title"><span class="text-bold">{{ shipment_details is defined ? lang('armada_shipment_details') : lang('armada_customer_details') }}</span></h6>
+                        <div class="heading-elements not-collapsible">
+                            <ul class="icons-list">
+                                <li><a data-action="collapse" class=""></a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="collapse in" id="fields-panel">
+                            
+                            {% if shipment_details is defined %}
+
+                                <table class="table table-bordered">
+                                    <tr>
+                                        <td>{{ lang('armada_code') }}</td>
+                                        <td>{{ shipment_details['code'] }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>{{ lang('armada_delivery_fees') }}</td>
+                                        <td>{{ shipment_details['deliveryFee'] }} {{ lang('armada_kwd') }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>{{ lang('armada_shipment_amount') }}</td>
+                                        <td>{{ shipment_details['amount'] }} {{ lang('armada_kwd') }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>{{ lang('armada_address') }}</td>
+                                        <td>{{ shipment_details['customerAddress'] }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>{{ lang('armada_customer_name') }}</td>
+                                        <td>{{ shipment_details['customerName'] }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>{{ lang('armada_customer_phone') }}</td>
+                                        <td>{{ shipment_details['customerPhone'] }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>{{ lang('armada_status') }}</td>
+                                        <td>{{ shipment_details['orderStatus'] }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>{{ lang('armada_est_distance') }}</td>
+                                        <td>{{ shipment_details['estimatedDistance'] / 1000 }} {{ lang('armada_km') }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>{{ lang('armada_est_duration') }}</td>
+                                        <td>{{ ((shipment_details['estimatedDuration'] / 60) % 60)|round(1, 'floor') }} {{ lang('armada_minute') }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>{{ lang('armada_created_at') }}</td>
+                                        <td>{{ shipment_details['orderCreatedAt'] }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>{{ lang('armada_currency') }}</td>
+                                        <td>{{ shipment_details['currency'] }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>{{ lang('armada_track_shipment') }}</td>
+                                        <td><a class="btn btn-primary" target="_blank" href="{{ shipment_details['trackingLink'] }}">{{ lang('armada_track') }}</a></td>
+                                    </tr>
+                                    <tr>
+                                        <td>{{ lang('armada_qr_code') }}</td>
+                                        <td><img src="{{ shipment_details['qrCodeLink'] }}" style="width:120px"/></td>
+                                    </tr>
+                                </table>
+
+                            {% else %}
+
+                                <!-- Name -->
+                                <div class="form-group col-md-6">
+                                    <label for="armada_customer_name" class="control-label">{{ lang('armada_customer_name') }}</label>
+                                    <input type="text" class="form-control" id="armada_customer_name" name="armada_customer_name" value="{{ order_info['firstname'] }} {{ order_info['lastname'] }}">
+                                </div>
+                                <!-- Name -->
+
+                                <!-- Phone -->
+                                <div class="form-group col-md-6">
+                                    <label for="armada_customer_phone" class="control-label">{{ lang('armada_customer_phone') }}</label>
+                                    <input type="text" class="form-control" id="armada_customer_phone" name="armada_customer_phone" value="{{ order_info['telephone'] }}">
+                                </div>
+                                <!-- Phone -->
+
+                                <!-- Governorate -->
+                                <div class="form-group col-md-6">
+                                    <label for="armada_customer_governorate" class="control-label">{{ lang('armada_customer_governorate') }}</label>
+                                    <select class="form-control" id="armada_customer_governorate">
+                                        <option selected disabled>{{ lang('armada_select_governorate') }}</option>
+                                        {% for zone in zones %}
+                                            {% set selected = '' %}
+                                            {% if zone['zone_id'] == order_zone_id %}
+                                                {% set selected = ' selected' %}
+                                            {% endif %}    
+                                            <option value="{{ zone['zone_id'] }}" {{ selected }}>{{  zone['name'] }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <!-- Governorate -->
+
+                                <!-- Area -->
+                                <div class="form-group col-md-6">
+                                    <label for="armada_customer_area" class="control-label">{{ lang('armada_customer_area') }}</label>
+                                    <select class="form-control" id="armada_customer_area" name="armada_customer_area">
+                                        <option selected disabled>{{ lang('armada_select_governorate_first') }}</option>
+                                    </select>
+                                </div>
+                                <!-- Area -->
+
+                                <!-- Block -->
+                                <div class="form-group col-md-6">
+                                    <label for="armada_customer_block" class="control-label">{{ lang('armada_customer_block') }}</label>
+                                    <input type="number" class="form-control" id="armada_customer_block" name="armada_customer_block" min="0">
+                                </div>
+                                <!-- Block -->
+
+                                <!-- Street -->
+                                <div class="form-group col-md-6">
+                                    <label for="armada_customer_street" class="control-label">{{ lang('armada_customer_street') }}</label>
+                                    <input type="text" class="form-control" id="armada_customer_street" name="armada_customer_street">
+                                </div>
+                                <!-- Street -->
+
+                                <!-- Building -->
+                                <div class="form-group col-md-6">
+                                    <label for="armada_customer_building" class="control-label">{{ lang('armada_customer_building') }}</label>
+                                    <input type="number" class="form-control" id="armada_customer_building" name="armada_customer_building" min="1">
+                                </div>
+                                <!-- Building -->
+
+                                <!-- Payment Amount -->
+                                <div class="form-group col-md-6">
+                                    <label for="armada_payment_amount" class="control-label">{{ lang('armada_payment_amount') }}</label>
+                                    <input type="number" class="form-control" id="armada_payment_amount" name="armada_payment_amount" value="{{ order_info['total'] }}" min="0">
+                                </div>
+                                <!-- Payment Amount -->
+
+                            {% endif %}
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Customer Details -->
+
+            <!-- Products Details -->
+            <div class="col-md-6">
+                <div class="panel panel-white">
+                    <div class="panel-heading">
+                        <h6 class="panel-title"><span class="text-bold">{{ lang('armada_products_details') }}</span></h6>
+                        <div class="heading-elements not-collapsible">
+                            <ul class="icons-list">
+                                <li><a data-action="collapse" class=""></a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="collapse in" id="fields-panel">
+                            <table class="table table-bordered table-striped">
+                                <thead>
+                                    <th>{{ lang('armada_product_name') }}</th>
+                                    <th>{{ lang('armada_product_quantity') }}</th>
+                                </thead>
+                                <tbody>
+                            
+                                    {% set qty = 0 %}
+
+                                    {% for product in products %}
+                                    
+                                        <tr id="item{{ product['order_product_id'] }}" style="width: 100%;">
+
+                                            <td>
+                                                <span title="{{ product['name'] }}">{{ product['name'] }}</span>
+                                                <input type="hidden" value="{{ product['quantity'] }}" name="product[{{ product['order_product_id'] }}]">
+                                            </td>
+
+                                            <td>
+                                            
+                                                <label class="label label-success" style="padding: 10px 20px;"> {{ product['quantity'] }} </label>
+
+                                                <input type="hidden" value="{{ product['quantity'] }}" name="{{ op['order_product_id'] }}" class="valid" readonly>
+
+                                                <input type="hidden" value="{{ product['price'] }}" name="armada_items_base_price_{{ op['order_product_id'] }}">
+                                                <input type="hidden" value="{{ product['weight'] }}" name="armada_items_base_weight_{{ op['order_product_id'] }}">
+                                                <input type="hidden" value="{{ product['quantity'] }}" name="armada_items_total_{{ op['order_product_id'] }}">
+                                            </td>
+                                        </tr>
+
+                                        {% set qty = qty + product['quantity'] %}
+
+                                    {% endfor %}
+                                
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                {% if shipment_details is defined %}
+                    <div class="panel panel-white">
+                        <div class="panel-heading">
+                            <h6 class="panel-title"><span class="text-bold">{{ lang('armada_location') }}</span></h6>
+                            <div class="heading-elements not-collapsible">
+                                <ul class="icons-list">
+                                    <li><a data-action="collapse" class=""></a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="panel-body">
+                            <div class="collapse in" id="fields-panel">
+                                <div id="map" style="height:350px"></div>
+                                <script>
+                                    function initMap() {
+                                        var uluru = {lat: {{ shipment_details['customerLocation']['latitude'] }}, lng: {{ shipment_details['customerLocation']['longitude'] }};
+                                        var map = new google.maps.Map(
+                                            document.getElementById('map'), {zoom: 15, center: uluru}
+                                        );
+                                        var marker = new google.maps.Marker({position: uluru, map: map});
+                                    }
+                                </script>
+                                <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDVcts20BdnqMJ_KfnHy3JTCxfxYGvjH0M&callback=initMap"></script>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+
+            </div>
+            <!-- Products Details -->
+        </div>
+
+        {% if shipment_details is not defined %}
+            <div class="row">
+                <div class="col-md-12 text-right">
+                    <hr/>
+                    <a onclick="$('#armada-shipment').submit()" class="button btn btn-primary">{{ lang('armada_create_shipment') }}</a>
+                </div>
+            </div>
+        {% endif %}
+
+    </form>        
+<script>
+            
+$(function(){
+
+    var armadaCustomerGovernorate = $('#armada_customer_governorate'),
+        armadaCustomerArea  = $('#armada_customer_area');
+        
+     function fileAreasData(){
+         
+         var _this = $(this),
+             zoneId = _this.val();
+         
+         $.ajax({
+             type:'GET',
+             url: '{{ link('sale/armada_create_shipment/getZoneAreas') }}',
+             data: {zone_id:zoneId},
+             dataType:'JSON',
+             success:function(response){
+             var options = response.map(data => `<option value ='${data.name_en}' ${ (data.area_id == {{order_area_id}}) ? ' selected' : ''}>${data.name_{{language_code}} }</option>`);
+              armadaCustomerArea.html(options);
+             }
+         });        ``
+     }
+     
+     armadaCustomerGovernorate.on('change',fileAreasData);
+     armadaCustomerGovernorate.trigger('change');
+    });        
+</script>
+{% endblock content %}

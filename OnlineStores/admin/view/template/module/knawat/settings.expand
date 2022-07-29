@@ -1,0 +1,236 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+
+{% block title %}
+    {{ lang('heading_title') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block content %}
+
+<style>
+    .content-wrapper {
+        background-color: #f8f9ff;
+    }
+
+    .page-header-default {
+        background-color: transparent;
+    }
+    .page-header-content + .breadcrumb-line {
+        border: 0;
+    }
+
+    .page-header {
+        margin: 0 60px;
+    }
+
+    .breadcrumb-line {
+        border-bottom: 1px solid #e0ddef !important;
+        margin: 0 32px;
+        /* border-top: 0; */
+        margin-bottom: 30px !important;
+    }
+
+    .page-holder-center {
+        margin: 0 70px;
+    }
+
+    .lable-light-green {
+        background: #c5eee8;
+        padding: 1px 10px;
+        border-radius: 25px;
+    }
+
+    .btn-light-blue {
+        background: #dff4fd !important;
+        color: #000 !important;
+        border: none;
+    }
+
+    @media (max-width: 768px) {
+        .page-header {
+            margin: 0;
+        }
+
+        .page-holder-center {
+            margin: 0 0px;
+        }
+    }
+
+</style>
+
+    {% if success %}
+        <div class="alert alert-success alert-styled-left alert-bordered">
+            <button type="button" class="close" data-dismiss="alert"><span>×</span><span class="sr-only">Close</span>
+            </button>
+            {{ success }}
+        </div>
+    {% endif %}
+
+    {% if knawat is defined %}
+
+    <div class="page-holder-center">
+        <form action="{{ action }}" method="post" class="form needs-validation">
+            <div class="row">
+                <div class="col-sm-3">
+                    <p class="bold font-15 mb-10 mt-10">{{ lang('text_product_management') }}</p>
+                    <p class="font-color-light font-13 mb-10">{{ lang('text_product_management_desc') }}</p>
+                </div>
+
+                <div class="col-sm-9">
+                    <div class="panel panel-white">
+                        <div class="panel-body">
+                            {% if (sync and sync['sync_status'] == 0) %}
+                            <p class="font-color-mindark">{{ lang('async_in_progress') }}</p>
+                            {% else %}
+                            {% if (supported_knawat_currency) %}
+                            <div class="d-flex j-content-between ai-center">
+                                <h6 class="m-bold">{{ lang('text_currently_have') }}<span id="productsCount" class="lable-light-green">{{ products_count }}</span>{{ lang('text_products') }}</h6>
+                                <button type="button" data-spinner-color="#000" class="btn btn-primary btn-light-blue s-bold btn-ladda btn-ladda-spinner" data-style="zoom-in" id="updateKnawatProducts"><span class="ladda-label">
+                                    {{ lang('text_update_products') }}
+                                     </span><span class="ladda-spinner"></span>
+                                 </button>
+                            </div>
+                            <p class="font-color-mindark">{{ lang('text_product_management_sub_desc') }}</p>
+                            {% else %}
+                            <p class="font-color-mindark">Unsupported currency</p>
+                            {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="row">
+                <div class="col-sm-3">
+                    <p class="bold font-15 mb-10 mt-10">{{ lang('text_order_automation') }}</p>
+                        <p class="font-color-light font-13 mb-10">{{ lang('text_order_automation_desc') }}</p>
+                </div>
+                <div class="col-sm-9">
+                    <div class="panel panel-white">
+                        <div class="panel-body">
+
+                            <div class="d-flex j-content-between ai-center">
+                                <h6 class="m-bold">{{ lang('text_currently_have') }} <span class="lable-light-green">{{ orders_count }}</span>  {{ lang('text_onprogress_orders') }}</h6>
+
+                                 <a href="{{ knawat_orders_url }}" class="btn btn-light-blue s-bold btn-primary" target="_blank">
+                                        {{ lang('text_track_order') }}
+                                </a>
+                            </div>
+                            <p class="font-color-mindark">{{ lang('text_order_automation_sub_desc') }}</p>
+                        </div>
+                        <hr>
+                        <div class="panel-body">
+                                    <div class="form-group">
+                                        <label class="control-label">{{ lang('text_send_order_status') }}</label>
+                                        <select type="text" class="form-control select" name="push_order_status_id">
+                                            <option value="" selected>Select order status</option>
+                                            {% for order_status in order_statuses %}
+                                                <option value="{{ order_status['order_status_id'] }}"
+                                                        {% if knawat['push_order_status_id'] == order_status['order_status_id'] %}
+                                                            selected
+                                                        {% endif %}
+                                                >{{ order_status['name'] }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-3"></div>
+                <div class="col-sm-9">
+                    <div class="d-flex j-content-between ai-center">
+                        <a id="uninstallBtn" class="font-color-light m-bold">{{ lang('text_uninstall') }}</a>
+                        <button type="button" class="btn btn-primary btn-ladda btn-ladda-spinner top-save-button ladda-button" data-style="zoom-in" onclick="$('.form').submit();"><span class="ladda-label">
+                            <i class="far fa-save fa-lg position-left"></i> {{ lang('text_save') }}
+                        </span><span class="ladda-spinner"></span></button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    {% else %}
+        <div class="alert alert-warning"><i class="fa fa-exclamation-circle"></i>
+            {{ lang('extension_not_active') }}
+        </div>
+
+    {% endif %}
+{% endblock content %}
+
+{% block scripts %}
+
+
+    <script>
+        function upgradeKnawat(){
+            $.ajax({
+                type: "POST",
+                url: "{{ update_version_url }}",
+                dataType: "json",
+                success: function (res) {
+                    if (res.success == 1) {
+                        location.reload();
+                    }else{
+                        alert("faild");
+                    }
+                }
+            });
+        }
+        var knawat_sync_products_url = '{{ knawat_sync_products_url }}';
+        $(function () {
+            $('#updateKnawatProducts').on('click', function () {
+                $.ajax({
+                    type: "POST",
+                    url: knawat_sync_products_url.replace(/&amp;/g, '&'),
+                    dataType: "json",
+                    success: function (res) {
+                        if (res.success == 1 && typeof res.redirect != 'undefined') {
+                            window.location.reload();
+                        }
+
+                        if (res.success == 1) {
+                            $('#productsCount').html(res.products_count)
+                            $("#updateKnawatProducts").removeAttr( "disabled data-loading" );
+                        }
+
+                        if (res.success == 0){
+                            displayErrors(res.error);
+                        }
+                    }
+                });
+            });
+
+
+            $('#uninstallBtn').on('click', function () {
+                $.ajax({
+                    type: 'GET',
+                    url: "{{ uninstall_url }}",
+                    dataType: 'json',
+                    data: {extension: 'knawat'},
+                    async: true,
+                    success: function(json) {
+                        if (json.success == "true") {
+                            window.location.href = "{{ cancel }}";
+                        }
+                        else {
+                            displayErrors(json.error);
+
+                            $('#disable-ps').parent().find('.server-loading').hide();
+
+                            $('#modal-disable-ps').modal('toggle');
+                        }
+                    }
+                });
+
+            });
+
+            $('.select').select2();
+        });
+    </script>
+{% endblock scripts %}

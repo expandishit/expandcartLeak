@@ -1,0 +1,175 @@
+<div id="mylerz-send-bulk-orders-modal" class="modal fade">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h5 class="modal-title">{{ lang('send_bulk_orders_to_mylerz') }}</h5>
+            </div>
+            <!-- Image loader -->
+            <div id='loader' style="display: none">
+              <img src='view/image/loader.gif' width="32" height="32">
+            </div>
+            <!-- Image loader -->
+            <form id='mylerz-send-bulk-orders-form' method='POST' action="#">
+                <div class="modal-body">
+                    <div class="modal-errors alert alert-danger hidden"></div>
+                    
+                    <div class="col-md-12">
+                        
+                        <!-- pickup_due_date -->
+                        <div class="form-group col-md-6">
+                            <label for="pickup_due_date" class="control-label">{{ lang('entry_pickup_due_date') }}</label>
+                            <input class="form-control datetimepicker" type="text" name="mylerz_pickup_due_date" id="pickup_due_date" value="{{ mylerz_pickup_due_date }}">
+                        </div>
+
+
+                        <!-- Service Name -->
+                        <div class="form-group col-md-6">
+                            <label for="service_name" class="control-label">{{ lang('entry_service_name') }}</label>
+                            <select class="form-control" name="mylerz_service_name" id="service_name">
+                                <option value="SD" selected>{{ lang('text_same_day') }}</option>
+                                <option value="ND">{{ lang('text_next_day') }}</option>
+                            </select>
+                        </div>
+
+
+                        <!-- Service Type -->
+                        <div class="form-group col-md-6">
+                            <label for="service_type" class="control-label">{{ lang('entry_service_type') }}</label>
+                            <select class="form-control" name="mylerz_service_type" id="service_type">
+                                <option value="DTD" selected>{{ lang('text_dtd') }}</option>
+                                  <option value="DTC">{{ lang('text_dtc') }}</option>
+                                  <option value="CTD">{{ lang('text_ctd') }}</option>
+                                  <option value="CTC">{{ lang('text_ctc') }}</option>
+                            </select>
+                        </div>
+
+
+                        <!-- service_category -->
+                        <div class="form-group col-md-6">
+                            <label for="service_category" class="control-label">{{ lang('entry_service_category') }}</label>
+                            <select class="form-control" name="mylerz_service_category" id="service_category">
+                                <option value="DELIVERY" selected>{{ lang('text_delivery', 'shipping/mylerz') }}</option>
+                                <option value="RETURN">{{ lang('text_return', 'shipping/mylerz') }}</option>
+                            </select>
+                        </div>  
+
+                    </div>            
+                </div>
+                <div style="clear: both"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link" data-dismiss="modal">{{ lang('text_close') }}</button>
+                    <button type="button" id="mylerz-send-bulk-orders-save-button" class="btn btn-primary">{{ lang('button_save') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style type="text/css">
+    #AnyTime--pickup_due_date {z-index:9999!important;}
+    #loader {
+      position: fixed; /* Sit on top of the page content */
+      /*display: none; /* Hidden by default */
+      width: 100%; /* Full width (cover the whole page) */
+      height: 100%; /* Full height (cover the whole page) */
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0,0,0,0.5); /* Black background with opacity */
+      z-index: 2; /* Specify a stack order in case you're using a different order for other elements */
+      cursor: pointer; /* Add a pointer on hover */
+    }
+    #loader img{
+     margin: 0;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+</style>
+
+<script type="text/javascript">
+
+    $('select').select2();
+
+    $("#pickup_due_date").AnyTime_picker({
+        format: "%Y-%m-%d %I:%i%p",
+        labelTitle: "{{ lang('text_select_datetime') }}",
+        labelHour: "{{ lang('text_hour') }}",
+        labelMinute: "{{ lang('text_minute') }}",
+        labelYear: "{{ lang('text_year') }}",
+        labelMonth: "{{ lang('text_month') }}",
+        labelDayOfMonth: "{{ lang('text_day_of_month') }}",
+    });
+
+    $('#mylerz-send-bulk-orders-modal').on('show.bs.modal', function (ev) {
+        $('#mylerz-send-bulk-orders-modal').find('.modal-errors').html('');
+        let r = $(ev.relatedTarget), c = $(ev.currentTarget);
+
+        var selectedRows = orderTable.rows('.selected').data();
+        selectedRows.each(function(item) {
+            c.find('form').append(
+                `<input type="hidden" class="mylerz_orders" name="mylerz_orders[]" value="${item.order_id}" />`
+            );
+        });
+    });
+
+    $('#mylerz-send-bulk-orders-modal').on('hide.bs.modal', function (ev) {
+        let r = $(ev.relatedTarget), c = $(ev.currentTarget);
+
+        c.find('form').find('.mylerz_orders').remove();
+    });
+
+    //Save button click event
+    $('#mylerz-send-bulk-orders-save-button').click(()=>{
+        $('#mylerz-send-bulk-orders-modal').find('.modal-errors').html('');
+        $('#mylerz-send-bulk-orders-modal').find('.modal-errors').addClass('hidden');
+
+        $.ajax({
+            url: "{{ link('sale/mylerz_shipment_order/storeMultiple') }}",
+            method: 'POST',
+            data: $('#mylerz-send-bulk-orders-form').serialize(),  
+            dataType: 'JSON',
+            beforeSend: function(){
+            // Show image container
+            $("#loader").show();
+           },
+        }).done((response)=>{
+            if (response.success == '1') {
+                orderTable.rows('.selected').deselect();
+                reloadDT();
+                $('#mylerz-send-bulk-orders-modal').modal('toggle');
+                notify('', 'success', response.success_msg);                
+                return;
+            }
+
+            //display errors
+            if(response.errors){
+                if(typeof response.errors == 'string'){
+                    let e = response.errors;
+                    $('#mylerz-send-bulk-orders-modal').find('.modal-errors').removeClass('hidden');
+                    $('#mylerz-send-bulk-orders-modal').find('.modal-errors').append(`<p>${e}</p>`);
+                }
+                else{
+                        $('#mylerz-send-bulk-orders-modal').find('.modal-errors').removeClass('hidden');
+                    let t = response.errors.warning;
+                    $('#mylerz-send-bulk-orders-modal').find('.modal-errors').append(
+                    `<p>${t}</p>`
+                    );
+                    for (const [key, value] of Object.entries(response.errors)) {
+                        if(key != 'warning'){
+                            $('#mylerz-send-bulk-orders-modal').find('.modal-errors').append(
+                            `<p>${value}</p>`
+                            );
+                        }
+                    }
+                }//else
+            }
+
+        }).always(()=>{
+            $("#loader").hide();
+        });
+    });
+</script>

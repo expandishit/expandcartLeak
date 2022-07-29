@@ -1,0 +1,243 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% import 'controls/uploader.expand' as uploader %}
+
+{% block title %}
+    {{ lang('printing_document_heading_title', 'module/printing_document') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+    {% include "includes/buttons_top.expand" %}
+{% endblock headelements %}
+
+{% block content %}
+<form action="{{ action }}" method="post" class="form">
+
+    <div class="panel panel-white">
+          <div class="panel-heading">
+              <h6 class="panel-title"><span class="text-bold">{{ text_settings }}</span></h6>
+              <div class="heading-elements not-collapsible">
+                  <ul class="icons-list">
+                      <li><a data-action="collapse" class=""></a></li>
+                  </ul>
+              </div>
+          </div>
+          <div class="panel-body">
+              <div class="collapse in" id="fields-panel">
+                     <div class="row">
+                        <!--Popup status-->
+                        <div class="col-md-4">
+                          <div class="form-group"  id="Enabled-group">
+                            <label class="control-label">
+                              {{ entry_status }}
+                            </label>
+                            <div class="checkbox checkbox-switchery no-margin">
+                              <label>
+                                    <input type="checkbox" onchange="changeStatus(this);" name="printing_document_module[status]" class="switchery" {{ printing_document_module['status'] == '1'   ? 'checked' }}>
+                                    <span class="switchery-status">
+                                      {% if printing_document_module['status'] == '1' %} {{ text_enabled }} {% else %} {{ text_disabled }} {% endif %}
+                                    </span>
+                              </label>
+                            </div>
+                            <span class="help-block"></span>
+                            <span class="text-muted"></span>
+                          </div>
+                        </div>
+                     </div>
+                     <!--End Popup status-->
+              </div>
+          </div>
+      </div>
+
+    <div class="panel panel-white">
+            <div class="panel-heading">
+                <h6 class="panel-title"><span class="text-bold">{{ text_cover_types ?? 'text_cover_types' }}</span></h6>
+                <div class="heading-elements not-collapsible">
+                    <ul class="icons-list">
+                        <li><a data-action="collapse" class=""></a></li>
+                    </ul>
+                </div>
+            </div>
+          <div class="panel-body" style="padding: 0">
+            <fieldset>
+          <table id="module" class="table table-hover">
+            <thead>
+              <tr>
+                <th>{{ text_image ?? 'text_image' }}</th>
+                <th>{{ text_name ?? 'text_name' }}</th>
+                <th>{{ text_price ?? 'text_price' }}</th>
+                <th></th>
+              </tr>
+            </thead>
+            {% set module_row = 0 %}
+            <tbody id="module-row">
+            {% for module in modules %}
+            {% set loopIndex = loop.index %}
+              <tr id="module-row{{ loopIndex }}" class="sortable">
+                  <td>
+                      {{ uploader.image({ 'name': 'printing_document_module[cover]['~ loopIndex ~'][image]', 'thumbPath': module['thumb'], 'imagePath': module['image'], 'noImage': no_image }) }}
+                  </td>
+                  <td>
+                      <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                          <div class="tab-content">
+                              {% for language in languages %}
+                                  <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}" id="langTab-{{ loopIndex }}-{{ language['language_id'] }}">
+                                      <div class="form-group" id="option_value_{{ ovKey }}_{{ language['language_id'] }}-group">
+                                          {% set val = module['name'][language['language_id']] %}
+                                          <input type="text" class="form-control" name="printing_document_module[cover][{{ loopIndex }}][name][{{ language['language_id'] }}]" value="{{ val }}"/>
+                                          <span class="help-block"></span>
+                                      </div>
+                                  </div>
+                              {% endfor %}
+                          </div>
+
+                          <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                              {% for language in languages %}
+                                  <li class="{{ loop.first ? 'active' : '' }}">
+                                      <a href="#langTab-{{ loopIndex }}-{{ language['language_id'] }}" data-toggle="tab" aria-expanded="false">
+                                          <img src="view/image/flags/{{ language['image'] }}" title="{{ language['name'] }}" class="pull-right">
+                                          <div> {{ language['name'] }}</div>
+                                      </a>
+                                  </li>
+                              {% endfor %}
+                          </ul>
+                      </div>
+                  </td>
+                  <td>
+                    <input name="printing_document_module[cover][{{ loopIndex }}][price]" value="{{ printing_document_module['cover'][ loopIndex ]['price'] }}" class="form-control  touchspin-money" type="text">
+                  </td>
+                  <td class="text-center">
+                    <a href="javascript://" onclick="removeModule('{{ loopIndex }}', true)" class="text-danger-600"><i class="icon-trash"></i></a>
+
+                    <input name="printing_document_module[cover][{{ loopIndex }}][cover_id]" value="{{ loopIndex }}" class="form-control" type="hidden">
+
+                  </td>
+              </tr>
+              {% set module_row = loopIndex + 1 %}
+              {% endfor %}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="4" class="text-right"> 
+                  <a onclick="addType();" class="btn btn-success btn-labeled btn-xs"><b><i class="icon-plus3"></i></b> {{ button_add_module ?? 'button_add_module' }}</a>
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+              
+            </fieldset>
+          </div>
+      </div>
+</form>
+
+<script type="text/javascript">
+$(document).ready(function () {
+  loadTouchPrice();
+});
+
+function loadTouchPrice(){
+    let defaultCurrency = '{{ defaultCurrency }}';
+    $('.touchspin-money').TouchSpin({
+        'postfix': defaultCurrency,
+        'decimals': 2,
+        step: 0.01,
+        min: 0,
+        max: Infinity
+    });
+}
+
+var row_value = '{{ module_row }}';
+
+function addType()
+{
+    html = '';
+    var uniqueID = ( (Math.random() * 50000) + 1);
+    var noImage = 'no_image';
+
+    html += `<tr id="module-row${row_value}">`;
+
+    html += `<td>{{ uploader.image({ 'name': 'printing_document_module[cover][][image]', 'thumbPath': no_image, 'imagePath': "", 'noImage': no_image, 'ID': "__" })|e("js") }}</td>`;
+
+    html += `
+            <td>
+                <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                    <div class="tab-content">
+                        {% for language in languages %}
+                            <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}" id="langTab-${row_value}-{{ language['language_id'] }}">
+                                <div class="form-group" id="option_value_${row_value}_{{ language['language_id'] }}-group">
+                                    <input type="text" class="form-control" name="printing_document_module[cover][${row_value}][name][{{ language['language_id'] }}]" value=""/>
+                                    <span class="help-block"></span>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                        {% for language in languages %}
+                            <li class="{{ loop.first ? 'active' : '' }}">
+                                <a href="#langTab-${row_value}-{{ language['language_id'] }}" data-toggle="tab" aria-expanded="false">
+                                    <img src="view/image/flags/{{ language['image'] }}" title="{{ language['name'] }}" class="pull-right">
+                                    <div> {{ language['name'] }}</div>
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </td>
+        `;
+
+        html += `<td>
+                <input name="printing_document_module[cover][${row_value}][price]" value="" class="form-control touchspin-money" type="text">
+            </td>`;
+
+        html += `<td>
+                <a href="javascript://" onclick="removeModule(${row_value}, true)" class="text-danger-600"><i class="icon-trash"></i></a>
+                <input name="printing_document_module[cover][${row_value}][cover_id]" value="${row_value}" class="form-control" type="hidden">
+            </td></tr>`;
+
+    html = html.replace(/printing_document_module\[cover]\[]\[image]/, 'printing_document_module[cover][' + row_value + '][image]');
+    html = html.replace(/image__/g, 'image__' + row_value + '_image');
+    html = html.replace(/thumb__/g, 'thumb__' + row_value + '_image');
+
+    $('#module-row').append(html);
+    loadTouchPrice();
+    
+    row_value++;
+}
+
+// Remove PopUp
+function removeModule(id, submitAction) {
+    confirmMessage(function () {
+        $('#module-row'+id).remove();
+        if(submitAction)
+          $('.form').submit();    
+    });
+}
+
+function changeStatus(checkbox)
+{
+    var self = $(checkbox);
+    var switch_status = self.siblings('.switchery-status');
+    var targetAttr = self.attr('data-target');
+
+    if ( self.is(':checked') )
+    {
+        switch_status.html("{{ text_enabled }}");
+        if(targetAttr)
+          $('.popups').find('.'+targetAttr).show(200);
+    }
+    else
+    {
+        switch_status.html("{{ text_disabled }}");
+        if(targetAttr)
+          $('.popups').find('.'+targetAttr).hide(200);
+    }
+}
+</script>
+{% endblock %}
+            

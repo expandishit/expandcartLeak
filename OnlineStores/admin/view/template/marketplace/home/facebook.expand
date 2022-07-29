@@ -1,0 +1,172 @@
+{% extends "base.expand" %}
+
+{% set hideHeader = true %}
+
+{% block content %}
+	<style>
+		.content-wrapper {
+			background-color: #fff;
+		}
+	</style>
+	<div class="list-wrapper empty-page">
+		<div class="content-inner-small">
+			<div class="row center-row">
+				<div class="col-12 col-md-6">
+					<p class="large-title-font theme-color-dark">
+						{{lang("fb_page_title")}}
+					</p>
+					<p class="desc-font font-color-dark">
+						{{lang("sub_title")}}
+					</p>
+					{# app price cases #}
+					{% if purchased == false %}
+						<p class="empty-price">
+							{% if (price == "$0") or isbundle %}
+								{# {{ lang('price_free') }} #}
+							{% else %}
+								{{ lang_printf('price', price) }}
+								{% if app_isTrial == 1 %}
+									<span class="hint">{{ lang_printf('trial', trial_days) }}</span>
+								{% elseif app_isTrial == 0 %}
+									<span class="hint">{{ lang_printf('trial', 7) }}</span>
+								{% else %}
+									<span class="hint">{{ lang('trial_end') }}</span>
+								{% endif %}
+							{% endif %}
+						</p>
+					{% endif %}
+					
+					<div class="btns-row">
+						{# start order btn case #}
+						{# 
+							/ if isTrial (isTrial: boolean if client on free plan)
+								=> subscripe plan popup
+							/ on plan
+								// if purchased or isbundle (purchased: app had purchased; isbundle: this app free on this plan )
+									=> install
+								// else
+									=> order now
+						 #}
+						<button class="theme-btn primary-btn" id="install_app">
+							{{lang("install")}}
+							<i class="fas fa-chevron-right ml-20 reverce" aria-hidden="true"></i>
+						</button>
+						{# end order btn case #}
+
+						{# start try trial case #}
+						{# 
+							/ if not purchased and not isbundle (purchased: app had purchased; isbundle: this app free on this plan )
+								// if app_isTrial == 0 (not tried yet)
+									=> try
+								// else app_isTrial == 1 (in try trial)
+									=> edit
+						 #}
+						 {% if (purchased == false) and (isbundle == false) %}
+						 	{% if app_isTrial == 0 %}
+							 	<button class="theme-btn primary-btn" data-toggle="modal" data-target="#modal-trial">
+									{{lang("try")}}
+								</button>
+							{% elseif app_isTrial == 1 %}
+								<a href="{{ link('module/') ~ extension }}" class="theme-btn primary-btn">
+									{{lang("edit")}}
+									<i class="fa fa-pencil-square-o reverce" aria-hidden="true"></i>
+								</a>
+							{% endif %}
+						 {% endif %}
+						 {# end try trial case #}
+					</div>
+					<p class="empty-hint">
+						{{lang('hint')}}
+					</p>
+					<a href="{{lang('guide_link')}}" class="learn-link" target="_blank">
+						{{lang("learn_guide")}}
+						<i class="fa fa-chevron-right" aria-hidden="true"></i>
+					</a>
+				</div>
+				<div class="col-12 col-md-6">
+					<img src="view/assets/images/empty-pages/instagram-facebook.png" alt="" class="w-70">
+				</div>
+			</div>
+		</div>
+	</div>
+
+    <!-- select plan modal -->
+    <div id="modal_default" class="modal fade">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h5 class="modal-title">{{ lang('text_choose_plans') }}</h5>
+                </div>
+
+                <div class="modal-body">
+                    <span>{{ lang('text_choose_plans_text') }}</span>
+                </div>
+
+                <div class="modal-footer">
+                    <a href="{{ htmlEntityDecode(packageslink) }}" type="button" class="btn btn-primary">
+						{{ lang('text_explore_plans') }}
+					</a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <!-- /select plan modal -->
+
+    <!-- try trial modal -->
+    <div class="modal fade" id="modal-trial">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <div class="modal-header bg-primary">
+                    <button type="button" class="close" data-dismiss="modal">×</button>
+                    <h4 class="modal-title">{{ lang_printf('text_modal_x_trial_title',maxTrialDays) }} <span id="ps-title"></span></h4>
+                </div>
+
+                <div class="modal-body">
+                    <p>{{ trial_model_description }}</p>
+                </div>
+
+                <div class="modal-footer">
+					<a href="{{link('marketplace/home/trial')}}?extension={{extension}}" class="btn btn-primary">
+						{{ lang_printf('text_modal_x_trial_confirm',maxTrialDays) }}
+					</a>
+                    <button type="button" class="btn btn-link" onclick="$('#modal-trial').modal('toggle');">
+						{{ lang('text_modal_trial_cancel') }}
+					</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+	<!-- /try trial modal -->
+{% endblock %}
+{% block endScripts %}
+	<script>
+		// install app function
+		$('#install_app').click(function() {
+			let thisBtn = $(this);
+			thisBtn.addClass('.load');
+
+			$.ajax({
+				type: 'get',
+				url: "{{link('marketplace/home/install')}}?extension={{extension}}",
+				dataType: 'json',
+				data: {extension:$('#enable-ps').attr('extension')},
+				async: true,
+				success: function(json) {
+					if (json.success == "true") {
+						window.location = "{{link('module/') ~ extension}}"
+					}
+					else {
+						notify("err", "error", "textSuccess");
+						thisBtn.removeClass('.load');
+						$('#modal-enable-ps').modal('toggle');
+					}
+				}
+			});
+		})
+	</script>
+{% endblock %}

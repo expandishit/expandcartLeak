@@ -1,0 +1,589 @@
+
+{% macro multiSelectedOptions(totalData,selectedData,totalDataInt,TotalDataText) %}
+    
+    {% if selectedData is not empty %}
+        
+    {% for elem in totalData %}
+        
+        {% set selected = '' %}
+        
+        {% for item in selectedData %}
+            {% if item == elem[totalDataInt]%}
+                {% set selected = 'selected' %}
+            {% endif %}    
+        {% endfor %}
+        
+       <option value = "{{ elem[totalDataInt] }}" {{ selected }}>{{ elem[TotalDataText] }}</option>
+   {% endfor %} 
+    {% else %}
+       {% for elem in totalData %}
+       <option value = "{{ elem[totalDataInt] }}">{{ elem[TotalDataText] }}</option>
+   {% endfor %} 
+   {% endif %} 
+
+{% endmacro multiSelectedOptions%}
+
+{% macro booleansOptions(totalData,key) %}
+    <option value="" {{ (totalData[key] == '') ? 'selected' : '' }}>{{ lang('text_select_all') }}</option>
+    <option value="1"  {{ (totalData[key] == '1') ? 'selected' : '' }}>{{ lang('text_yes') }}</option>
+    <option value="0" {{ (totalData[key] == '0') ? 'selected' : '' }}>{{ lang('text_no') }}</option>
+    
+{% endmacro booleansOptions%}
+
+<div class="sidebar-detached">
+    <div class="sidebar sidebar-default sidebar-normal">
+        <div class="sidebar-content">
+            <form id="filter" method="post">
+            <!-- Filter -->
+                <div class="category-content">
+            <div class="sidebar-category">
+                <div class="category-title cursor-pointer">
+                    <span>{{ lang('filter_general_tab')  }} </span>
+                    <ul class="icons-list">
+                        <li><a href="#" data-action="collapse"></a></li>
+                    </ul>
+                </div>
+                {% if isFacebookInstalled is defined  %}
+
+                <div class="form-group" id="price-range-group">
+                    <label class="control-label">{{ lang('sales_channel') }}</label>
+{#                    <div class="noui-slider-primary noui-slider-solid noui-slider-sm"#}
+{#                         id="price-range" style="margin-bottom: 30px;"></div>#}
+
+
+                    <select name="filter[salesChannel]" class="multiselect-tags form-control">
+                        <option>{{ lang('entry_sales_option') }}</option>
+                        <option  value="facebook">{{ lang('entry_sales_facebook') }}</option>
+                    </select>
+
+{#                    <input type="hidden" name="filter[ranges][price][min]" value="{{ filterElements['priceRange']['min'] }}" id="price-range-input-min">#}
+{#                    <input type="hidden" name="filter[ranges][price][max]" value="{{  filterElements['priceRange']['max'] }}" id="price-range-input-max">#}
+                    <span class="help-block"></span>
+                    <span class="text-muted">{{ langempty('price-range_help') }}</span>
+                </div>
+                {% endif %}
+            </div>
+
+                <div class="category-content">
+                        <div class="form-group" id="categories-group">
+                            <label class="control-label">{{ lang('filter_label_categories') }}</label>
+                            <select class="multiselect-tags form-control" multiple="multiple"
+                                    name="filter[categories][]" id="categories">
+                                
+                                {{ _self.multiSelectedOptions(filterElements['categories'],filterData['categories'],'category_id','name') }}
+                                
+{#                                {% for elem in filterElements['categories'] %}
+                                    <option value="{{ elem['category_id'] }}">{{ elem['name'] }}</option>
+                                {% endfor %}#}
+                            </select>
+                            <span class="help-block"></span>
+                            <span class="text-muted">{{ langempty('categories_help') }}</span>
+                        </div>
+
+                    <div class="form-group" id="date-available-group">
+                        <label class="control-label">{{ lang('filter_label_date_available') }}</label>
+                        <input class="form-control date-available"
+                               type="text">
+
+                        <input type="hidden" name="filter[date_available][start]" id="date-available-start"/>
+                        <input type="hidden" name="filter[date_available][end]" id="date-available-end"/>
+                        <span class="help-block"></span>
+                        <span class="text-muted">{{ langempty('date-available_help') }}</span>
+                    </div>
+
+                    {% for key,element in filterElements['booleans'] %}
+                    {% if key == 'status' or key == 'discounts' or key == 'specials' or key == 'specialAndDiscounts' %}
+                    <div class="form-group" id="booleans-{{ key }}-group">
+                        <label class="control-label">{{ element }}</label>
+                        <select class="notSearchable form-control"
+                                name="filter[booleans][{{ key }}]" id="booleans">
+                            
+                            {{ _self.booleansOptions(filterData['booleans'],key)}}
+                            
+{#                            <option value="">{{ lang('text_select_all') }}</option>
+                            <option value="1">{{ lang('text_yes') }}</option>
+                            <option value="0">{{ lang('text_no') }}</option>#}
+                        </select>
+                        <span class="help-block"></span>
+                        <span class="text-muted">{{ langempty('booleans-' ~ key ~ '_help') }}</span>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+
+                    <div class="form-group" id="price-range-group">
+                            <label class="control-label">{{ lang('filter_label_price') }}</label>
+                            <div class="noui-slider-primary noui-slider-solid noui-slider-sm"
+                                 id="price-range" style="margin-bottom: 30px;"></div>
+    
+                            <input type="hidden" name="filter[ranges][price][min]" value="{{ filterElements['priceRange']['min'] }}" id="price-range-input-min">
+                            <input type="hidden" name="filter[ranges][price][max]" value="{{  filterElements['priceRange']['max'] }}" id="price-range-input-max">
+                            <span class="help-block"></span>
+                            <span class="text-muted">{{ langempty('price-range_help') }}</span>
+                        </div>
+    
+                        <div class="form-group" id="quantity-range-group">
+                            <label class="control-label">{{ lang('filter_label_quantity') }}</label>
+                            <div class="noui-slider-primary noui-slider-solid noui-slider-sm"
+                                 id="quantity-range" style="margin-bottom: 30px;"></div>
+    
+                            <input type="hidden" name="filter[ranges][quantity][min]" value="{{ filterElements['quantityRange']['min'] }}" id="quantity-range-input-min">
+                            <input type="hidden" name="filter[ranges][quantity][max]" value="{{ filterElements['quantityRange']['max'] }}" id="quantity-range-input-max">
+                            <span class="help-block"></span>
+                            <span class="text-muted">{{ langempty('quantity-range_help') }}</span>
+                        </div>
+                </div>
+            </div>
+            <div class="sidebar-category">
+                <div class="category-title cursor-pointer category-collapsed">
+                    <span>{{ lang('filter_settings_tab') }}</span>
+                    <ul class="icons-list">
+                        <li><a href="#" data-action="collapse"></a></li>
+                    </ul>
+                </div>
+
+                <div class="category-content" style="display: none;">
+                        <div class="form-group" id="brands-group">
+                                <label class="control-label">{{ lang('filter_label_brands') }}</label>
+                                <select class="multiselect-tags form-control" multiple="multiple"
+                                        name="filter[brands][]" id="brands">
+                                      {{ _self.multiSelectedOptions(filterElements['brands'],filterData['brands'],'manufacturer_id','name') }}
+
+{#                                    {% for elem in filterElements['brands'] %}
+                                        <option value="{{ elem['manufacturer_id'] }}">{{ elem['name'] }}</option>
+                                    {% endfor %}#}
+                                </select>
+                                <span class="help-block"></span>
+                                <span class="text-muted">{{ langempty('brands_help') }}</span>
+                            </div>
+
+                            <div class="form-group">
+                                    <div class="form-group">
+                                        <label class="control-label">{{ lang('filter_label_taxes') }}</label>
+                                        <select class="multiselect-tags form-control" multiple="multiple"
+                                                name="filter[taxes][]" id="taxes">
+                                            {{ _self.multiSelectedOptions(filterElements['taxes'],filterData['taxes'],'tax_class_id','title') }}
+{#                                            {% for elem in filterElements['taxes'] %}
+                                                <option value="{{ elem['tax_class_id'] }}">{{ elem['title'] }}</option>
+                                            {% endfor %}#}
+                                        </select>
+                                    </div>
+                                </div>
+
+                        {% for key,element in filterElements['booleans'] %}
+                        {% if key == 'image' or key == 'subtract' or key == 'downloads' %}
+                        <div class="form-group" id="booleans-{{ key }}-group">
+                            <label class="control-label">{{ element }}</label>
+                            <select class="notSearchable form-control"
+                                    name="filter[booleans][{{ key }}]" id="booleans">
+                                
+                                  {{ _self.booleansOptions(filterData['booleans'],key)}}
+
+{#                                <option value="">{{ lang('text_select_all') }}</option>
+                                <option value="1">{{ lang('text_yes') }}</option>
+                                <option value="0">{{ lang('text_no') }}</option>#}
+                            </select>
+                            <span class="help-block"></span>
+                            <span class="text-muted">{{ langempty('booleans-' ~ key ~ '_help') }}</span>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+
+                        <div class="form-group hidden" id="points-range-group">
+                            <label class="control-label">{{ lang('lbl_points-range') }}</label>
+                            <div class="noui-slider-primary noui-slider-solid noui-slider-sm"
+                                 id="points-range" style="margin-bottom: 30px;"></div>
+    
+                            <input type="hidden" name="filter[ranges][points][min]" id="points-range-input-min">
+                            <input type="hidden" name="filter[ranges][points][max]" id="points-range-input-max">
+                            <span class="help-block"></span>
+                            <span class="text-muted">{{ langempty('points-range_help') }}</span>
+                        </div>
+                        <div class="form-group" id="cost-price-range-group">
+                            <label class="control-label">{{ lang('filter_label_cost_price') }}</label>
+                            <div class="noui-slider-primary noui-slider-solid noui-slider-sm"
+                                 id="cost-price-range" style="margin-bottom: 30px;"></div>
+                            <input type="hidden" name="filter[ranges][cost_price][min]"
+                                   id="cost-price-range-input-min">
+                            <input type="hidden" name="filter[ranges][cost_price][max]"
+                                   id="cost-price-range-input-max">
+                            <span class="help-block"></span>
+                            <span class="text-muted">{{ langempty('cost-price-range_help') }}</span>
+                        </div>
+                </div>
+            </div>
+
+            <div class="sidebar-category">
+                <div class="category-title cursor-pointer category-collapsed">
+                    <span>{{ lang('filter_shipping_tab') }}</span>
+                    <ul class="icons-list">
+                        <li><a href="#" data-action="collapse"></a></li>
+                    </ul>
+                </div>
+
+                <div class="category-content" style="display: none;">
+                    {% for key,element in filterElements['booleans'] %}
+                    {% if key == 'shipping' %}
+                    <div class="form-group" id="booleans-{{ key }}-group">
+                        <label class="control-label">{{ element }}</label>
+                        <select class="notSearchable form-control"
+                                name="filter[booleans][{{ key }}]" id="booleans">
+                            
+                              {{ _self.booleansOptions(filterData['booleans'],key)}}
+
+{#                            <option value="">{{ lang('text_select_all') }}</option>
+                            <option value="1">{{ lang('text_yes') }}</option>
+                            <option value="0">{{ lang('text_no') }}</option>#}
+                        </select>
+                        <span class="help-block"></span>
+                        <span class="text-muted">{{ langempty('booleans-' ~ key ~ '_help') }}</span>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+
+                    <div class="form-group">
+                            <div class="form-group">
+                                <label class="control-label">{{ lang('filter_label_weights') }}</label>
+                                <select class="multiselect-tags form-control" multiple="multiple"
+                                        name="filter[weights][]" id="weights">
+                                     {{ _self.multiSelectedOptions(filterElements['weights'],filterData['weights'],'weight_class_id','title') }}
+{#                                    {% for elem in filterElements['weights'] %}
+                                        <option value="{{ elem['weight_class_id'] }}">{{ elem['title'] }}</option>
+                                    {% endfor %}#}
+                                </select>
+                            </div>
+                        </div>
+    
+                        <div class="form-group">
+                            <div class="form-group">
+                                <label class="control-label">{{ lang('filter_label_lengths') }}</label>
+                                <select class="multiselect-tags form-control" multiple="multiple"
+                                        name="filter[lengths][]" id="brands">
+                                     {{ _self.multiSelectedOptions(filterElements['lengths'],filterData['lengths'],'length_class_id','title') }}
+{#                                    {% for elem in filterElements['lengths'] %}
+                                        <option value="{{ elem['length_class_id'] }}">{{ elem['title'] }}</option>
+                                    {% endfor %}#}
+                                </select>
+                            </div>
+                        </div>
+
+                    <div class="form-group" id="weight-range-group">
+                        <label class="control-label">{{ lang('filter_label_weight') }}</label>
+                        <div class="noui-slider-primary noui-slider-solid noui-slider-sm"
+                             id="weight-range" style="margin-bottom: 30px;"></div>
+
+                        <input type="hidden" name="filter[ranges][weight][min]" id="weight-range-input-min">
+                        <input type="hidden" name="filter[ranges][weight][max]" id="weight-range-input-max">
+                        <span class="help-block"></span>
+                        <span class="text-muted">{{ langempty('weight-range_help') }}</span>
+                    </div>
+
+                    <div class="form-group" id="length-range-group">
+                        <label class="control-label">{{ lang('filter_label_length') }}</label>
+                        <div class="noui-slider-primary noui-slider-solid noui-slider-sm"
+                             id="length-range" style="margin-bottom: 30px;"></div>
+
+                        <input type="hidden" name="filter[ranges][length][min]" id="length-range-input-min">
+                        <input type="hidden" name="filter[ranges][length][max]" id="length-range-input-max">
+                        <span class="help-block"></span>
+                        <span class="text-muted">{{ langempty('length-range_help') }}</span>
+                    </div>
+
+                    <div class="form-group" id="width-range-group">
+                        <label class="control-label">{{ lang('filter_label_width') }}</label>
+                        <div class="noui-slider-primary noui-slider-solid noui-slider-sm"
+                             id="width-range" style="margin-bottom: 30px;"></div>
+
+                        <input type="hidden" name="filter[ranges][width][min]" id="width-range-input-min">
+                        <input type="hidden" name="filter[ranges][width][max]" id="width-range-input-max">
+                        <span class="help-block"></span>
+                        <span class="text-muted">{{ langempty('width-range_help') }}</span>
+                    </div>
+
+                    <div class="form-group" id="height-range-group">
+                        <label class="control-label">{{ lang('filter_label_height') }}</label>
+                        <div class="noui-slider-primary noui-slider-solid noui-slider-sm"
+                             id="height-range" style="margin-bottom: 30px;"></div>
+
+                        <input type="hidden" name="filter[ranges][height][min]" id="height-range-input-min">
+                        <input type="hidden" name="filter[ranges][height][max]" id="height-range-input-max">
+                        <span class="help-block"></span>
+                        <span class="text-muted">{{ langempty('height-range_help') }}</span>
+                    </div>
+                </div>
+            </div>
+            <!-- /filter -->
+            <div class="category-content">
+                <button type="reset" id="resetList" class="btn btn-default btn-block mt-10">{{ lang('lbl_reset_filter') }}</button>
+            </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script type="text/javascript" src="view/assets/js/plugins/sliders/nouislider.min.js"></script>
+<script type="text/javascript" src="view/assets/js/plugins/sliders/ion_rangeslider.min.js"></script>
+<script>
+
+    $(document).ready(function () {
+        
+        let cachedDateStarted = '{{ filterData['date_available']['start'] }}',
+            cachedDateEnd = '{{ filterData['date_available']['end'] }}',
+            
+            defaultValues = {
+            
+            'price-range':{min:parseInt('{{ filterElements['priceRange']['min'] }}'),max:parseInt('{{ filterElements['priceRange']['max'] }}')},
+            'cost-price-range':{min:parseInt('{{ filterElements['costPriceRange']['min'] }}'),max:parseInt('{{ filterElements['costPriceRange']['max'] }}')},
+            'quantity-range':{min:parseInt('{{ filterElements['quantityRange']['min'] }}'),max:parseInt('{{ filterElements['quantityRange']['max'] }}')},
+            'points-range':{min:parseInt('{{ filterElements['pointsRange']['min'] }}'),max:parseInt('{{ filterElements['pointsRange']['max'] }}')},
+            'weight-range':{min:parseInt('{{ filterElements['weightRange']['min'] }}'),max:parseInt('{{ filterElements['weightRange']['max'] }}')},
+            'length-range':{min:parseInt('{{ filterElements['lengthRange']['min'] }}'),max:parseInt('{{ filterElements['lengthRange']['max'] }}')},
+            'width-range':{min:parseInt('{{ filterElements['widthRange']['min'] }}'),max:parseInt('{{ filterElements['widthRange']['max'] }}')},
+            'height-range':{min:parseInt('{{ filterElements['heightRange']['min'] }}'),max:parseInt('{{ filterElements['heightRange']['max'] }}')},
+            
+        },
+
+         datePikerObject = {
+            autoApply: true,
+            ranges: locales['drp_ranges'],
+            locale: locales['drp_locale'],
+            startDate:(cachedDateStarted != '') ? cachedDateStarted : moment().format('YYYY-MM-DD'),
+            endDate:(cachedDateEnd != '') ? cachedDateEnd : moment().format('YYYY-MM-DD')
+        };
+
+        $('select').select2({
+            width: '100%',
+            minimumResultsForSearch: Infinity,
+        });
+
+        $('.notSearchable').select2({
+            minimumResultsForSearch: 5,
+        });
+
+        $("#brands, #models").select2({
+            tokenSeparators: [','],
+        });
+
+
+        $('.date-available').daterangepicker(datePikerObject, function (start, end, label) {
+                        
+            $('#date-available-start').val(start.format('YYYY-MM-DD'));
+            $('#date-available-end').val(end.format('YYYY-MM-DD'));
+      });
+
+
+       old_search_value = $('input[type="search"]').val();
+        $('input, select').not('.dtSelectAll').change(function (event) {
+            event.preventDefault();
+			if(event.target.type=='search'){
+				if(old_search_value && $('#datatableGrid_filter input').val() != old_search_value){  
+					filterReloadDT();
+				}
+			}else{
+				filterReloadDT();
+			}
+        });
+
+        $('#filter').on('reset', function (e) {
+            filterReset();
+            $('#btnreset').addClass('hidden');
+        });
+
+        $('#btnreset').on('click', function(e){
+            e.preventDefault();
+            $('#resetList').trigger("click");
+            //$('#filter')[0].reset();
+        });
+
+    
+
+    function filterReloadDT()
+    {
+        $('#btnreset').removeClass('hidden');
+        var $formData = $('#filter').serialize();
+
+        table.on('preXhr.dt', function (e, settings, data) {
+            return $.extend(data, {filter: $formData});
+        });
+       
+
+        table.ajax.reload();
+    }
+
+    {# function noUiranger(id, options) { //this function is not using in this filter
+
+        if (typeof options === 'undefined') {
+            options = {};
+        }
+
+        var rangeDefaults = {
+            type: "double",
+            tooltips: true,
+            connect: true,
+//            steps: 1,
+//            pips: {
+//                mode: 'range',
+//                density: 10
+//            }
+        };
+
+        var selector = document.getElementById(id);
+
+        var range = rangeDefaults;
+
+        for (opt in options) {
+            range[opt] = options[opt];
+        }
+
+        $('#' + id + '-input-min').val(range[min]);
+        $('#' + id + '-input-max').val(range[max]);
+
+        noUiSlider.create(selector, range);
+        selector.noUiSlider.on('update', function (value, handle) {
+            $('#' + id + '-input-min').val(value[0]);
+            $('#' + id + '-input-max').val(value[1]);
+        });
+
+
+    } #}
+
+    var min = parseInt('{{ filterElements['priceRange']['min'] }}');
+    var max = parseInt('{{ filterElements['priceRange']['max'] }}');
+    var fromMin = parseInt('{{ filterData['ranges']['price']['min'] }}');
+    var ToMax = parseInt('{{ filterData['ranges']['price']['max'] }}');
+    
+    ranger('price-range', {
+        'from': fromMin,
+        'to': ToMax,
+        'min': min,
+        'max': max
+    });
+
+    var min = parseInt('{{ filterElements['costPriceRange']['min'] }}');
+    var max = parseInt('{{ filterElements['costPriceRange']['max'] }}');
+    var fromMin = parseInt('{{ filterData['ranges']['cost_price']['min'] }}');
+    var ToMax = parseInt('{{ filterData['ranges']['cost_price']['max'] }}');
+    
+    ranger('cost-price-range', {
+        'from': fromMin,
+        'to': ToMax,
+        'min': min,
+        'max': max
+    });
+
+    var min = parseInt('{{ filterElements['quantityRange']['min'] }}');
+    var max = parseInt('{{ filterElements['quantityRange']['max'] }}');
+    var fromMin = parseInt('{{ filterData['ranges']['quantity']['min'] }}');
+    var ToMax = parseInt('{{ filterData['ranges']['quantity']['max'] }}');
+
+    ranger('quantity-range', {
+        'from': fromMin,
+        'to': ToMax,
+        'min': min,
+        'max': max
+    });
+
+    var min = parseInt('{{ filterElements['pointsRange']['min'] }}');
+    var max = parseInt('{{ filterElements['pointsRange']['max'] }}');
+    var fromMin = parseInt('{{ filterData['ranges']['points']['min'] }}');
+    var ToMax = parseInt('{{ filterData['ranges']['points']['max'] }}');
+    
+    ranger('points-range', {
+        'from': fromMin,
+        'to': ToMax,
+        'min': min,
+        'max': max
+    });
+
+    var min = parseInt('{{ filterElements['weightRange']['min'] }}');
+    var max = parseInt('{{ filterElements['weightRange']['max'] }}');
+    var fromMin = parseInt('{{ filterData['ranges']['weight']['min'] }}');
+    var ToMax = parseInt('{{ filterData['ranges']['weight']['max'] }}');
+    
+    ranger('weight-range', {
+        'from': fromMin,
+        'to': ToMax,
+        'min': min,
+        'max': max
+    });
+
+    var min = parseInt('{{ filterElements['lengthRange']['min'] }}');
+    var max = parseInt('{{ filterElements['lengthRange']['max'] }}');
+    var fromMin = parseInt('{{ filterData['ranges']['length']['min'] }}');
+    var ToMax = parseInt('{{ filterData['ranges']['length']['max'] }}');
+    
+    ranger('length-range', {
+        'from': fromMin,
+        'to': ToMax,
+        'min': min,
+        'max': max
+    });
+
+    var min = parseInt('{{ filterElements['widthRange']['min'] }}');
+    var max = parseInt('{{ filterElements['widthRange']['max'] }}');
+    var fromMin = parseInt('{{ filterData['ranges']['width']['min'] }}');
+    var ToMax = parseInt('{{ filterData['ranges']['width']['max'] }}');
+
+    ranger('width-range', {
+        'from': fromMin,
+        'to': ToMax,
+        'min': min,
+        'max': max
+    });
+
+    var min = parseInt('{{ filterElements['heightRange']['min'] }}');
+    var max = parseInt('{{ filterElements['heightRange']['max'] }}');
+    var fromMin = parseInt('{{ filterData['ranges']['height']['min'] }}');
+    var ToMax = parseInt('{{ filterData['ranges']['height']['max'] }}');
+    
+    ranger('height-range', {
+        'from': fromMin,
+        'to': ToMax,
+        'min': min,
+        'max': max
+    });
+
+    function ranger(selector, options) {
+
+        if (typeof options === 'undefined') {
+            options = {};
+        }
+
+        var rangeDefaults = {
+            type: 'double',
+//            grid: true,
+//            step: 1,
+            onChange: function (data) {
+                $('#' + selector + '-input-min').val(data.from);
+                $('#' + selector + '-input-max').val(data.to);
+                filterReloadDT();
+            }
+        };
+
+        var range = rangeDefaults;
+
+        for (opt in options) {
+            range[opt] = options[opt];
+        }
+
+//        $('#' + selector + '-input-min').val(range['min']);
+//        $('#' + selector + '-input-max').val(range['max']);
+
+        $('#' + selector).ionRangeSlider(range);
+    }
+
+    function filterReset(){
+
+        $('#filter').find('.noui-slider-primary').each(function () {
+
+           var selector = $(this).attr('id'),
+               selectorData = defaultValues[selector];
+        
+                if(typeof selectorData != 'undefined')              
+                {
+                    $(this).data('ionRangeSlider').update({from:selectorData.min,to:selectorData.max});
+                }
+    
+            });
+            
+        }
+});
+</script>

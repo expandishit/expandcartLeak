@@ -1,0 +1,117 @@
+<div class="panel panel-flat">
+    <div class="panel-heading">
+        <h6 class="panel-title">
+            <div class="title">
+                <span>
+                    <span class="text-bold">{{ lang('tab_attribute') }}</span>
+                    <span class="sub-text">{{ lang('tab_attributes_cap') }}</span>
+                </span>
+            </div>
+            <a class="heading-elements-toggle"><i class="icon-more"></i></a>
+        </h6>
+        <div class="heading-elements not-collapsible">
+            <ul class="icons-list">
+                <li><a data-action="collapse" class=""></a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="panel-body">
+
+        <div class="content-group-sm">
+            <p class="content-group-sm">{{ lang('text_attribute_add_help') }}</p>
+
+            <div class="input-group">
+                <select multiple="multiple" id="attribute-autocomplete">
+                    {% for groupId, group in attributes %}
+                    {% if group.options|length > 0 and (group.options|first).attribute_id is not null %}
+                        <optgroup class="attributes-group" label="{{ group['group_name'] }}"
+                                  data-group-id="{{ groupId }}">
+                            {% for attrKey, attribute in group['options'] %}
+                                {% if attribute['attribute_name'] %}
+                                    <option {{ product_attributes_ids[attrKey] is defined ? 'selected' : '' }}
+                                            data-attribute-id="{{ attrKey }}"
+                                            value="{{ attribute['attribute_id'] }}">{{ attribute['attribute_name'] | escape }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </optgroup>
+                    {% endif %}
+                    {% endfor %}
+                </select>
+                <span class="input-group-btn">
+                <a data-toggle="modal"
+                   data-target="#newAttribute"
+                   class="btn-primary btn btn-lg">{{ lang('btn_add_new_attribute') }}</a>
+                </span>
+            </div>
+
+
+        </div>
+
+        <table class="table table-hover table-framed  datatable-highlight attributeTable {{ product_attributes|length < 1 ? 'hidden' : ''}}" id="attributeTable">
+            <thead>
+            <tr>
+                <th>{{ lang('entry_attribute') }}</th>
+                <th>{{ lang('entry_attribute_group') }}</th>
+                <th>{{ lang('entry_text') }}</th>
+                <th>{{ lang('entry_action') }}</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for key, attribute in product_attributes %}
+
+                {% set key = attribute['attribute_id'] %}
+
+                <tr id="attribute-row-{{ key }}">
+                    <td class="col-md-4">
+                        {{ attribute['name'] }}
+                        <input type="hidden" name="product_attribute[{{ key }}][attribute_id]"
+                               value="{{ attribute['attribute_id'] }}"/>
+                    </td>
+                    <td class="col-md-2">
+                        {{ attribute['GroupName'] }}
+                    </td>
+                    <td class="col-md-4">
+                        <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                            <div class="tab-content">
+                                {% for lng in languages %}
+                                    <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}"
+                                         id="attributeLangTab-{{ key }}-{{ lng['language_id'] }}">
+                                        <div class="form-group"
+                                             id="opt-name-group_{{ lng['language_id'] }}">
+                                            <label class="control-label"></label>
+                                            <input type="text" class="form-control"
+                                                   name="product_attribute[{{ key }}][product_attribute_description][{{ lng['language_id'] }}][text]"
+                                                   value="{{ attribute['product_attribute_description'][lng['language_id']]['text'] }}"/>
+                                            <span class="help-block"></span>
+                                            <span class="text-muted"></span>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+
+                            <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                                {% for language in languages %}
+                                    <li class="{{ loop.first ? 'active' : '' }}">
+                                        <a href="#attributeLangTab-{{ key }}-{{ language['language_id'] }}"
+                                           data-toggle="tab"
+                                           aria-expanded="false">
+                                            <img src="view/image/flags/{{ language['image'] }}"
+                                                 title="{{ language['name'] }}" class="pull-right">
+                                            <div> {{ language['name'] }}</div>
+                                        </a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </td>
+                    <td class="col-md-2">
+                        <a onclick="$('#attribute-row-{{ key }}').remove();"
+                           class="button btn btn-danger"><i class="icon-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>

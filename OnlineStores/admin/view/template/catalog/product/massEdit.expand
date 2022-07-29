@@ -1,0 +1,167 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block title %}
+    {{ lang('dt_product_mass_edit') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+    <a href="{{ links['cancel'] }}" class="btn btn-default"> {{ lang('button_cancel') }}</a>
+    <a class="btn btn-primary masseditSaver btn-ladda btn-ladda-spinner ladda-button"><i
+                class="far fa-save fa-lg position-left"></i> {{ lang('button_save') }}</a>
+{% endblock headelements %}
+
+{% block content %}
+
+    {#<form class="massEditForm" action="{{ links['submit'] }}">#}
+
+        <div class="panel panel-flat">
+            <div class="panel-heading">
+                <h5 class="panel-title">{{ lang('dt_product_mass_edit_help') }}</h5>
+            </div>
+
+            <div class="panel-body">
+                <div class="hot-container">
+                    <div id="massedit"></div>
+                </div>
+            </div>
+        </div>
+
+    {#</form>#}
+
+    <div class="row">
+        <div class="col-md-12 text-right">
+            <hr/>
+            <a href="{{ links['return_product'] }}" class="btn btn-default"> {{ lang('button_cancel') }}</a>
+            <a class="btn btn-primary masseditSaver"><i
+                        class="far fa-save fa-lg position-left"></i> {{ lang('button_save') }}</a>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block scripts %}
+
+    {{ parent() }}
+
+    <script type="text/javascript" src="view/assets/js/plugins/tables/handsontable/handsontable.min.js"></script>
+
+    <script>
+
+        var links = {};
+
+        links['massUpdate'] = '{{ links['massUpdate'] }}';
+        links['manufacturers'] = '{{ links['manufacturers'] }}';
+
+        locales['options'] = {
+            'entry_required': '{{ lang('entry_required') }}',
+            'text_yes': '{{ lang('text_yes') }}',
+            'text_no': '{{ lang('text_no') }}',
+            'entry_option_value': '{{ lang('entry_option_value') }}',
+            'entry_quantity': '{{ lang('entry_quantity') }}',
+            'entry_subtract': '{{ lang('entry_subtract') }}',
+            'entry_price': '{{ lang('entry_price') }}',
+            'entry_option_points': '{{ lang('entry_option_points') }}',
+            'entry_weight': '{{ lang('entry_weight') }}',
+            'button_add_option_value': '{{ lang('button_add_option_value') }}',
+            'entry_image': '{{ lang('entry_image') }}',
+            'button_remove': '{{ lang('button_remove') }}',
+        };
+
+        $(document).ready(function () {
+
+            var products = JSON.parse('{{ products|json_encode|escape("js") }}');
+
+            var manufacturers = JSON.parse('{{ manufacturers|json_encode|escape("js") }}');
+
+            function mergeCell(instance, td, row, col, prop, value, cellProperties) {
+                td.setAttribute("rowSpan", "2");
+            }
+
+            var massEdit = new Handsontable($('#massedit')[0], {
+                data: products,
+                colHeaders: ['#', 'Name', 'Price', 'Model', 'Quantity', 'Max Quantity Ordered'],
+                stretchH: 'all',
+                columns: [
+                    {
+                        data: 'product_id',
+                        editor: false,
+                        width: '10',
+                        readOnly: true,
+                        manualColumnResize: true
+                    },
+                    {
+                        data: 'name',
+                        editor: false,
+                        width: '100'
+                    },
+                    {
+                        'data': 'price'
+                    },
+                    {
+                        'data': 'model'
+                    },
+                    {
+                        'data': 'quantity'
+                    },
+                    {
+                        'data': 'maximum'
+                    }
+                ],
+                //Disable drag-down and copy-down for product id & name columns
+                afterSelection: function(row, col, row2, col2) {
+                    var meta = this.getCellMeta(row2, col2);                    
+                    if (meta.prop == 'product_id' || meta.prop == 'name') {
+                        this.updateSettings({ fillHandle: false }); this.render();
+                    }
+                    else{
+                        this.updateSettings({ fillHandle: true }); this.render(); 
+                    }
+                },
+            });
+
+            $('.masseditSaver').click(function () {
+                Ladda.startAll();
+                $.ajax({
+                    url: links['massUpdate'],
+                    data: {data: massEdit.getSourceData()},
+                    dataType: 'JSON',
+                    method: 'POST',
+                    success: function (response) {
+                        Ladda.stopAll();
+                        if (response.status == 'success') {
+                            new PNotify({
+                                title: response.title,
+                                text: response.message,
+                                addclass: 'bg-success stack-top-right',
+                                stack: {"dir1": "down", "dir2": "right", "push": "top"}
+                            });
+                            //Refresh page after success response
+                            location.reload();
+
+                        } else {
+                            for (error in response.errors) {
+                                new PNotify({
+                                    title: response.title,
+                                    text: response.errors[error],
+                                    addclass: 'bg-danger stack-top-right',
+                                    stack: {"dir1": "down", "dir2": "right", "push": "top"}
+                                });
+                            }
+                        }
+                    },
+                    complete: function (xhr, textStatus) {
+                        Ladda.stopAll();
+                    }
+                });
+            });
+        });
+
+    </script>
+
+{% endblock %}

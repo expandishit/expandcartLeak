@@ -1,0 +1,229 @@
+<style>
+.gameball-redeem {
+  display: flex;
+  align-items: center;
+  padding: 10px 4px;
+}
+
+.gameball-redeem__logo {
+  margin: 0 5px;
+}
+
+.gameball-redeem__logo img {
+    width: 30px;
+    height: 30px;
+    border-radius: 20px;
+}
+
+.gameball-redeem__btn {
+    background: #e7623f;
+    color: #fff;
+    border: none;
+    outline: none;
+    padding: 7px;
+    border-radius: 3px;
+    margin: 0 5px;
+    position: relative;
+    overflow: hidden;
+
+}
+
+.gameball-redeem__loading {
+  background: #e7623f;
+  position: absolute;
+  right: 0;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.gameball-redeem__btn i {
+  font-size: 11px;
+}
+
+.gameball-redeem__point {
+  margin: 0 5px;
+}
+
+#gameball-redeem__modal {
+      z-index: 99999;
+    background: rgba(0, 0, 0, 17%);
+}
+
+#gameball-redeem__modal .modal-dialog {
+      min-height: calc(100vh - 60px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: auto;
+}
+
+#gameball-redeem__modal .modal-title {
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+}
+
+#gameball-redeem__modal .gameball-redeem__logo img {
+      width: 30px;
+    height: 30px;
+    border-radius: 20px;
+}
+
+.gameball-redeem__convert-icon {
+     color: #ff5400;
+    margin: 0 5px;
+}
+
+.gameball-redeem__label {
+    color: #242424;
+    padding: 5px;
+    margin: 0 5px;
+    border-radius: 5px;
+    font-size: 16px;
+    background: #eee;
+    font-weight: 600;
+
+}
+
+.gameball-redeem__code {
+  font-weight: bold;
+  font-size: 25px;
+  padding: 15px 0 0 0;
+  color: #e7623f;
+}
+
+.gameball-redeem__input {
+  width: 80px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.gameball-redeem__input-disabled {
+  background: #f0f0f0 !important;
+  pointer-events: none;
+}
+.gameball-redeem__dec{
+  margin:30px auto 10px;
+  line-height:21px;
+  max-width:350px;
+}
+.gameball-redeem__symbol{
+  margin:0 5px;
+  font-size:16px;
+  font-weight:bold;
+}
+
+html[lang="ar"] .gameball-redeem__btn{
+  float:left;
+}
+
+html[lang="ar"] .gameball-redeem__convert-icon{
+  transform:rotate(180deg)
+}
+</style>
+    <div class="qc-row">
+      <div class="gameball-redeem">
+        <div class="gameball-redeem__logo"><img src="expandish/view/theme/default/image/gameball.png"></div>
+        {{lang('qoute_text_3')}} <b class="gameball-redeem__point"> {{customer_points}} </b> {{lang('qoute_text_2')}}
+        <button class="gameball-redeem__btn" data-toggle="modal" data-target="#gameball-redeem__modal">
+          {{lang('redeem_text')}}
+        </button>
+      </div>
+    </div>
+
+
+<!-- Gameball Redeem Modal -->
+<div class="modal fade" id="gameball-redeem__modal" tabindex="9999999999999999999" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel"><div class="gameball-redeem__logo"><img src="expandish/view/theme/default/image/gameball.png"></div> {{lang('header_text')}}</h4>
+      </div>
+      <div class="modal-body text-center">
+        {{lang('qoute_text_1')}} <input type="text" class="gameball-redeem__input" id="redeem_point" value="{{customer_points}}" oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');"> <i class="fa fa-arrow-right gameball-redeem__convert-icon"></i> <input type="text" id="points_value" class="gameball-redeem__input gameball-redeem__input-disabled" value="{{points_value}}">
+        <span class="gameball-redeem__symbol">{{currency_symbol}}</span>
+
+        <p class="gameball-redeem__dec" >{{lang('warning_text')}}</p>
+      </div>
+      <div class="modal-footer">
+        <button class="gameball-redeem__btn" id='generate_coupon'>
+        <span class="gameball-redeem__loading mr-5" style="display:none;"><i class="fa fa-spinner fa-spin"></i></span>
+
+          {{lang('button_get_coupon')}}
+        </button>
+      </div>
+
+      <div class="modal-body gameball-redeem__successfully  text-center" id="text_coupon" style="display: none;">
+        {{lang('coupon_success_text')}}
+          <div class="gameball-redeem__code">
+          
+        </div>
+      </div>
+      <div class="modal-footer gameball-redeem__successfully " id="copy_coupon" style="display: none;"">
+        <button class="gameball-redeem__btn">
+          {{lang('button_copy_coupon')}}
+        </button>
+      </div>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+<script>
+    $('#generate_coupon').click(function(){
+        $('.gameball-redeem__loading').show();
+        $action = '{{link('module/gameball/addGameballCoupon')}}';
+
+        var data = {
+            'amount': $('#points_value').val(),
+        }
+        $.ajax({
+            url: $action,
+            data: data,
+            dataType: 'JSON',
+            method: 'POST',
+            success: function (response){
+                if(response.status == 1){
+                    $('.gameball-redeem__loading').hide();
+                    $('.modal-body.text-center').hide();
+                    $('.modal-footer').hide();
+                    $('#text_coupon,#copy_coupon').show();
+                    $('.gameball-redeem__code').text(response.coupon)
+                }
+            }
+        });
+
+
+    })
+    var oldPoints = 0;
+
+    $('#redeem_point').focus(function(){
+        oldPoints = $('#redeem_point').val();
+    })
+    $('#redeem_point').change(function(){
+        var points = $('#redeem_point').val()
+        var pointsValue = $('#points_value').val();
+
+        if(oldPoints == 0){
+          $('#points_value').val(0);
+        }else{
+          var newValue = (points * pointsValue) / oldPoints;
+          $('#points_value').val(Math.round(newValue * 100) / 100);
+        }
+    });
+
+    $('#copy_coupon').click(function(){
+        $('#coupon').val($('.gameball-redeem__code').text());
+        $('.close').trigger('click')
+        $('#confirm_coupon').trigger('click');
+    })
+</script>

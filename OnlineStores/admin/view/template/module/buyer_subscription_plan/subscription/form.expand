@@ -1,0 +1,192 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% set dualMenuEnabled = true %}
+
+{% block title %}
+    {{ lang('heading_title', 'module/buyer_subscription_plan') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block secondarymenu %}
+    {% include 'module/buyer_subscription_plan/side_menu.expand' with {'expand': '#buyer_subscription_plan', 'active': '#subscriptions'} %}
+{% endblock secondarymenu %}
+
+
+{% block headelements %}
+    {% include "includes/buttons_top.expand" %}
+{% endblock headelements %}
+
+{% block content %} 
+
+        <form class="form" method="post" action="{{ action }}" id="formId">
+            <div class="col-md-9">
+                <div class="panel panel-flat">
+                    <div class="panel-body">
+
+                        <!-- Multi Language Information -->
+                        <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                            <div class="tab-content">
+                                {% for lng in languages %}
+                                    <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}" id="langTab{{ lng['language_id'] }}">
+
+                                            <!-- Title -->
+                                            <div class="form-group" id="name_{{ lng['language_id'] }}-group">
+                                                <label for="attr-name{{ lng['language_id'] }}">{{ lang('entry_title') }} <span class="text-danger">*</span></label>
+                                                <input class="form-control" id="attr-name{{ lng['language_id'] }}"
+                                                       placeholder="{{ lng['name'] }}"
+                                                       value="{{ subscription['translations'][lng['language_id']] ? subscription['translations'][lng['language_id']]['title'] :'' }}"
+                                                       type="text"
+                                                       name="subscription[translations][{{ lng['language_id'] }}][title]">
+                                                <span class="help-block"></span>
+                                                <span class="text-muted"></span>                                    
+                                            </div>
+                                            <!-- /Tile -->
+
+                                            <!-- Description -->
+                                            <div class="form-group" id="description_{{ lng['language_id'] }}-group">
+                                                <label class="control-label">{{ lang('entry_description') }}</label>
+                                                <textarea
+                                                        name="subscription[translations][{{ lng['language_id'] }}][description]"
+                                                        id="description_{{ lng['language_id'] }}"
+                                                        placeholder="{{ lng['name'] }}"
+                                                        class="form-control summernote">{{ subscription['translations'][lng['language_id']] ? subscription['translations'][lng['language_id']]['description'] : '' }}</textarea>
+                                                <span class="help-block"></span>
+                                                <span class="text-muted"></span>
+                                            </div>
+                                            <!-- /Description -->
+
+                                    </div>
+                                {% endfor %}
+                            </div>
+
+                            <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                                {% for language in languages %}
+                                    <li class="{{ loop.first ? 'active' : '' }}">
+                                        <a href="#langTab{{ language['language_id'] }}" data-toggle="tab"
+                                           aria-expanded="false">
+                                            <img src="view/image/flags/{{ language['image'] }}"
+                                                 title="{{ language['name'] }}" class="pull-right">
+                                            <div> {{ language['name'] }}</div>
+                                        </a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <!-- /Multi language information -->
+
+                    </div>
+                </div>
+            </div>
+
+
+
+            <div class="col-md-3">
+                <div class="panel panel-flat">
+                    <div class="panel-body">
+
+
+                        <!-- Status -->                    
+                        <div class="form-group" id="status-group">
+                            <label class="control-label">{{ lang('entry_status') }}</label>
+                            <div class="checkbox checkbox-switchery">
+                                <label>
+                                    <input type="checkbox" value="1" name="subscription[status]"
+                                           class="switchery" {{ subscription['status'] == 1 ? 'checked' : '' }}>
+                                    <span class="switchery-status">{{ subscription['status'] in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                </label>
+                            </div>
+                        </div>
+                        <!-- /Status -->                    
+
+
+
+
+                        <!-- Price -->
+                        <div class="form-group">
+                            <label for="subscription-price" class="control-label">{{ lang('text_price') }}</label>
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="subscription-price" name="subscription[price]" placeholder="00.00" value="{{ subscription['price'] }}">
+                                        <span class="input-group-btn">
+                                            <button class="btn btn-default" type="button">{{ current_store_currency }}</button>
+                                        </span>
+                                    </div><!-- /input-group -->
+                                </div><!-- /.col-lg-6 -->
+                            </div><!-- /.row -->
+                            <span class="help-block"></span>
+                            <span class="text-muted"></span>
+                        </div>
+                        <!-- /Price -->
+
+
+
+
+
+                        <!-- Coupons -->
+                        <div class="form-group">
+                            <label for="plan_price" class="control-label">{{ lang('text_coupons') }}</label>
+                            <select class="form-control" name="subscription[coupons][]" multiple>
+                                {% for coupon in coupons %}
+                                <option value="{{ coupon.coupon_id }}" {{ coupon.coupon_id in subscription.coupons ? 'selected' : '' }}>{{ coupon.code ~ ' - ' ~ coupon.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <span class="help-block"></span>
+                            <span class="text-muted"></span>
+                        </div>
+                        <!-- /Coupons -->
+
+
+
+
+
+                        <!-- Validity Period -->                                            
+                        <div class="form-group">
+                            <label for="subscription_validity_period" class="control-label">
+                                {{ lang('text_validity_period') }}
+                            </label>
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <input type="text" name="subscription[validity_period]" class="form-control" placeholder="1" value="{{ subscription['validity_period'] }}" />
+                                </div>
+                                <div class="col-md-8">
+                                    <select class="form-control" name="subscription[validity_period_unit]" id="validity_period_unit">
+                                        <option {{ subscription['validity_period_unit'] == 'day'   ? 'selected' : '' }} value="day"  >{{ lang('day')   }}</option>
+                                        <option {{ subscription['validity_period_unit'] == 'month' ? 'selected' : '' }} value="month">{{ lang('month') }}</option>
+                                        <option {{ subscription['validity_period_unit'] == 'year' or
+                                                   subscription['validity_period_unit'] == ''      ? 'selected' : '' }} value="year" >{{ lang('year')  }}</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- /Validity Period -->                                            
+
+
+
+                    </div>
+                </div>
+            </div>
+
+
+        </form>
+        <!-- Lower Buttons -->
+{% include "includes/buttons_bottom.expand" %}
+
+
+{% endblock %}
+{% block scripts %}
+<script type="text/javascript">
+    $('document').ready(function(){
+        $('select').select2();
+
+        console.log($('#validity_period_unit').val());
+    });
+
+</script>
+
+{% endblock %}

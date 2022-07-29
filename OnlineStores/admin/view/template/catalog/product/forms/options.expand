@@ -1,0 +1,523 @@
+<div class="panel panel-flat">
+    <div class="panel-heading">
+        <h6 class="panel-title">
+            <div class="title">
+                <span>
+                    <span class="text-bold">
+                        {{ lang('tab_option') }}
+                        {% if options_limit_reached %}
+                            <span class="locked-label">
+                                <i class="fas fa-lock"></i>
+                                {{lang('text_upgrade')}}
+                            </span>
+                        {% endif %}
+                    </span>
+                    <span class="sub-text">{{ lang('tab_options_cap') }}</span>
+                </span>
+            </div>
+            <a class="heading-elements-toggle"><i class="icon-more"></i></a>
+        </h6>
+        <div class="heading-elements not-collapsible">
+            <ul class="icons-list">
+                <li><a data-action="collapse" class=""></a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="panel-body">
+
+        {% if knawat_status == true %}
+            <p>{{ lang('text_go_sku_section') }}</p>
+        {% endif %}
+
+        {% if knawat_status == false %}
+        <div class="content-group-sm">
+
+            <div class="input-group">
+                <select multiple="multiple" id="options-autocomplete">
+                    {% for key, po in product_options %}
+                        <option value="{{ po['option_id'] }}" selected>{{ po['name'] }}</option>
+                    {% endfor %}
+                </select>
+                <span class="input-group-btn" >
+                    <a class="btn-primary btn btn-lg {{ options_limit_reached ? 'plan-lock-btn' : 'newOption' }}"> {{ lang('btn_add_new_option') }}</a>
+                </span>
+		    </div>
+        </div>
+
+        <div class="optionsRows panel-group accordion-sortable content-group-lg ui-sortable sortable-heading" id="accordion-controls">
+
+            {% set optionKey = 0 %}
+            {% for ovKey,po in product_options %}
+
+                {% set key = po['option_id'] %}
+                {% set optionKey = ovKey %}
+
+                <div class="panel panel-white option-row cursor-move" id="sort_{{optionKey}}" data-option-id="{{ po['option_id'] }}" data-option-is-submitted="1"
+                     id="option-row-{{ po['option_id'] }}">
+
+                    <input type="hidden" name="product_option[{{ key }}][product_option_id]"
+                           value="{{ po['product_option_id'] }}"/>
+                    <input type="hidden" name="product_option[{{ key }}][name]"
+                           value="{{ po['name'] }}"/>
+                    <input type="hidden" name="product_option[{{ key }}][option_id]"
+                           value="{{ po['option_id'] }}"/>
+                    <input type="hidden" name="product_option[{{ key }}][type]"
+                           value="{{ po['type'] }}"/>
+                    <input type="hidden" name="product_option[{{ key }}][sort_order]"
+                           value="{{ optionKey }}" class="product_option_sort_order"/>
+                    <div class="panel-heading w-100 m-0">
+                        <h6 class="panel-title">
+                            <a data-toggle="collapse" data-parent="#accordion-controls"
+                               href="#accordion-controls-group-{{ key }}" aria-expanded="true">{{ po['name'] }}</a>
+                            <a class="heading-elements-toggle"><i class="icon-more"></i></a>
+                        </h6>
+
+                        <div class="heading-elements">
+                            <div class="heading-form">
+                                <div class="form-group">
+                                    <div class="checkbox checkbox-switchery">
+                                        <label>
+                                            <input type="checkbox"
+                                                   onchange="changeStatusRequired(this)"
+                                                   name="product_option[{{ key }}][required]"
+                                                   class="switchery" {{ po['required'] == 1 ? 'checked' : '' }}>
+                                            <span class="switchery-status">
+                                                    {{ po['required'] == 1 ? lang('lbl_switch_required') : lang('lbl_switch_optional') }}
+                                                </span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <ul class="icons-list">
+                                <li>
+                                    <a class="text-warning-600 remove-option-row" data-popup="tooltip"
+                                       data-original-title="Remove Option">
+                                        <i class="icon-trash"></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div id="accordion-controls-group-{{ key }}"
+                         class="panel-collapse {{ loop.first ? 'in' : '' }}">
+
+
+                            {% if po['type'] == 'text' %}
+                            <div class="panel-body">
+                                <div class="form-group col-md-12" id="model-group">
+                                    <label for="model" class="control-label">
+                                        {{ lang('entry_option_value') }}
+                                    </label>
+                                    <input name="product_option[{{ key }}][option_value]"
+                                           value="{{ po['option_value'] }}" class="form-control"/>
+                                </div>
+                            </div>
+                            {% elseif po['type'] == 'textarea' %}
+                            <div class="panel-body">
+                                <div class="form-group col-md-12" id="model-group">
+                                    <label for="model" class="control-label">
+                                        {{ lang('entry_option_value') }}
+                                    </label>
+                                    <textarea name="product_option[{{ key }}][option_value]"
+                                              class="form-control">{{ po['option_value'] }}</textarea>
+                                </div>
+                            </div>
+                            {% elseif po['type'] == 'file' %}
+                            <div class="panel-body">
+                                <div class="form-group col-md-12" id="model-group">
+                                    <label for="model" class="control-label">
+                                        {{ lang('entry_option_value') }}
+                                    </label>
+                                    <input name="product_option[{{ key }}][option_value]"
+                                           value="{{ po['option_value'] }}" class="form-control"/>
+                                </div>
+                            </div>
+                            {% elseif po['type'] == 'date' %}
+                            <div class="panel-body">
+                                <div class="form-group col-md-12" id="model-group">
+                                    <label for="model" class="control-label">
+                                        {{ lang('entry_option_value') }}
+                                    </label>
+                                    <input name="product_option[{{ key }}][option_value]"
+                                           value="{{ po['option_value'] }}"
+                                           class="form-control datepicker"/>
+                                </div>
+                                </div>
+                            {% elseif po['type'] == 'datetime' %}
+                            <div class="panel-body">
+                                <div class="form-group col-md-12" id="model-group">
+                                    <label for="model" class="control-label">
+                                        {{ lang('entry_option_value') }}
+                                    </label>
+                                    <input name="product_option[{{ key }}][option_value]"
+                                           value="{{ po['option_value'] }}"
+                                           class="form-control" id="datetimepicker"/>
+                                </div>
+                            </div>
+                            {% elseif po['type'] == 'time' %}
+                            <div class="panel-body">
+                                <div class="form-group col-md-12" id="model-group">
+                                    <label for="model" class="control-label">
+                                        {{ lang('entry_option_value') }}
+                                    </label>
+                                    <input name="product_option[{{ key }}][option_value]"
+                                           value="{{ po['option_value'] }}"
+                                           class="form-control timepicker"/>
+                                </div>
+                            </div>
+                            {% elseif po['type'] == 'select' or po['type'] == 'checkbox' or po['type'] == 'radio' or po['type'] == 'image' or po['type'] == 'product' %}
+                                <div class="table-responsive accordion-sortable content-group-lg ui-sortable sortable-heading-table">
+                                    <table class="table table-hover datatable-highlight optionValuesTable"
+                                        id="optionValuesTable">
+                                        <thead>
+                                        <tr>
+                                            <th>{{ lang('entry_option_value') }}</th>
+                                            <th>{{ lang('entry_quantity') }}</th>
+                                            <th>{{ lang('entry_subtract') }}</th>
+                                            <th>{{ lang('entry_price_diff') }}</th>
+                                            <th>{{ lang('entry_weight_diff') }}</th>
+                                            <th></th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        {% for pOpvKey,pov in po['product_option_value'] %}
+
+                                            {% set vKey = pov['option_value_id'] %}
+                                            {% if option_values[key] is defined and option_values[key][vKey] is defined %}
+                                                <tr style="display: none;" id="hidden-option-value-row-{{ pov['option_value_id'] }}"  class="sort-tr">
+                                                    <td class="td-sort">
+                                                        <input type="hidden"
+                                                               name="product_option[{{ key }}][product_option_value][{{ vKey }}][option_value_id]"
+                                                               value="{{ pov['option_value_id'] }}"/>
+                                                        <input type="hidden"
+                                                               name="product_option[{{ key }}][product_option_value][{{ vKey }}][product_option_value_id]"
+                                                               value="{{ pov['product_option_value_id'] }}"/>
+
+                                                        <input type="hidden"
+                                                               name="product_option[{{ key }}][product_option_value][{{ vKey }}][quantity]"
+                                                               value="{{ pov['quantity'] }}"/>
+
+                                                        <input type="hidden"
+                                                               name="product_option[{{ key }}][product_option_value][{{ vKey }}][subtract]"
+                                                               value="{{ pov['subtract'] }}"/>
+
+                                                        <input type="hidden"
+                                                               name="product_option[{{ key }}][product_option_value][{{ vKey }}][price]"
+                                                               value="{{ pov['price_prefix'] ~ pov['price'] }}"/>
+
+                                                        <input type="hidden"
+                                                               name="product_option[{{ key }}][product_option_value][{{ vKey }}][weight]"
+                                                               value="{{ pov['weight_prefix'] ~ pov['weight'] }}"/>
+
+                                                        <input type="hidden" name="product_option[{{ key }}][product_option_value][{{ vKey }}][sort_order]"
+                                                               value="{{ pOpvKey }}"/>
+                                                    </td>
+
+                                                </tr>
+                                            {% endif %}
+                                        {% endfor %}
+
+                                        {% for pOpvKey,pov in po['product_option_value']|slice(0,10) %}
+
+                                            {% set vKey = pov['option_value_id'] %}
+                                            {% if option_values[key] is defined and option_values[key][vKey] is defined %}
+                                                    <tr id="option-value-row-{{ pov['option_value_id'] }}"  class="sort-tr">
+                                                        <td class="td-sort">
+                                                            <input type="hidden"
+                                                                   name="product_option[{{ key }}][product_option_value][{{ vKey }}][option_value_id]"
+                                                                   value="{{ pov['option_value_id'] }}"/>
+                                                            {% if option_values[po['option_id']] is defined %}
+                                                                {% for ov in option_values[po['option_id']] %}
+                                                                    {% if ov['option_value_id'] == pov['option_value_id'] %}
+                                                                        {{ ov['name'] }}
+                                                                    {% endif %}
+                                                                {% endfor %}
+                                                            {% endif %}
+                                                            <input type="hidden"
+                                                                   name="product_option[{{ key }}][product_option_value][{{ vKey }}][product_option_value_id]"
+                                                                   value="{{ pov['product_option_value_id'] }}"/>
+                                                        </td>
+                                                        <td>
+                                                            <input type="text" class="form-control touchspin-quantity-control"
+                                                                   name="product_option[{{ key }}][product_option_value][{{ vKey }}][quantity]"
+                                                                   value="{{ pov['quantity'] }}" size="3"/>
+                                                        </td>
+                                                        <td>
+                                                            <div class="checkbox checkbox-switchery">
+                                                                <label>
+                                                                    <input type="checkbox"
+                                                                           onchange="changeStatusYesNo(this)"
+                                                                           name="product_option[{{ key }}][product_option_value][{{ vKey }}][subtract]"
+                                                                           class="switchery" {{ pov['subtract'] == 1 ? 'checked' : '' }}>
+                                                                    <span class="switchery-status">
+                                                                    {{ pov['subtract'] == 1 ? lang('lbl_switch_yes') : lang('lbl_switch_no') }}
+                                                                </span>
+                                                                </label>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <input type="text" class="form-control touchspin-money-minus"
+                                                                   name="product_option[{{ key }}][product_option_value][{{ vKey }}][price]"
+                                                                   value="{{ pov['price_prefix'] ~ pov['price'] }}" size="5"/>
+                                                        </td>
+                                                        <td>
+                                                            <input type="text" class="form-control touchspin-money-weight"
+                                                                   name="product_option[{{ key }}][product_option_value][{{ vKey }}][weight]"
+                                                                   value="{{ pov['weight_prefix'] ~ pov['weight'] }}" size="5"/>
+                                                        </td>
+                                                         <td>
+                                                         <a class="button btn btn-danger removeOptionValue" data-id="{{ pov['option_value_id'] }}" data-product-id="{{ product_id }}">
+                                                          <i class="icon-trash"></i></a>
+                                                         </td>
+                                                        {# key = opt id #}
+                                                        {# vKey = opt val id #}
+                                                        {# pOpvKey = optval index #}
+                                                        <input type="hidden" name="product_option[{{ key }}][product_option_value][{{ vKey }}][sort_order]"
+                                                               value="{{ pOpvKey }}" class="product_option_value_sort_order"/>
+                                                    </tr>
+                                            {% endif %}
+                                        {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% endif %}
+                            
+                        {% if po['type'] == 'select' or po['type'] == 'checkbox' or po['type'] == 'radio' or po['type'] == 'image' or po['type'] == 'product' %}
+                        <div class="panel-body">
+                            <div class="row">
+                                <div class="mt-10 mb-10 d-flex j-content-between ai-center">
+                                    <div class="left">
+                                        <a data-option="{{ po['option_id'] }}" data-toggle="modal"
+                                        data-target="#newOptionValue"
+                                        class="btn btn-xs border-blue text-blue btn-flat no-margin">
+                                            {{ lang('button_add_option_value') }}
+                                        </a>
+
+                                        {% if po.total > 0 %}
+                                            <button class="theme-btn primary-btn btn-md option-view-more" type="button" data-total="{{po.total}}">
+                                                {{lang('button_view_more')}}
+                                                <i class="fas fa-chevron-down reverce"></i>
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                    {# {% if po.total > 10 %} #}
+                                        <p class="option-table-count small-hint-font">
+                                            <span class="total">{{po.total}}</span>/
+{#                                            <span class="current">{{po['product_option_value']|length}}</span>#}
+                                            <span class="current">10</span>
+                                        </p>
+                                    {# {% endif %} #}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    var viewMoreLink = `{{link('catalog/product/getProductOptions', { product_id:product_id, option_id: "moreOptionId", start: "moreStart", limit: "10" } )}}`;
+    var currentProductId = {{ product_id }}
+    $(".touchspin-money-weight").TouchSpin({
+        'postfix': text_gram,
+        min: -Infinity,
+        max: Infinity,
+        initval: 0,
+        step: 0.01,
+        decimals: 2,
+    });
+    document.addEventListener('DOMContentLoaded', function () {
+        // this code is used for sort product option value
+        $(".sortable-heading-table").sortable({
+            connectWith: '.heading-sortable-table',
+            items: '.sort-tr',
+            helper: 'original',
+            cursor: 'move',
+            handle: '.td-sort, [data-action=move]',
+            revert: 100,
+            containment: '.content-wrapper',
+            forceHelperSize: true,
+            placeholder: 'sortable-placeholder',
+            forcePlaceholderSize: true,
+            tolerance: 'pointer',
+            start: function (e, ui) {
+                ui.placeholder.height(ui.item.outerHeight());
+            },
+            update: function (event, ui) {
+                $('.product_option_value_sort_order').each(function (i) {
+                    var numbering = i + 1;
+                    $(this).val(numbering);
+                });
+            }
+        });
+
+        // Change sort handle
+        $(".sortable-heading").sortable({
+            connectWith: '.heading-sortable',
+            items: '.panel',
+            helper: 'original',
+            cursor: 'move',
+            handle: '.panel-title, [data-action=move]',
+            revert: 100,
+            containment: '.content-wrapper',
+            forceHelperSize: true,
+            placeholder: 'sortable-placeholder',
+            forcePlaceholderSize: true,
+            tolerance: 'pointer',
+            start: function (e, ui) {
+                ui.placeholder.height(ui.item.outerHeight());
+            },
+            update: function (event, ui) {
+                $('.product_option_sort_order').each(function (i) {
+                    var numbering = i + 1;
+                    $(this).val(numbering);
+                });
+            }
+        });
+
+    });
+
+    $(document).ready(function () {
+
+        $(document).on('click', '.datepicker', function(){
+            $('.datepicker').pickadate({
+                'format': 'yyyy-mm-dd',
+                'formatSubmit': 'yyyy-mm-dd'
+            });
+        });
+        $(document).on('click', '#datetimepicker', function(){
+            $("#datetimepicker").AnyTime_picker({
+                format: "%Y-%m-%d %H:%i",
+            });
+        });
+
+        $(document).on('click', '.timepicker', function(){
+            $('.timepicker').pickatime({});
+        });
+
+         // Delete 
+    $(document).on('click','.removeOptionValue', function(){
+        var el = this;
+        // Delete id
+        var deleteid = $(this).data('id');
+        var productId = $(this).data('product-id');
+        var delteOptionValueHref = "{{ link('catalog/product/deleteOptionValue') }}";
+        confirmMessage(() => {
+                if (productId == ''){
+                    removeOptionValueRaw(el,deleteid);
+                }else{
+                    $.ajax({
+                        url: delteOptionValueHref,
+                        dataType: 'JSON',
+                        method: 'POST',
+                        data: { id:deleteid, product_id : productId },
+                    }).done((r)=>{
+                        if (typeof r.status !== 'undefined' && r.status === 'OK') {
+                            // Remove row from HTML Table
+                            removeOptionValueRaw(el,deleteid);
+                        }
+                    });
+                }
+            }, () => {
+            }, {
+                title: "{{lang('cm_title')}}",
+                text: "{{lang('cm_text')}}",
+                type: "warning",
+                showCancelButton: true,
+                confirmButtonClass: "danger",
+                confirmButtonText: "{{lang('cm_confirm_button')}}",
+                cancelButtonText: "{{lang('cm_cancel_button')}}"
+            });
+
+      });
+
+    });
+
+    $(document).on('click', '.remove-option-row', function(){
+        var parent = $(this).parents('.option-row');
+
+        var optionId = parent.attr('data-option-id');
+
+        var isSubmitted = parent.attr('data-option-is-submitted');
+
+        if (isSubmitted) {
+            confirmMessage(() => {
+                // show dropdown after confirm
+                $("<style type='text/css'> .select2-dropdown{ visibility: visible; } </style>").appendTo("head");
+                $.ajax({
+                    url: "{{ link('catalog/product/revokeOption') }}",
+                    dataType: 'JSON',
+                    method: 'POST',
+                    data: {product_id: {{ product_id ?? 0 }}, option_id: optionId},
+
+                }).done((r) => {
+                    if (typeof r.status !== 'undefined' && r.status === 'OK') {
+                        // Remove row from HTML Table
+                        parent.remove();
+
+                        delete selectedOptionValues[optionId];
+
+                        $('.thumb-option-selector').find('*[data-option-id=' + optionId + ']').remove();
+                        $('#selection-' + optionId).remove();
+                        $('#option-row-' + optionId).remove();
+
+                        $('#options-autocomplete option[value="' + optionId + '"]').removeAttr('selected').change();
+
+                        // $('.optionsRows .option-row').addClass('hide');
+                        $('.optionsRows .option-row:first-child').removeClass('hide');
+
+                        notify('', 'success', "{{ lang('message_deleted_successfully') }}");
+                        return;
+                    }
+                });
+            }, () => {
+                // show dropdown after cancel
+                $("<style type='text/css'> .select2-dropdown{ visibility: visible; } </style>").appendTo("head");
+            }, {
+                title: "{{ lang('cm_title') }}",
+                text: "{{ lang('cm_text') }}",
+                type: "warning",
+                showCancelButton: true,
+                confirmButtonClass: "danger",
+                confirmButtonText: "{{ lang('cm_confirm_button') }}",
+                cancelButtonText: "{{ lang('cm_cancel_button') }}"
+            });
+        }else{
+            // Remove row from HTML Table
+            parent.remove();
+
+            delete selectedOptionValues[optionId];
+
+            $('.thumb-option-selector').find('*[data-option-id=' + optionId + ']').remove();
+            $('#selection-' + optionId).remove();
+            $('#option-row-' + optionId).remove();
+
+            $('#options-autocomplete option[value="' + optionId + '"]').removeAttr('selected').change();
+
+            // $('.optionsRows .option-row').addClass('hide');
+            $('.optionsRows .option-row:first-child').removeClass('hide');
+        }
+
+    });
+
+
+    function removeOptionValueRaw(el,deleteid){
+        $(el).closest('tr').css('background','tomato');
+        $(el).closest('tr').fadeOut(800,function(){
+            $(this).remove();
+            $('#hidden-option-value-row-'+ deleteid).remove();
+        });
+        notify('', 'success', "{{lang('message_deleted_successfully')}}");
+        return;
+    }
+
+</script>
+{% block scripts %}
+
+{% endblock scripts %}

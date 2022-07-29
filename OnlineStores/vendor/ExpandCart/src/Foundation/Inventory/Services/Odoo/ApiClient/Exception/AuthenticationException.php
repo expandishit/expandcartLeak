@@ -1,0 +1,11 @@
+<?php
+
+namespace ExpandCart\Foundation\Inventory\Services\Odoo\ApiClient\Exception;
+
+class AuthenticationException extends RequestException
+{
+    public function __construct(\Throwable $previous = null)
+    {
+        parent::__construct('Bad credentials', 0, $previous);
+    }
+}

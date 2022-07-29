@@ -1,0 +1,259 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block title %}
+    {{ lang('heading_title') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block content %}
+
+  {% include "wkpos/reports/tabs.expand" %}
+
+<div class="tab-content">
+  <!-- BEGIN Products TAB -->
+  <div class="tab-pane active" id="tab-product">
+      <div class="col-md-10" style="padding-left: 0; padding-right: 0">
+        <div class="panel panel-flat">
+          <div class="panel-body" style="padding: 0">
+            <div class="table-bordered">
+              <table class="table  table-hover" id="product-report">
+                <thead>
+                  <tr>
+                {# <th>{{ column_number }}</th>#}
+                    <th>{{ column_product }}</th>
+                    {#`<th>{{ column_outlet }}</th>#}
+                    <th>{{ column_model }}</th>
+                    <th>{{ column_quantity }}</th>
+                    <th>{{ column_pos_quantity }}</th>
+                    <th>{{ column_sold }}</th>
+                    <th>{{ column_remaining }}</th>
+                    <th>{{ column_total }}</th>
+                    <th>{{ column_cost }}</th>
+                    <th>{{ column_profit }}</th>
+                    {#<th>{{ column_supplier }}</th>#}
+                  </tr>
+                </thead>
+                <tbody>
+
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colspan="11" id="product-footer" class="alert-info text-center"><span class="one"></span><span class="two" style="display:none;cursor:pointer;">{{ column_show_next }}</span></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="panel panel-flat">
+          <div class="panel-heading">
+            <h6 class="panel-title"><span class="text-bold">{{ text_filter }}</span><a class="heading-elements-toggle"><i class="icon-more"></i></a></h6>
+            <div class="heading-elements not-collapsible">
+                <ul class="icons-list">
+                    <li><a data-action="collapse" class=""></a></li>
+                </ul>
+            </div>
+        </div>
+          <div class="panel-body">
+            <div class="row">
+              <div class="col-sm-12">
+                <div class="form-group">
+                  <label for="input-outlet">{{ column_product }}</label>
+                  <select class="form-control select" id="input-product">
+                    <option value="">{{ text_none }}</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-sm-12">
+                <div class="form-group">
+                  <label for="input-outlet">{{ column_outlet }}</label>
+                  <select class="form-control select" id="input-outlet">
+                    <option value="">{{ text_none }}</option>
+                    {% for outlet in outlets %}
+                      <option value="{{ outlet['outlet_id'] }}">{{ outlet['name'] }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+              <div class="col-sm-12">
+                <div class="form-group">
+                  <label for="input-supplier">{{ column_supplier }}</label>
+                  <select class="form-control select" id="input-supplier">
+                    <option value="">{{ text_none }}</option>
+                    {% for supplier in suppliers %}
+                      <option value="{{ supplier['supplier_id'] }}">{{ supplier['firstname'] ~ ' ' ~ supplier['lastname'] }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Filter Ended -->
+
+  </div>
+  <!-- END Products TAB -->
+</div>
+
+<script type="text/javascript">
+  // Product Reports
+  var product_url = '';
+  var page = 1;
+  var product_total = 0;
+  var limit = {{ limit ? limit : 0 }};
+  var text_product_listed = '{{ text_listed }}';
+  var text_no_data = '{{ text_no_data }}';
+  var product_listed = 0;
+  var token = '{{ token }}';
+
+  $(document).on('change','#input-outlet, #input-supplier, #input-product', function(){
+    product_listed = 0;
+    page = 1;
+    productReport();
+  });
+  $(document).on('click','#product-footer .two', function(){
+    if (product_listed < product_total) {
+      page = page + 1;
+      productReport();
+    }
+  });
+  productReport();
+  function productReport() {
+    product_url = 'wkpos/reports/productReport?i=1';
+    var outlet = $('#input-outlet').val();
+    var supplier = $('#input-supplier').val();
+    var product = $('#input-product').val();
+    if (outlet != '') {
+      product_url += '&filter_outlet=' + encodeURIComponent(outlet);
+    }
+    if (supplier != '') {
+      product_url += '&filter_supplier=' + encodeURIComponent(supplier);
+    }
+    if (product != '') {
+      product_url += '&filter_product=' + encodeURIComponent(product);
+    }
+    product_url += '&page=' + encodeURIComponent(page);
+    $.ajax({
+      url: product_url,
+      type: 'post',
+      dataType: 'json',
+      beforeSend: function(){
+        $('#product-footer').prepend('<i class="fa fa-spin fa-spinner"></i>');
+      },
+      success: function(json) {
+        if (json['success']) {
+          var product = '';
+          $('#product-report tbody').html('');
+          if (json['products'] && json['products'].length > 0) {
+
+            product_total = json['total'];
+            for (var i = 0; i < json['products'].length; i++) {
+              var supplier = '{{ text_no_supplier }}';
+              if (json['products'][i]['supplier'] != null) {
+                supplier = json['products'][i]['supplier'];
+              }
+              product += '<tr style="display:none" class="last-row">';
+              //product += '<td>' + (Number(product_listed) + 1) + '.</td>';
+              product += '<td>' + json['products'][i]['name'] + '</td>';
+              //product += '<td>' + json['products'][i]['outlet'] + '</td>';
+              product += '<td>' + json['products'][i]['model'] + '</td>';
+              product += '<td>' + json['products'][i]['quantity'] + '</td>';
+              product += '<td>' + json['products'][i]['pos_quantity'] + '</td>';
+              product += '<td>' + json['products'][i]['sold'] + '</td>';
+              product += '<td>' + json['products'][i]['remaining'] + '</td>';
+              product += '<td>' + json['products'][i]['total'] + '</td>';
+              product += '<td>' + json['products'][i]['cost'] + '</td>';
+              product += '<td>' + json['products'][i]['profit'] + '</td>';
+              //product += '<td>' + supplier + '</td>';
+              product += '</tr>';
+              if (product_listed < product_total) {
+                product_listed += 1;
+              }
+            }
+
+          }else{
+            product += '<tr>';
+            product += '<td colspan="11" style="text-align: center">'+text_no_data+'</td>';
+            product += '</tr>';
+          }
+
+          $('#product-report tbody').append($(product));
+          $('#product-report .last-row').slideDown(2000);
+          $('#product-footer .one').text((text_product_listed.replace('_listed',product_listed)).replace('_total', json['total']));
+        }
+      },
+      complete: function() {
+        $('#product-footer').find('i').remove();
+      }
+    });
+  }
+  $(document).on('ready', function(){
+    $('#product-footer').mouseover(function(){
+      if (product_listed < product_total) {
+      $(this).find('.one').hide();
+      $(this).find('.two').show();
+    } else if (product_listed == product_total ) {
+      $(this).find('.one').show();
+      $(this).find('.two').hide();
+    }
+    });
+    $('#product-footer').mouseout(function(){
+      if (product_listed < product_total) {
+        $(this).find('.two').hide();
+        $(this).find('.one').show();
+      } else if (product_listed == product_total ) {
+        $(this).find('.one').show();
+        $(this).find('.two').hide();
+      }
+    });
+  });
+  $(document).ready(function () {
+    var none = '{{ text_none }}';
+    $("#input-product").select2({
+      tokenSeparators: [','],
+      closeOnSelect: false,
+      ajax: {
+        url: '{{ link("catalog/product/autocomplete") }}',
+        dataType: 'json',
+        type: 'GET',
+        delay: 250,
+        data: function (params) {
+          return {
+            filter_name: params.term
+          };
+        },
+        processResults: function (data) {
+          data.unshift({product_id:0, name:none});
+          return {
+            results: $.map(data, function (item, index) {
+
+              return {
+                id: item.product_id,
+                text: item.name
+              }
+            })
+          };
+        },
+        cache: true
+      }
+    });
+
+  });
+</script>
+<style>
+.radius-0 {
+  border-radius: 0;
+}
+.padding-0 {
+  padding: 0;
+}
+</style>
+  {% endblock %}

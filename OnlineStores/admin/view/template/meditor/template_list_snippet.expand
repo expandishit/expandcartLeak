@@ -1,0 +1,154 @@
+{% if templates|length > 0 %}
+<div class="grid">
+        {% for template in templates %}
+            <div class="infinite-scroll-content template-box" id=config_mobile_template"{{ template['code_name'] }}">
+                <div class="theme-box {{template.code_name == config_mobile_template ? 'current' : ''}}">
+                    {% set templateimage = imageBase ~ template.code_name ~ '.png' %}
+                    <div class="img">
+                        <img src="{{ templateimage }}"
+                             class="scroll-back-image">
+                    </div>
+                    {# <div class="info">
+                        <div class="up">
+                            <p class="name">{{ template.name }}</p>
+                            {% if template.code_name == config_mobile_template %}
+                            <span class="current-label">
+                                <i class="icon-checkmark4 pull-left"></i> {{ lang('current_template') }}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div> #}
+
+                    <div class="">
+                        {% if template.code_name == config_mobile_template %}
+                        <div id="apply" class="btns" style="width: 100%;">
+                            <button
+                                    class="button blue-dark-btn"
+                                    style="width: calc(100% - 100px);">{{ lang('text_already_applied') }}</button>
+                                <a data-popup="tooltip" data-toggle="modal"  class ="button dark-white-empty"data-target="#modal-reset-def" tempName="{{ template['code_name'] }}"
+                                    data-template-id="{{ template.id }}" data-original-title="{{ lang('text_reset_templ') }}">
+                                    <i class="fas fa-redo-alt"></i>
+                                </a>
+                                <button type="button" class="button dark-white-empty preview-demo-image" data-popup="tooltip" data-toggle="modal"
+                                  data-target="#template-mobile-demo" tempName="{{ template.code_name }}" data-codename="{{ template.code_name }}">
+                                  <i class="icon-eye"></i>
+                                </button>
+                            </div>
+                        {% else %}
+                                <div id="apply" class="btns" style="width: 100%;">
+
+{#                                    onclick='Pace.restart();changeTemplate("", "{{ template.code_name }}");'#}
+                                    <button
+                                            class="button blue-white-empty" style="width: calc(100% - 50px);"
+                                            data-popup="tooltip"
+                                            data-toggle="modal"
+                                            data-target="#modal-apply-def"
+                                            tempName="{{ template.code_name }}"
+                                    ><i
+                                                class="icon-brush position-left"></i> {{ lang('text_apply_template') }}
+                                    </button>
+                                    <button type="button" class="button dark-white-empty preview-demo-image" 
+                                     data-popup="tooltip"
+                                            data-toggle="modal"
+                                            data-target="#template-mobile-demo"
+                                            tempName="{{ template.code_name }}"
+                                            data-codename="{{ template.code_name }}">
+                                    <i class="icon-eye"></i>
+                                    </button>
+                                    {# <ul class="dropdown-menu dropdown-menu-right">
+                                       <li>
+                                           <a target="_blank"
+                                               href="{{ link('templates/preview', {'t': template.code_name}) }}">
+                                                <i class="icon-eye"></i> {{ lang('text_preview_template') }}
+                                            </a>
+                                       </li>
+                                    </ul>#}
+                                </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+<!-- Modal -->
+<div class="modal fade template-demo-image center-modal" id="template-mobile-demo" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="demo-wrapper">
+        <img src="http://qaz123.expandcart.com/image/templates/mobile/default.png" alt="" class="demo">
+        <i class="fas fa-chevron-right next"></i>
+        <i class="fas fa-chevron-left prev"></i>
+        <div class="preview">
+          <img src="http://qaz123.expandcart.com/image/templates/mobile/stylish.png" alt="">
+          <img src="http://qaz123.expandcart.com/image/templates/mobile/stylish.png" alt="">
+          <img src="http://qaz123.expandcart.com/image/templates/mobile/stylish.png" alt="">
+          <img src="http://qaz123.expandcart.com/image/templates/mobile/default.png" alt="">
+          <img src="http://qaz123.expandcart.com/image/templates/mobile/default.png" alt="">
+          <img src="http://qaz123.expandcart.com/image/templates/mobile/default.png" alt="">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    {% if pagination %}
+
+        <!-- Pagination -->
+        <div class="text-center pagination-wrapper content-group-lg pt-20"> {{ pagination }} </div>
+        <!-- /pagination -->
+
+        {% include 'includes/infinite_scroller_status.expand' %}
+
+        <script>
+            applyInfiniteScroll();
+        </script>
+    {% endif %}
+{% else %}
+    <h2 class="text-center"><i class="far fa-frown fa-2x"></i> <br>{{ lang('no_search_result') }}</h2>
+{% endif %}
+{% block endScripts %}
+  <script>
+    $(document).on('click','.template-demo-image .demo-wrapper .preview img' ,function(){
+      $('.template-demo-image .demo-wrapper .demo').attr('src', $(this).attr('src'));
+      $('.template-demo-image .demo-wrapper .preview img').removeClass('active');
+      $(this).addClass('active');
+    });
+    $(document).on('click','.preview-demo-image' ,function(){
+      let codeName = $(this).data('codename');
+      let imageBase = "{{imageBase}}";
+      let imagePath = imageBase + codeName;
+      let imageLength = codeName == 'default' ? 7 : codeName == 'stylish' ? 4 : 8;
+      $('.template-demo-image .demo-wrapper .preview').empty();
+      $('.template-demo-image .demo-wrapper .demo').attr('src', imagePath + '/1.jpg');
+      for(var i= 0 ; i < imageLength ; i++ ){
+        $('.template-demo-image .demo-wrapper .preview').append(`<img src="${imagePath}/${i+1}.jpg" class="${i==0 ? 'active' : ''}"/>`)
+      }
+    })
+    $(document).on('click', '.template-demo-image .demo-wrapper i', function () {
+        let activeIndex = $('.template-demo-image .demo-wrapper .preview img.active').index();
+        let imagesLength = $('.template-demo-image .demo-wrapper .preview img').length;
+        if($(this).hasClass('next')){
+          if(activeIndex < imagesLength - 1){
+            $('.template-demo-image .demo-wrapper .demo').attr('src', $('.template-demo-image .demo-wrapper .preview img').eq(activeIndex + 1).attr('src'));
+            $('.template-demo-image .demo-wrapper .preview img').removeClass('active');
+            $('.template-demo-image .demo-wrapper .preview img').eq(activeIndex + 1).addClass('active')
+          }else{
+            $('.template-demo-image .demo-wrapper .demo').attr('src', $('.template-demo-image .demo-wrapper .preview img').eq(0).attr('src'));
+            $('.template-demo-image .demo-wrapper .preview img').removeClass('active');
+            $('.template-demo-image .demo-wrapper .preview img').eq(0).addClass('active')
+          }
+        }
+        if ($(this).hasClass('prev')) {
+          if(activeIndex > 0){
+            $('.template-demo-image .demo-wrapper .demo').attr('src', $('.template-demo-image .demo-wrapper .preview img').eq(activeIndex - 1).attr('src'))
+            $('.template-demo-image .demo-wrapper .preview img').removeClass('active');
+            $('.template-demo-image .demo-wrapper .preview img').eq(activeIndex - 1).addClass('active')
+          }else{
+            $('.template-demo-image .demo-wrapper .demo').attr('src', $('.template-demo-image .demo-wrapper .preview img').eq(imagesLength - 1).attr('src'))
+            $('.template-demo-image .demo-wrapper .preview img').removeClass('active');
+            $('.template-demo-image .demo-wrapper .preview img').eq(imagesLength - 1).addClass('active')
+          }
+        }
+      });
+  </script>
+{% endblock endScripts %}

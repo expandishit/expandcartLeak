@@ -1,0 +1,292 @@
+{% extends "base.expand" %}
+{% import "controls/forms.expand" as forms %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+
+{% block title %}
+    {{ lang('heading_title_settings', 'extension/payment') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block secondarymenu %}
+{% endblock secondarymenu %}
+
+{% block content %}
+
+<style>
+    .content-wrapper {
+        background-color: #f8f9ff;
+    }
+
+    .page-header-default {
+        background-color: transparent;
+    }
+    .page-header-content + .breadcrumb-line {
+        border: 0;
+    }
+
+    .page-header {
+        margin: 0 60px;
+    }
+
+    .breadcrumb-line {
+        border-bottom: 1px solid #e0ddef !important;
+    margin: 0 32px;
+    border-top: 0;
+    margin-bottom: 30px !important;
+    }
+
+    .SubFormHidden {
+        display: none
+    }
+
+    .hiddenSubmit {
+        opacity: 0.5;
+        pointer-events: none;
+    }
+
+    @media (max-width: 768px) {
+        .page-header {
+            margin: 0;
+        }
+    }
+</style>
+
+
+<!-- Whatsapp Settings -->
+<form class="form whatsapp-setting-page" action="{{ action }}">
+    <div class="row">
+        <div class="col-md-3">
+            <p class="bold font-15 mb-10 mt-10">{{ lang('label_app_status') }}</p>
+        </div>
+        <div class="col-md-9">
+            <div class="panel">
+                <div class="panel-body">
+                    <p class="s-bold"> {{ lang('text_new_messages_have') }} <span class="whatsapp-msg-num">{{new_messages_count}}</span> {{ lang('text_new_messages') }} </p>
+                    <div class=" d-flex j-content-end ai-center">
+                        <a class="btn-whatsapp-chatting" href="{{ link('module/whatsapp/chat') }}"><img src="view/assets/images/whatsapp/WhatsApp_icon.png" width="20" alt="icon" class="mr-5">  {{lang('entry_chatting')}}</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-3">
+            <p class="bold font-15 mb-10 mt-10">{{ lang('label_app_status') }}</p>
+        </div>
+        <div class="col-md-9">
+            <div class="panel">
+                <div class="panel-body">
+                    <div class=" d-flex j-content-between ai-center activate-controls">
+                        <label class="control-label">{{ lang('text_displaying') }} </label>
+                        <div class="switch-component" id="status-group">
+                            <div class="switch-inner">
+                                <label class="switch-cover">
+                                    <input type="checkbox" class="hide" onchange="changeStatus(this);" name="whatsapp_chat_show" {{ (whatsapp_chat_show == 1) ? 'checked' : '' }} >
+                                    <span class="switch-title switch-enabled">
+                                        {{lang('text_disabled')}}
+                                    </span>
+                                    <span class="switch-title switch-disabled">
+                                        {{lang('text_enabled')}}
+                                    </span>
+                                    <span class="switch-btn"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-3">
+            <p class="bold font-15 mb-10 mt-10">{{ lang('text_display_controls') }}</p>
+        </div>
+        <div class="col-md-9">
+            <div class="panel">
+                <div class="panel-body">
+                    <label class="custom-radio">
+                        <input type="radio" name="whatsapp_chat_applied_on" class="hide radio-toggler hasSubForm required-field-toSubmit" value="all" {{ (whatsapp_chat_applied_on == 'all') ? 'checked' : '' }}>
+                        <i></i>
+                        <span>{{ lang('text_all_customers') }}</span>
+                    </label>
+                    <label class="custom-radio">
+                        <input type="radio" name="whatsapp_chat_applied_on" class="hide radio-toggler hasSubForm required-field-toSubmit" value="specific" {{ (whatsapp_chat_applied_on == 'specific') ? 'checked' : '' }}>
+                        <i></i>
+                        <span>{{ lang('text_specific_customer') }}</span>
+                    </label>
+
+                    <div class="whatsapp_chat_applied_on">
+                        <div class="specific {% if whatsapp_chat_applied_on != 'specific' %} SubFormHidden {% endif %}">
+                            <div class="form-group ml-25 mt-15">
+                                <label class="control-label">{{ lang('select_customer_group') }}</label>
+                                <select name="whatsapp_chat_selected_groups[]" id="select-post" class="form-control select" multiple>
+                                    {% for customer_group in customer_groups %}
+									
+									<option value="{{customer_group.customer_group_id}}" {{ (customer_group.customer_group_id in whatsapp_chat_selected_groups) ? 'selected' : '' }}>
+									{{customer_group.name}}
+									</option>
+									
+                                    {% endfor %} 
+                                </select>
+                                <span class="help-block"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+    <div class="row">
+        <div class="col-md-3">
+            
+        </div>
+        <div class="col-md-9">
+            <div class="d-flex j-content-between activate-controls">
+                <div class="">
+                    {% if activated == 0 %}
+                    <a class="btn-gray" data-target="#modal-deactivate-ps"
+                        data-toggle="modal" ps-title="{{ payment_method_data['title'] }}"
+                        psid="{{ payment_method_data['code'] }}" href="#"> {{ lang('entry_remove_app') }}</a>
+                    {% endif %}
+                </div>
+                <div class="text-right">
+                    <a href="{{ link('module/whatsapp') }}" class="btn btn-default bottom-cancel-button">
+                        {{ activated == 0 ? lang('button_cancel') : lang('button_cancel_changes') }}</a>
+                    <button type="button" class="btn btn-primary btn-ladda btn-ladda-spinner bottom-save-button hiddenSubmit"
+                        data-style="zoom-in" onclick="$('.form').submit();"><i
+                            class="far fa-save fa-lg position-left"></i>
+                        {{ lang('button_save_changes') }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<div class="modal fade modal-expandpay-remove" id="modal-deactivate-ps">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">×</button>
+                <h4 class="modal-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Layer_1" x="0px" y="0px" fill="#c40000" viewBox="0 0 512 512" style="width: 20px;height: 20px;display: inline-block;margin-inline-end: 5px;transform: translateY(3px);" xml:space="preserve">
+                        <g>
+                            <g>
+                                <path d="M505.403,406.394L295.389,58.102c-8.274-13.721-23.367-22.245-39.39-22.245c-16.023,0-31.116,8.524-39.391,22.246    L6.595,406.394c-8.551,14.182-8.804,31.95-0.661,46.37c8.145,14.42,23.491,23.378,40.051,23.378h420.028    c16.56,0,31.907-8.958,40.052-23.379C514.208,438.342,513.955,420.574,505.403,406.394z M477.039,436.372    c-2.242,3.969-6.467,6.436-11.026,6.436H45.985c-4.559,0-8.784-2.466-11.025-6.435c-2.242-3.97-2.172-8.862,0.181-12.765    L245.156,75.316c2.278-3.777,6.433-6.124,10.844-6.124c4.41,0,8.565,2.347,10.843,6.124l210.013,348.292    C479.211,427.512,479.281,432.403,477.039,436.372z"></path>
+                            </g>
+                        </g>
+                        <g>
+                            <g>
+                                <path d="M256.154,173.005c-12.68,0-22.576,6.804-22.576,18.866c0,36.802,4.329,89.686,4.329,126.489    c0.001,9.587,8.352,13.607,18.248,13.607c7.422,0,17.937-4.02,17.937-13.607c0-36.802,4.329-89.686,4.329-126.489    C278.421,179.81,268.216,173.005,256.154,173.005z"></path>
+                            </g>
+                        </g>
+                        <g>
+                            <g>
+                                <path d="M256.465,353.306c-13.607,0-23.814,10.824-23.814,23.814c0,12.68,10.206,23.814,23.814,23.814    c12.68,0,23.505-11.134,23.505-23.814C279.97,364.13,269.144,353.306,256.465,353.306z"></path>
+                            </g>
+                        </g>
+                        <g>
+                        </g>
+                        <g>
+                        </g>
+                        <g>
+                        </g>
+                        <g>
+                        </g>
+                        <g>
+                        </g>
+                        <g>
+                        </g>
+                        <g>
+                        </g>
+                        <g>
+                        </g>
+                        <g>
+                        </g>
+                        <g>
+                        </g>
+                        <g>
+                        </g>
+                        <g>
+                        </g>
+                        <g>
+                        </g>
+                        <g>
+                        </g>
+                        <g>
+                        </g>
+                        </svg>
+                        {{ lang('entry_remove_app') }}<span id="ps-title"></span></h4>
+            </div>
+            <div class="modal-body">
+                Remove App Description
+            </div>
+            <div class="modal-footer">
+                <span class="server-loading mr-5" style="display:none;"><i class="fa fa-refresh fa-spin"></i></span> 
+                <button type="button" class="btn btn-default" onclick="$('#modal-deactivate-ps').modal('toggle');">{{ lang('entry_cancel') }}</button>
+                <a class="btn btn-danger" psid="" id="deactivate-ps">{{ lang('entry_remove_app') }}
+                    <button type="button" class="btn btn-danger btn-sm custom-alert-onBtn alert-loading-state" style="display: none;"><i class="fas fa-spinner fa-spin"></i></button>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+var deactivateURL = '{{link('module/whatsapp/chat_uninstall')}}';
+   $(document).on('click', '.md-trigger', function () {
+        $('#modal-deactivate-ps').find('#deactivate-ps').attr('psid', $(this).attr('psid'));
+        $('#modal-deactivate-ps').find('#ps-title').html($(this).attr('ps-title'));
+    });
+    $("#deactivate-ps").click(function () {
+        // $('#deactivate-ps').parent().find('.server-loading').show();
+        $('.alert-loading-state').show();
+        window.location.replace(deactivateURL);
+        console.log(deactivateURL + $("#deactivate-ps").attr('psid'))
+    });
+
+
+    $(document).ready(function() {
+        /// radio select 
+        $(".hasSubForm").change(function() {
+            var selectedVal = $(this).val();
+            var holderName = $(this).attr("name");
+            $("." + holderName).find('> *').addClass('SubFormHidden');
+            $("." + holderName +' '+ "." + selectedVal).removeClass('SubFormHidden');
+        });
+		
+		
+        ////// hide submit if the required fields are empty
+
+        function emptyInputConfigure(){
+                var empty = false;
+                $('.required-field-toSubmit').each(function() {
+                    if ($(this).is(":checked")) {
+                        empty = true;
+                    }
+                });
+
+                if (empty) {
+                    $('.btn-ladda-spinner').removeClass('hiddenSubmit');
+                } else {
+                    $('.btn-ladda-spinner').addClass('hiddenSubmit');
+                }
+        };
+
+        $('.required-field-toSubmit').change(function() {
+            emptyInputConfigure()
+        });
+
+        emptyInputConfigure();
+        });
+
+</script>
+
+{% endblock content %}

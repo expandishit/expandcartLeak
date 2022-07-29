@@ -1,0 +1,73 @@
+{% set products_per_item = fields.noOfRows.field_value %}
+
+{% if fields.blockFunction.field_value == 'getLatestProducts' %}
+  {% set sliderProducts = getLatestProducts(15, 600, 600) %}
+
+{% elseif fields.blockFunction.field_value == 'getBestSellerProducts' %}
+  {% set sliderProducts = getBestSellerProducts(15, 600, 600) %}
+
+{% elseif fields.blockFunction.field_value == 'getSpecialProducts' %}
+  {% set sliderProducts = getSpecialProducts(15, 600, 600) %}
+
+{% elseif fields.blockFunction.field_value == 'getProductsByCategoryId' %}
+{% set sliderProducts = getProductsByCategoryId(fields['categories']['field_value'], 20, 600, 600) %}
+
+{% elseif fields.blockFunction.field_value == 'getFeaturedProducts' %}
+  {% set sliderProducts = getFeaturedProducts(fields['products']['field_value'], 600, 600) %}
+
+{% endif %}
+
+{% set items_products = sliderProducts|chunk(products_per_item) %}
+{% set items_count = sliderProducts|length %}
+
+
+{% if items_count > 0 %}
+<div class="container" id="section-{{ section_id }}">
+  {% if fields.displaysectiontitle.field_value == '1' %}
+  <div class="title-product-order8">
+    <h2 class="title18">{{ fields.sectiontitle.field_value }}</h2>
+  </div>
+  {% endif %}
+  <div class="content-product-order8">
+    <div class="wrap-item" data-pagination="true" data-navigation="true" data-itemscustom="[[0,1],[480,2],[768,3],[1024,4],[1200,5]]">
+      {% for items_product in items_products %}
+      <div class="item-product-order8">
+        {% for item_product in items_product %}
+        <div class="item-product">
+          <div class="product-thumb">
+            <a href="{{item_product.href}}" class="product-thumb-link">
+              <img src="{{item_product.thumb}}" alt="{{item_product.name}}">
+            </a>
+            <a href="{{item_product.href}}" class="quickview-link"></a>
+            <div class="product-extra-link">
+             {% if customer.isCustomerAllowedToAdd_cart and ( config('config_hide_add_to_cart') != 1 or item_product.quantity > 0 )  %}
+              <a class="addcart-link" href="#" onclick="event.preventDefault(); addToCart({{ item_product.product_id }},1, {{ ('-1' in item_product.price) or ('-1' in item_product.special) ? 'true' : 'false' }}); return false;"><i aria-hidden="true" class="fa fa-shopping-basket"></i></a>
+               {% endif %}
+              <a class="wishlist-link" href="#" onclick="event.preventDefault(); addToWishList('{{ item_product.product_id }}',1); return false;"><i aria-hidden="true" class="fa fa-heart"></i></a>
+              <a class="compare-link" href="#"  onclick="event.preventDefault(); addToCompare('{{ item_product.product_id }}',1); return false;"><i aria-hidden="true" class="fa fa-refresh"></i></a>
+            </div>
+          </div>
+          <div class="product-info">
+            <h3 class="product-title"><a href="{{item_product.href}}">{{item_product.name}}</a></h3>
+            {% if ('-1' in item_product.price) or ('-1' in item_product.special) %}
+              <ins><span class="clickable" onclick="contact_us('{{ item_product.product_id }}');">{{ lang('button_req_quote') }}</span></ins>
+              <div id="enquiry-{{ item_product.product_id }}"  style="display:none">{{ item_product.name }}</div>
+            {% else %}
+              <div class="product-price">
+                {% if item_product.special != '' %}
+                <del><span>{{ item_product.price }}</span></del>
+                <ins><span>{{ item_product.special }}</span></ins>
+                {% else %}
+                <ins><span>{{ item_product.price }}</span></ins>
+                {% endif %}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}

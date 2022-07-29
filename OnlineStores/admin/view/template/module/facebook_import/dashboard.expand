@@ -1,0 +1,197 @@
+<!-- Start Form -->
+<!-- Advanced legend -->
+<div class="create-product-page">
+	<div class="panel-body pt-20 pb-20">
+		<fieldset>
+			<div id="panel1">
+				{% if facebook_token %}
+					<h5 class="text-semibold mb-20">
+						{{lang('fc_sync')}}
+					</h5>
+					<div id="loader" class="hidden" style="padding: 0 0 20px;"><div class="inline-loader"></div></div>
+					<div class="alert alert-danger hidden" id="errors"></div>
+					<div class="alert alert-success hidden" id="success"></div>
+					<div class="row">
+						<div class="col-md-6" style="padding: 0 10px" id="business-div">
+								<div class="form-group">
+									<label class="control-label">{{lang('select_business')}}</label>
+									<select class="form-control">
+											<option></option>
+									</select>
+								</div>
+						</div>
+						<div class="col-md-6" style="padding: 0 10px " id="catalog-div">
+								<div class="form-group">
+									<label class="control-label">{{lang('catalog_select')}}</label>
+									<select class="form-control" disabled>
+											<option></option>
+									</select>
+								</div>
+						</div>
+						<div class="col-md-12 mb-10">
+							<button class="btn blue-white" id="syncBtn">{{lang('sync_all_btn')}}</button>
+						</div>
+					</div>
+					<hr>
+				{% endif %}
+			</div>
+		</fieldset>
+		<fieldset>
+			<div class="collapse in" id="panel1">
+				<div class="row">
+					<div class="col-md-12">
+						{% if  facebook_token %}
+							<h5 class="text-semibold mb-10 mt-10">{{lang('previous_queues')}}</h5>
+							{% if queue_jobs|length > 0 %}
+								<table id="datatable-queues" class="table table-hover datatable-highlight" style="font-size: 10pt">
+									<thead>
+										<tr>
+											<th>{{lang('job_id')}}</th>
+											<th>{{lang('catalog_id')}}</th>
+											<th>{{lang('status')}}</th>
+											<th>{{lang('start_time')}}</th>
+											<th>{{lang('finish_time')}}</th>
+											<th>{{lang('product_count')}}</th>
+											<th>{{lang('operation')}}</th>
+										</tr>
+									</thead>
+									<tbody>
+										{% for queue_job in queue_jobs %}
+										<tr>
+											<td>{{queue_job['job_id']}}</td>
+											<td>{{queue_job['catalog_id']}}</td>
+											<td>
+												{% if queue_job['status'] == 'completed' %}
+												{% set class_ = 'success' %}
+												{% elseif queue_job['status'] == 'failed' %}
+												{% set class_ = 'danger' %}
+												{% else %}
+												{% set class_ = 'warning' %}
+												{% endif %}
+												<span class="label label-{{class_}}">{{ lang('queue_' ~ queue_job['status']) }}</span>
+											</td>
+											<td>{{queue_job['created_at']}}</td>
+											<td>{{queue_job['finished_at']}}</td>
+											<td>{{queue_job['product_count']}}</td>
+											<td>
+												<span class="label label-primary">{{ lang('queue_' ~ queue_job['operation']) }}</span>
+											</td>
+										</tr>
+										{% endfor %}
+									</tbody>
+								</table>
+							{% else %}
+								<h6 class="font-13 text-semibold p-15 info-alert">{{lang('no_queues')}}</h6>
+							{% endif %}
+
+						{% else %}
+							{% include 'module/facebook_import/no_token.expand' %}
+						{% endif %}
+					</div>
+					<!-- col-md-12 -->
+				</div>
+				<!-- row -->
+			</div>
+		</fieldset>
+	</div>
+</div>
+<!-- /a legend -->
+<!-- End Form -->
+
+<!-- End Lower Buttons -->
+
+
+{% block scripts %}
+	{% import _self as dtControls %}
+    <script>
+        $(document).ready(function () {
+            $('#errors').addClass('hidden');
+            $('#success').addClass('hidden');
+
+            //load businesses
+            $('#loader').removeClass('hidden');
+            $.getJSON('/admin/module/facebook_import/getBusinesses', function(res) {
+                if(res.items.length > 0){
+                    $.each(res.items,function( key, val ) {
+                        $('#business-div select').append("<option value='" + val.id + "'>" + val.name + "</option>");
+                    })
+                }else{
+                    $('#errors').html(`<p>{{lang('no_businesses')}}</p>`);
+                    $('#errors').removeClass('hidden');
+                }
+            }).done(function(){
+                $('#loader').addClass('hidden');
+            });
+
+            //load catalogs on business change
+            $('#business-div select').change(function(e){
+                $('#errors').addClass('hidden');
+                $('#success').addClass('hidden');
+
+                if(this.value == '' || this.value == null || this.value == undefined){
+                    $('#catalog-div select').attr('disabled','disabled');
+                }else{
+                    $('#catalog-div select').html('<option></option>');
+                    $('#catalog-div select').attr('disabled','disabled');
+
+                    $('#loader').removeClass('hidden');
+                    
+                    $.getJSON('/admin/module/facebook_import/getCatalogs?business_id='+this.value, function(res) {
+                        if(!res.owned_product_catalogs || res.owned_product_catalogs.data.length < 1){
+                            $('#catalog-div select').attr('disabled','disabled');
+                            $('#errors').removeClass('hidden');
+                            $('#errors').html(`<p>{{lang('no_catalogs')}}</p>`);
+                        }else{
+                            $.each(res.owned_product_catalogs.data,function( key, val ) {
+                                $('#catalog-div select').append("<option value='" + val.id + "'>" + val.name + "</option>");
+                            });
+                            $('#catalog-div select').removeAttr('disabled');
+                        }
+                    }).done(function(){
+                        $('#loader').addClass('hidden');
+                    });
+                }
+            });
+
+            //send sync request with selected products
+            $('#syncBtn').click(function () {
+								$('#errors').addClass('hidden');
+                $('#success').addClass('hidden');
+
+                if($('#business-div select').val() == '' || $('#business-div select').val() == null || $('#business-div select').val() == undefined){
+                    $('#errors').html(`<p>{{lang('no_business_selected')}}</p>`);
+                    $('#errors').removeClass('hidden');
+                }else if($('#catalog-div select').val() == '' || $('#catalog-div select').val() == null || $('#catalog-div select').val() == undefined){
+                    $('#errors').html(`<p>{{lang('no_catalog_selected')}}</p>`);
+                    $('#errors').removeClass('hidden');
+                }else{
+                    //Send the request to export the products
+                    $('#loader').removeClass('hidden');
+
+                    $.ajax({
+                        url: '/admin/module/facebook_import/handleSync',
+                        method: "POST",
+                        dataType: 'JSON',
+                        data: {
+                            catalog_id: $('#catalog-div select').val()
+                        }
+                    }).done(function(res){
+                        if(res.status == 'success'){
+                            $('#success').html(`<p>${res.message}</p>`);
+                            $('#success').removeClass('hidden');
+                        }else{
+                            $('#errors').html(`<p>${res.message}</p>`);
+                            $('#errors').removeClass('hidden');
+                        }
+                        $('#loader').addClass('hidden');
+                        console.log(res);
+                    });
+
+                    $('#errors').addClass('hidden');
+                }
+
+
+            });
+        });
+    </script>
+{% endblock scripts %}

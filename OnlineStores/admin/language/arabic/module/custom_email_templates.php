@@ -1,0 +1,224 @@
+<?php
+// Heading
+$_['heading_title']                             = 'قوالب البريد المخصصة';
+$_['date_format_short']                         = 'Y/m/d H:i:s';
+
+// Text
+$_['text_module']                               = 'التطبيقات';
+$_['text_success']                              = 'تم تعديل الإعدادات بنجاح';
+$_['text_history_success']                      = 'تم تعديل الطلبات بنجاح';
+$_['text_history_break']                        = 'لقد حدث خطأ: %s, رقم الطلب المعدل: %s';
+$_['text_email_history_removed']                = 'تم حذف البريد من السجل بنجاح!';
+$_['text_order_history_removed']                = 'تم حذف الطلب من السجل بنجاح!';
+$_['text_left']                                 = 'يسار';
+$_['text_center']                               = 'وسط';
+$_['text_right']                                = 'يمين';
+$_['text_edit_template']                        = 'تعديل القالب: %s';
+$_['text_template_preview']                     = 'مشاهدة القالب';
+$_['text_template']                             = '--- تحميل القالب ---';
+$_['text_no_results']                           = 'لا توجد نتائج!';
+$_['text_image_manager']                        = 'مدير الصور';
+$_['text_clear']                                = 'مسح';
+$_['text_search']                               = 'بحث';
+$_['text_template_customer_register']           = 'تسجيل حساب جديد';
+$_['text_template_customer_register_approval']  = 'الموافقة على تسجيل العميل';
+$_['text_template_customer_password_reset']     = 'إستعادة كلمة المرور المنسية';
+$_['text_template_customer_approve']            = 'تم الموافقة على العميل';
+$_['text_template_customer_voucher']            = 'قسيمة الطلب';
+$_['text_template_customer_balance']            = 'إضافة رصيد';
+$_['text_template_affiliate_register']          = 'تسجيل حساب جديد';
+$_['text_template_affiliate_register_approval'] = 'الموافقة على تسجيل الحساب';
+$_['text_template_affiliate_password_reset']    = 'إستعادة كلمة المرور المنسية';
+$_['text_template_affiliate_approve']           = 'تمت الموافقة على الحساب';
+$_['text_template_affiliate_add_transaction']   = 'قام المشرف بإضافة المعاملة';
+$_['text_template_contact_confirmation']        = 'إتصل بنا (رسالة التأكيد للعميل)';
+$_['text_template_reviews_added']               = 'تم إضافة تعليق (رسالة إخبارية للمشرف)';
+$_['text_template_cron_invoice']                = 'بريد إلكتروني به فاتورة عن طريق CRON';
+$_['text_template_seller_order']                = 'بيانات طلبات البائع';
+$_['text_template_seller_enable']               = 'تفعيل/قبول البائع';
+$_['text_template_seller_disable']              = 'رفض/تعطيل البائع';
+$_['text_template_seller_contact']              = 'التواصل مع البائع';
+$_['text_tab_order']                            = 'حالة الطلب';
+$_['text_tab_return']                           = 'حالة المرتجع';
+$_['text_tab_mail']                             = 'بريد / نشرة إخبارية';
+$_['text_tab_customer']                         = 'العميل';
+$_['text_tab_affiliate']                        = 'الأفليت';
+$_['text_tab_contact']                          = 'الإتصال';
+$_['text_tab_reviews']                          = 'التقييمات';
+$_['text_tab_cron']                             = 'Cron';
+$_['text_setting_table']                        = 'إعدادات عامة للجداول مسبقة التعريف (الرمز المختصر: {products}, {returns}, {totals}, {taxes}, {vouchers}, {comment})';
+$_['text_setting_order_status']                 = 'إعداد الجدول بالمنتجات المشتراة (الرمز المختصر: {products})';
+$_['text_setting_return_status']                = 'إعداد الجدول بالمنتجات المرتجعة (الرمز المختصر: {returns})';
+$_['text_setting_tax']                          = 'قسم الضرائب في قالب حالة الطلب (الرمز المختصر: {taxes})';
+$_['text_setting_total']                        = 'قسم الجمالي في قالب حالة الطلب (الرمز المختصر: {totals})';
+$_['text_setting_comment']                      = 'قسم التعليق في قالب حالة الطلب (الرمز المختصر: {comment})';
+$_['text_product_latest']                       = 'الأحدث';
+$_['text_product_bestseller']                   = 'الأكثر مبيعاً';
+$_['text_product_mostviewed']                   = 'الأكثر مشاهدة';
+$_['text_product_special']                      = 'العروض';
+$_['text_upload']                               = 'تم رفع الملف بنجاح!';
+$_['text_use_custom_invoice']                   = 'استخدام قالب الفاتورة المخصص';
+
+// product
+$_['text_template_product_approve']             = 'الموافقة على منتج';
+$_['text_template_product_reject']              = 'رفض منتج';
+$_['text_shortcode_product_approve']            = 'الرمز المختصر:<br />{logo}<br />{store_url}<br />{seller_firstname}<br />{seller_lastname}<br />{seller_email}<br />{seller_nickname}<br />{product_name}';
+$_['text_shortcode_product_reject']             = 'الرمز المختصر:<br />{logo}<br />{store_url}<br />{seller_firstname}<br />{seller_lastname}<br />{seller_email}<br />{seller_nickname}<br />{product_name}';
+
+$_['text_shortcode_order_status']               = 'الرمز المختصر:<br />{logo}<br />{firstname}<br />{lastname}<br />{delivery_address}<br />{shipping_address}<br />{payment_address}<br />{order_date}<br />{products}<br />{totals}<br />{vouchers}<br />{showcase}<br />{date}<br />{payment}<br />{shipment}<br />{order_id}<br />{total}<br />{invoice_number}<br />{order_link}<br />{store_url}<br />{status_name}<br />{store_name}<br />{ip}<br />{comment}<br />{sub_total}<br />{shipping_cost}<br />{client_comment}<br />{taxes}<br />{tax_amount}<br />{email}<br />{telephone}<br /><br />CSS table ID selectors:<br />#products-section<br />#totals-section<br />#vouchers-section<br />#taxes-section<br />#comment-section';
+$_['text_shortcode_return_status']              = 'الرمز المختصر:<br />{logo}<br />{firstname}<br />{lastname}<br />{email}<br />{telephone}<br />{order_id}<br />{order_date}<br />{returns}<br />{comment}<br />{showcase}<br /><br />CSS table ID selectors:<br />#returns-section';
+$_['text_shortcode_mail']                       = 'الرمز المختصر:<br />{showcase}';
+$_['text_shortcode_customer_register']          = 'الرمز المختصر:<br />{logo}<br />{firstname}<br />{lastname}<br />{date}<br />{store_name}<br />{email}<br />{password}<br />{account_link}<br />{activate_link}<br />{showcase}';
+$_['text_shortcode_customer_register_approval'] = 'الرمز المختصر:<br />{logo}<br />{firstname}<br />{lastname}<br />{date}<br />{store_name}<br />{email}<br />{account_link}<br />{showcase}';
+$_['text_shortcode_customer_password_reset']    = 'الرمز المختصر:<br />{logo}<br />{firstname}<br />{lastname}<br />{date}<br />{store_name}<br />{email}<br />{password}<br />{account_link}<br />{showcase}';
+$_['text_shortcode_customer_approve']           = 'الرمز المختصر:<br />{logo}<br />{firstname}<br />{lastname}<br />{date}<br />{store_name}<br />{email}<br />{account_link}<br />{showcase}';
+$_['text_shortcode_customer_voucher']           = 'الرمز المختصر:<br />{recip_name}<br />{recip_email}<br />{date}<br />{store_name}<br />{name}<br />{amount}<br />{message}<br />{store_link}<br />{image}<br />{code}<br />{showcase}';
+$_['text_shortcode_customer_balance']           = 'الرمز المختصر:<br />{logo}<br />{date}<br />{store_name}<br />{customer_first_name}<br />{customer_last_name}<br />{customer_email}<br />{customer_phone}<br />{amount}<br />{total}<br />{message}<br />{showcase}';
+$_['text_shortcode_affiliate_register']         = 'الرمز المختصر:<br />{logo}<br />{firstname}<br />{lastname}<br />{date}<br />{store_name}<br />{email}<br />{password}<br />{affiliate_code}<br />{account_link}';
+$_['text_shortcode_affiliate_register_approval'] = 'الرمز المختصر:<br />{logo}<br />{firstname}<br />{lastname}<br />{date}<br />{store_name}<br />{email}<br />{password}<br />{affiliate_code}<br />{account_link}';
+$_['text_shortcode_affiliate_password_reset']    = 'الرمز المختصر:<br />{firstname}<br />{lastname}<br />{date}<br />{store_name}<br />{email}<br />{password}<br />{account_link}';
+$_['text_shortcode_affiliate_approve']           = 'الرمز المختصر:<br />{firstname}<br />{lastname}<br />{date}<br />{store_name}<br />{email}<br />{account_link}';
+$_['text_shortcode_affiliate_add_transaction']   = 'الرمز المختصر:<br />{firstname}<br />{lastname}<br />{date}<br />{store_name}<br />{description}<br />{order_id}<br />{commission}<br />{account_link}';
+$_['text_shortcode_contact_confirmation']        = 'الرمز المختصر:<br />{firstname}<br />{email}<br />{date}<br />{enquiry}<br />{showcase}<br />{phone}';
+$_['text_shortcode_reviews_added']               = 'الرمز المختصر:<br />{product}<br />{author}<br />{date}<br />{rating}<br />{review}';
+$_['text_shortcode_cron_invoice']                = 'الرمز المختصر:<br />{firstname}<br />{lastname}<br />{date}<br />{order_id}<br />{invoice_number}';
+$_['text_shortcode_seller_order']               = 'الرمز المختصر:<br />{logo}<br />{firstname}<br />{lastname}<br />{delivery_address}<br />{shipping_address}<br />{payment_address}<br />{order_date}<br />{products}<br />{showcase}<br />{date}<br />{payment}<br />{shipment}<br />{order_id}<br />{invoice_number}<br />{order_link}<br />{store_url}<br />{status_name}<br />{store_name}<br />{ip}<br />{comment}<br />{shipping_cost}<br />{client_comment}<br />{email}<br />{telephone}<br />{seller_name}<br />{seller_email}<br />{seller_nickname}<br />{seller_company}<br />{delivery_slot_date}<br />{delivery_slot_time}<br />{seller_total_products}';
+$_['text_shortcode_seller_contact']               = 'Shortcode:<br />{logo}<br />{firstname}<br />{store_name}><br />{client_comment}<br />{email}<br />{seller_name}<br />{seller_email}<br />';
+$_['text_shortcode_seller_enable']               = 'الرمز المختصر:<br />{logo}<br />{store_url}<br />{store_name}<br />{seller_firstname}<br />{seller_lastname}<br />{seller_email}<br />{seller_nickname}';
+$_['text_shortcode_seller_disable']               = 'الرمز المختصر:<br />{logo}<br />{store_url}<br />{store_name}<br />{seller_firstname}<br />{seller_lastname}<br />{seller_email}<br />{seller_nickname}';
+
+$_['text_tab_general']                           = 'عام';
+$_['text_tab_showcase']                          = 'عرض المنتجات';
+$_['text_tab_predefined']                        = 'الجدول المعد مسبقاً';
+$_['text_tab_order_status']                      = 'حالات الطلب';
+$_['text_tab_return_status']                     = 'حالات المرتجعات';
+$_['text_tab_tax']                               = 'الضرائب';
+$_['text_tab_total']                             = 'الإجمالي';
+$_['text_tab_comment']                           = 'التعليقات';
+
+// Entry
+$_['entry_module_status']                       = 'حالة التطبيق';
+$_['entry_cron_invoice_status']                 = 'إرسال فاتورة عن طريق CRON';
+$_['entry_generate_invoice_number']             = 'توليد رقم الفاتورة';
+$_['entry_attach_invoice']                      = 'إرفاق فاتورة';
+$_['entry_invoice_template']                    = 'قالب الفاتورة';
+$_['entry_notify_admin_status']                 = 'إبلاغ المشرف باستخدام قوالب';
+$_['entry_track_status']                        = 'تتبع البريد الإلكتروني';
+$_['entry_date_format']                         = 'صيغة التاريخ';
+$_['entry_plain_text_status']                   = 'نص عادي';
+$_['entry_layout_width']                        = 'عرض التخطيط';
+$_['entry_text_color']                          = 'لون الخط';
+$_['entry_link_color']                          = 'لون الوصلة';
+$_['entry_background_image']                    = 'الصورة الخلفية';
+$_['entry_background_repeat']                   = 'تكرار الخلفية';
+$_['entry_showcase_image_dimension']            = 'بعد صورة المنتج';
+$_['entry_showcase_product_name']               = 'خط اسم المنتج';
+$_['entry_showcase_product_description']        = 'خط وصف المنتج';
+$_['entry_showcase_button']                     = 'الأزرار';
+$_['entry_showcase_button_text']                = 'نص الأزرار';
+$_['entry_taxes_section_title_align']           = 'محاذاة النص لعمود العنوان';
+$_['entry_taxes_section_rate']                  = 'اسم العمود لمعدل الضريبة';
+$_['entry_taxes_section_rate_align']            = 'محاذاة النص لعمود معدل الضريبة';
+$_['entry_taxes_section_tax']                   = 'إسم عمود قيمة الضريبة';
+$_['entry_taxes_section_tax_align']             = 'محاذاة النص لعمود قيمة الضريبة';
+$_['entry_totals_section_title_align']          = 'محاذاة النص لعمود العنوان';
+$_['entry_totals_section_amount_align']         = 'محاذاة النص لعمود الكمية';
+$_['entry_comment']                             = 'إسم العمود للتعليقات';
+$_['entry_column_name_font']                    = 'خط إسم العمود';
+$_['entry_padding']                             = 'الهامش الداخلي';
+$_['entry_border']                              = 'الحدود';
+$_['entry_column_name']                         = 'اسم العمود';
+$_['entry_text_align']                          = 'محاذاة النص';
+$_['entry_column_image_status']                 = 'عرض عمود الصورة';
+$_['entry_column_image_dimension']              = 'أبعاد صورة المنتج';
+$_['entry_column_product_status']               = 'عرض عمود إسم المنتج';
+$_['entry_column_product_link_status']          = 'إسم المنتج كوصلة';
+$_['entry_column_quantity_status']              = 'عرض عمود الكمية';
+$_['entry_column_model_status']                 = 'عرض عمود الموديل';
+$_['entry_column_sku_status']                   = 'عرض عمود الSKU';
+$_['entry_column_upc_status']                   = 'عرض عمود الUPC';
+$_['entry_column_attribute_status']             = 'عرض عمود خصائص المنتج';
+$_['entry_column_price_status']                 = 'عرض عمود السعر';
+$_['entry_column_price_gross_status']           = 'عرض عمود السعر الإجمالي';
+$_['entry_column_tax_status']                   = 'عرض عمود ضريبة المنتج';
+$_['entry_column_total_status']                 = 'عرض عمود الإجمالي';
+$_['entry_column_total_gross_status']           = 'عرض عمود الجمالي الصافي';
+$_['entry_product_option_status']               = 'عرض خيارات المنتج';
+$_['entry_product_totals_status']               = 'عرض إجماليات الطلب';
+$_['entry_column_reason_status']                = 'عرض عمود سبب الإرتجاع';
+$_['entry_column_opened_status']                = 'عرض عمود المفتوحة';
+$_['entry_column_action_status']                = 'عرض عمود';
+$_['entry_column_return_status_status']         = 'عرض عمود حالة المرتجع';
+$_['entry_column_comment_status']               = 'عرض عمود التعليق';
+$_['entry_bcc']                                 = 'بريد إلكتروني BCC';
+$_['entry_product']                             = 'عرض المنتجات';
+$_['entry_product_limit']                       = 'الحدود';
+$_['entry_subject']                             = 'الموضوع';
+$_['entry_description']                         = 'الوصف';
+$_['entry_status']                              = 'الحالة';
+$_['entry_template_code']                       = 'كود القالب';
+$_['entry_email']                               = 'البريد الإلكتروني';
+$_['entry_attachment']                          = 'مرفق في البريد الإلكتروني؟';
+$_['entry_date_added']                          = 'تاريخ الإضافة';
+$_['entry_width']                               = 'العرض';
+$_['entry_height']                              = 'الإرتفاع';
+$_['entry_size']                                = 'الحجم';
+$_['entry_color']                               = 'اللون';
+$_['entry_weight']                              = 'الوزن';
+$_['entry_background']                          = 'الخلفية';
+$_['entry_button_text']                         = 'نص الأزرار';
+$_['entry_top']                                 = 'أعلى';
+$_['entry_right']                               = 'يمين';
+$_['entry_bottom']                              = 'أسفل';
+$_['entry_left']                                = 'يسار';
+$_['entry_table']                               = 'جدول';
+$_['entry_language_tax_id']                     = 'نص الرقم التعريفي للضريبة';
+$_['entry_language_company_id']                 = 'نص الرقم التعريفي للشركة';
+
+// Column
+$_['column_name']                               = 'الإسم';
+$_['column_code']                               = 'كود القالب';
+$_['column_subject']                            = 'الموضوع';
+$_['column_email']                              = 'البريد الإلكتروني';
+$_['column_attachment']                         = 'المرفقات';
+$_['column_date_added']                         = 'تاريخ الإضافة';
+$_['column_date_opened']                        = 'تاريخ فتح البريد';
+$_['column_status']                             = 'الحالة';
+$_['column_group']                             = 'القسم';
+
+// Help
+$_['help_cron_invoice_status']                  = 'في القالب -> Cron, القالب يجب أن يكون مفعل.';
+$_['help_generate_invoice_number']              = 'توليد رقم الفاتورة عندما يكون للطلب حالة';
+$_['help_attach_invoice']                       = 'سيتم ارفاق الفاتورة تلقائياً مع حالات الطلب المحددة';
+$_['help_plain_text_status']                    = 'تجريد علامات HTML إلى نص عادي من رسائل البريد الإلكتروني.';
+$_['help_layout_width']                         = 'تحديد عرض قالب البريد الإلكتروني بالبيكسل.';
+$_['help_text_color']                         = 'تعيين كود لون النص';
+$_['help_link_color']                         = 'تعيين كود لون الروابط';
+$_['help_background_color']                         = 'تعيين كود لون الخلفية';
+$_['help_product']                              = 'استخدم الرمز المختصر {showcase} لعرض المنتجات المختارة في محتوى البريد.';
+$_['help_bcc']                                  = 'إفصل أكثر من واحد عن طريق فاصلة (,).';
+$_['help_table']                                = 'عرض المحتوى في جدول.';
+$_['help_use_custom_invoice']                   = 'عند تفعيل هذه الخاصية سوف يتم استخدام قالب الفاتورة في تطبيق قالب الفاتورة المخصص';
+
+// Tab
+$_['tab_general']                               = 'الإعدادات';
+$_['tab_template']                              = 'القوالب';
+$_['tab_history']                               = 'السجلات';
+
+// Button
+$_['button_add']                                = 'أضف جديد';
+$_['button_preview']                            = 'مشاهدة';
+$_['button_remove_all']                         = 'حذف الكل';
+
+// Error
+$_['error_permission']   			            = 'تحذير: أنت لا تمتلك صلاحيات التعديل!';
+$_['error_required']                            = 'تحذير: يرجى مراجعة النموذج بعناية بحثا عن الأخطاء!';
+$_['error_curl']                                = 'خطأ CURL %s(%s)!';
+$_['error_key']                                 = 'رمز API غير صحيح!';
+$_['error_subject']                             = 'يجب أن يكون موضوع البريد الإلكتروني أكبر من 2 وأقل من 255 حرفا!';
+$_['error_description']                         = 'يجب أن يكون محتوى البريد الإلكتروني أكبر من 3 أحرف!';
+$_['error_module']                              = 'لا توجد وحدة!';
+$_['error_filename']                            = 'يجب أن يكون اسم الملف بين 3 و 128 حرفا!';
+$_['error_filetype']                            = 'نوع الملف غير صالح!';
+$_['error_upload']                              = 'رفع الملف مطلوب!';
+?>

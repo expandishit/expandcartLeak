@@ -1,0 +1,659 @@
+{% extends "base.expand" %}
+{% import "controls/forms.expand" as forms %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+
+{% block title %}
+    {{ lang('heading_title', 'extension/payment') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block secondarymenu %}
+{% endblock secondarymenu %}
+
+{% block content %}
+
+<style>
+    .content-wrapper {
+        background-color: #fff;
+    }
+</style>
+
+{% if request.get['from_merge'] == 'yes' %}
+    <div class="alert alert-info">
+        {{ lang('redirected_from_merge_message') }}
+    </div>
+{% endif %}
+
+{% if code == 'my_fatoorah' %}
+    {% include "payment/my_fatoorah_register.expand" %}
+{% endif %}
+
+<div class="alert alert-danger" style="display: none;" id="errors-fallback"></div>
+
+<div class="alert alert-danger" style="display: none;" id="errors-fallback"></div>
+
+    <div class="modal fade" id="modal-deactivate-ps">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger">
+                    <button type="button" class="close" data-dismiss="modal">×</button>
+                    <h4 class="modal-title">{{ lang('entry_deactivate_payment_method') }} <span id="ps-title"></span></h4>
+                </div>
+                <div class="modal-body">
+                    <p>{{ lang('entry_deactivate_message') }}</p>
+        
+                    <p>{{ lang('entry_deactivate_message_conf') }}</p>
+                </div>
+                <div class="modal-footer">
+                    <span class="server-loading" style="display:none;"><i class="fa fa-refresh fa-spin"></i></span>
+                    <button type="button" class="btn btn-danger" psid="" id="deactivate-ps">{{ lang('entry_remove_app') }}</button>
+                    <button type="button" class="btn btn-link" onclick="$('#modal-deactivate-ps').modal('toggle');">{{ lang('entry_cancel') }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- expandpay activation tabs -->
+<div class="shipping-activation-tabs">
+    <ul class="ship-active-list">
+        <li class="">
+            <span><i class="fa fa-exclamation" aria-hidden="true"></i></span>
+        </li>
+        <li class="">
+            <span><i class="fa fa-list-ol" aria-hidden="true"></i></span>
+        </li>
+        <li class="">
+            <span><i class="fa fa-user" aria-hidden="true"></i></span>
+        </li>
+        <li class=" active">
+            <span><i class="fa fa-rocket" aria-hidden="true"></i></span>
+        </li>
+    </ul>
+
+    <div class="ship-steps-content">
+        <div class="step ">
+            {% if payment_method_data.description %}
+            <p class="font-16 bold mb-30">
+                {{ lang_printf("text_about",payment_method_data.title) }}
+            </p>
+            {% if payment_method_data.special_rate %}
+            <div class=" mb-10">
+                <p class="rate-label">
+                    {{ lang('text_steps_special_btn') }}
+                </p>
+            </div>
+            {% endif %}
+            <div class="gray-color mb-30 weight-500">
+                {{payment_method_data.description }}
+            </div>
+            {% endif %}
+            {% if payment_method_data.type != "offline_methods" %}
+                <p class="font-13 bold mb-10">
+                    {{ lang('text_supported_countries') }}
+                </p>
+                <div class="gray-color mb-30 weight-500">
+                    {% for countrie in payment_method_data.supported_countries %}
+                        {{countrie.name}} {% if loop.index < payment_method_data.supported_countries|length %},{% elseif loop.index >= payment_method_data.supported_countries|length %}{% endif %}
+                    {% endfor %}
+                    {% if payment_method_data.supported_countries|length == 0 %}{{lang('text_global')}}{% endif %}
+                </div>
+            {% else %}
+                <p class="font-15 bold mb-10">
+                    {{ lang('text_price') }}
+                </p>
+                <div class="font-16 gray-color mb-30 weight-500">
+                    {% if payment_method_data.price %}
+                        {{payment_method_data.price}}
+                    {% else %}
+                        {{ lang('text_free') }}
+                    {% endif %}
+                </div>
+            {% endif %}
+            {% if payment_method_data.contact_info %}
+            <p class="font-14 bold mb-10">
+                {{ lang_printf('text_have_inquiry', payment_method_data.title) }}
+            </p>
+            <div class="gray-color mb-30 weight-500">
+                {{payment_method_data.contact_info }}
+            </div>
+            {% endif %}
+
+            <div class="next-row">
+                <button class="next ship-next-btn">
+                    {{ lang('text_get_started') }}
+                    <i class="fa fa-angle-right" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+        <div class="step">
+            <p class="font-16 bold mb-20">
+                {{ lang_printf('text_integrate', payment_method_data.title) }}
+            </p>
+            <div class="ship-terms-row">
+                {% if payment_method_data.company_requirements %}
+                <div class="setting-step-box">
+                    <div class="img">
+                        <img src="view/assets/images/icons/companies-icon.svg" alt="">
+                    </div>
+                    <div class="info">
+                        <div class="up">
+                            <p class="font-14 box-title mb-10">
+                                {{ lang('text_as_companies') }}
+                            </p>
+                            <p class="list-title">
+                                {{ lang('text_should_have') }}
+                            </p>
+                            <ul>
+                                <li>
+                                    {{payment_method_data.company_requirements}}
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                {% if payment_method_data.individual_requirements %}
+                <div class="setting-step-box">
+                    <div class="img">
+                        <img src="view/assets/images/icons/individuals-icon.svg" alt="">
+                    </div>
+                    <div class="info">
+                        <div class="up">
+                            <p class="font-14 box-title mb-10">
+                                {{ lang('text_as_individuals') }}
+                            </p>
+                            <p class="list-title">
+                                {{ lang('text_should_have') }}
+                            </p>
+                            <ul>
+                                <li>
+                                    {{payment_method_data.individual_requirements}}
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% if payment_method_data.contact_info %}
+            <p class="font-15 bold mb-10">
+                {{ lang_printf('text_have_inquiry', payment_method_data.title) }}
+            </p>
+            <div class="font-16 gray-color mb-30">
+                {{payment_method_data.contact_info }}
+            </div>
+            {% endif %}
+            <div class="next-row">
+                <p class="info-content">
+                    {{ lang('text_match_requirements') }}
+                </p>
+                <button class="next ship-next-btn">
+                    {{ lang('btn_proceed') }}
+                    <i class="fa fa-angle-right" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+        <div class="step">
+            <p class="font-14 bold mb-15 text-center">
+                {{ lang_printf('text_should_have_acc', payment_method_data.title) }}
+            </p>
+            <p class="font-14 bold mb-20 text-center">
+                {{ lang_printf('text_have_acc', payment_method_data.title) }}
+            </p>
+            <div class="shipping-acc-btns">
+                <button class="acc-btn no-have">
+                    {{lang('text_no_havnt')}}
+                </button>
+                <button class="acc-btn have next">
+                    <span>
+                        {{lang('text_yes_have')}}
+                    </span>
+{#                        <i class="fa fa-chevron-right" aria-hidden="true"></i>#}
+                </button>
+            </div>
+            <div class="ship-create-cover">
+                <div class="ship-acc-create">
+                    <img src="view/assets/images/icons/lightbulb.svg" alt="">
+                    <div class="info blue-box">
+                        <p class="bold mb-30">
+                            {{ lang('account_creation_title') }}
+                        </p>
+                        <p class="font-14 bold mb-10"></p>
+                        <ul>
+                            <li>
+                                {{ payment_method_data.account_creation_steps }}
+                            </li>
+                        </ul>
+                            <br>
+                        {% if payment_method_data.contact_info %}
+                        <p class="gray-color font-13">
+                            {{ lang_printf('text_need_help', payment_method_data.title) }}
+                        </p>
+                        <p class="gray-color font-13">
+                            {{payment_method_data.contact_info }}
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="step active">
+            <p class="font-16 bold mb-30">
+                {{lang("text_installation")}}
+            </p>
+            <form id="setting-payment" class="form" action="{{ activated ? link('extension/expandpay/update') : link('extension/expandpay/register') }}">
+                <div class="row">
+                    <!-- Status -->
+                    <div class="col-md-3">
+                        <div class="panel panel-white">
+                            <div class="panel-heading">
+                                <h6 class="panel-title"><span class="text-bold">{{ lang('entry_status')|trim(':') }}</span></h6>
+                                <div class="heading-elements not-collapsible">
+                                    <ul class="icons-list">
+                                        <li><a data-action="collapse" class=""></a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="panel-body">
+                                <div class="collapse in" id="pnl-status">
+                                <!-- Status -->
+                                    <div class="form-group" id="pp_standard_status-group">
+                                        <label class="control-label">{{ lang('entry_status')|trim(':') }}</label>
+                                        <div class="checkbox checkbox-switchery">
+                                            <label>
+                                                <input type="checkbox" onchange="changeStatus(this);" name="expandpay_status" class="switchery" {{ pp_standard_status not in ['0', 0, 'off'] or pp_standard_status is null ? 'checked' }}>
+                                                <span class="switchery-status">{{ pp_standard_status not in ['0', 0, 'off'] or pp_standard_status is null ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                            </label>
+                                        </div>
+                                        <span class="help-block"></span>
+                                    </div>
+                                <!-- /Status -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- End of Status -->
+                    <!-- Fields -->
+                    <div class="col-md-9">
+
+                        <div class="panel panel-white">
+                            <div class="panel-body">
+                                    <div class="alert alert-warning" role="alert">
+                                     <i class="fa fa-info-circle" aria-hidden="true"></i>
+                                     {{ lang('activation_steps_alert') }}
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        <label for="business-country" class="control-label">{{ lang('activation_steps_business_country') }}</label>
+                                        <select name="business-country" id="business-country" class="form-control">
+                                            <option>{{ lang('entry_please_select') }}</option>
+                                            <option value-payment="Fawaterak" value='eg'>Egypt</option>
+                                            <option value-payment="MyFatoorah" value='sa'>Saudi</option>
+                                            <option value-payment="MyFatoorah" value='kw'>Kuwait</option>
+                                            <option value-payment="MyFatoorah" value='ae'>Emirates</option>
+                                        </select>
+                                        <span class="help-block"></span>
+                                        <span class="text-muted"></span>
+                                    </div>
+
+                                    <div class="form-group col-md-6">
+                                        <label for="business-city" class="control-label">{{ lang('activation_steps_business_city') }}</label>
+                                        <select name="business-city" id="business-city" class="form-control">
+                                            <option>{{ lang('entry_please_select') }}</option>
+                                            <option value-payment="Fawaterak">cairo</option>
+                                            <option value-payment="MyFatoorah">Riyad</option>
+                                            <option value-payment="MyFatoorah">Kuwait</option>
+                                            <option value-payment="MyFatoorah">Abu</option>
+                                        </select>
+                                        <span class="help-block"></span>
+                                        <span class="text-muted"></span>
+                                    </div>
+
+                                    <!-- In case Of Egypt account will create in My fawaterak  -->
+                                    <div class="form-group col-md-12 Fawaterak-item">
+                                            <label class="control-label"> {{ lang('activation_steps_account_type') }}</label>
+
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="account_type" id="Business_Owner" value="Business_Owner">
+                                                <label class="form-check-label" for="Business_Owner">
+                                                    {{ lang('activation_steps_type_busienss') }}
+                                                </label>
+                                              </div>
+                                              <div class="form-check disabled">
+                                                <input class="form-check-input" type="radio" name="account_type" id="Personal" value="Personal" disabled>
+                                                <label class="form-check-label" for="Personal">
+                                                    {{ lang('activation_steps_type_personal') }}
+                                                </label>
+                                              </div>
+                                    </div>
+                                    <div class="form-group col-md-6 Fawaterak-item">
+                                        <label class="control-label">{{ lang('entry_full_name') }}</label>
+                                        <input type="text" class="form-control" value="" placeholder="">
+                                        <span class="help-block"></span>
+                                    </div>
+
+                                    <div class="form-group col-md-6 Fawaterak-item">
+                                        <label class="control-label">{{ lang('entry_mobile') }}</label>
+                                        <input type="email" class="form-control" value="" placeholder="">
+                                        <span class="help-block"></span>
+                                    </div>
+
+                                    <div class="form-group col-md-6 Fawaterak-item">
+                                        <label class="control-label">{{ lang('entry_email') }}</label>
+                                        <input type="number" class="form-control" value="" placeholder="">
+                                        <span class="help-block"></span>
+                                    </div>
+                                    <!-- end In case Of Egypt account will create in My fawaterak  -->
+                            </div>
+                        </div>
+
+                        
+                        <!-- In case Of Saudi, Kuwait, emirates account will create in Myfatoorah   -->
+                        <div class="panel panel-white MyFatoorah-item">
+                            <div class="panel-heading">
+                                <h6 class="panel-title"><span class="text-bold">{{ lang('entry_register_info') }}</span></h6>
+                            </div>
+                            <div class="panel-body">
+                                <div class="collapse in">
+                                    <div class="form-group col-md-6">
+                                        <label class="control-label">{{ lang('entry_first_name') }}</label>
+                                        <input type="text" name="firstName" class="form-control" value="" placeholder="">
+                                        <span class="help-block"></span>
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        <label class="control-label">{{ lang('entry_last_name') }}</label>
+                                        <input type="text" name="lastName" class="form-control" value="" placeholder="">
+                                        <span class="help-block"></span>
+                                    </div>
+
+                                    <div class="form-group col-md-6">
+                                        <label class="control-label">{{ lang('entry_mobile') }}</label>
+                                        <input type="number" name="phone" class="form-control" value="" placeholder="">
+                                        <span class="help-block"></span>
+                                    </div>
+
+                                    <div class="form-group col-md-6">
+                                        <label class="control-label">{{ lang('entry_email') }}</label>
+                                        <input type="email" name="email" class="form-control" value="" placeholder="">
+                                        <span class="help-block"></span>
+                                    </div>
+
+                                    <div class="form-group col-md-6">
+                                        <label class="control-label">{{ lang('entry_password') }}</label>
+                                        <input type="password" name="password" class="form-control" value="" placeholder="">
+                                        <span class="help-block"></span>
+                                    </div>
+                                    <!--
+                                    <div class="form-group col-md-6">
+                                        <label class="control-label">{{ lang('entry_profile_name') }}</label>
+                                        <input type="text" class="form-control" value="" placeholder="">
+                                        <span class="help-block"></span>
+                                    </div>
+                                    -->
+
+                                    <div class="form-group col-md-6">
+                                        <label for="Entry_business" class="control-label">{{ lang('entry_business ') }}</label>
+                                        <select name="business_type" id="Entry_business" class="form-control">
+                                            <option>{{ lang('text_individual') }}</option>
+                                            <option>{{ lang('text_company') }}</option>
+                                        </select>
+                                        <span class="help-block"></span>
+                                        <span class="text-muted"></span>
+                                    </div>
+
+                                    <div class="form-group col-md-6">
+                                        <label for="vendor_category" class="control-label">{{ lang('vendor_category') }}</label>
+                                        <select name="vendor_category" id="vendor_category" class="form-control">
+                                            {% for CategoryList in vendorCategoryList %}
+                                                <option value={{CategoryList['Value']}}>{{CategoryList['Text']}}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <span class="help-block"></span>
+                                        <span class="text-muted"></span>
+                                    </div>
+
+
+                                    <div class="form-group col-md-6">
+                                        <label class="control-label">{{ lang('entry_address_1') }}</label>
+                                        <input type="text" name="address_1" class="form-control" value="" placeholder="">
+                                        <span class="help-block"></span>
+                                    </div>
+
+                                    <div class="form-group col-md-6">
+                                        <label class="control-label">{{ lang('entry_address_2') }}</label>
+                                        <input type="text" name="address_2" class="form-control" value="" placeholder="">
+                                        <span class="help-block"></span>
+                                    </div>
+                                    <!--
+                                    <div class="form-group col-md-6">
+                                        <label for="Bank" class="control-label">{{ lang('entry_bank') }}</label>
+                                        <select name="Bank" id="Bank" class="form-control">
+                                            <option>{{ lang('entry_please_select') }}</option>
+                                        </select>
+                                        <span class="help-block"></span>
+                                        <span class="text-muted"></span>
+                                    </div>
+
+                                    <div class="form-group col-md-6">
+                                        <label class="control-label">{{ lang('entry_account_holder_name') }}</label>
+                                        <input type="text" class="form-control" value="" placeholder="">
+                                        <span class="help-block"></span>
+                                    </div>
+
+                                    <div class="form-group col-md-6">
+                                        <label class="control-label">{{ lang('entry_iban') }}</label>
+                                        <input type="text" class="form-control" value="" placeholder="">
+                                        <span class="help-block"></span>
+                                    </div>
+
+                                    <div class="form-group col-md-6">
+                                        <label class="control-label">{{ lang('entry_bank_account') }}</label>
+                                        <input type="text" class="form-control" value="" placeholder="">
+                                        <span class="help-block"></span>
+                                    </div>
+
+                                    <div class="form-group col-md-6">
+                                        <label class="control-label">{{ lang('entry_transactions_no') }}</label>
+                                        <input type="text" class="form-control" value="" placeholder="">
+                                        <span class="help-block"></span>
+                                    </div>
+
+                                    <div class="form-group col-md-6">
+                                        <label class="control-label">{{ lang('entry_transactions_value') }}</label>
+                                        <input type="text" class="form-control" value="" placeholder="">
+                                        <span class="help-block"></span>
+                                    </div>
+
+                                    <div class="form-group col-md-6">
+                                        <label for="Bank" class="control-label">{{ lang('entry_country') }}</label>
+                                        <select name="Bank" id="Bank" class="form-control">
+                                            <option>{{ lang('entry_please_select') }}</option>
+                                        </select>
+                                        <span class="help-block"></span>
+                                        <span class="text-muted"></span>
+                                    </div>
+
+                                    <div class="form-group col-md-6">
+                                        <label for="Bank" class="control-label">{{ lang('entry_nationality') }}</label>
+                                        <select name="Bank" id="Bank" class="form-control">
+                                            <option>{{ lang('entry_please_select') }}</option>
+                                        </select>
+                                        <span class="help-block"></span>
+                                        <span class="text-muted"></span>
+                                    </div>
+                                    -->
+
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="panel panel-white MyFatoorahAndFawaterak-item">
+                            <div class="panel-heading">
+                                <h6 class="panel-title"><span class="text-bold">{{ lang('entry_register_files') }}</span></h6>
+                            </div>
+                            <div class="panel-body">
+                                <div class="collapse in">
+                                    <div class="form-group col-md-4">
+                                        <label class="control-label">{{ lang('entry_articles_assoc') }}</label>
+                                        <input type="file" class="form-control" value="" placeholder="">
+                                        <span class="help-block"></span>
+                                    </div>
+
+                                    <div class="form-group col-md-4">
+                                        <label class="control-label">{{ lang('entry_commercial_license') }}</label>
+                                        <input type="file" class="form-control" value="" placeholder="">
+                                        <span class="help-block"></span>
+                                    </div>
+
+                                    <div class="form-group col-md-4">
+                                        <label class="control-label">{{ lang('entry_others') }}</label>
+                                        <input type="file" class="form-control" value="" placeholder="">
+                                        <span class="help-block"></span>
+                                    </div>
+
+                                    <div class="form-group col-md-4">
+                                        <label class="control-label">{{ lang('entry_signature_auth') }}</label>
+                                        <input type="file" class="form-control" value="" placeholder="">
+                                        <span class="help-block"></span>
+                                    </div>
+
+                                    <div class="form-group col-md-4">
+                                        <label class="control-label">{{ lang('entry_civil_id') }}</label>
+                                        <input type="file" class="form-control" value="" placeholder="">
+                                        <span class="help-block"></span>
+                                    </div>
+
+                                    <div class="form-group col-md-4">
+                                        <label class="control-label">{{ lang('entry_back_civil_id') }}</label>
+                                        <input type="file" class="form-control" value="" placeholder="">
+                                        <span class="help-block"></span>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- end In case Of Saudi, Kuwait, emirates account will create in Myfatoorah  -->
+                    </div>
+                    <!-- End of Fields -->
+                </div>
+            </form>
+            <hr/>
+            <div class="row"></div>
+            <div class="d-flex j-content-between activate-controls">
+                <div class="">
+                    {% if activated == 1 %}
+                    <a class="btn btn-default bottom-cancel-button md-trigger" 
+                    data-target="#modal-deactivate-ps"
+                    data-toggle="modal"
+                    ps-title="{{ payment_method_data['title'] }}"
+                    psid="{{ payment_method_data['code'] }}"
+                    href="#"> {{ lang('entry_remove_app') }}</a>
+                    {% endif %}
+                </div>
+                <div class="text-right">
+                    <a  href="{{ link('extension/payment') }}" class="btn btn-default bottom-cancel-button">  {{ activated == 0 ? lang('button_cancel') : lang('button_cancel_changes') }}</a>
+                    <button type="button" class="btn btn-primary btn-ladda btn-ladda-spinner bottom-save-button" data-style="zoom-in" onclick="$('.form').submit();"><i class="far fa-save fa-lg position-left"></i> {{ activated == 0 ? lang('button_install_app') : lang('button_save_changes') }}</button>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</div>
+<!-- /expandpay activation tabs -->
+
+
+<script>
+    var payment_code = '{{code}}';
+    var deactivateURL = '{{link('extension/expandpay/expandpay_uninstall')}}';
+    $(document).on('click', '.md-trigger', function () {
+        $('#modal-deactivate-ps').find('#deactivate-ps').attr('psid', $(this).attr('psid'));
+        $('#modal-deactivate-ps').find('#ps-title').html($(this).attr('ps-title'));
+    });
+    $("#deactivate-ps").click(function () {
+        $('#deactivate-ps').parent().find('.server-loading').show();
+        window.location.replace(deactivateURL);
+        console.log(deactivateURL + $("#deactivate-ps").attr('psid'))
+    });
+
+    $(document).ready(function() {
+        let tabsActivation = function(el) {
+            el.prevAll().addClass('active');
+            el.addClass('active');
+            el.nextAll().removeClass('active');
+
+            $('.ship-steps-content .step').removeClass('active')
+            $('.ship-steps-content .step').eq(el.index()).addClass('active')
+
+            let liWidth = $('.ship-active-list li').width();
+            let liActiveLength = $('.ship-active-list li.active').length - 1;
+            let liLength = $('.ship-active-list li').length - 1;
+            let containerWidth = $('.ship-active-list').width();
+            let lineWidth = ((liActiveLength / (liLength)) * containerWidth) - 35;
+            $('head').append(`<style>
+                .shipping-activation-tabs .ship-active-list::after{width:${lineWidth < 0 ? 0 : lineWidth + 'px'};}
+            </style>`);
+            console.log(liActiveLength, liLength, containerWidth, ((liActiveLength / (liLength)) * containerWidth), lineWidth < 0 ? 0 : lineWidth);
+        }
+        if($('.ship-active-list li:last-child').hasClass('active')) {
+            tabsActivation($('.ship-active-list li:last-child'))
+        }
+        $('.ship-active-list li').click(function() {
+            tabsActivation($(this));
+        });
+        $('.next').click(function() {
+            let el = $('.ship-active-list li').eq($(this).parents('.step').index() + 1)
+            console.log(el)
+            tabsActivation(el);
+        });
+        $(".acc-btn.no-have").click(function() {
+            if('undefined' !== typeof is_my_fatoorah_approved && is_my_fatoorah_approved == false && payment_code == 'my_fatoorah')
+                $('#MyFatoorahRegisterModal').modal('toggle');
+            else
+                $('.ship-create-cover').slideDown()
+        })
+
+        $('select').select2();
+        $('.touchspinney').TouchSpin({
+            'postfix': '{{ current_currency_code }}',
+            'decimals': 2,
+            'min': 0,
+            'max': Infinity
+        });
+        $('.touchy').TouchSpin({
+            min: 1,
+            max: 99,
+        });
+    });
+
+    function changeStatus(checkbox)
+        {
+            var self = $(checkbox);
+            var switch_status = self.siblings('.switchery-status');
+
+            if ( self.is(':checked') )
+            {
+                switch_status.html("{{ lang('text_enabled') }}");
+            }
+            else
+            {
+                switch_status.html("{{ lang('text_disabled') }}");
+            }
+        }
+
+        $('#business-country').change(function(){
+            if($('option:selected', this).attr('value-payment') == 'Fawaterak'){
+                $('.Fawaterak-item').show();
+                $('.MyFatoorah-item').hide();
+                $('.MyFatoorahAndFawaterak-item').show();
+            } else if($('option:selected', this).attr('value-payment') ==  'MyFatoorah') {
+                $('.Fawaterak-item').hide();
+                $('.MyFatoorah-item').show();
+                $('.MyFatoorahAndFawaterak-item').show();
+            }
+        });
+</script>
+
+{% endblock content %}

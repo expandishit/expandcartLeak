@@ -1,0 +1,256 @@
+{# Start :: Breadcrumb Section Start #}
+<section class="breadcrumb-bg light-bg">                
+    <div class="theme-container container ">
+        <div class="space-top-30"></div>
+        <div class="site-breadcumb col-md-5 space-80">
+            <h1 class="section-title size-48 no-margin space-bottom-20">{{ lang('heading_title') }}</h1>                      
+            <ol class="breadcrumb breadcrumb-menubar">
+                {% for breadcrumb in breadcrumbs %}
+                   {% if loop.last %}
+                       <li>{{ breadcrumb['text'] }}</li>
+                   {% else %}
+                       <li><a href="{{ breadcrumb['href'] }}" class="gray-color">{{ breadcrumb['text'] }}</a></li>
+                   {% endif %}
+                {% endfor %}                            
+            </ol>
+        </div>  
+    </div>
+</section>
+{# End :: Breadcrumb Section Start #}
+
+<div class="container">
+    <br><br><br>
+  <table class="table">
+    <thead>
+      <tr>
+        <th class="left" colspan="2">{{ lang('text_order_detail') }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="left" style="width: 50%;">
+          {% if invoice_no %}
+          <b>{{ lang('text_invoice_no') }}</b> {{ invoice_no }}<br />
+          {% endif %}
+          <b>{{ lang('text_order_id') }}</b> #{{ order_id }}<br />
+          <b>{{ lang('text_date_added') }}</b> {{ date_added }}<br />
+          {% if custom_fields['confirm'] %}
+            {% for cfd in custom_fields['confirm'] %}
+              <b>{{ cfd['field_title'] }}</b>: {{ cfd['value'] }}<br />
+            {% endfor %}
+          {% endif %}
+        </td>
+        <td class="left" style="width: 50%;">
+          {% if payment_method %}
+          <b>{{ lang('text_payment_method') }}</b> {{ payment_method }}<br />
+          {% endif %}
+          {% if shipping_method %}
+          <b>{{ lang('text_shipping_method') }}</b> {{ shipping_method }}
+          {% endif %}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th class="left">{{ lang('text_payment_address') }}</th>
+        {% if shipping_address %}
+        <th class="left">{{ lang('text_shipping_address') }}</th>
+        {% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="left">{{ payment_address }}
+          {% if custom_fields['payment_address'] %}
+            {% for pfd in custom_fields['payment_address'] %}
+              <br/><br/>
+              <b>{{ pfd['field_title'] }}</b>: {{ pfd['value'] }}
+            {% endfor %}
+          {% endif %}
+        </td>
+        <td class="left">
+          {% if shipping_address %}
+            {{ shipping_address }}
+          {% endif %}
+          {% if custom_fields['shipping_address'] %}
+            <br/><br/>
+            {% for sfd in custom_fields['shipping_address'] %}
+              <b>{{ sfd['field_title'] }}</b>: {{ sfd['value'] }}
+            {% endfor %}
+          {% endif %}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>{{lang('image')}}</th>
+        <th class="left">{{ column_name }}</th>
+        
+
+        {% if show_videos_links %}
+        <th class="left">{{ lang('column_url') }}</th>
+        {% endif %}
+
+
+        <th class="left">{{ lang('column_model') }}</th>
+        <th class="right">{{ lang('column_quantity') }}</th>
+        <th class="right">{{ lang('column_price') }}</th>
+        <th class="right">{{ lang('column_total') }}</th>
+        {% if products %}
+        <th style="width: 1px;"></th>
+        {% endif %}
+      </tr>
+    </thead>
+    <tbody>
+    {% if seller_based %}
+      {{ include('default/template/account/order_info_order_products.expand') }}
+      {% else %}
+      {% for product in products %}
+      <tr>
+        <td class="left">
+          <img src="{{ product['image'] }}" alt="">
+        </td>
+        <td class="left">{{ product['name'] }}
+          {% for option in product['option'] %}
+          <br />
+          &nbsp;<small> - {{ option['name'] }}: {{ option['value'] }}</small>
+          {% endfor %}
+
+          {% if product['rentData'] %}
+            <div>
+                {{ lang('product_for_rent_from') }}
+                {{ product['rentData']['range']['from'] }}
+                {{ lang('product_for_rent_to') }}
+                {{ product['rentData']['range']['to'] }}
+                {{ lang('product_for_rent_for') }}
+                {{ product['rentData']['diff'] }}
+                {{ lang('text_day') }}
+            </div>
+          {% endif %}
+
+        </td>
+                {% if show_videos_links  %}
+        <td class="left"><a href="{{ product['external_video_url'] }}">{{ product['external_video_url'] }}</a></td>
+        {% endif %}
+
+        <td class="left">{{ product['model'] }}</td>
+        <td class="right">{{ product['quantity'] }}</td>
+        <td class="right">{{ product['price'] }}</td>
+        <td class="right">{{ product['total'] }}</td>
+        <td class="right">
+        {% if returned_products is defined and product['product_id'] in returned_products|keys %}
+              {{ lang( return_type ~  'ed_text') }} {{ returned_products[product['product_id']] }}
+        {% elseif return_limit is defined %}
+          {{ lang( return_type ~ '_limit') }}
+        {% else %}
+        <a class="btn btn-primary" href="{{ product['return'] }}">{{ lang('button_' ~ return_type) }}</a>
+        {% endif %}
+        
+        </td>
+      </tr>
+      {% endfor %}
+      {% endif %}
+      {% for voucher in vouchers %}
+      <tr>
+        <td class="left">{{ voucher['description'] }}</td>
+        <td class="left"></td>
+        <td class="right">1</td>
+        <td class="right">{{ voucher['amount'] }}</td>
+        <td class="right">{{ voucher['amount'] }}</td>
+        {% if products %}
+        <td></td>
+        {% endif %}
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      {% for total in totals %}
+      <tr>
+        <td colspan="3"></td>
+        <td class="right"><b>{{ total['title'] }}:</b></td>
+        <td class="right">{{ total['text'] }}</td>
+        {% if products %}
+        <td colspan="2"></td>
+        {% endif %}
+      </tr>
+      {% endfor %}
+    </tfoot>
+  </table>
+
+  {% if comment %}
+  <table class="table">
+    <thead>
+      <tr>
+        <th class="left">{{ lang('text_comment') }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="left">{{ comment }}</td>
+      </tr>
+    </tbody>
+  </table>
+  {% endif %}
+
+  {% if histories %}
+    <div class="page-title-base">
+        <h1 class="title-base">{{ lang('text_history') }}</h1>
+    </div>
+
+  {% if track_url %}
+    <br>
+    <a href="{{ track_url }}" class="button" target="_blank">{{ lang('text_tracking_aramex') }}</a>
+    <br>
+    <br>
+  {% endif %}
+
+  {% if awb_no %}
+	
+  <div>
+    
+    <a href="https://zajilship.com/traking_shipment_detail/{{ awb_no }}" class="btn btn-primary button" target="_blank">Track zajil Shipment</a>
+
+  </div>
+	
+  {% endif %}
+
+  {% if shipping_tracking_url|length %}
+    <br>
+    <a href="{{ shipping_tracking_url }}" class="btn btn-success" target="_blank">{{ lang('text_shipping_tracking') }}</a>
+    <br>
+    <br>
+  {% endif %}
+  <table class="table">
+    <thead>
+      <tr>
+        <th class="left">{{ lang('column_date_added') }}</th>
+        <th class="left">{{ lang('column_status') }}</th>
+        <th class="left">{{ lang('column_comment') }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for history in histories %}
+      <tr>
+        <td class="left">{{ history['date_added'] }}</td>
+        <td class="left">{{ history['status'] }}</td>
+        <td class="left">{{ history['comment'] }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
+    <div class="row">
+        <div class="col-md-7">
+            <div class="pull-left">
+                <a href="{{ link('account/order', '', 'SSL') }}" class="theme-btn-1">{{ lang('button_continue') }}</a>
+            </div>
+        </div>
+    </div>
+</div>

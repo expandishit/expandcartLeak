@@ -1,0 +1,181 @@
+<style>
+    #content {
+        /*border: 1px solid #ccc;*/
+        margin: 5px 0px;
+    }
+
+    .agenciesContainer {
+        margin-bottom: 20px;
+    }
+
+    .newAgencyContainer {
+        margin-bottom: 20px;
+    }
+
+    .footer {
+        text-align: center;
+        padding-bottom: 10px;
+        margin-bottom: 10px;
+    }
+
+    .footer #form {
+        margin: 5px 0px;
+    }
+
+    .heading .newAgencyButton {
+        margin: 0px 20px;
+    }
+</style>
+{% if success %}
+    <br>
+    <div class="alert alert-success alert-dismissible" role="alert">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        {{ success }}
+    </div>
+{% endif %}
+
+{% if error_warning %}
+    <br>
+    <div class="alert alert-warning alert-dismissible" role="alert">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        {{ error_warning }}
+    </div>
+{% endif %}
+
+<div class="agenciesContainer">
+    <div class="row newAgencyContainer">
+        <div class="heading col-md-12">
+            <div class="col-md-9">
+                {{ lang('text_your_agencies') }}
+                <span class="newAgencyButton">
+                <a href="{{ link('marketing/network/agencies/newAgency', '', 'SSL') }}"
+                   id="newAgency" class="btn btn-primary">{{ lang('add_new_agency') }}</a>
+            </span>
+            </div>
+            <div class="col-md-3">
+                {{ agencies['count'] }} {{ lang('text_of') }} {{ settings['max_agencies'] }}
+            </div>
+        </div>
+        <div class="heading col-md-12">
+
+        </div>
+
+        <div class="footer col-md-12 hide" id="form">
+            <form id="newAgencyForm">
+                <div class="form-group">
+                    <input type="text" name="email" class="form-control" placeholder="{{ lang('entry_email') }}" value="{{ email }}">
+                </div>
+                <div class="form-group">
+                    <input type="password" name="password" class="form-control" placeholder="{{ lang('entry_password') }}" value="{{ password }}">
+                </div>
+                <button type="submit" class="btn btn-inline">{{ lang('button_login') }}</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div>
+                <h1 class="title-base">{{ lang('text_my_own_agencies') }}</h1>
+            </div>
+            <table class="table">
+                <thead>
+                <tr>
+                    <th class="left">{{ lang('text_date_added') }}</th>
+                    {#<th class="left">{{ lang('customer_name') }}</th>#}
+                    <th class="right">{{ lang('text_ref_id') }}</th>
+                    <th class="right">{{ lang('text_ref_url') }}</th>
+                    <th class="right">{{ lang('text_options') }}</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% if agencies['data'] %}
+                {% for agency in agencies['data'] %}
+                    <tr>
+                        <td>{{ agency['created_at'] }}</td>
+                        {#<td>{{ agency['firstname'] ~ ' ' ~ agency['lastname'] }}</td>#}
+                        <td>{{ agency['ref_id'] }}</td>
+                        <td>{{ link('account/register&refid=') ~ agency['ref_id']|url_encode }}</td>
+                        <td>
+                            <a href="{{ link('marketing/network/agencies/downline') }}&agency_id={{ agency['agency_id'] }}">
+                                {{ lang('view_downline') }}
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                {% else %}
+                    <tr>
+                        <td class="center" colspan="5">{{ lang('text_no_results') }}</td>
+                    </tr>
+                {% endif %}
+                </tbody>
+            </table>
+        </div>
+        <div class="col-md-12">
+            <div>
+                <h1 class="title-base">{{ lang('text_sub_agencies') }}</h1>
+            </div>
+            <table class="table">
+                <thead>
+                <tr>
+                    <th class="left">{{ lang('text_date_added') }}</th>
+                    <th class="left">{{ lang('owner_name') }}</th>
+                    <th class="right">{{ lang('text_ref_id') }}</th>
+                    <th class="right">{{ lang('text_ref_url') }}</th>
+                    <th class="right">{{ lang('text_options') }}</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% if subAgencies['data'] %}
+                {% for subAgency in subAgencies['data'] %}
+                    <tr>
+                        <td>{{ subAgency['created_at'] }}</td>
+                        <td>{{ subAgency['firstname'] ~ ' ' ~ subAgency['lastname'] }}</td>
+                        <td>
+                            {% if subAgency['sub_agency'] is not empty %}
+                                {{ subAgency['sub_ref_id'] }}
+                            {% else %}
+                                <a href="{{ link('marketing/network/agencies/newSubAgency') ~ '&p=' ~ subAgency['parent_agency_id'] }}">
+                                    {{ lang('new_subagency') }}
+                                </a>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if subAgency['sub_agency'] != '' %}
+                                {{ link('account/register&refid=') ~ subAgency['sub_ref_id']|url_encode }}
+                            {% else %}
+                                <a href="{{ link('marketing/network/agencies/newSubAgency') ~ '&p=' ~ subAgency['parent_agency_id'] }}">
+                                    {{ lang('new_subagency') }}
+                                </a>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if subAgency['sub_agency'] != '' %}
+                            <a href="{{ link('marketing/network/agencies/downline') }}&agency_id={{ subAgency['sub_agency'] }}">
+                                {{ lang('view_downline') }}
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                {% else %}
+                    <tr>
+                        <td class="center" colspan="5">{{ lang('text_no_results') }}</td>
+                    </tr>
+                {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+$('#newAgencyaa').click(function (event) {
+    event.preventDefault();
+    $('.footer#form').toggleClass('hide');
+});
+
+$('#newAgencyForm').submit(function (event) {
+    event.preventDefault();
+});
+</script>

@@ -1,0 +1,300 @@
+
+{% extends "base.expand" %}
+
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% set dualMenuEnabled = true %}
+
+{% block title %}
+{{ lang('es_heading_title') }}
+<link rel="stylesheet" type="text/css" href="view/stylesheet/modules/expand_seo/custom.css?bn={{ BuildNumber }}"/>
+{% endblock title %}
+
+{% block breadcrumb %}
+{{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+<span class="headLinksEffect">
+    <a href="{{ insert }}" class="btn btn-success btn-labeled btn-xs"><b><i class="icon-plus3"></i></b>{{lang('button_new_rule')}}</a>
+</span>
+{% endblock headelements %}
+
+{% block secondarymenu %}
+    {% include 'module/expand_seo/menu.expand' with {'expand': '#expand_seo', 'active': '#url_schema'} %}
+{% endblock secondarymenu %}
+
+{% block content %}
+    <!-- Schema list data table -->
+    <div class="col-md-12">
+        <!-- Advanced legend -->
+        <div class="panel panel-flat">
+            <div class="collapse in" id="panel-language">
+                <table id="datatable-language" class="table table-hover datatable-highlight">
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th>{{ lang('es_entry_schema_group') }}</th>
+                        <th>{{ lang('es_language') }}</th>
+                        <th>{{ lang('entry_status') }}</th>
+                        <th>{{ lang('es_url_schema') }}</th>
+                        <th>{{ lang('text_options') }}</th>
+                    </tr>
+                    </thead>
+
+
+                </table>
+            </div>
+        </div>
+        <!-- /a legend -->
+    </div>
+    <!-- End of Schema list data table -->
+
+{% endblock content %}
+
+{% block scripts %}
+    {{ parent() }}
+    {% import _self as dtControls %}
+    <script>
+    $(document).ready(function() {
+        $('select').select2();
+        $('.touchspinney').TouchSpin({
+            'postfix': '{{ current_currency_code }}',
+            'decimals': 2,
+        });
+         $.extend($.fn.dataTable.defaults, {
+            autoWidth: false,
+            dom: '<"datatable-header"fB><"datatable-scroll-wrap"t><"datatable-footer"lip>',
+            // "dom": '<"top"i>rt<"bottom"flp><"clear">',
+            language: locales['dt_language'],
+            lengthMenu: [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ]
+        });
+    });
+
+    var dt;
+    $(document).ready(function() {
+
+        dt = $('#datatable-language').DataTable({
+            processing: true,
+            serverSide: true,
+            stateSave: true,
+            language: locales['dt_language'],
+            rowId: "seo_id",
+            select: {
+                style: 'multi',
+                selector: 'td:first-child'
+            },
+            "ajax": {
+                url: '{{ link('module/expand_seo/dtHandler') }}',
+                type: "post",
+                error: function (e,m,l) {
+                    console.log(e);
+                    $(".datatable-language-error").html("");
+                    $("#datatable-language").append('<tbody class="datatables_country-error"><tr><th colspan="3">No data found in the server</th></tr></tbody>');
+                    $("#datatable-language_processing").css("display", "none");
+                }
+            },
+            buttons: [
+                {
+                    text: "<i class='icon-trash'></i>",
+                    className: 'btn btn-default bulk-delete disabled',
+                    action: function(e, dt, node, config) {
+                        var selectedRows = dt.rows('.selected').data();
+                        var selectedIds = [];
+                        selectedRows.each(function(item) {
+                            selectedIds.push(item.seo_id);
+                        });
+                        if (selectedIds.length > 0){
+                            confirmMessage(function () {
+                                $.ajax({
+                                    url:  ' {{ link("module/expand_seo/dtDelete") }} ',
+                                    type: 'post',
+                                    data: {id: selectedIds},
+                                    success: function(response){
+                                        var returnResult = JSON.parse(response);
+                                        if (returnResult.success == '1')
+                                            notify('Success', 'success', returnResult.success_msg);
+                                        else
+                                            notify('Failed', 'failed', returnResult.error);
+                                        reloadDT();
+                                    },
+                                });
+                            });
+                        }
+                    }
+                },
+                {
+                    extend: 'collection',
+                    text: '<i class="icon-drawer-out"></i>',
+                    className: 'btn btn-default btn-export',
+                    buttons: [
+                        {
+                            extend: 'copyHtml5',
+                            text: locales['buttons']['copy'],
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        },
+                        {
+                            extend: 'csvHtml5',
+                            text: locales['buttons']['export2csv'],
+                            fieldSeparator: ',',
+                            extension: '.csv',
+                            bom: "true",
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        },
+                        {
+                            extend: 'excelHtml5',
+                            text: locales['buttons']['export2excel'],
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        },
+                        {
+                            extend: 'pdfHtml5',
+                            text: locales['buttons']['export2pdf'],
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        }
+                    ]
+                },
+                {
+                    extend: 'colvis',
+                    text: '<i class="icon-grid3"></i>',
+                    className: 'btn btn-default btn-colvis',
+                    columns: [1,2,3,4]
+                }
+            ],
+
+            columns: [
+                {
+                    title:`<input type="checkbox" class="styled" onchange='toggleSelectAll(this);'>`,
+                    orderable: false,
+                    data: "seo_id",
+                    width: "50px",
+                    render: function (data, type, row) {
+                        return `<input data-id="${row['seo_id']}" type="checkbox" class="select-checkbox">`;
+                    }
+                },
+                {
+                    data: 'seo_group',
+                },
+                {
+                    data: 'language',
+                },
+                {
+                    data: "schema_status",
+                    render: function(data, whatever, row) {
+                        if ( row['schema_status'] == '1' || row['schema_status'] == 1 ) {
+                            return '<span class="label label-success">' + row['status_text'] + '</span>';
+                        } else {
+                            return '<span class="label label-danger">' + row['status_text'] + '</span>';
+                        }
+                    }
+                },
+                 {
+                     data: 'schema_parameters',
+                      render: function(data, whatever, row) {
+                           var params=row['sd'].split("/");
+                           var param_list='';
+                           for(var i=0;i<params.length;i++){
+                              if(params[i]=="") continue;
+                              param_list+='<span>'+params[i]+'</span>';
+                           }
+                           return '<div class="ltr url_container schema_elements_style">'+
+                                    '<span>'+row['url_schema']+'</span>'+
+                                     param_list
+                                  '</div>';
+                     }
+                 },
+                 {
+                     render: function (data, type, row) {
+                         return `<a class='btn btn-danger' onclick='removeItem("${row['seo_id']}")'> <i class="fa fa-trash"></i>  </a>`;
+                     },
+                 },
+            ],
+            "order": [[1, "asc"]],
+             columnDefs: [
+                {
+                    targets: [3,4,5],
+                    orderable: false,
+                }
+            ]
+        });
+
+        $(".bulk-delete").attr({
+            "data-popup": "tooltip",
+            "title": locales['button_delete']
+        });
+        $(".btn-export").attr({
+            "data-popup": "tooltip",
+            "title": locales['button_export']
+        });
+        $(".btn-colvis").attr({
+            "data-popup": "tooltip",
+            "title": locales['button_colvis']
+        });
+
+        $('[data-popup="tooltip"]').tooltip();
+
+        // On each draw, loop over the `detailRows` array and show any child rows
+        dt.on('draw', function () {
+            $(".switch").bootstrapSwitch();
+            $(".styled, .multiselect-container input").uniform({
+                radioClass: 'choice'
+            });
+        });
+
+        dt.on( 'select', function ( e, objDT, type, indexes ) {
+            if ( dt.rows( '.selected' ).any() ) $(".bulk-delete").removeClass('disabled');
+            else $(".bulk-delete").addClass('disabled');
+        })
+        .on( 'deselect', function ( e, objDT, type, indexes ) {
+            if ( dt.rows( '.selected' ).any() ) $(".bulk-delete").removeClass('disabled');
+            else $(".bulk-delete").addClass('disabled');
+        })
+        .on( 'search.dt', function (e, objDT) {
+            if ( dt.rows( '.selected' ).any() ) $(".bulk-delete").removeClass('disabled');
+            else $(".bulk-delete").addClass('disabled');
+        });
+
+        $('.dataTables_length select').select2({
+            minimumResultsForSearch: Infinity,
+            width: 'auto'
+        });
+        $(".styled, .multiselect-container input").uniform({
+            radioClass: 'choice'
+        });
+    });
+
+    function removeItem(id) {
+        confirmMessage(function() {
+            ajax( ' {{ link("module/expand_seo/dtDelete") }} ' , {id: id}, function (res) {
+                var returnResult = JSON.parse(res);
+                if (returnResult.success == '1'){
+                    notify('Success', 'success', returnResult.success_msg);
+                }
+                else{
+                     notify('Failed', 'failed', returnResult.error);
+                }
+                reloadDT();
+            });
+        });
+    }
+
+    function reloadDT() {
+        dt.ajax.reload();
+    }
+
+    function toggleSelectAll(checkbox) {
+        if (checkbox.checked == true) {
+            dt.rows().select();
+        } else {
+            dt.rows().deselect();
+        }
+    }
+</script>
+{% endblock scripts %}

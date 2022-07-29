@@ -1,0 +1,494 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block title %}
+    {{ lang('dedicated_domains_heading_title') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+    <a href="{{ link('multiseller/attribute') }}" class="btn btn-default"> {{ lang('button_cancel') }}</a>
+    <a class="btn btn-primary" onclick="$('#setting-payment.form').submit();"><i
+                class="far fa-save fa-lg position-left"></i> {{ lang('button_save') }}</a>
+{% endblock headelements %}
+
+{% block content %}
+    <div id="adding_products" class="alert alert-warning" style="display: none;">
+        <i class="fa fa-info-circle"></i> {{ lang('warning_adding_products') }}
+    </div>
+    <!-- Start Form -->
+    <form id="setting-payment" class="form" action="{{ links['submit'] }}">
+        <!-- Status -->
+        <div class="col-md-3">
+            <div class="panel panel-flat">
+                <div class="panel-body">
+                    <fieldset>
+                        
+                        <legend class="text-semibold">
+                            <i class="fas fa-check-circle fa-lg position-left"></i>
+                            {{ lang('entry_status')|trim(':') }}
+                            <a class="control-arrow" data-toggle="collapse" data-target="#panel1">
+                                <i class="icon-circle-down2"></i>
+                            </a>
+                        </legend>
+
+                        <div class="collapse in" id="panel1" style="text-align:center;">
+                            <div class="form-group col-md-12">
+                                <label class="control-label">{{ lang('entry_status') }}</label>
+                                <!-- Switchery -->
+                                <div class="checkbox checkbox-switchery">
+                                    <label>
+                                        <input type="checkbox" data-on-text="{{ lang('text_enabled') }}" data-off-text="{{ lang('text_disabled') }}" onchange="changeStatus(this);" name="dedicated_domains[status]" class="switchery" {{ settings['status'] in ['1', 1, 'on'] ? 'checked' }}>
+                                        <span class="switchery-status">{{ settings['status'] in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                    </label>
+                                </div>
+                                <!-- /Switchery -->
+                                <span class="help-block"></span>
+                            </div>
+                            <hr style="width: 100%; border: 1px solid #e8e8e8;">
+                             <!-- Change Currency -->
+                            <div class="form-group col-md-12">
+                                <label class="control-label">{{ lang('enable_change_currency') }}</label>
+                                <!-- Switchery -->
+                                <div class="checkbox checkbox-switchery">
+                                    <label>
+                                        <input type="checkbox" data-on-text="{{ lang('text_enabled') }}" data-off-text="{{ lang('text_disabled') }}" onchange="changeStatus(this);" name="dedicated_domains[changeCurrency]" class="switchery" {{ settings['changeCurrency'] in ['1', 1, 'on'] ? 'checked' }}>
+                                        <span class="switchery-status">{{ settings['changeCurrency'] in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                    </label>
+                                </div>
+                                <!-- /Switchery -->
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Change Currency -->
+                            <!-- Force Redirect -->
+                            <div class="form-group col-md-12">
+                                <label class="control-label">{{ lang('force_redirect') }}</label>
+                                <!-- Switchery -->
+                                <div class="checkbox checkbox-switchery">
+                                    <label>
+                                        <input type="checkbox" data-on-text="{{ lang('text_enabled') }}" data-off-text="{{ lang('text_disabled') }}" onchange="changeStatus(this);" name="dedicated_domains[force_redirect]" class="switchery" {{ settings['force_redirect'] in ['1', 1, 'on'] ? 'checked' }}>
+                                        <span class="switchery-status">{{ settings['force_redirect'] in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                    </label>
+                                </div>
+                                <!-- /Switchery -->
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Force Redirect -->
+                            <!-- Add all Products -->
+                            <div class="form-group col-md-12">
+                                <label class="control-label">{{ lang('enable_add_all_products') }}</label>
+                                <!-- Switchery -->
+                                <div class="checkbox checkbox-switchery">
+                                    <label>
+                                        <input type="checkbox" data-on-text="{{ lang('text_enabled') }}" data-off-text="{{ lang('text_disabled') }}" onchange="changeStatus(this);" name="dedicated_domains[add_all_products]" class="switchery" {{ settings['add_all_products'] in ['1', 1, 'on'] ? 'checked' }}>
+                                        <span class="switchery-status">{{ settings['add_all_products'] in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                    </label>
+                                </div>
+                                <!-- /Switchery -->
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Add all Products -->  
+                        </div>
+                    </fieldset>
+                </div>
+            </div>
+        </div>
+        <!-- End of Status -->
+
+        <!-- Domains List -->
+        <div class="col-md-9">
+            <div class="panel panel-flat">
+                <div class="tab-pane fade in active" id="gridView">
+                    <table id="datatableGrid" class="table table-hover datatable-highlight">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th>{{ lang('domain_name') }}</th>
+                                <th>{{ lang('default_currency') }}</th>
+                                <th>{{ lang('default_country') }}</th>
+                                <th>{{ lang('domain_status') }}</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!-- /Domains List -->
+
+    </form>
+    <!-- End Form -->
+
+<!-- Lower Buttons -->
+{% include "includes/buttons_bottom.expand" %}
+<!-- End Lower Buttons -->
+
+
+
+    <!-- Domain Modal -->
+    <div id="newDomainModal" class="modal fade">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h5 class="modal-title">{{ lang('modal_header') }}</h5>
+                </div>
+                
+                <hr>
+
+                <form class="form" id='domain-modal-form' method='post' action="{{ link('module/dedicated_domains/newDomain') }}">
+                    <input type="hidden" id="domain-method" name="method">
+                    <input type="hidden" id="domain-id" name="domainId">
+
+                    <div class="modal-body">
+                        <!-- Domain Status -->
+                        <div class="checkbox checkbox-switchery text-center">
+                            <label>
+                                <input type="checkbox" data-on-text="{{ lang('text_enabled') }}" data-off-text="{{ lang('text_disabled') }}" onchange="changeStatus(this);" name="domain[domain_status]" class="switchery" id="domain-status">
+                                <span class="switchery-status">{{ settings['status'] in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                            </label>
+                        </div>
+                        <!-- /Domain Status -->
+                        <br>
+                        <!-- Domain Name -->
+                        <div class="form-group col-md-12">
+                            <label for="domain-name-input" class="control-label">{{ lang('domain_name') }} <span class="text-muted">( {{ lang('domain_name_note') }} )</span></label>
+                            <input type="text" name="domain[name]" class="form-control" id="domain-name-input">
+                        </div>
+                        <!-- /Domain Name-->
+                        <!-- Default Currency -->
+                        <div class="form-group col-md-12">
+                            <label for="currency-input" class="control-label">{{ lang('default_currency') }}</label>
+                            <select name="domain[currency]" id="currency-input">
+                                {% for currency in newDomain['currencies'] %}
+                                    <option value="{{ currency['code'] }}">{{ currency['title'] }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <!-- /Default Currency-->
+                        <br>
+                        <!-- Default Country -->
+                        <div class="form-group col-md-12">
+                            <label for="coutnry-input" class="control-label">{{ lang('default_country') }}</label>
+                            <select name="domain[country]" id="country-input">
+                                <option value="WWW">{{ lang('any_country') }}</option>
+                                {% for country in newDomain['countries'] %}
+                                    <option value="{{ country['iso_code_2'] }}">{{ country['name'] }}</option>
+                                {% endfor %}
+                            </select>
+                            <hr>
+                        </div>
+                        <!-- /Default Country-->
+
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-link" data-dismiss="modal">{{ lang('text_close') }}</button>
+                        <button type="submit" class="btn btn-primary">{{ lang('button_save') }}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- /Domain Modal-->
+
+
+<script>
+    $(document).ready(function() {
+        $('.touchspinney').TouchSpin({});
+
+        $('#newDomainModal select').select2();
+
+        $('#domain-modal-form').submit(function () {
+            $('#newDomainModal').modal('hide');
+            reloadDT();
+        });
+    });
+
+
+function deleteDomains( ids )
+{
+    $.ajax({
+        url: "{{ link('module/dedicated_domains/dtDelete') }}",
+        type: "POST",
+        data: { ids: ids },
+        success: function (resp) {
+            reloadDT();
+            console.log(resp);
+            resp = JSON.parse(resp);
+
+            if ( resp.success == '1' )
+            {
+                notify('Success', 'success', resp.success_msg);
+            }
+        }
+    });
+}
+
+
+function newDomainModal(insert, domain_name, domain_status, country, currency, domain_id)
+{
+
+    if (insert === true) {
+        setSwitchery($('#domain-status'), true);
+
+        $('#domain-name-input').val('');
+        $('#country-input').val('WWW').select2();
+        $('#currency-input').val('USD').select2();
+        $('#domain-method').val('newDomain');
+    } else {
+        status = (parseInt(domain_status) == 1);
+        if(parseInt(domain_status) == 1 || domain_status == 'on') {
+            if(!$('#domain-status').is(':checked')) {
+                setSwitchery($('#domain-status'), true);
+            }
+        } else {
+            if($('#domain-status').is(':checked')) {
+                $('#domain-status').trigger('click').removeAttr("checked");
+            }
+        }
+
+        $('#domain-name-input').val(domain_name);
+        $('#country-input').val(country).select2();
+        $('#currency-input').val(currency).select2();
+        $('#domain-method').val('updateExist');
+        $('#domain-id').val(domain_id);
+    }
+
+    $('#newDomainModal').modal('show');
+}
+
+function changeStatus(checkbox)
+{
+    var self = $(checkbox);
+    var switch_status = self.siblings('.switchery-status');
+
+    if ( self.is(':checked') )
+    {
+        switch_status.html("{{ lang('text_enabled') }}");
+    }
+    else
+    {
+        switch_status.html("{{ lang('text_disabled') }}");
+    }
+}
+</script>
+
+<script>
+    $.extend($.fn.dataTable.defaults, {
+        autoWidth: false,
+        dom: '<"datatable-header"fB><"datatable-scroll-wrap"t><"datatable-footer"lip>',
+        language: locales['dt_language'],
+        lengthMenu: [[10, 25, 50, 100, 200], [10, 25, 50, 100, 200]]
+    });
+
+    dt = $('#datatableGrid').DataTable({
+        processing: true,
+        serverSide: true,
+        stateSave: true,
+        language: locales['dt_language'],
+        select: {
+            style: 'multi',
+            selector: 'td:first-child'
+        },
+        "ajax": {
+            url: '{{ link('module/dedicated_domains/dtHandler') }}',
+            type: "post",
+            error: function (e,m,l) {
+                $(".datatables_country-error").html("");
+                $("#datatables_country").append('<tbody class="datatables_country-error"><tr><th colspan="3">No data found in the server</th></tr></tbody>');
+                $("#datatables_country_processing").css("display", "none");
+            }
+        },
+        buttons: [
+            {
+                text: '<i class="icon-plus3">',
+                className: 'button_insert btn btn-default',
+                action: function( e, dt, node, config )
+                {
+                    newDomainModal(true);
+                }
+            },
+            {
+                text: "<i class='icon-trash'></i>",
+                className: 'btn btn-default bulk-delete disabled',
+                action: function(e, dt, node, config) {
+                    var selectedRows = dt.rows('.selected').data();
+                    var selectedIds = [];
+                    selectedRows.each(function(item) {
+                        selectedIds.push(item.domain_id);
+                    });
+                    // console.log(selectedIds);
+                    if (selectedIds.length > 0){
+                        confirmMessage(function () {
+                            deleteDomains(selectedIds);
+                        });
+                    }
+                }
+            },
+            {
+                extend: 'collection',
+                text: '<i class="icon-drawer-out"></i>',
+                className: 'btn btn-default btn-export',
+                buttons: [
+                    {
+                        extend: 'copyHtml5',
+                        text: locales['buttons']['copy'],
+                        exportOptions: {
+                            columns: ':visible'
+                        }
+                    },
+                    {
+                        extend: 'csvHtml5',
+                        text: locales['buttons']['export2csv'],
+                        fieldSeparator: ',',
+                        extension: '.csv',
+                        bom: "true",
+                        exportOptions: {
+                            columns: ':visible'
+                        }
+                    },
+                    {
+                        extend: 'excelHtml5',
+                        text: locales['buttons']['export2excel'],
+                        exportOptions: {
+                            columns: ':visible'
+                        }
+                    },
+                    {
+                        extend: 'pdfHtml5',
+                        text: locales['buttons']['export2pdf'],
+                        exportOptions: {
+                            columns: ':visible'
+                        }
+                    }
+                ]
+            },
+            {
+                extend: 'colvis',
+                text: '<i class="icon-grid3"></i>',
+                className: 'btn btn-default btn-colvis',
+                columns: [1,2,3,4]
+            }
+        ],
+
+        columns: [
+            {
+                title:`<input type="checkbox" class="styled" onchange='toggleSelectAll(this);'>`,
+                orderable: false,
+                data: "domain_id",
+                width: "50px",
+                render: function (data, type, row) {
+                    return `<input data-id="${row['domain_id']}" type="checkbox" class="select-checkbox">`;
+                }
+            },
+            {
+                data: 'domain',
+                render: function (data, type, row) {
+                    return `<a onclick="newDomainModal(false, '${row['domain']}', '${row['domain_status']}', '${row['country']}', '${row['currency']}', '${row['domain_id']}')">${row['domain']}</a>`;
+                },
+            },
+            {data: "currency"},
+            {data: "country"},
+            {data: 'domain_status',
+
+                render: function(data, whatever, row) {
+                    if ( row['domain_status'] == '1') {
+                        return '<span class="label label-success">' + row['status_text'] + '</span>';
+                    } else {
+                        return '<span class="label label-danger">' + row['status_text'] + '</span>';
+                    }
+                }
+            },
+        ],
+        "order": [[1, "asc"]],
+        columnDefs: [
+            {
+                targets: 5,
+                orderable: false,
+                render: function (data, type, row) {
+                    return `<ul class="icons-list pull-right">
+                            <li class="dropdown">
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                    <i class="icon-menu9"></i>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-right">
+                                    <li><a onclick="newDomainModal(false, '${row['domain']}', '${row['domain_status']}', '${row['country']}', '${row['currency']}', '${row['domain_id']}')"><i class='icon-pencil7'></i> ${locales['button_edit']}</a></li>
+                                    <li><a onclick="removeItem(${row['domain_id']})"><i class='icon-trash'></i> ${locales['button_delete']}</a></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    `;
+                }
+            }
+        ]
+    });
+
+    $(".bulk-delete").attr({
+        "data-popup": "tooltip",
+        "title": locales['button_delete']
+    });
+    $(".btn-export").attr({
+        "data-popup": "tooltip",
+        "title": locales['button_export']
+    });
+    $(".btn-colvis").attr({
+        "data-popup": "tooltip",
+        "title": locales['button_colvis']
+    });
+
+    $('[data-popup="tooltip"]').tooltip();
+
+    dt.on('draw', function () {
+        $(".switch").bootstrapSwitch();
+        $(".styled, .multiselect-container input").uniform({
+            radioClass: 'choice'
+        });
+    });
+
+    dt.on( 'select', function ( e, objDT, type, indexes ) {
+        if ( dt.rows( '.selected' ).any() ) $(".bulk-delete").removeClass('disabled');
+        else $(".bulk-delete").addClass('disabled');
+    })
+    .on( 'deselect', function ( e, objDT, type, indexes ) {
+        if ( dt.rows( '.selected' ).any() ) $(".bulk-delete").removeClass('disabled');
+        else $(".bulk-delete").addClass('disabled');
+    })
+    .on( 'search.dt', function (e, objDT) {
+        if ( dt.rows( '.selected' ).any() ) $(".bulk-delete").removeClass('disabled');
+        else $(".bulk-delete").addClass('disabled');
+    });
+
+    $('.dataTables_length select').select2({
+        minimumResultsForSearch: Infinity,
+        width: 'auto'
+    });
+    $(".styled, .multiselect-container input").uniform({
+        radioClass: 'choice'
+    });
+
+
+    function removeItem(id) {
+        confirmMessage(function() {
+            deleteDomains(id);
+        });
+    }
+
+    function reloadDT() {
+        dt.ajax.reload();
+    }
+
+    function toggleSelectAll(checkbox) {
+        if (checkbox.checked == true) {
+            dt.rows().select();
+        } else {
+            dt.rows().deselect();
+        }
+    }
+</script>
+
+{% endblock %}

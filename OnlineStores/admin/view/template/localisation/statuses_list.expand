@@ -1,0 +1,485 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block secondarymenu %}
+    {% include 'setting/settingmenu.expand' with {'expand': '#advanced', 'active': '#statuses'} %}
+{% endblock secondarymenu %}
+
+{% block title %}
+    {{ lang('heading_title', 'setting/setting') }}
+{% endblock title %}
+
+{% block styles %}
+	{% if base.direction == "ltr" %}
+    <link href="view/assets/css/LTR/icons/icomoon2/style.css" rel="stylesheet" type="text/css">
+	{% else %}
+    <link href="view/assets/css/RTL/icons/icomoon2/style.css" rel="stylesheet" type="text/css">
+	{% endif %}	
+{% endblock styles %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+    <style>
+        .sp-container{
+            z-index: 9999;
+        }
+    </style>
+{% endblock headelements %}
+
+{% block content %}
+    <style>
+        .page-header-default {
+            background-color: transparent;
+        }
+        .page-header-content + .breadcrumb-line {
+            border: 0;
+        }
+    </style>
+    <div class="container">
+        <div class="row">
+            {% for objName in statusObjects %}
+            <div class="col-md-12">
+                <!-- Advanced legend -->
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h5 class="panel-title">
+                            {{ lang('lbl_' ~ objName) }}
+                        </h5>
+                        <div class="heading-elements">
+                            <a onclick="insert('{{ objName }}')" class="btn btn-success btn-labeled btn-xs"><b><i class="icon-plus3"></i></b> {{ lang('btn_new_' ~ objName) }}</a>
+                            {#<ul class="icons-list">#}
+                                {#<li><a data-action="collapse"></a></li>#}
+                            {#</ul>#}
+                        </div>
+                    </div>
+                    <div class="collapse in" id="feed-panel">
+                        <table id="dt_{{ objName }}" class="table table-hover datatable-highlight">
+                            <thead>
+                            <tr>
+                                <th></th>
+                                <th>{{ lang('column_' ~ objName ~ '_name') }}</th>
+                                {% if objName == 'order_status' %}
+                                    <th>{{ lang('column_' ~ objName ~ '_color') }}</th>
+                                {% endif %}
+                                <th></th>
+                            </tr>
+                            </thead>
+                        </table>
+                    </div>
+                </div>
+                <!-- /a legend -->
+            </div>
+
+                <div id="insertModal_{{ objName }}" class="modal fade">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                <h5 class="modal-title">{{ lang('text_insert_' ~ objName) }}</h5>
+                            </div>
+
+                            <form id='test' method='post' action="#">
+                                <div class="modal-body">
+                                    <div class="form-group">
+                                        <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                                            <div class="tab-content">
+                                                {% for  language in languages %}
+                                                    <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}" id="langTab_{{ objName }}{{ language['language_id'] }}">
+                                                        <div class="form-group" id="name[{{ language['language_id'] }}]">
+                                                            <label class="control-label">{{ lang('entry_name_' ~ objName) }} ({{ language['name'] }}) <span class="text-danger">*</span></label>
+                                                            <input class="form-control" type="text" name="{{ objName }}[{{ language['language_id'] }}]" id="{{ objName }}[{{ language['language_id'] }}]"  />
+                                                            <span class="help-block"></span>
+                                                            <span class="text-muted">{{ langempty(objName ~ '_help') }}</span>
+                                                        </div>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+
+                                            <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                                                {% for language in languages %}
+                                                    <li class="{{ loop.first ? 'active' : '' }}">
+                                                        <a href="#langTab_{{ objName }}{{ language['language_id'] }}" data-toggle="tab" aria-expanded="false">
+                                                            <img src="view/image/flags/{{ language['image'] }}" title="{{ language['name'] }}" class="pull-right">
+                                                            <div> {{ language['name'] }}</div>
+                                                        </a>
+                                                    </li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    {% if objName == 'order_status' %}
+                                    <div class="form-group">
+                                        <label class="control-label">{{ lang('entry_color_' ~ objName) }} </label>
+                                        <br/>
+                                        <input
+                                                type="text"
+                                                class="current_color_picker"
+                                                id="{{ objName }}[bk_color]"
+                                                name="{{ objName }}[bk_color]">
+                                    </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="modal-footer">
+                                    <input type="hidden" name="modal_objname" id="modal_objname" value="{{ objName }}">
+                                    <input type="hidden" name="modal_objid" id="modal_objid" value="-1">
+                                    <button type="button" class="btn btn-link" data-dismiss="modal">{{ lang('text_close') }}</button>
+                                    <button id="btninsert_{{ objName }}" type="submit" class="btn btn-primary">{{ lang('button_save') }}</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock content %}
+
+{% block scripts %}
+    {{ parent() }}
+    <script>
+        {% for objName in statusObjects %}
+        var dt_{{ objName }};
+        $(document).ready(function () {
+            $('.current_color_picker').spectrum({
+                preferredFormat: "hex",
+                allowEmpty: true
+            });
+
+            dt_{{ objName }} = $('#dt_{{ objName }}').DataTable({
+                processing: true,
+                serverSide: true,
+                stateSave: true,
+                autoWidth: false,
+                dom: '<"datatable-header"Bf><"datatable-scroll"t><"datatable-footer"lip>',
+                language: locales['dt_language'],
+                lengthMenu: [[10, 25, 50, 100, 200], [10, 25, 50, 100, 200]],
+                ajax: {
+                    url: '{{ link('localisation/statuses/dtHandler') }}',
+                    type: 'post',
+                    data: {
+                        objName: "{{ objName }}"
+                    }
+                },
+                drawCallback: function () {
+                    $(this).find('tbody tr').slice(-3).find('.dropdown, .btn-group').addClass('dropup');
+                },
+                preDrawCallback: function() {
+                    $(this).find('tbody tr').slice(-3).find('.dropdown, .btn-group').removeClass('dropup');
+                },
+                select: {
+                    style: 'multi',
+                    selector: 'td:first-child'
+                },
+                buttons: [
+                    {
+                        text: "<i class='icon-trash'></i>",
+                        className: 'btn btn-default bulk-delete disabled',
+                        action: function (e, dt, node, config) {
+                            var selectedRows = dt.rows('.selected').data();
+                            var selectedIds = [];
+                            selectedRows.each(function (item) {
+                                selectedIds.push(item.{{ objName }}_id);
+                            });
+                            if (selectedIds.length > 0) {
+                                confirmMessage(function () {
+                                    $.ajax({
+                                        url: '{{ link('localisation/statuses/bulkDelete') }}',
+                                        type: 'post',
+                                        data: {selected: selectedIds, objName: '{{ objName }}'},
+                                        dataType: 'JSON',
+                                        success: function (response) {
+
+                                            dt.rows('.selected').remove().draw();
+
+                                            if (response.status == 'success') {
+                                                new PNotify({
+                                                    title: response.title,
+                                                    text: response.message,
+                                                    addclass: 'bg-success stack-top-right',
+                                                    stack: {"dir1": "down", "dir2": "right", "push": "top"}
+                                                });
+                                            } else {
+                                                for (error in response.errors) {
+                                                    new PNotify({
+                                                        title: response.title,
+                                                        text: response.errors[error],
+                                                        addclass: 'bg-danger stack-top-right',
+                                                        stack: {"dir1": "down", "dir2": "right", "push": "top"}
+                                                    });
+                                                }
+                                            }
+                                        }
+                                    });
+                                });
+                            }
+                        }
+                    },
+                    {
+                        extend: 'collection',
+                        text: '<i class="icon-drawer-out"></i>',
+                        className: 'btn btn-default btn-export',
+                        buttons: [
+                            {
+                                extend: 'copyHtml5',
+                                text: locales['buttons']['copy'],
+                                exportOptions: {
+                                    columns: ':visible'
+                                }
+                            },
+                            {
+                                extend: 'csvHtml5',
+                                text: locales['buttons']['export2csv'],
+                                fieldSeparator: ',',
+                                extension: '.csv',
+                                bom: "true",
+                                exportOptions: {
+                                    columns: ':visible'
+                                }
+                            },
+                            {
+                                extend: 'excelHtml5',
+                                text: locales['buttons']['export2excel'],
+                                exportOptions: {
+                                    columns: ':visible'
+                                }
+                            },
+                            {
+                                extend: 'pdfHtml5',
+                                exportOptions: {
+                                    columns: ':visible'
+                                },
+                                text: locales['buttons']['export2pdfexcel']
+                            }
+                        ]
+                    }
+                ],
+                "order": [[1, "asc"]],
+                columns: [
+                    {
+                        title: `<input type="checkbox" class="styled" onchange='toggleSelectAll(this, dt_{{ objName }});'>`,
+                        orderable: false,
+                        data: "{{ objName }}_id",
+                        width: "50px"
+                    },
+                    {data: "name"},
+
+                    {% if objName == 'order_status' %}
+                    {
+                        data: "bk_color",
+                        render: function (data, type, row) {
+                        if(row['bk_color'])
+                            return `<label class="label label-success" style="width:50x;background-color: ${row['bk_color']}; border-color: ${row['bk_color']}">&nbsp;&nbsp;&nbsp;&nbsp;</label>`;
+                        else
+                            return `<label class="label label-success">&nbsp;&nbsp;&nbsp;&nbsp;</label>`;
+                        }
+                    },
+                    {% endif %}
+
+                    {data: "{{ objName }}_id"}
+                ],
+                columnDefs: [
+                    {
+                        orderable: false,
+                        className: 'select-checkbox',
+                        targets: 0
+                    },
+                    {
+                        targets: 1,
+                        orderable: true,
+                        render: function (data, type, row) {
+                            return `<a href="#" onclick="edit(event, ${row['{{ objName }}_id']}, '{{ objName }}')">${data}</a>`;
+                        }
+                    },
+                    {
+                        {% if objName == 'order_status' %}
+                            targets: 3 ,
+                        {% endif %}
+                        orderable: false,
+                        render: function (data, type, row) {
+                            return `<ul class="icons-list pull-right">
+                                <li class="dropdown">
+                                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                        <i class="icon-menu9"></i>
+                                    </a>
+
+                                    <ul class="dropdown-menu dropdown-menu-right">
+                                        <li>` + btnEditItem(data, '{{ objName }}') + `</li>
+                                        <li>` + btnDeleteItem(data, '{{ objName }}') + `</li>
+                                    </ul>
+                                </li>
+                            </ul>`;
+                            //return '<span class="pull-right"><i class="icon-menu9"></i></span>';//btnEditItem(data) + ' ' + btnDeleteItem(data);
+                        }
+                    }]
+            });
+
+            $(".bulk-delete").attr({
+                "data-popup": "tooltip",
+                "title": locales['bulk_delete']
+            });
+            $(".btn-export").attr({
+                "data-popup": "tooltip",
+                "title": locales['export']
+            });
+            $(".btn-colvis").attr({
+                "data-popup": "tooltip",
+                "title": locales['colvis']
+            });
+
+            $('[data-popup="tooltip"]').tooltip();
+
+
+            dt_{{ objName }}.on('select', function (e, objDT, type, indexes) {
+                if (dt_{{ objName }}.rows('.selected').any()) $('#dt_{{ objName }}_wrapper').find(".bulk-delete").removeClass('disabled');
+                else $('#dt_{{ objName }}_wrapper').find(".bulk-delete").addClass('disabled');
+            }).on('deselect', function (e, objDT, type, indexes) {
+                if (dt_{{ objName }}.rows('.selected').any()) $('#dt_{{ objName }}_wrapper').find(".bulk-delete").removeClass('disabled');
+                else $('#dt_{{ objName }}_wrapper').find(".bulk-delete").addClass('disabled');
+            }).on('search.dt', function (e, objDT) {
+                if (dt_{{ objName }}.rows('.selected').any()) $('#dt_{{ objName }}_wrapper').find(".bulk-delete").removeClass('disabled');
+                else $('#dt_{{ objName }}_wrapper').find(".bulk-delete").addClass('disabled');
+            });
+
+            $(".styled, .multiselect-container input").uniform({
+                radioClass: 'choice'
+            });
+
+            $('select').select2({
+                minimumResultsForSearch: Infinity,
+                width: 'auto'
+            });
+        });
+        {% endfor %}
+        function btnEditItem(id, objName) {
+            return `<a title="` + locales['button_edit'] + `" onclick="edit(event, ${id}, '${objName}')">
+                <i class="icon-pencil7 position-left"></i> ${locales['button_edit']}
+            </a>`;
+        }
+
+        function btnDeleteItem(id, objName) {
+            return `<a title="` + locales['button_delete'] + `" onclick="removeItem(this, '${objName}');" data-rowid="` + id + `">
+                <i class="icon-trash position-left"></i> ${locales['button_delete']}
+            </a>`;
+        }
+
+        function toggleSelectAll(checkbox, dt) {
+            if (checkbox.checked == true) {
+                dt.rows().select();
+            } else {
+                dt.rows().deselect();
+            }
+        }
+
+        function insert(objName)
+        {
+            resetModal($('#insertModal_' + objName));
+            //$("#updateOrderStatus").attr('id', 'insertOrderStatus');
+            var Modal = $('#insertModal_' + objName);
+            Modal.modal('show');
+            var btnInsert = $("#btninsert_" + objName);
+            btnInsert.off('click').on('click', function(event){
+                event.preventDefault();
+                ajax("{{ link("localisation/statuses/insert") }}", btnInsert.closest('form').serialize(), function (res) {
+                    reload(window['dt_' + objName]);
+                    Modal.modal('hide');
+                    res = JSON.parse(res);
+                    //showNotification(res);
+                });
+            });
+        }
+
+        function removeItem(row, objName) {
+            var that = $(row);
+            var rowId = that.data('rowid');
+
+            confirmMessage(function () {
+                $.ajax({
+                    url: '{{ link('localisation/statuses/bulkDelete') }}',
+                    data: {selected: [rowId], objName: objName},
+                    dataType: 'JSON',
+                    method: 'POST',
+                    success: function (response) {
+                        window['dt_' + objName].row(that.parents('tr')).remove().draw();
+
+                        if (response.status == 'success') {
+                            new PNotify({
+                                title: response.title,
+                                text: response.message,
+                                addclass: 'bg-success stack-top-right',
+                                stack: {"dir1": "down", "dir2": "right", "push": "top"}
+                            });
+                        } else {
+                            for (error in response.errors) {
+                                new PNotify({
+                                    title: response.title,
+                                    text: response.errors[error],
+                                    addclass: 'bg-danger stack-top-right',
+                                    stack: {"dir1": "down", "dir2": "right", "push": "top"}
+                                });
+                            }
+                        }
+                    }
+                });
+            });
+        }
+
+        function edit(e, id, objName){
+            e.preventDefault();
+            $.ajax({
+                url: "{{ link('localisation/statuses/get') }}",
+                type: "POST",
+                data: {id: id, objName: objName},
+                success : function (res) 
+                {
+                    var btnUpdate = $('#btninsert_' + objName);
+                    var Modal = $('#insertModal_' + objName);
+                    res = JSON.parse(res);
+                    for (var property in res[objName]) {
+                        $('input[name="'+objName+'['+property+']"').val(res[objName][property]);
+                    }
+
+                    $('.current_color_picker').spectrum({
+                        preferredFormat: "hex",
+                        showInitial: true
+                    });
+
+                    Modal.modal('show');
+                    btnUpdate.off('click').on('click', function(event){
+                        event.preventDefault();
+
+                        if(id){
+                            //console.log(updateStockStatus.closest('form').serialize());
+                            //var data = {stock_status_id: stock_status_id, data: };
+                            var data = btnUpdate.closest('form').serialize() + "&id="+id+"&objName="+objName;
+                            $.ajax({
+                                url: "{{ link("localisation/statuses/update") }}",
+                                type: "POST",
+                                data: data,
+                                success: function (res)
+                                {
+                                    reload(window['dt_' + objName]);
+                                    res = JSON.parse(res);
+                                    notify(res.title, 'success', res.message);
+                                }
+                            });
+                        }
+                        Modal.modal('hide');
+                        id=null;
+                    });
+                }
+            });
+        }
+
+        function resetModal(obj){
+            obj.find('input:not(#modal_objname)').val('');
+        }
+        function reload(dt) {
+            dt.ajax.reload();
+        }
+    </script>
+{% endblock scripts %}

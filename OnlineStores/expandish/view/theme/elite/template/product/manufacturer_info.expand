@@ -1,0 +1,339 @@
+{{ script('js/jquery/jquery.total-storage.min.js') }}
+
+    {% set mfSettings = config(mega_filter_settings) %}
+    {% if mfSettings %}
+    {% if mfilter_json %}
+        <div id="mfilter-json" style="display:none">{{ mfilter_json|base64_encode }}</div>
+    {% endif %}
+        <div id="mfilter-content-container">
+    {% endif %}
+
+
+    <div class="container">
+            <!-- Breadcrumbs -->
+            <div class="block block-breadcrumbs clearfix">
+                <ul>
+                    {% for breadcrumb in breadcrumbs %} {% if loop.last %}
+                    <li>
+                        <li>{{ breadcrumb['text'] }}</li>
+                    </li>
+                    {% else %}
+                    <li class="home">
+                        <a href="{{ breadcrumb['href'] }}">{{ breadcrumb['text'] }}</a>
+                        <span></span>
+                    </li>
+                    {% endif %} {% endfor %}
+                </ul>
+            </div>
+            <!-- Breadcrumbs End -->
+        
+            <div id="notification"></div>
+            <div style="text-align:center;" class="brand-img">
+                <h3 class="page-title">
+                    <span>{{ manufacturer_name }}</span>
+                </h3>
+                <img src="{{ manufacturer_image }}" alt="{{ manufacturer_name }}">
+            </div>
+
+            {% if products %}
+            <div class="st-default main-wrapper clearfix">
+                
+                <div class="sortPagiBar">
+                    <ul class="display-product-option">
+                        <li class="view-as-grid selected" onclick="$('.products-grid').show(); $('.products-list').hide(); $('.view-as-list').removeClass('selected'); $('.view-as-grid').addClass('selected'); return false;">
+                            <span>grid</span>
+                        </li>
+                        <li class="view-as-list" onclick="$('.products-list').show(); $('.products-grid').hide(); $('.view-as-grid').removeClass('selected'); $('.view-as-list').addClass('selected'); return false;">
+                            <span>list</span>
+                        </li>
+                    </ul>
+        
+                    <div class="sortPagiBar-inner">
+                        <nav>
+                          <ul class="pagination">
+                            {{ pagination }}
+                          </ul>
+                        </nav>
+                        <div class="show-product-item">
+                            <select class="limiter-options" onchange="location = this.value;">
+                                {% for limitst in limits %}
+                                    {% if limitst.value == limit %}
+                                        <option value="{{ limitst.href }}" selected="selected">{{ limitst.text }}</option>
+                                    {% else %}
+                                        <option value="{{ limitst.href }}">{{ limitst.text }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="sort-product">
+                            <select onchange="location = this.value;" class="sorter-options">
+                                {% for sortst in sorts %}
+                                    {% if sortst.value == sort ~ '-' ~ order %}
+                                        <option value="{{ sortst.href }}" selected="selected">{{ sortst.text }}</option>
+                                    {% else %}
+                                        <option value="{{ sortst.href }}">{{ sortst.text }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+        
+                <div class="products-grid category-products">
+                    <ul class="products row">
+                        {% for product in products %}
+                        <li class="product col-xs-12 col-sm-4 col-md-4 col-lg-3">
+                            <div class="product-container">
+                                <div class="inner">
+                                    <div class="product-left">
+                                        <div class="product-thumb">
+                                          {% if product.special != '' and product.special != '-1'%}
+                                            <div class="product-preview__label product-preview__label--right product-preview__label--sale">
+                                            <span>{{ lang("text_sale")}}<br>
+                                            -{{product.saving}} %</span>
+                                            </div>
+                                        {% endif %}
+                                            <a class="product-img" href="{{ product.href }}"><img src="{{ image(product.image, auto, auto) }}" alt="{{ product.name }}"></a>
+                                        </div>
+                                    </div>
+                                    <div class="product-right">
+                                        <div class="product-name">
+                                            {% if config('show_brands') %}
+                                            <a href="{{ product.manufacturer_href }}">{{ product.manufacturer }}</a><br>
+                                            {% endif %}
+                                            <a href="{{ product.href }}">{{ product.name|slice(0, 60) }}</a>
+                                        </div>
+                                        <div class="price-box">
+                                            {% if ('-1' in product.price) or ('-1' in product.special) %}
+                                                <span class="product-price clickable" onclick="contact_us('{{ product.product_id }}');">{{ lang('button_req_quote') }}</span>
+                                                <div id="enquiry-{{ product.product_id }}" style="display:none">{{ product.name }}:</div>
+                                            {% elseif product.special %}
+                                                <span class="product-price">&nbsp;&nbsp;{{ product.special }}</span>
+                                                <span class="product-price-old">&nbsp;&nbsp;&nbsp;&nbsp;{{ product.price }}</span>
+                                            {% else %}
+                                                <span class="product-price">&nbsp;&nbsp;&nbsp;{{ product.price }}</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="product-star">
+                                                {% if product.rating == 0 %}
+                                                <i class="fa fa-star-o"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                {% elseif product.rating == 1 %}
+                                                <i class="fa fa-star"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                {% elseif product.rating == 2 %}
+                                                <i class="fa fa-star"></i>
+                                                <i class="fa fa-star"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                {% elseif product.rating == 3 %}
+                                                <i class="fa fa-star"></i>
+                                                <i class="fa fa-star"></i>
+                                                <i class="fa fa-star"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                {% elseif product.rating == 4 %}
+                                                <i class="fa fa-star"></i>
+                                                <i class="fa fa-star"></i>
+                                                <i class="fa fa-star"></i>
+                                                <i class="fa fa-star"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                {% else %}
+                                                <i class="fa fa-star"></i>
+                                                <i class="fa fa-star"></i>
+                                                <i class="fa fa-star"></i>
+                                                <i class="fa fa-star"></i>
+                                                <i class="fa fa-star"></i>
+                                                {% endif %}
+                                        </div>
+                                        <div class="product-button">
+                                        {% set hideAaddToCartMessage = '' %}
+
+                                            <a class="btn-add-wishlist" title="Add to Wishlist" href="#" onclick="addToWishList({{ product.product_id }}); return false;">Add Wishlist</a>
+                                            <a class="btn-add-comparre" title="Add to Compare" href="#" onclick="addToCompare({{ product.product_id }}, 1); return false;">Add Compare</a>
+                                            
+                                            {% if ('-1' in product.price) or ('-1' in product.special) %}
+                                                <a class="button-radius btn-add-cart" {{ hideAaddToCart }} onclick="contact_us('{{ product.product_id }}');">{{ lang('button_cart') }}<span class="icon"></span></a> <p class="button-radius btn-add-cart">{{ hideAaddToCartMessage }}</p>
+                                            {% else %}
+                                             {% if product.viewAddToCart %}
+                                            <a class="button-radius btn-add-cart" title="Add to Cart" href="#" onclick="addToCart({{ product.product_id }}, 1); return false;">{{ lang('button_cart') }}<span class="icon"></span></a>
+                                            {% else %}
+                                            {% set hideAaddToCartMessage = lang('text_outstock') %}
+                                            {{ hideAaddToCartMessage != '' ? "<p class='button-radius btn-add-cart'>" ~ hideAaddToCartMessage~"</p>" : '' }}
+                                            {% endif %}
+                                            {% endif %}
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+        
+                <div class="products-list category-products" style="display:none;">
+                    <ul class="products list row">
+                        {% for product in products %}
+                        <li class="product col-xs-12">
+                            <div class="product-container">
+                                <div class="inner row">
+                                    <div class="product-left col-sm-4 rtl-right">
+                                        <div class="product-thumb">
+                                          {% if product.special != '' and product.special != '-1'%}
+                                            <div class="product-preview__label product-preview__label--right product-preview__label--sale">
+                                            <span>{{ lang("text_sale")}}<br>
+                                            -{{product.saving}} %</span>
+                                            </div>
+                                        {% endif %}
+                                            <a class="product-img" href="{{ product.href }}"><img src="{{ image(product.image, 500, 500) }}" alt="Product"></a>
+                                        </div>
+                                    </div>
+                                    <div class="product-right col-sm-8">
+                                        <div class="product-name">
+                                            {% if config('show_brands') %}
+                                            <a href="{{ product.manufacturer_href }}">{{ product.manufacturer }}</a><br>
+                                            {% endif %}
+                                            <a href="{{ product.href }}">{{ product.name }}</a>
+                                        </div>
+                                        <div class="price-box">
+                                                {% if product.special > 0 %}
+                                                <span class="product-price">{{ product.special }}</span>
+                                                <span class="product-price-old">{{ product.price }}</span>
+                                                {% else %}
+                                                <span class="product-price">{{ product.price }}</span>
+                                                {% endif %}
+                                        </div>
+                                        <div class="product-star">
+                                                {% if product.rating == 0 %}
+                                                <i class="fa fa-star-o"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                {% elseif product.rating == 1 %}
+                                                <i class="fa fa-star"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                {% elseif product.rating == 2 %}
+                                                <i class="fa fa-star"></i>
+                                                <i class="fa fa-star"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                {% elseif product.rating == 3 %}
+                                                <i class="fa fa-star"></i>
+                                                <i class="fa fa-star"></i>
+                                                <i class="fa fa-star"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                {% elseif product.rating == 4 %}
+                                                <i class="fa fa-star"></i>
+                                                <i class="fa fa-star"></i>
+                                                <i class="fa fa-star"></i>
+                                                <i class="fa fa-star"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                {% else %}
+                                                <i class="fa fa-star"></i>
+                                                <i class="fa fa-star"></i>
+                                                <i class="fa fa-star"></i>
+                                                <i class="fa fa-star"></i>
+                                                <i class="fa fa-star"></i>
+                                                {% endif %}
+                                        </div>
+                                        <div class="desc">{{ product.description }}</div>
+                                         {% set hideAaddToCartMessage = '' %}
+                                        <div class="product-button">
+                                            <a class="btn-add-wishlist" title="Add to Wishlist" href="#" onclick="addToWishList({{ product.product_id }}); return false;">Add Wishlist</a>
+                                            <a class="btn-add-comparre" title="Add to Compare" href="#" onclick="addToCompare({{ product.product_id }}, 1); return false;">Add Compare</a>
+                                             {% if product.viewAddToCart  %}
+                                            <a class="button-radius btn-add-cart" title="Add to Cart" href="#" onclick="addToCart({{ product.product_id }}, 1); return false;">{{ lang('button_cart') }}<span class="icon"></span></a>
+                                            {% else %}
+                                            {% set hideAaddToCartMessage = lang('text_outstock') %}
+                                             {{ hideAaddToCartMessage != '' ? "<p class='button-radius btn-add-cart'>" ~ hideAaddToCartMessage~"</p>" : '' }}
+                                             {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+        
+                <div class="sortPagiBar">
+                    <ul class="display-product-option">
+                        <li class="view-as-grid selected" onclick="$('.products-grid').show(); $('.products-list').hide(); $('.view-as-list').removeClass('selected'); $('.view-as-grid').addClass('selected'); return false;">
+                            <span>grid</span>
+                        </li>
+                        <li class="view-as-list" onclick="$('.products-list').show(); $('.products-grid').hide(); $('.view-as-grid').removeClass('selected'); $('.view-as-list').addClass('selected'); return false;">
+                            <span>list</span>
+                        </li>
+                    </ul>
+            
+                    <div class="sortPagiBar-inner">
+                            <nav>
+                              <ul class="pagination">
+                                {{ pagination }}
+                              </ul>
+                            </nav>
+                            <div class="show-product-item">
+                                <select class="limiter-options" onchange="location = this.value;">
+                                    {% for limitst in limits %}
+                                        {% if limitst.value == limit %}
+                                            <option value="{{ limitst.href }}" selected="selected">{{ limitst.text }}</option>
+                                        {% else %}
+                                            <option value="{{ limitst.href }}">{{ limitst.text }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="sort-product">
+                                <select onchange="location = this.value;" class="sorter-options">
+                                    {% for sortst in sorts %}
+                                        {% if sortst.value == sort ~ '-' ~ order %}
+                                            <option value="{{ sortst.href }}" selected="selected">{{ sortst.text }}</option>
+                                        {% else %}
+                                            <option value="{{ sortst.href }}">{{ sortst.text }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                    </div>
+                </div>
+        
+            </div>
+            {% else %}
+                <br><br>
+                <div class="content">{{ lang('text_empty') }}</div>
+                <br><br><br>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="pull-left">
+                            <a href="{{ link('common/home') }}" class="btn btn-inline">{{ lang('button_continue') }}</a>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+
+
+
+
+  
+
+  {% if mfSettings %}
+    </div>
+  {% endif %}

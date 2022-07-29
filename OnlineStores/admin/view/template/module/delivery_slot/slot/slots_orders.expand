@@ -1,0 +1,622 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% set dualMenuEnabled = true %}
+
+{% block title %}
+    {{ lang('delivery_slot_heading_title') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block secondarymenu %}
+    {% include 'module/delivery_slot/menu.expand' with {'active': '#slots_orders'} %}
+{% endblock secondarymenu %}
+
+{% block headelements %}
+
+{% endblock headelements %}
+
+{% set icon = random(['fa-check-circle', 'fa-hand-peace', 'fa-thumbs-up']) %}
+{% set default_selected_order_statuses = [1, '1', 2, '2', 3, '3'] %}
+
+
+{% block content %}
+
+    <!-- Detached content -->
+    <div class="col-md-10" style="padding-left: 0; padding-right: 0">
+        <div id="product-grid">
+        <div class="container-detached">
+            <div class="content-detached">
+                <div class="tab-pane fade in active" id="gridView">
+                    <div class="panel panel-default">
+                        <div class="collapse in">
+                            <table id="datatable-language" class="table table-hover datatable-highlight">
+                                <thead>
+                                <tr>
+                                    <th></th>
+                                    <th style="min-width:130px">{{ lang('column_order_id') }}</th>
+                                    <th>{{ lang('text_delivery_day') }}</th>
+                                    <th>{{ lang('text_delivery_date') }}</th>
+                                    <th>{{ lang('text_delivery_slot') }}</th>
+                                    <th>{{ lang('text_order_status') }}</th>
+                                    <th></th>
+                                </tr>
+                                </thead>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+    <!-- /detached content -->
+    <div class="col-md-2">
+        <div class="panel panel-flat">
+            <div class="panel-heading">
+                <h6 class="panel-title"><span class="text-bold">{{ lang('text_orders_filter') }}</span><a class="heading-elements-toggle"><i class="icon-more"></i></a></h6>
+                <div class="heading-elements not-collapsible">
+                    <ul class="icons-list">
+                        <li><a data-action="collapse" class=""></a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel-body">
+                <form id="filter" method="post">
+                    <div class="form-group" id="order_status_id-group">
+                        <label class="control-label">{{ lang('filter_label_order_statuses') }}</label>
+                        <select class="multiselect-tags form-control" multiple="multiple"
+                                name="filter[order_status_id][]" id="order_status_id">
+                            {% for elem in statuses %}
+                                <option value="{{ elem['order_status_id'] }}">{{ elem['name'] }}</option>
+                            {% endfor %}
+                        </select>
+                        <span class="help-block"></span>
+                        <span class="text-muted"></span>
+                    </div>
+                    <div class="form-group" id="date-delivery_slot-group">
+                        <label class="control-label">{{ lang('filter_label_ds_date') }}</label>
+                        <input class="form-control date-delivery_slot"
+                               type="text">
+
+                        <input type="hidden" name="filter[delivery_slot_date][start]" id="date-delivery_slot-start"/>
+                        <input type="hidden" name="filter[delivery_slot_date][end]" id="date-delivery_slot-end"/>
+                        <span class="help-block"></span>
+                        <span class="text-muted">{{ langempty('date-added_help') }}</span>
+                    </div>
+                </form>
+                <div style="padding-top: 10px">
+                    <button type="reset" id="resetList"
+                            class="btn btn-default btn-block mt-10">{{ lang('lbl_reset_filter') }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="order-delivery-slot-modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title">{{ lang('text_slots_edit') }} </h4>
+                </div>
+                <div class="modal-body">
+                    <form id="order-delivery-slot-form" data-action="{{ link('sale/order/updateOrderDeliverySlot') }}">
+                        <div class="col-md-12 modal-errors"></div>
+                        <input type="hidden" id="modal_order_id" name="order_id" value=""/>
+                        <input type="hidden" id="modal_slot_order_id" name="slot_order_id" value="" />
+                        <input type="hidden" id="modal_current_slot_id" name="current_slot_id" value="" />
+                        <div class="col-md-12">
+                            <div class="form-group required col-md-6">
+                                <label class="control-label">
+                                    {{ lang('text_delivery_date') }}
+                                </label>
+                                <input id="modal_slot_date" type="text" name="delivery_slot_date" value=""
+                                       class="form-control pickadate-events" />
+                            </div>
+                            <div class="form-group required col-md-6">
+                                <label class="control-label">
+                                    {{ lang('text_delivery_slot') }}
+                                </label>
+                                <select id="modal_slot_id" name="delivery_slot" class="select form-control">
+
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer" style="text-align: {{lang('code') == 'ar' ? 'left' : 'right'}}">
+                    <button type="button" class="btn btn-danger " data-dismiss="modal">
+                        {{ lang('button_close') }}
+                    </button>
+                    <button type="button" class="btn btn-primary update-delivery-slot-btn">
+                        {{ lang('button_save') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+
+{% block scripts %}
+
+{{ parent() }}
+{% import _self as dtControls %}
+<script>
+      $(document).ready(function() {
+        $.extend($.fn.dataTable.defaults, {
+            autoWidth: false,
+            dom: '<"datatable-header"Bf><"datatable-scroll-wrap"t><"datatable-footer"lip>',
+            language: locales['dt_language'],
+            lengthMenu: [[10, 25, 50, 100, 200], [10, 25, 50, 100, 200]]
+        });
+    });
+
+    function toggleFilter(el) {
+        //debugger;
+        var isFilterHidden = $('body').hasClass('sidebar-detached-hidden');
+
+        if(isFilterHidden) $(el).children('a').children('span').text('{{ lang('lbl_hide_filter') }}');
+        else $(el).children('a').children('span').text('{{ lang('lbl_filter') }}');
+    }
+
+    var orderTable;
+
+    Array.prototype.remove = function(item)
+    {
+        // index will have -1 if item does not exist
+        // else it will have the index of 1st item found in array
+        var index = this.indexOf(item);
+
+        if (index > -1)
+        {
+            // splice() method is used to add/remove items(s) in array
+            this.splice(index, 1);
+        }
+
+        return index;
+    }
+
+    var selectedIds = [];
+    var picker = null;
+    var $input = null;
+
+    $(document).ready(function(){
+
+        $('.hide-on-grid-view').hide();
+
+        $('select:not(.multiselect-bs)').select2({dropdownAutoWidth : true});
+
+        orderTable = $('#datatable-language').DataTable({
+                processing: true,
+                serverSide: true,
+                stateSave: true,
+                rowId: "ds_delivery_slot_order_id",
+                ajax: {
+                    url: '{{ link('module/delivery_slot/dtordersHandler') }}',
+                    type: "post",
+                    beforeSend: function() {
+                        $('#datatable-language').before('<div class="text-center loading" style="position: absolute;width: 100%;height: 100%;"><img src="view/image/blue-loading-gif-transparent-9.gif"  style="width: 100px" /></div>');
+                    },
+                    complete: function() {
+                        $('.loading').remove();
+                    },
+                    error: function (e,m,l) {
+                        $(".datatables_country-error").html("");
+                        $("#datatables_country").append('<tbody class="datatables_country-error"><tr><th colspan="3">No data found in the server</th></tr></tbody>');
+                        $("#datatables_country_processing").css("display", "none");
+                    }
+                },
+                dom: '<"datatable-header"fB><"datatable-scroll-wrap"t><"datatable-footer"lip>',
+                language: locales['dt_language'],
+                select: {
+                    style: 'multi',
+                    selector: 'td:first-child'
+                },
+                drawCallback: function () {
+                    if($("#datatable-language").find('tbody tr').length > 2){
+                        $("#datatable-language").find('tbody tr').slice(-2).find('.dropdown, .btn-group').addClass('dropup');
+                    }
+                },
+                preDrawCallback: function() {
+                    if($("#datatable-language").find('tbody tr').length > 2){
+                        $("#datatable-language").find('tbody tr').slice(-2).find('.dropdown, .btn-group').removeClass('dropup');
+                    }
+                },
+                buttons: [
+                    {
+                        text: "<i class='icon-trash'></i>",
+                        className: 'btn btn-default bulk-delete {{ not can_do_action('deleteOrder') ? 'hidden' }}',
+                        action: function(e, dt, node, config) {
+                            var selectedRows = dt.rows('.selected').data();
+                            selectedRows.each(function(item) {
+                                selectedIds.push(item.ds_delivery_slot_order_id);
+                            });
+                            if (selectedIds.length > 0){
+                                confirmMessage(function () {
+                                    $.ajax({
+                                        url: '{{ link('module/delivery_slot/dtSlotOrderDelete') }}',
+                                        type: 'post',
+                                        data: {id: selectedIds},
+                                        success: function(){
+                                            reloadDT();
+                                        }
+                                    });
+                                });
+                            }
+                        }
+                    }
+                ],
+
+                columns: [
+                    {
+                        title:`<input type="checkbox" class="styled" onchange='toggleSelectAll(this);'>`,
+                        orderable: false,
+                        width: "50px",
+                        data: 'ds_delivery_slot_order_id',
+                        render: function(data, type, row) {
+                           return `<input type="checkbox" row-id="${row['ds_delivery_slot_order_id']}" class="select-checkbox">`;
+                        }
+                    },
+                    {
+                        data: "order_id",
+                        render: function (data, type, row) {
+                            return `<a class="text-semibold" href="{{ link('sale/order/info?order_id=') }}${row['order_id']}" target="_blank">#${row['order_id']}</a>`;
+                        }
+                    },{
+                        data: 'day_name'
+                    },
+
+                    {
+                        data: 'delivery_date'
+                    },
+                    {
+                        data: 'slot_description'
+                    },
+                    {
+                        data: "status",
+                        render: function (data, type, row) {
+                            if(row['status_color'])
+                                return `<label class="label label-success" style="background-color: ${row['status_color']}; border-color: ${row['status_color']}">${row['status']}</label>`;
+                            else
+                                return `<label class="label label-success">${row['status']}</label>`;
+                        }
+                    },
+                    {
+                        targets: 6,
+                        orderable: false,
+                        width: "10px",
+                        className: "text-center",
+                        render: function (data, type, row) {
+
+
+                            return `<ul class="icons-list pull-right">
+                                    <li class="dropdown">
+                                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                            <i class="icon-menu9"></i>
+                                        </a>
+                                        <ul class="dropdown-menu dropdown-menu-right">
+                                            <li><a href='javascript://' onclick='open_slot_modal(${row['order_id']}, ${row['ds_delivery_slot_order_id']}, ${row['ds_delivery_slot_id']}, "${row['delivery_date']}")'><i class='icon-pencil7'></i> ${locales['button_edit']}</a></li>
+
+                                            <li style="{{ not can_do_action('deleteOrder') ? 'display: none;'}}"><a onclick="removeItem(${row['ds_delivery_slot_order_id']})"><i class='icon-trash'></i> ${locales['button_delete']}</a></li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            `;
+                        }
+                    }
+                ]
+            });
+
+            $(".bulk-delete").attr({
+                "data-popup": "tooltip",
+                "title": locales['button_delete']
+            });
+            $(".bulk-archive").attr({
+                "data-popup": "tooltip",
+                "title": locales['button_archive']
+            });
+            $(".btn-export").attr({
+                "data-popup": "tooltip",
+                "title": locales['button_export']
+            });
+            $(".btn-colvis").attr({
+                "data-popup": "tooltip",
+                "title": locales['button_colvis']
+            });
+            $(".merge-orders").attr({
+                "data-popup": "tooltip",
+                "title": locales['button_merge']
+            });
+            $(".bulk-order-status-update").attr({
+                "data-popup": "tooltip",
+                "title": locales['button_mass_edit']
+            });
+            $(".btn-print").attr({
+                "data-popup": "tooltip",
+                "title": locales['button_print']
+            });
+
+            $('[data-popup="tooltip"]').tooltip();
+
+            // On each draw, loop over the `detailRows` array and show any child rows
+            orderTable.on('draw', function () {
+                $(".switch").bootstrapSwitch();
+                $(".styled, .multiselect-container input").uniform({
+                    radioClass: 'choice'
+                });
+            });
+
+            orderTable.on( 'select', function ( e, objDT, type, indexes ) {
+                if ( orderTable.rows( '.selected' ).any() )
+                {
+                    $(".bulk-delete").removeClass('disabled');
+
+                    $('.print-orders-container').removeClass('disabled');
+                }
+                else
+                {
+                    $(".bulk-delete").addClass('disabled');
+
+                    $('.print-orders-container').addClass('disabled');
+                }
+
+
+                if ( $('.selected').length >= 1 ) {
+                    $('.bulk-order-status-update').removeClass('disabled');
+                } else {
+                    $('.bulk-order-status-update').addClass('disabled');
+                }
+
+            })
+            .on( 'deselect', function ( e, objDT, type, indexes ) {
+                if ( orderTable.rows( '.selected' ).any() )
+                {
+                    $(".bulk-delete").removeClass('disabled');
+
+                    $('.print-orders-container').removeClass('disabled');
+                }
+                else
+                {
+                    $(".bulk-delete").addClass('disabled');
+
+                    $('.print-orders-container').addClass('disabled');
+                }
+
+
+                if ( $('.selected').length >= 1 ) {
+                    $('.bulk-order-status-update').removeClass('disabled')
+                } else {
+                    $('.bulk-order-status-update').addClass('disabled')
+                }
+            })
+            .on( 'search.dt', function (e, objDT) {
+                if ( orderTable.rows( '.selected' ).any() )
+                {
+                    $(".bulk-delete").removeClass('disabled');
+
+                    $('.print-orders-container').removeClass('disabled');
+                }
+                else
+                {
+                    $(".bulk-delete").addClass('disabled');
+
+                    $('.print-orders-container').addClass('disabled');
+                }
+            });
+
+            $('.dataTables_length select').select2({
+                minimumResultsForSearch: Infinity,
+                width: 'auto'
+            });
+            $(".styled, .multiselect-container input").uniform({
+                radioClass: 'choice'
+            });
+
+            $('input, select', $('#filter')).not('.dtSelectAll, #slot-days-select').change(function (event) {
+                event.preventDefault();
+                filterReloadDT();
+            });
+
+            $('#filter').on('reset', function (e) {
+                $('#btnreset').addClass('hidden');
+            });
+
+            $('#btnreset').on('click', function (e) {
+                e.preventDefault();
+                $('#resetList').trigger("click");
+                //$('#filter')[0].reset();
+            });
+
+            $('#resetList').click(function () {
+
+                $(':input', '#filter')
+                    .not(':button, :submit, :reset, :hidden')
+                    .val('')
+                    .prop('checked', false)
+                    .prop('selected', false);
+
+                $('#filter').find('select').each(function () {
+                    this.value = '';
+                }).trigger('change');
+
+                orderTable.on('preXhr.dt', function (e, settings, data) {
+                    return $.extend(data, {filter: null});
+                });
+
+                orderTable.ajax.reload();
+
+            });
+
+            $('.date-delivery_slot').daterangepicker({
+                autoApply: true,
+                ranges: locales['drp_ranges'],
+                locale: locales['drp_locale']
+            }, function (start, end, label) {
+                $('#date-delivery_slot-start').val(start.format('YYYY-MM-DD'));
+                $('#date-delivery_slot-end').val(end.format('YYYY-MM-DD'));
+            });
+
+            $input = $('.pickadate-events').pickadate({
+                format: "mm-dd-yyyy",
+                onStart: function() {},
+                onRender: function() {},
+                onOpen: function() {},
+                onClose: function() {},
+                onStop: function() {},
+                onSet: function(context) {
+                    getSlots();
+                }
+            });
+            picker = $input.pickadate('picker');
+
+            picker.set('min', {{ slots_day_index ? slots_day_index : true }});
+            {% if slots_max_day and slots_max_day > 0  %}
+            picker.set('max', {{ slots_max_day }});
+            {% endif  %}
+
+            $('.update-delivery-slot-btn').click(function () {
+
+                let f = $('#order-delivery-slot-form'), d = f.serialize();
+                $('.modal-errors').html('');
+
+                $.ajax({
+                    url: f.data('action'),
+                    data: d,
+                    method: 'POST',
+                    dataType: 'JSON',
+                    success: (r) => {
+                        if (typeof r.status !== 'undefined' && r.status === 'OK') {
+                            reloadDT();
+                            $('#order-delivery-slot-modal').modal('hide');
+                            return;
+                        }
+
+                        for (i in r.errors) {
+                            if(parseInt(i) >= 0){
+                                let e = r.errors[i];
+                                $('.modal-errors').append(`<div class="alert alert-danger">${e}</div>`);
+                            }
+                        }
+                    }
+                });
+            });
+
+        });
+
+        function removeItem(id)
+        {
+            confirmMessage(
+                function ()
+                {
+                    $.ajax({
+                        url: "{{ link('module/delivery_slot/dtSlotOrderDelete') }}",
+                        type: "post",
+                        data: { id: id},
+                        success: function ( resp )
+                        {
+                            reloadDT();
+                        }
+                    });
+                }
+            , '');
+        }
+
+        function reloadDT()
+        {
+            orderTable.ajax.reload();
+        }
+
+        function toggleSelectAll(checkbox)
+        {
+            if (checkbox.checked == true) {
+                orderTable.rows().select();
+            } else {
+                orderTable.rows().deselect();
+            }
+        }
+
+    function update_selected_rows()
+    {
+        var selectedRows = orderTable.rows('.selected').data();
+        selectedRows.each(function(item) {
+            selectedIds.push(item.ds_delivery_slot_order_id);
+        });
+    }
+
+      $('input, select', $('#filter')).not('.dtSelectAll, #slot-days-select').change(function (event) {
+          event.preventDefault();
+          filterReloadDT();
+      });
+
+      function filterReloadDT() {
+          $('#btnreset').removeClass('hidden');
+          var $formData = $('#filter').serialize();
+
+          orderTable.on('preXhr.dt', function (e, settings, data) {
+              return $.extend(data, {filter: $formData});
+          });
+
+          orderTable.ajax.reload();
+      }
+
+    /////////////Update slot
+      function open_slot_modal(order_id, ds_order_id, slot_id, date) {
+
+          $('.modal-errors').html('');
+          $('#modal_slot_id').html('');
+
+          $('#modal_order_id').val(order_id);
+          $('#modal_slot_order_id').val(ds_order_id);
+          $('#modal_slot_date').val(date);
+          $('#modal_current_slot_id').val(slot_id);
+
+          //getSlots();
+
+          $('#order-delivery-slot-modal').modal('show');
+      }
+
+      function getSlots(){
+          var slot_id = $('#modal_current_slot_id').val();
+          var dateValue = $('#modal_slot_date').val();
+          if(slot_id && dateValue){
+              var dayOfWeek = parseInt(picker.get('select').day) - 1;
+
+              $.ajax({
+                  url: "{{ link('module/delivery_slot/getSlotsData') }}",
+                  type: "GET",
+                  data: {'dateValue': dateValue, 'dayOfWeek': dayOfWeek},
+                  success: function (resp)
+                  {
+
+                      var resp = JSON.parse(resp);
+                      var html = '';
+                      var lenthData = resp.length;
+                      if(lenthData > 0){
+                          var selected = '';
+                          for (var i = 0; i < lenthData; i++)
+                          {
+                              selected = '';
+                              if(slot_id == resp[i].slot_id)
+                                  selected = 'selected=""';
+                              html += '<option class="slot-dir-left" value="' + resp[i].slot_id + '"'+selected+'>' + resp[i].delivery_slot_data + '</option>';
+                          }
+                      }else{
+                          html += '<option value="0">{{ lang('text_no_data') }}</option>';
+                      }
+
+                      $('#modal_slot_id').html(html);
+
+                  }
+              });
+          }
+      }
+      //////////////////////////
+</script>
+
+{% endblock scripts %}

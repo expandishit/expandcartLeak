@@ -1,0 +1,632 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block secondarymenu %}
+    {% include 'setting/settingmenu.expand' with {'expand': '#lang&region', 'active': '#language'} %}
+{% endblock secondarymenu %}
+
+{% block title %}
+    {{ lang('heading_title_expandPay_payments') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block content %}
+
+<style>
+
+    .payment-text-td{
+        color:#089b61;
+    }
+
+    .refund-text-td{
+        color:#c40000;
+    }
+
+    .label-danger{
+        background-color: #fdd2d2 !important;
+        color: #2c2c35 !important;
+        border: none;
+
+    }
+
+    .label-success {
+        background-color: #d6f6e9 !important;
+        color: #2c2c35 !important;
+        border: none;
+    }
+
+    .label-warning{
+        background-color: #ffedcd !important;
+        color: #2c2c35 !important;
+        border: none;
+    }
+
+
+
+</style>
+
+
+        <div class="row">
+            <div class="col-md-4">
+                <div class="panel panel-white">
+                    <div class="panel-body panel-body-p30">
+                        <div class="Transactions-items-holder">
+                            <p class="title bold">
+                                {{ lang('transactions_current') }}
+                                <span type="button" data-toggle="tooltip" data-placement="top" title="{{ lang('transactions_current_tooltip') }}">
+                                    <i class="fa fa-info-circle " aria-hidden="true"></i>
+                                  </span>
+                            </p>
+							<!--
+                            <p class="amount blue-white-color bold font-17" id='available_balance'>
+                                {{merchant_balances['available_balance']}} {{merchant_balances['currency']}}
+                            </p>-->
+                            <p class="amount blue-white-color bold font-17" id='available_balance'>
+                               <span id='available_balance_amount'> {{merchant_balances['available_balance']}} </span> <span id='available_balance_currency'>{{merchant_balances['currency']}}</span>
+                            </p>
+                            <span id='on_hold_container'>
+                                {% if merchant_balances['total_holds'] > 0 %}
+                                <div class='balance-status'><span>{{merchant_balances['total_holds']}}</span>{{ lang('on_hold') }} <span type="button" data-toggle="tooltip" data-placement="top" title="{{ lang('on_hold') }}">
+                                    <i class="fa fa-info-circle " aria-hidden="true"></i>
+                                </span></div>
+                                {%endif%}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="panel panel-white">
+                    <div class="panel-body panel-body-p30">
+                        <div class="Transactions-items-holder">
+                            <p class="title bold">
+                                {{ lang('transactions_recieved') }}
+                                <span type="button" data-toggle="tooltip" data-placement="top" title="{{ lang('transactions_recieved_tooltip') }}">
+                                    <i class="fa fa-info-circle" aria-hidden="true"></i>
+                                  </span>
+                            </p>
+                            <p class="amount blue-white-color bold font-17" id='received_balance'>
+                                {{merchant_balances['received_balance']}} {{merchant_balances['currency']}}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="panel panel-white">
+                    <div class="panel-body panel-body-p30">
+                        <div class="Transactions-items-holder">
+                            <p class="title bold">
+                                {{ lang('transactions_total') }}
+                                <span type="button" data-toggle="tooltip" data-placement="top" title="{{ lang('transactions_total_tooltip') }}">
+                                    <i class="fa fa-info-circle" aria-hidden="true"></i>
+                                  </span>
+                            </p>
+                            <p class="amount blue-white-color bold font-17" id='transactions_total'>
+                                {{merchant_balances['transactions_total']}} {{merchant_balances['currency']}}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Nav tabs -->
+        <div class="page-tabs-container">
+            <div class="navigation-tabs-wrapper">
+                <ul class="navigation-tabs">
+                    <li role="presentation" class="active"><a href="#Transactions" aria-controls="home" role="tab" data-toggle="tab"> {{ lang('tab_title_transaction') }}</a></li>
+                    <li role="presentation"><a href="#Statement" aria-controls="profile" role="tab" data-toggle="tab"> {{ lang('tab_title_amounts') }}</a></li>
+                </ul>
+            </div>  
+        </div>
+      
+        <!-- Tab panes -->
+        <div class="tab-content transactions-tables-holder panel panel-default clearfix has-adv-search">
+            <div class="sidebar-detached-custom" >
+                <div class="sidebar-default sidebar-normal">
+                    <div class="sidebar-content">
+                        <form id="filter" method="post">
+                            <!-- Filter -->
+                            <div class="sidebar-category">
+                                <div class="category-title cursor-pointer">
+                                    <span>{{ lang('filter_general_tab') }}</span>
+                                    <ul class="icons-list">
+                                        <li><a href="#" data-action="collapse"></a></li>
+                                    </ul>
+                                </div>
+            
+                                <div class="category-content" style="padding-bottom: 0">
+                                    <div class="form-group" id="order_status_id-group">
+                                        <label class="control-label">{{ lang('column_status') }}</label>
+                                        <select class="multiselect-tags form-control" multiple="multiple">
+
+                                                <option value="successed">{{ lang('label_title_successed') }}</option>
+                                                <option value="failure">{{ lang('label_title_failure') }}</option>
+                                                <option value="pending">{{ lang('label_title_pending') }}</option>
+                                        </select>
+                                        <span class="help-block"></span>
+                                        <span class="text-muted"></span>
+                                    </div>
+            
+                                    <div class="form-group" id="date-added-group">
+                                        <label class="control-label">{{ lang('filter_label_date_added') }}</label>
+                                        <input class="form-control date-added"
+                                               type="text">
+            
+                                        <input type="hidden" name="filter[date_added][start]" id="date-added-start"/>
+                                        <input type="hidden" name="filter[date_added][end]" id="date-added-end"/>
+                                        <span class="help-block"></span>
+                                        <span class="text-muted"></span>
+                                    </div>
+                                </div>
+
+                            </div>
+            
+                            <!-- /filter -->
+                            <div class="category-content" style="padding-top: 10px">
+                                <button type="reset" id="resetList"
+                                        class="btn btn-default btn-block mt-10">{{ lang('lbl_reset_filter') }}</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+          <div role="tabpanel" class="tab-pane border-tab-top active" id="Transactions">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="collapse in table-side" >
+                        <table id="ListTransactions" class="table table-hover datatable-highlight nowrap">
+                            <thead>
+                            <tr>
+                                <th><input type="checkbox" class="styled" id="toggleSelectAll_Transactions"></th>
+                                <th>{{ lang('column_Transaction_ID') }}</th>
+                                <th>{{ lang('column_type') }}</th>
+                                <th>{{ lang('column_status') }}</th>
+                                <th>{{ lang('column_Order_ID') }}</th>
+                                <th>{{ lang('column_Order_amount') }}</th>
+                                <th>{{ lang('column_Transction_amount') }} ({{currency}})</th>
+                                <th>{{ lang('column_fees') }} ({{currency}})</th>
+                                <th>{{ lang('column_net') }} ({{currency}})</th>
+                                <!--<th>{{ lang('column_payment_method') }}</th>-->
+                                <th>{{ lang('column_time') }}</th>
+                                <th>{{ lang('column_action') }}</th>
+                                <!--<th>{{ lang('column_customer') }}</th>-->
+                            </tr>
+                            
+                            </thead>
+                            <tbody>
+                            <!--
+                            {% for transaction  in transactions %}
+                                <tr role="row" class="odd">
+                                    <td></td>
+                                    <td>{{transaction['status']}}</td>
+                                    <td>{{transaction['transaction_id']}}</td>
+                                    <td>{{transaction['type']}}</td>
+                                    <td>{{transaction['amount']}} ({{currency}})</td>
+                                    <td>{{transaction['currency']}}</td>
+                                    <td>#{{transaction['custom_fields']['customer_refrence']}}</td>
+                                    <td>{{transaction['custom_fields']['customer_name']}}</td>
+                                    <td>{{transaction['created_at']}}</td>
+                                    <td></td>
+                                    <td></td>
+                                    {% if transaction['type'] == 'refund' %}
+                                        <td><a data-toggle="modal" data-target="#Refund" class='refund_button' id='refund_button' style='display:none'>{{ lang('column_refund') }}</a></td>
+                                    {% elseif transaction['status'] == 'pending' %}
+                                        <td><a data-toggle="modal" data-target="#Refund" class='refund_button' id='refund_button' style='display:none'>{{ lang('column_refund') }}</a></td>
+                                    {% else %}
+                                        <td><a data-toggle="modal" data-target="#Refund" class='refund_button' id='refund_button'>{{ lang('column_refund') }}</a></td>
+                                    {% endif %}
+                                </tr>
+                            {% endfor %}
+                            -->
+                            </tbody> 
+                        </table>
+                    </div>
+                </div>
+            </div>
+          </div>
+          <div role="tabpanel" class="tab-pane border-tab-top" id="Statement">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="collapse in table-side" >
+                        <table id="AccountStatement" class="table table-hover datatable-highlight nowrap">
+                            <thead>
+                            <tr>
+                                <th><input type="checkbox" class="styled" id="toggleSelectAll_Statement"></th>
+                                <th>{{ lang('column_Batch_ID') }}</th>
+                                <th>{{ lang('column_status') }}</th>
+                                <th>{{ lang('column_amount') }}</th>
+                                <th>{{ lang('column_time') }}</th>
+                                <!--<th>{{ lang('column_send_to') }}</th>-->
+                                <!--<th>{{ lang('column_currency') }}</th>-->
+                                <!--<th>{{ lang('column_num_trs') }}</th>-->
+                                <!--<th>{{ lang('column_fees') }}</th>-->
+                                <!--<th>{{ lang('column_net') }}</th>-->
+                            </tr>
+                            
+                            </thead>
+                            <tbody>
+                            <!--
+                                {% for withdraw in withdraws_List %}
+                                    <tr role="row" class="odd">
+                                        <td></td>
+                                        <td>{{withdraw['status']}}</td>
+                                        <td>{{withdraw['Withdrawal_id']}}</td>
+                                        <td>{{withdraw['amount']}} ({{currency}})</td>
+                                        <td>{{withdraw['currency']}}</td>
+                                        <td></td>
+                                        <td>{{withdraw['created_at']}}</td>
+                                        <td>Bank Account</td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                {% endfor %}
+                            -->
+                            </tbody> 
+                        </table>
+                    </div>
+                </div>
+            </div>
+          </div>
+        </div>
+      
+      
+    <!-- Refund Modal -->
+    <div class="modal-center modal fade" id="Refund" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title m-bold" id="myModalLabel">{{ lang('column_refund_req') }}</h4>
+                </div>
+                <form id='refundForm' action='{{link('extension/expandpay/transactionRefund')}}'>
+                    <div class="modal-body pb-0">
+                        <div class="alert alert-danger" id='refund_error' role="alert" style='display:none'>
+                            <i class="fa fa-exclamation-triangle" aria-hidden="true"></i> {{lang('refund_alert')}}
+                        </div>
+                        <div class="alert alert-success" id='refund_success' role="alert" style='display:none'>
+                            {{lang('withdraw_success_message')}}
+                        </div>
+
+                        <div class="row">
+                            <div class="form-group col-md-12">
+                                <label class="control-label">{{ lang('refund_title') }}</label>
+                                <div class="total-transaction-amount-holder" style="padding: 0;background: #fff;">
+                                    <input type="text" name='transaction_amount' class="form-control input-disabled-style" value="1000" placeholder="" disabled="" style="width: 100%;">
+                                    <!--<input type="text" name='currency' class="form-control input-disabled-style" value="EGP" placeholder="" style="width: 70px;text-align: center;margin-inline-start: 10px;">-->
+                                </div>
+                            </div>
+    
+                            <div class="form-group col-md-12">
+                                <label class="control-label">{{ lang('refund_amount') }}</label>
+                                <input type="number" name='amount' class="form-control {{country == 'eg' ? 'input-disabled-style': ''}}" value="" placeholder="" min='0'>
+                                <span class="help-block"></span>
+                            </div>
+    
+                            <div class="form-group col-md-12">
+                                <label class="control-label">{{ lang('refund_comment') }}</label>
+                                <textarea type="text" name='description' class="form-control" value="" placeholder="" style="resize: none;"></textarea>
+                                <span class="help-block"></span>
+                            </div>
+                        </div>
+                        <input type="hidden" name='transaction_id' class="form-control" value="" placeholder="" min='0'>
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" id='refundSubmitButton' class="btn btn-danger">{{ lang('btn_refund') }}
+                            <span class="btn btn-danger btn-sm custom-alert-onBtn refundloader alert-loading" style="display: none;"><i class="fas fa-spinner fa-spin"></i></span>
+
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script>
+        // update balances after submit refund or withdraw request
+        function getBalances(){
+            $.ajax({
+                url: '{{link('extension/expandpay/transactions')}}',
+                data: {start_date: null,end_date:null},
+                dataType: 'JSON',
+                method: 'POST',
+                success: function (response) {
+                    
+                    $('#available_balance').text(response.available_balance + ' ' + response.currency)
+                    $('#transactions_total').text(response.transactions_total + ' ' + response.currency)
+                    $('#received_balance').text(response.received_balance + ' ' + response.currency)
+                    if(response.total_holds > 0){
+                        
+                        $('#on_hold_container').html(`<div class='balance-status'>
+                                <span>${response.total_holds}</span>{{ lang('on_hold') }} 
+                                <span type='button' data-toggle='tooltip' data-placement='top' title='{{ lang('on_hold') }}'>
+                                    <i class='fa fa-info-circle ' aria-hidden='true'></i>
+                                </span>
+                            </div>
+                        `)
+
+                    }
+
+                }
+            });
+        }
+
+        $('#refundSubmitButton').click(function(e){
+            e.preventDefault();
+            var formData = new FormData($("#refundForm")[0]);
+            var $form = $('#refundForm');
+            var $action = $form.attr('action');
+            $('.alert-loading.refundloader').show();
+            $(this).addClass('pointer-events-none')
+            var $data = $form.serialize();
+            // clear error class if exist before send a new request
+            $("input").parent().removeClass('has-error')
+            $("input").next().empty()
+            $("textarea").parent().removeClass('has-error')
+            $("textarea").next().empty()
+            $('#refund_error').hide();
+            $('#refund_error span').remove();
+            $.ajax({
+                url: $action,
+                data: formData,
+                dataType: 'JSON',
+                method: 'POST',
+                processData: false,
+                contentType: false,
+                success: function (response) {
+                    $('.alert-loading.refundloader').hide();
+                    $('#refundSubmitButton').removeClass('pointer-events-none')
+                    if(response.success == 0 && response.error == undefined){
+                        for(err in response.errors){
+                            var error = response.errors[err];
+                            $("input[name='"+err+"']").parent().addClass('has-error')
+                            $("input[name='"+err+"']").next().append(response.errors[err])
+                            $("textarea[name='"+err+"']").parent().addClass('has-error')
+                            $("textarea[name='"+err+"']").next().append(response.errors[err])
+                        }
+                    }else if(response.error == 'NOT_ALLOWED' || response.error == 'PROVIDER_ERROR' || response.error == 'FORM_VALIDATIONS' ){
+                        $('#refund_error').show()
+                        for(err in response.errors){
+                            var error = response.errors[err]
+                            $('#refund_error').append("<span>"+error+"</span>");
+                        }
+                    }
+
+                    if(response.success == 1){
+                        $('#refund_success').show();
+                        setTimeout(function(){
+                            $('#Refund').modal('hide');
+                        },2000)
+                        getBalances();
+                        table1.ajax.reload();
+                    }
+
+                }
+            });
+
+
+        })
+    </script>
+    <!-- withdraw Modal -->
+    <div class="modal-center modal fade" id="withdraw" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title m-bold" id="myModalLabel">{{ lang('withdraw_title') }}</h4>
+                </div>
+                <form action='{{link('extension/expandpay/requestWithdraw')}}' id='withdrawalForm'>
+                    <div class="modal-body">
+                        <div class="alert alert-danger" id='withdraw_error' role="alert" style='display:none'>
+                            <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
+                        </div>
+                        <div class="alert alert-success" id='withdraw_success' role="alert" style='display:none'>
+                            {{lang('withdraw_success_message')}}
+                        </div>
+
+                        <p>{{ lang('withdraw_hint1') }} {{merchant_balances['available_balance']}} {{merchant_balances['currency']}} {{lang('withdraw_hint2')}}</p>
+
+                        <label class="bold" style="margin: 15px 0 5px 0;">{{ lang('requested_amount') }}</label>
+                        
+                            <div class="total-transaction-amount-holder" style="padding: 0;background: #fff">
+                                <input type="text" class="form-control input-disabled-style" name='amount' value="1000" placeholder="" style="width: 100%;" min='0'>
+                                <!--<input type="text" class="form-control input-disabled-style " name='currency' value="EGP" placeholder="" style="width: 70px;text-align: center;margin-inline-start: 10px;">-->
+                            </div>
+                        </div>
+                    <div class="modal-footer">
+                        <a class="btn btn-default" data-dismiss="modal" aria-label="Close"> {{ lang('withdraw_btn_cancel') }} </a>
+                        <a class="btn btn-primary" id='withdrawalSubmitButton'>{{ lang('withdraw_btn_request') }} 
+                            <span class="btn btn-primary btn-sm custom-alert-onBtn withdrawloader alert-loading" style="display: none;"><i class="fas fa-spinner fa-spin"></i></span>
+
+
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+{% endblock %}
+
+{% block scripts %}
+
+    {{ parent() }}
+
+    <script>
+        var links = {};
+        var lang = {};
+        lang['status_successed'] = '{{lang('status_successed')}}';
+        lang['status_failed'] = '{{lang('status_failed')}}';
+        lang['status_pending'] = '{{lang('status_pending')}}';
+        lang['status_refused'] = '{{lang('status_refused')}}';
+        lang['type_refund'] = '{{lang('type_refund')}}';
+        lang['type_payment'] = '{{lang('type_payment')}}';
+        links['time_zone'] = '{{time_zone}}';
+        links['dtTransactionHandler'] = '{{ link('extension/expandpay/dtTransactionHandler') }}';
+        links['dtWithDrawHandler'] = '{{ link('extension/expandpay/dtWithDrawHandler') }}';
+        links['column_refund'] = '{{ lang('column_refund') }}';
+        // links['dtUpdateStatus'] = '{{ link("localisation/language/dtUpdateStatus") }}';
+        // links['dtDelete'] = '{{ link('localisation/language/dtDelete') }}';
+        // links['insert'] = '{{ link('localisation/language/insert') }}';
+        // links['update'] = '{{ link('localisation/language/update') }}';
+        // links['send'] = '{{ link('localisation/language/send') }}';
+
+        $(document).ready(function(){
+            $('[data-toggle="tooltip"]').tooltip();
+
+            $(document).on("click",".btn-withdraw",function() {
+                $('#withdraw_success').hide();
+                $('#withdraw').modal('show');/*
+                var available_balance = $('#available_balance').html()
+                available_balance = available_balance.trim().split(' ')
+                $('#withdrawalForm input[name=amount]').val(available_balance[0])
+                $('#withdrawalForm input[name=currency]').val(available_balance[1])
+				*/
+				var available_balance_amount = $('#available_balance_amount').html().trim()
+				available_balance_amount = parseInt(available_balance_amount)
+                var available_balance_currency =  $('#available_balance_currency').html().trim()
+                $('#withdrawalForm input[name=amount]').val(available_balance_amount)
+                $('#withdrawalForm input[name=currency]').val(available_balance_currency)
+            });
+            // clear errors if modal is closed
+            $('#withdraw,.close').click(function(){
+                $('#withdraw_error span').remove();
+                $('#withdraw_error').hide();
+                $('#refund_error span').remove();
+                $('#refund_error').hide();
+            })
+            $('#withdrawalSubmitButton').click(function(e){
+                e.preventDefault();
+                var formData = new FormData($("#withdrawalForm")[0]);
+                var $form = $('#withdrawalForm');
+                var $action = $form.attr('action');
+                var $data = $form.serialize();
+                $('#withdraw_error').hide();
+                $('#withdraw_error span').remove();
+                $('.alert-loading.withdrawloader').show();
+                $(this).addClass('pointer-events-none');
+                $.ajax({
+                    url: $action,
+                    data: formData,
+                    dataType: 'JSON',
+                    method: 'POST',
+                    processData: false,
+                    contentType: false,
+                    success: function (response) {
+                        $('.alert-loading.withdrawloader').hide();
+                        $('#withdrawalSubmitButton').removeClass('pointer-events-none');
+                        if(response.error != undefined){
+                            $('#withdraw_error').show();
+                            for(err in response.errors){
+                                $('#withdraw_error').append("<span>"+response.errors[err]+"</span>");
+                            }
+                        }else{
+                            $('#withdraw_success').show();
+                            setTimeout(function(){
+                                $('#withdraw').modal('hide');
+                            },2000)
+                            getBalances();
+                            table2.ajax.reload();
+                        }
+
+                    }
+                });
+
+            });
+
+            $('.multiselect-tags').change(function(){
+                var status = $('.multiselect-tags option').filter(':selected');
+                var statuses = []
+                var i;
+                for(i = 0; i < status.length;i++){
+                    statuses.push(status[i].value)
+                }
+                var start = $('#date-added-start').val().format('YYYY-MM-DD');
+                var end = $('#date-added-end').val().format('YYYY-MM-DD');
+
+                handleFilter(start,end,statuses)
+            })
+
+            $('.date-added').daterangepicker({
+                autoApply: true,
+                ranges: locales['drp_ranges'],
+                locale: locales['drp_locale']
+            }, function (start, end, label) {
+                $('#date-added-start').val(start.format('YYYY-MM-DD'));
+                $('#date-added-end').val(end.format('YYYY-MM-DD'));
+                handleFilter(start.format('YYYY-MM-DD'),end.format('YYYY-MM-DD'))
+            });
+
+            $('#filter').on('reset', function (e) {
+                $('.multiselect-tags').val(null).trigger('change');
+            });
+            $('#resetList').click(function(){
+                $('.sidebar-category input').val('')
+                handleFilter(null,null);
+            })
+            function handleFilter(start,end,statuses){
+
+
+
+            table1.on('preXhr.dt', function (e, settings, data) {
+                return $.extend(data, {start_date: start,end_date:end,statuses:statuses});
+            });
+
+            table1.ajax.reload();
+            table2.on('preXhr.dt', function (e, settings, data) {
+                return $.extend(data, {start_date: start,end_date:end,statuses:statuses});
+            });
+
+            table2.ajax.reload();
+            /*
+            $.ajax({
+                url: '{{link('extension/expandpay/transactions')}}',
+                data: {start_date: start,end_date:end},
+                dataType: 'JSON',
+                method: 'POST',
+                success: function (response) {
+                    
+                    $('#available_balance').text(response.available_balance + ' ' + response.currency)
+                    $('#transactions_total').text(response.transactions_total + ' ' + response.currency)
+                    $('#received_balance').text(response.received_balance + ' ' + response.currency)
+                    if(response.total_holds > 0){
+                        
+                        $('#on_hold_container').html(`<div class='balance-status'>
+                                <span>${response.total_holds}</span>{{ lang('on_hold') }} 
+                                <span type='button' data-toggle='tooltip' data-placement='top' title='{{ lang('on_hold') }}'>
+                                    <i class='fa fa-info-circle ' aria-hidden='true'></i>
+                                </span>
+                            </div>
+                        `)
+
+                    }
+
+                }
+            });
+            */
+            }
+
+            
+        });
+    </script>
+    <script src="view/javascript/pages/setting/transactions.js?bn={{ BuildNumber }}"></script>
+    <script>
+        var country = '{{country}}';
+        $(document).ready(function(){
+            if(country != 'eg'){
+                btn = document.querySelector('.hide-withdraw');
+                btn.remove();
+            }
+        })
+    </script>
+{% endblock scripts %}

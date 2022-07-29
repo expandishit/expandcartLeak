@@ -1,0 +1,147 @@
+<modification>
+	<id>EComteck - Hot Deals</id>
+	<version>1.0.0</version>
+	<vqmver>2.3.0</vqmver>
+	<author>EcomTeck</author>
+
+	<file name="catalog/model/catalog/product.php">
+		<operation error="abort">
+			<search position="after"><![CDATA[public function getProduct($product_id) {]]></search>
+			<add><![CDATA[
+				$setting = $this->config->get('ecdeals_setting');
+				if(isset($setting['allow_buy']) && !$setting['allow_buy']){
+					//$this->db->query("UPDATE `".DB_PREFIX."product` SET `quantity`=0 WHERE `product_id`=".$product_id);
+				}
+				]]></add>
+		</operation>
+	</file>
+	<file name="catalog/view/theme/*/template/product/product.tpl">
+		<operation  error="abort">
+			<search position="before"><![CDATA[
+				<?php if ($minimum > 1) { ?>
+			]]></search>
+			<add><![CDATA[
+				<?php
+				if(!defined("_EC_DEALS")){
+				
+					echo $this->getChild('module/ecdeals/deal', array($product_id, array('enable_deal_image'=>0,
+			    																			'enable_deal_name'=>0)));
+			    	define("_EC_DEALS", 1);
+				}
+			    ?>
+			]]></add>
+		</operation>
+	</file>
+	<!-- Call count down timer in category page -->
+	<file name="catalog/controller/product/category.php">
+		<operation error="abort">
+			<search position="before"><![CDATA[$this->data['heading_title'] = $category_info['name'];]]></search>
+			<add><![CDATA[
+			        $queryMultiseller = $this->db->query("SELECT * FROM " . DB_PREFIX . "extension WHERE `code` = 'advanced_deals'");
+
+        			if($queryMultiseller->num_rows) {
+						if (file_exists(DIR_TEMPLATE . $this->config->get('config_template') . '/stylesheet/ecdeals.css')) {
+							$this->document->addStyle('catalog/view/theme/'.$this->config->get('config_template').'/stylesheet/ecdeals.css');
+						} else {
+							$this->document->addStyle('catalog/view/theme/default/stylesheet/ecdeals.css');
+						}
+						$this->document->addScript('catalog/view/javascript/ecdeals/countdown.js');
+					}
+				]]></add>
+		</operation>
+	</file>
+	<file name="catalog/view/theme/*/template/product/category.tpl">
+		<operation  error="abort">
+			<search position="after"><![CDATA[
+				<div id="content">
+			]]></search>
+			<add><![CDATA[
+				 <script type="text/javascript">
+    				var list_deals = [];
+				 </script>
+			]]></add>
+		</operation>
+		<operation  error="abort">
+			<search position="before"><![CDATA[
+				<?php if ($product['price']) { ?>
+			]]></search>
+			<add><![CDATA[
+				<?php echo $this->getChild('module/ecdeals/timer', $product['product_id']); ?>
+			]]></add>
+		</operation>
+		<operation  error="abort">
+			<search position="before"><![CDATA[
+				var rating = $(element).find('.rating').html();
+			]]></search>
+			<add><![CDATA[
+				var deal_timer = $(element).find('.ecdeal-timer').html();
+				if (deal_timer != null) {
+					html += '<div class="ecdeal-timer">' + deal_timer + '</div>';
+				}
+			]]></add>
+		</operation>
+		<operation  error="abort">
+			<search position="after"><![CDATA[
+				$(element).html(html);
+			]]></search>
+			<add><![CDATA[
+				if(typeof(list_deals) !== 'undefined' && list_deals.length > 0) {
+					var module_ids = [];
+					$.each(list_deals, function(key, value) {
+						var json_data = $.parseJSON(value);
+						var module_id = (json_data.module_id !== "undefined")?json_data.module_id:"";
+
+						if($.inArray(module_id, module_ids) < 0) {
+							module_ids.push(module_id);
+							if(module_id && $(module_id).length > 0) {
+								$(module_id).ecCountDown(json_data);
+							}
+						}
+						
+					});
+				}
+		        
+			]]></add>
+		</operation>
+	</file>
+	<!-- Call count down timer in category page -->
+	<file name="catalog/controller/common/header.php">
+		<operation error="abort">
+			<search position="before"><![CDATA[$this->render();]]></search>
+			<add><![CDATA[
+				$setting = $this->config->get('ecdeals_setting');
+				if(isset($setting['mini_mode']) && $setting['mini_mode']){
+					if(isset($setting['show_menu']) && $setting['show_menu']){
+						$this->language->load("module/ecdeals");
+						if(isset($this->data['categories'])){
+							$this->data['categories'][] = array(
+								'name'     => $this->language->get("text_deals"),
+								'children' => array(),
+								'column'   => 1,
+								'href'     => $this->url->link('ecdeals/sales', '')
+							);
+						}
+					}
+					
+				}
+				
+				]]></add>
+		</operation>
+	</file>
+	<file name="catalog/controller/common/seo_url.php">
+		<operation error="abort">
+			<search position="after"><![CDATA[$parts = explode('/', $this->request->get['_route_']);]]></search>
+			<add><![CDATA[
+				/** BEGIN PROCESSING TO DECORD REQUET SEO URL FOR DEALS MODULE **/
+				$dealsConfig = $this->config->get('ecdeals_setting');
+			 	$seo = isset($dealsConfig['keyword_seo'])?trim($dealsConfig['keyword_seo']):"deals"; 
+
+				if( $this->request->get['_route_'] ==  $seo ){
+					$this->request->get['route'] =  'ecdeals/sales';
+					return $this->forward($this->request->get['route']);
+				} 
+				/** END OF PROCESSING TO DECORD REQUET SEO URL FOR DEALS MODULE **/
+				]]></add>
+		</operation>
+	</file>
+</modification>

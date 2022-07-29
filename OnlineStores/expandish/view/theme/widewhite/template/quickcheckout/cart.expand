@@ -1,0 +1,210 @@
+<!-- Quick Checkout v4.2 by Dreamvention.com quickcheckout/cart.tpl -->
+<style>
+.qc.qc-popup {
+  width: {{ settings['general']['cart_image_size']['width'] }}px;
+  height: {{ settings['general']['cart_image_size']['height'] }}px;
+}
+</style>
+<div id="cart_wrap">
+  <div class="box box-border">
+    <div class="box-heading {% if not data['display'] %}qc-hide{% endif %}">
+      <span class="wrap"><span class="qc-icon-cart"></span></span> 
+      <span class="text">{{ data['title'] }}</span>
+    </div>
+  
+  <div class="qc-checkout-product {% if not data['display'] %}qc-hide{% endif %}" >
+    
+    {% if error %}
+      {% for error_message in error %}
+        <div class="error alert alert-danger">{{ error_message }}</div>
+      {% endfor %}
+    {% endif %}
+
+    {% if show_qantity_error %}
+    <div class="alert alert-warning alert-dismissible" role="alert">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        {{ lang('error_quantity_stock') }}
+    </div>
+    {% endif %}
+{% if seller_based %}
+  {{ include('default/template/multiseller/seller_cart.expand') }}
+    {% else %}  
+    <table class="qc-table qc-cart table-bordered {{ warehouses ? '': 'table-striped' }} table-hover">
+      <thead>
+        <tr>
+          <td class="qc-image {% if not data['columns']['image'] %}qc-hide{% endif %}">{{ lang('column_image') }}</td>
+          <td class="qc-name {% if not data['columns']['name'] %}qc-hide{% endif %}">{{ lang('column_name') }}</td>
+          <td class="qc-model {% if not data['columns']['model'] %}qc-hide{% endif %}">{{ lang('column_model') }}</td>
+          <td class="qc-quantity {% if not data['columns']['quantity'] %}qc-hide{% endif %}">{{ lang('column_quantity') }}</td>
+          <td class="qc-price  {% if not data['columns']['price'] or (config('config_customer_price') and not is_logged) %}qc-hide{% endif %}">{{ lang('column_price') }}</td>
+          <td class="qc-total {% if not data['columns']['total'] or (config('config_customer_price') and not is_logged) %}qc-hide{% endif %}">{{ lang('column_total') }}</td>
+        </tr>
+      </thead>
+      <tbody>
+        {% set products_list = groupProducts(products, 'warehouse', warehouses) %}
+{% for idx, productArr in products_list %}
+          {% if warehouses %}
+          <tr>
+            <td colspan="5" style="text-align: center;background-color: #f9f9f9;"><strong>{{ lang('warehouse') }} {{ idx == -1 ? lang('other_warehouse') : wrs_names[idx] }}</strong></td>
+          </tr>
+          {% endif %}
+          {% for product in productArr %}
+        <tr {% if not product['stock'] %}class="stock"{% endif %}>
+          <td class="qc-image {% if not data['columns']['image'] %}qc-hide{% endif %}">
+            <a rel="qc-popup" data-help='<img src="{{ product['image'] }}" />'  href="{{ product['href'] }}">
+              <img src="{{ product['thumb'] }}" />
+            </a>
+            <i rel="tooltip" data-help="{{ field['tooltip'] }}"></i>
+          </td>
+          <td class="qc-name  {% if not data['columns']['name'] %}qc-hide{% endif %}">
+            <a href="{{ product['href'] }}" {% if not data['columns']['image'] %}rel="popup" data-help='<img src="{{ product['image'] }}"/>'{% endif %}>
+              
+              {{ product['name'] }} {% if not product['stock'] %}<span class="out-of-stock">***</span>{% endif %}
+            </a>
+            
+            {% if isExtenionInstalled('stock_forecasting') and config('stock_forecasting_status') %}
+            <div><br><i>{{ lang('text_delivery_date') }}({{ product.delivery_date }})</i></div>
+            {% endif %}
+
+            
+            {% for option in product['option'] %}
+              <div> &nbsp;<small> - {{ option['name'] }}: {{ option['value'] }}</small> </div>
+            {% endfor %}
+
+                  {% if product['main_price'] %}
+                    <div>
+                        - <small>{{ lang('main_price') }} : {{ product['main_price'] }} </small><br/>
+                    </div>
+                  {% endif %}
+                  {% if product['remaining_amount'] %}
+                    <div>
+                        - <small>{{ lang('remaining_amount') }} : {{ product['remaining_amount'] }} </small><br/>
+                    </div>
+                  {% endif %}
+              {% if product['rentData'] %}
+                <div>
+                    {{ lang('product_for_rent_from') }}
+                    {{ product['rentData']['range']['from'] }}
+                    {{ lang('product_for_rent_to') }}
+                    {{ product['rentData']['range']['to'] }}
+                    {{ lang('product_for_rent_for') }}
+                    {{ product['rentData']['diff'] }}
+                    {{ lang('text_day') }}
+                </div>
+              {% endif %}
+              {{ include('default/template/checkout/product_bundles.expand') }}
+            
+              {% if product['pricePerMeterData'] %}
+              <div>
+                  {% if product['pricePerMeterData']['skirtings_status']  == 1 %}
+                  &nbsp;<small> - <small>{{ lang('text_skirtings') }}: {{ product['pricePerMeterData']['skirtings'] }} {{ lang('text_meter') }}</small><br/>
+                  {% endif %}
+                  {% if product['pricePerMeterData']['metalprofile_status']  == 1 %}
+                  &nbsp;<small> - <small>{{ lang('text_metalprofiles') }}: {{ product['pricePerMeterData']['doorsWidth'] }} {{ lang('text_meter') }}</small><br/>
+                  {% endif %}
+                  &nbsp;<small> - {{ lang('text_materials') }}: {{ product['pricePerMeterData']['dimention'] }} {{ lang('text_meter') }}<span style="font-size: 11px;vertical-align: top;">2</span></small><br/>
+              </div>
+              {% endif %}
+            <div class="qc-name-model {% if not data['columns']['model'] %}qc-hide{% endif %}"><span class="title">{{ column_model }}:</span> <span class="text">{{ product['model'] }}</span></div>
+            <div class="qc-name-price {% if not data['columns']['price'] or (config('config_customer_price') and not is_logged) %}qc-hide{% endif %}"><span class="title">{{ column_price }}:</span> <span class="text">{{ product['price'] }}</span></div>
+          </td>
+          <td class="qc-model {% if not data['columns']['model'] %}qc-hide{% endif %}">{{ product['model'] }}</td>
+          <td class="qc-quantity  {% if not data['columns']['quantity'] %}qc-hide{% endif %}">
+            <span class="qc-icon-minus-circle decrease" data-product="{{ product['product_id'] }}"></span>
+            <input type="text" value="{{ product['quantity'] }}" class="qc-product-qantity" name="cart[{{ product['product_id'] }}]"  data-refresh="2" readonly="readonly"/>
+            <span class="qc-icon-plus-circle increase" data-product="{{ product['product_id'] }}"></span></td>
+          <td class="qc-price {% if (not data['columns']['price'] or (config('config_customer_price') and not is_logged)) %}qc-hide{% endif %} ">{{ product['price'] }}</td>
+          <td class="qc-total {% if (not data['columns']['total'] or (config('config_customer_price') and not is_logged)) %}qc-hide{% endif %} ">{{ product['total'] }}</td>
+        </tr>
+        {% endfor %}
+        {% if warehouses %}
+          <tr>
+            <td colspan="5" style="text-align: center;"><strong>{{ lang('shipping_cost') }} {{ combined_wrs_costs[idx] }}</strong></td>
+          </tr>
+          {% if wrs_duration[idx] %}
+              <tr>
+                <td colspan="5" style="text-align: center;"><strong>{{ lang('shipping_duration') }} {{ wrs_duration[idx] }} {{ lang('shipping_days') }}</strong></td>
+              </tr>
+           {% endif %}
+          {% endif %}
+        {% endfor %}
+        
+        {% for itemvoucher in vouchers %}
+        <tr>
+          <td class="qc-name {% if not data['columns']['image'] %}qc-hide{% endif %}"></td>
+          <td class="qc-name {% if not data['columns']['name'] %}qc-hide{% endif %} ">{{ itemvoucher['description'] }}</td>
+          <td class="qc-model {% if not data['columns']['model'] %}qc-hide{% endif %} "></td>
+          <td class="qc-quantity {% if not data['columns']['quantity'] %}qc-hide{% endif %} ">{{ itemvoucher['quantity'] }}</td>
+          <td class="qc-price {% if (not data['columns']['price'] or (config('config_customer_price') and not is_logged)) %}qc-hide{% endif %} ">{{ itemvoucher['amount'] }}</td>
+          <td class="qc-total {% if (not data['columns']['total'] or (config('config_customer_price') and not is_logged)) %}qc-hide{% endif %} ">{{ itemvoucher['amount'] }}</td>
+        </tr>
+        {% endfor %}
+
+        <!-- Subscription Item -->
+        {% if subscription is defined and subscription is not empty %}        
+        <tr>
+          <td class="qc-name"><a href="{{ link('checkout/cart/removeSubscriptionPlan') }}">X</a></td>
+          <td class="qc-name {% if not data['columns']['name'] %}qc-hide{% endif %} ">{{ subscription['title'] }}</td>
+          <td class="qc-model {% if not data['columns']['model'] %}qc-hide{% endif %} "></td>
+          <td class="qc-quantity {% if not data['columns']['quantity'] %}qc-hide{% endif %} ">1</td>
+          <td class="qc-price {% if (not data['columns']['price'] or (config('config_customer_price') and not is_logged)) %}qc-hide{% endif %} ">{{ subscription['amount'] }}</td>
+          <td class="qc-total {% if (not data['columns']['total'] or (config('config_customer_price') and not is_logged)) %}qc-hide{% endif %} ">{{ subscription['amount'] }}</td>
+        </tr>
+        {% endif %}
+        <!-- /Subscription Item -->
+        
+      </tbody>
+    </table>
+  {% endif %}
+    <div class="qc-table qc-options">
+        {% if logged  %}
+          {% include('default/template/module/gameball.expand') %}
+        {% endif %}
+        <div class="qc-row qc-coupon {% if not coupon_status or not data['option']['coupon']['display'] %}qc-hide{% endif %}">
+          <div class="qc-col qc-text" >{{ lang('text_use_coupon') }}
+          </div><div class="qc-col qc-total"><input type="text" value="{{ (coupon and not buyer_subscription_plan_coupon) ? coupon : '' }}" name="coupon" id="coupon" placeholder="{{ lang('text_use_coupon') }}" />
+          <button class="btn btn-success btn-xs" id="confirm_coupon"><i class="fa fa-check"></i></button></div>
+        </div>
+        <div class="qc-row qc-voucher {% if not voucher_status or not data['option']['voucher']['display'] %}qc-hide{% endif %}">
+          <div class="qc-col qc-text" >{{ lang('text_use_voucher') }}
+          </div><div class="qc-col qc-total"><input type="text" value="{{ voucher ? voucher : '' }}" name="voucher" id="voucher" placeholder="{{ lang('text_use_voucher') }}"/>
+            <button class="btn btn-success btn-xs" id="confirm_voucher"><i class="fa fa-check"></i></button></div>
+        </div>
+        <div class="qc-row qc-reward {% if not reward_status or not data['option']['reward']['display'] %}hide{% endif %}">
+          <div class="qc-col qc-text" >{{ lang('text_use_reward') }}
+          </div><div class="qc-col qc-total "><input type="text" value="{{ reward ? reward : ''}}" name="reward" id="reward" placeholder="{{ lang('text_use_reward') }}"/>
+            <button class="btn btn-success btn-xs" id="confirm_reward"><i class="fa fa-check"></i></button></div>
+        </div>
+    </div>
+    <div class="qc-table qc-summary {% if config('config_customer_price') and not is_logged %}qc-hide{% endif %}">
+        {% for total in totals %}
+        <div class="qc-row qc-totals">
+          <div class="qc-col qc-text" >{{ total['title'] }}
+          </div><div class="qc-col qc-total">{{ total['text'] }}</div>
+        </div>
+        {% endfor %}
+    </div>
+
+  </div>
+  <div class="clear"></div>
+  </div>
+</div>
+<script><!--
+$(function(){
+	if($.isFunction($.fn.uniform)){
+		$(" .styled, input:radio.styled").uniform().removeClass('styled');
+	}
+	if($.isFunction($.fn.colorbox)){
+		$('.colorbox').colorbox({
+			width: 640,
+			height: 480
+		});
+	}
+	if($.isFunction($.fn.fancybox)){
+		$('.fancybox').fancybox({
+			width: 640,
+			height: 480
+		});
+	}
+});
+//--></script>

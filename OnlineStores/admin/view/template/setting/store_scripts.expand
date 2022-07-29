@@ -1,0 +1,116 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block secondarymenu %}
+    {% include 'setting/settingmenu.expand' with {'expand': '#advanced', 'active': '#custCode'} %}
+{% endblock secondarymenu %}
+
+{% block title %}
+    {{ lang('mn_setting_menu_custom_code_s') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+    {% include "includes/buttons_top.expand" %}
+{% endblock headelements %}
+
+{% block content %}
+    <style>
+        .page-header-default {
+            background-color: transparent;
+        }
+        .page-header-content + .breadcrumb-line {
+            border: 0;
+        }
+    </style>
+    <script type="text/javascript" src="view/assets/js/plugins/editors/ace/ace.js"></script>
+
+    <!-- Start Form -->
+    <form id="setting-scripts" class="form" action="{{ action }}">
+        <!-- Fields -->
+        <div class="col-md-12">
+            <div class="panel panel-white">
+                <div class="panel-body">
+                    <!-- Header Scripts -->
+                    <div class="col-md-6">
+                        <h6>{{ lang('entry_header_scripts') }}</h6>
+                        <div id="header_editor" name="config_google_analytics">{{ config_google_analytics }}</div>
+                    </div>
+                    <!-- /Header Scripts -->
+                    <!-- Body Scripts -->
+                    <div class="col-md-6">
+                        <h6>{{ lang('entry_body_scripts') }}</h6>
+                        <div id="body_editor" name="config_body_scripts">{{ config_body_scripts }}</div>
+                    </div>
+                    <!-- /Body Scripts -->
+                </div>
+            </div>
+        </div>
+        <!-- End of Fields -->
+
+        <!-- hidden inputs to contain ace editor values -->
+        <input type="hidden" name="config_body_scripts" value="{{ config_body_scripts }}">
+        <input type="hidden" name="config_google_analytics" value="{{ config_google_analytics }}">
+        <!-- /hidden inputs to contain ace editor values -->
+
+    </form>
+    <!-- End Form -->
+
+<!-- Lower Buttons -->
+{% include "includes/buttons_bottom.expand" %}
+<!-- End Lower Buttons -->
+<script>
+    var customHeaders = {
+        "X-EC-FORM-INPUTS": "SECURED"
+    };
+    $(document).ready(function() {
+        $('select').select2();
+        $('.touchspinney').TouchSpin({
+            'postfix': '{{ current_currency_code }}',
+            'decimals': 2,
+        });
+
+        $elem = $('#editor');
+
+        var header_editor = ace.edit("header_editor");
+        header_editor.setTheme("ace/theme/monokai");
+        header_editor.getSession().setMode("ace/mode/html");
+        header_editor.setShowPrintMargin(false);
+        header_editor.getSession().setUseWrapMode(true);
+
+        var body_editor = ace.edit("body_editor");
+        body_editor.setTheme("ace/theme/monokai");
+        body_editor.getSession().setMode("ace/mode/html");
+        body_editor.setShowPrintMargin(false);
+        body_editor.getSession().setUseWrapMode(true);
+
+        header_editor.getSession().on('change', function() {
+            $('[name=config_google_analytics]').val(header_editor.getValue());
+        });
+
+        body_editor.getSession().on('change', function() {
+            $('[name=config_body_scripts]').val(body_editor.getValue());
+        });
+
+    });
+    
+function changeStatus(checkbox)
+{
+    var self = $(checkbox);
+    var switch_status = self.siblings('.switchery-status');
+
+    if ( self.is(':checked') )
+    {
+        switch_status.html("{{ lang('text_enabled') }}");
+    }
+    else
+    {
+        switch_status.html("{{ lang('text_disabled') }}");
+    }
+}
+</script>
+{% endblock %}

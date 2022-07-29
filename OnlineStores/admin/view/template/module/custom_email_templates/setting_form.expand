@@ -1,0 +1,436 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% import 'controls/uploader.expand' as uploader %}
+{% set dualMenuEnabled = true %}
+
+{% block title %}
+{{ lang('heading_title') }}
+<style>
+.checkbox-container{
+    height: 150px; overflow: auto;margin-bottom:26px
+}
+</style>
+{% endblock title %}
+
+{% block breadcrumb %}
+{{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block secondarymenu %}
+    {% include 'module/custom_email_templates/menu.expand' with {'expand': '#custom_email_template', 'active': '#setting'} %}
+{% endblock secondarymenu %}
+
+{% block headelements %}
+    {% include "includes/buttons_top.expand" %}
+{% endblock headelements %}
+
+{% block content %}
+
+<!-- Start Form -->
+<form id="form" class="form" action="{{ action }}" method="post" enctype="multipart/form-data">
+    {# Hidden Fields #}
+      <input type="hidden" name="custom_email_templates[products_section][column][image][status]" value="1">
+      <input type="hidden" name="custom_email_templates[products_section][column][product][status]" value="1">
+      <!-- <input type="hidden" name="custom_email_templates[products_section][column][product][link_status]" value="1"> -->
+      <input type="hidden" name="custom_email_templates[products_section][column][quantity][status]" value="1">
+      <!-- <input type="hidden" name="custom_email_templates[products_section][column][model][status]" value="1"> -->
+    <input type="hidden" name="custom_email_templates[products_section][column][option][status]" value="1">
+    <input type="hidden" name="custom_email_templates[products_section][column][attribute][status]" value="1">
+      <input type="hidden" name="custom_email_templates[products_section][column][price][status]" value="1">    
+    {# /Hidden Fields #}
+
+    <div class="col-md-12" id="error-area">
+    </div>
+    <div class="col-md-6">
+
+        <!-- Advanced legend -->
+        <div class="panel panel-flat">
+            <div class="panel-body">
+                <fieldset>
+                    <legend class="text-semibold">
+                        <i class="fas fa-check-circle fa-lg position-left"></i>
+                        {{ lang('tab_general')|trim(':') }}
+                        <a class="control-arrow" data-toggle="collapse" data-target="#panel1">
+                            <i class="icon-circle-down2"></i>
+                        </a>
+                    </legend>
+                    <div class="collapse in" id="panel1" >
+                       <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group" id="custom_email_templates-group" >
+                                <div class="col-md-5">
+                                    <label> {{ lang('entry_module_status') }} </label>
+                                    <span class="help-block"></span>
+                                </div>
+                                <div class="col-md-7">
+                                    <!-- Switchery -->
+                                   <div class="checkbox checkbox-switchery no-margin" id="input-module-status">
+                                       <label>
+                                           <input type="checkbox" onchange="changeStatus(this);" name="custom_email_templates[status]" class="switchery" {{ status in ['1', 1, 'on'] ? 'checked' }}>
+                                           <span class="switchery-status">{{ status in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                       </label>
+                                   </div>
+                                   <!-- /Switchery -->
+
+                                </div>
+                            </div> <br>
+                            <!-- form-group -->
+                            <div class="form-group" id="custom_email_templates[generate_invoice_number]-group">
+                                <div class="col-md-5">
+                                    <label> {{ lang('entry_generate_invoice_number') }} </label>
+                                    <span class="help-block">{{ help_generate_invoice_number }}</span>
+                                </div>
+                                <div class="col-md-7 well well-sm checkbox-container" >
+
+                                    {% for order_status in order_statuses %}
+                                      <div class="checkbox">
+                                          <label>
+                                              {% if order_status['order_status_id'] in generate_invoice_number %}
+                                                <input type="hidden" name="custom_email_templates[generate_invoice_number][]" id="invoice-{{ order_status['order_status_id'] }}" value="{{ order_status['order_status_id'] }}"> 
+                                                <input type="checkbox" class="styled invoiceCheckbox" data-id ="invoice" value="{{ order_status['order_status_id'] }}" checked="checked"  />
+                                                {{ order_status['name'] }}
+                                              {% else %}
+                                                <input type="hidden" name="custom_email_templates[generate_invoice_number][]" id="invoice-{{ order_status['order_status_id'] }}" value="0">  
+                                                <input type="checkbox" class="styled invoiceCheckbox" data-id ="invoice" value="{{ order_status['order_status_id'] }}" />
+                                                {{ order_status['name'] }}
+                                              {% endif %}
+                                          </label>
+                                      </div>
+                                     {% endfor %}
+                                </div>
+                            </div>
+
+                            <div class="clearfix"></div>
+                            <!-- form-group -->
+                            <div class="form-group" id="custom_email_templates[attach_invoice]-group">
+                                <div class="col-md-5">
+                                    <label> {{ lang('entry_attach_invoice') }} </label>
+                                    <span class="help-block">{{ help_attach_invoice }}</span>
+                                </div>
+                                <div class="col-md-7 well well-sm checkbox-container" >
+
+                                    {% for order_status in order_statuses %}
+                                      <div class="checkbox">
+                                          <label>
+                                              {% if order_status['order_status_id'] in attach_invoice %}
+                                                <input type="hidden" name="custom_email_templates[attach_invoice][]" id="attachInvoice-{{ order_status['order_status_id'] }}" value="{{ order_status['order_status_id'] }}">   
+                                                <input type="checkbox" class="styled invoiceCheckbox" data-id ="attachInvoice" value="{{ order_status['order_status_id'] }}" checked="checked"  />
+                                                {{ order_status['name'] }}
+                                              {% else %}
+                                                <input type="hidden" name="custom_email_templates[attach_invoice][]" id="attachInvoice-{{ order_status['order_status_id'] }}" value="0">  
+                                                <input type="checkbox" class="styled invoiceCheckbox" data-id ="attachInvoice" value="{{ order_status['order_status_id'] }}" />
+                                                {{ order_status['name'] }}
+                                              {% endif %}
+                                          </label>
+                                      </div>
+                                     {% endfor %}
+                                </div>
+                            </div>
+
+                            <div class="clearfix"></div>
+                            
+                            {# check if customer install Custom invoice template application to using it nested of default email invoice templates #}
+                            
+                            {% if custom_invoice_app_installed == 1%}   
+                                
+                                <div class="form-group" id="custom_email_templates-group" >
+                                    <div class="col-md-5">
+                                        <label> {{ lang('text_use_custom_invoice') }} </label>
+                                        <span class="help-block">{{ lang('help_use_custom_invoice') }}</span>
+                                    </div>
+                                    <div class="col-md-7">
+                                        <!-- Switchery -->
+                                        <div class="checkbox checkbox-switchery no-margin" id="input-module-status">
+                                            <label>
+                                                <input type="checkbox" onchange="changeStatus(this);" id="customInvoiceTemplate" name="custom_email_templates[custom_invoice_status]" class="switchery" {{ custom_invoice_status in ['1', 1, 'on'] ? 'checked' }}>
+                                                <span class="switchery-status">{{ custom_invoice_status in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                            </label>
+                                        </div>
+                                        <!-- /Switchery -->
+
+                                    </div>
+                                </div> 
+
+                                <div class="clearfix"></div>
+                            {% endif %} 
+                            <!-- form-group -->
+                            <div class="form-group" id="custom_email_templates[invoice_template]-group">
+                                <div class="col-md-5">
+                                    <label> {{ lang('entry_invoice_template') }} </label>
+                                    <span class="help-block">{{ help_product }}</span>
+                                </div>
+                                <div class="col-md-4">
+                                    <select name="custom_email_templates[invoice_template]" {{ custom_invoice_status == 1 ? 'disabled' : '' }} id="input-invoice-template" class="form-control">
+                                      {% for template in invoice_templates %}
+                                        {% if invoice_template == template %}
+                                            <option value="{{ template }}" selected="selected">{{template}}</option>
+                                        {% else %}{
+                                            <option value="{{template}}">{{template}}</option>
+                                        {% endif %}
+                                      {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <img src="{{ invoice_template_img }}" id="img-invoice-preview" class="img-thumbnail" />
+                                </div>
+                            </div>
+
+                            <div class="clearfix"></div>
+                            <div class="form-group" id="custom_email_templates[notify_admin_status]-group" >
+                                <div class="col-md-5">
+                                    <label> {{ lang('entry_notify_admin_status') }} </label>
+                                    <span class="help-block"></span>
+                                </div>
+                                <div class="col-md-7">
+                                    <!-- Switchery -->
+                                   <div class="checkbox checkbox-switchery no-margin" id="input-module-status">
+                                       <label>
+                                           <input type="checkbox" id="input-notify-admin-status" onchange="changeStatus(this);" name="custom_email_templates[notify_admin_status]" class="switchery" {{ notify_admin_status in ['1', 1, 'on'] ? 'checked' }}>
+                                           <span class="switchery-status">{{ notify_admin_status in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                       </label>
+                                   </div>
+                                   <!-- /Switchery -->
+
+                                </div>
+                            </div>
+                            <div class="clearfix"></div>
+                            <!-- form-group -->
+                            <div class="form-group" id="custom_email_templates[bcc]-group" >
+                                <div class="col-md-5">
+                                    <label> {{ lang('entry_bcc') }} </label>
+                                    <span class="help-block">{{help_bcc}}</span>
+                                </div>
+                                <div class="col-md-7">
+                                     <input type="text" name="custom_email_templates[bcc]" value="{{bcc}}" placeholder="{{entry_bcc}}" id="input-bcc" class="form-control" />
+                                </div>
+                            </div>
+                            <div class="clearfix"></div>
+                            <div class="form-group" id="custom_email_templates[track_status]-group" >
+                                <div class="col-md-5">
+                                    <label> {{ lang('entry_track_status') }} </label>
+                                    <span class="help-block"></span>
+                                </div>
+                                <div class="col-md-7">
+                                    <!-- Switchery -->
+                                   <div class="checkbox checkbox-switchery no-margin" id="input-module-status">
+                                       <label>
+                                           <input type="checkbox" id="input-notify-admin-status" onchange="changeStatus(this);" name="custom_email_templates[track_status]" class="switchery" {{ track_status in ['1', 1, 'on'] ? 'checked' }}>
+                                           <span class="switchery-status">{{ track_status in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                       </label>
+                                   </div>
+                                   <!-- /Switchery -->
+
+                                </div>
+                            </div>
+
+                        </div>
+                        <!-- col-md-12 -->
+                        </div>
+                        <!-- row -->
+                    </div>
+                </fieldset>
+            </div>
+        </div>
+        <!-- /a legend -->
+    </div>
+    <!-- /col-md-6 -->
+    <div class="col-md-6">
+        <!-- Advanced legend -->
+        <div class="panel panel-flat">
+            <div class="panel-body">
+                <fieldset>
+                    <legend class="text-semibold">
+                        <i class="fas fa-check-circle fa-lg position-left"></i>
+                        {{ lang('tab_template')|trim(':') }}
+                        <a class="control-arrow" data-toggle="collapse" data-target="#panel1">
+                            <i class="icon-circle-down2"></i>
+                        </a>
+                    </legend>
+                    <div class="collapse in" id="panel1" >
+                       <!-- form-group -->
+                       <div class="form-group" id="custom_email_templates[date_format]-group">
+                           <div class="col-md-5">
+                               <label> {{ lang('entry_date_format') }} </label>
+                               <span class="help-block"></span>
+                           </div>
+                           <div class="col-md-7">
+                               <select name="custom_email_templates[date_format]" id="input-date-format" class="form-control">
+                                 {% for format in date_formats %}
+                                   {% if date_format == format %}
+                                       <option value="{{ format }}" selected="selected">{{format}}</option>
+                                   {% else %}{
+                                       <option value="{{format}}">{{format}}</option>
+                                   {% endif %}
+                                 {% endfor %}
+                               </select>
+                           </div>
+                       </div>
+                       <br><br><br>
+                       <div class="form-group" id="custom_email_templates[plain_text_status]-group" >
+                           <div class="col-md-5">
+                               <label> {{ lang('entry_plain_text_status') }} </label>
+                               <span class="help-block">{{help_plain_text_status}}</span>
+                           </div>
+                           <div class="col-md-7">
+                               <!-- Switchery -->
+                              <div class="checkbox checkbox-switchery no-margin" id="input-module-status">
+                                  <label>
+                                      <input type="checkbox" id="input-notify-admin-status" onchange="changeStatus(this);" name="custom_email_templates[plain_text_status]" class="switchery" {{ plain_text_status in ['1', 1, 'on'] ? 'checked' }}>
+                                      <span class="switchery-status">{{ plain_text_status in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                  </label>
+                              </div>
+                              <!-- /Switchery -->
+
+                           </div>
+                       </div>
+                       <div class="clearfix"></div>
+                       <!-- form-group -->
+                       <div class="form-group" id="custom_email_templates[layout_width]-group" >
+                           <div class="col-md-5">
+                               <label> {{ lang('entry_layout_width') }} </label>
+                               <span class="help-block">{{help_layout_width}}</span>
+                           </div>
+                           <div class="col-md-7">
+                                <input type="text" name="custom_email_templates[layout_width]" value="{{layout_width}}" placeholder="{{entry_layout_width}}" id="input-layout-width" class="form-control" />
+                           </div>
+                       </div>
+                       <div class="clearfix"></div>
+                       <!-- form-group -->
+                       <div class="form-group" id="custom_email_templates[text_color]-group" >
+                           <div class="col-md-5">
+                               <label> {{ lang('entry_text_color') }} </label>
+                               <span class="help-block">{{help_text_color}}</span>
+                           </div>
+                           <div class="col-md-7">
+                                <input type="text" name="custom_email_templates[text_color]" value="{{text_color}}" placeholder="{{entry_text_color}}" id="input-text-color" class="form-control" />
+                           </div>
+                       </div>
+                       <div class="clearfix"></div>
+                       <!-- form-group -->
+                       <div class="form-group" id="custom_email_templates[link_color]-group" >
+                           <div class="col-md-5">
+                               <label> {{ lang('entry_link_color') }} </label>
+                               <span class="help-block">{{help_link_color}}</span>
+                           </div>
+                           <div class="col-md-7">
+                                <input type="text" name="custom_email_templates[link_color]" value="{{link_color}}" placeholder="{{entry_link_color}}" id="input-link-color" class="form-control" />
+                           </div>
+                       </div>
+                       <div class="clearfix"></div>
+                       <!-- form-group -->
+                       <div class="form-group" id="custom_email_templates[invoice_template]-group">
+                           <div class="col-md-5">
+                               <label> {{ lang('entry_background_image') }} </label>
+                               {{ uploader.image({ 'thumbPath': background_image_thumb, 'imagePath': background_image, 'noImage': no_image, 'name': 'custom_email_templates[background_image]' }) }}
+
+                               <span class="help-block"></span>
+                           </div>
+                           <div class="col-md-7">
+                               <label>{{ lang('entry_background_repeat') }}</label>
+                               <select name="custom_email_templates[background_repeat]" id="input-background-repeat" class="form-control">
+                                 {% for repeat in repeats %}
+                                   {% if background_repeat == repeat %}
+                                       <option value="{{ repeat }}" selected="selected">{{repeat}}</option>
+                                   {% else %}{
+                                       <option value="{{repeat}}">{{repeat}}</option>
+                                   {% endif %}
+                                 {% endfor %}
+                               </select>
+                           </div>
+
+                       </div>
+                       <div class="clearfix"></div>
+                       <!-- form-group -->
+                       <div class="form-group" id="custom_email_templates[background_color]-group" >
+                           <div class="col-md-5">
+                               <label> {{ lang('entry_background') }} </label>
+                               <span class="help-block">{{help_background_color}}</span>
+                           </div>
+                           <div class="col-md-7">
+                                <input type="text" name="custom_email_templates[background_color]" value="{{background_color}}" placeholder="{{entry_background}}" id="input-background" class="form-control" />
+                           </div>
+                       </div>
+
+                    </div>
+                </fieldset>
+            </div>
+        </div>
+        <!-- /a legend -->
+    </div>
+    <!-- /col-md-12-->
+</form>
+<!-- End Form -->
+
+<!-- Lower Buttons -->
+    {% include "includes/buttons_bottom.expand" %}
+    <!-- End Lower Buttons -->
+{% endblock content %}
+{% block scripts %}
+    {{ parent() }}
+    {% import _self as dtControls %}
+    <script>
+
+    $(document).ready(function(){
+
+        $('select').select2();
+        $('#input-invoice-template').bind('change', function() {
+
+            $('#img-invoice-preview').attr('src', '{{ invoice_template_path }}' + $(this).val().replace('.tpl', '.jpg'));
+        });
+        
+        var invoiceCheckbox = $('.invoiceCheckbox'),
+            customInvoiceTemplate = $('#customInvoiceTemplate');
+        
+        function controlCheckBoxValues()
+        {
+           var _this = $(this),
+               checkboxValue = _this.val(),
+               checkboxDataId = _this.data('id'),
+               hiddenId = `${checkboxDataId}-${checkboxValue}`;
+               
+               if(_this.is(':checked'))
+               {
+                   $('#'+hiddenId).val(checkboxValue);
+               }else{
+                   $('#'+hiddenId).val(0);
+               }
+        }
+        
+        invoiceCheckbox.on('change',controlCheckBoxValues);
+        
+        function disabledDefaultTemplate(){
+        
+        let _this = $(this),
+        
+        disabledStatus = (_this.is(':checked') === true) ? true : false;
+        
+        $('#input-invoice-template').prop('disabled',disabledStatus);
+        
+    }
+    
+    customInvoiceTemplate.on('change',disabledDefaultTemplate); 
+    });
+    
+    function changeStatus(checkbox)
+    {
+        var self = $(checkbox);
+        var switch_status = self.siblings('.switchery-status');
+
+        if ( self.is(':checked') )
+        {
+            switch_status.html("{{ lang('text_enabled') }}");
+        }
+        else
+        {
+            switch_status.html("{{ lang('text_disabled') }}");
+        }
+    }
+    function image_upload(field, thumb) {
+        $.startImageManager(field, thumb);
+    };
+    
+
+</script>
+
+{% endblock scripts %}

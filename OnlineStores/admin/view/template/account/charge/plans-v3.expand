@@ -1,0 +1,1591 @@
+{% extends "base.expand" %}
+{% set hideLayout = true %}
+{% set hideHeader = true %}
+
+{% block styles %}
+    <link href="https://cdn.datatables.net/1.10.22/css/jquery.dataTables.min.css" rel="stylesheet" type="text/css">
+    <link href="https://cdn.datatables.net/fixedheader/3.1.7/css/fixedHeader.dataTables.min.css" rel="stylesheet" type="text/css">
+    <style>
+        .content {
+            background: #ffff;
+        }
+        .page-header-default {
+            background-color: transparent;
+        }
+        .page-header-content
+        {
+            padding-right: 60px;
+            padding-left: 60px;
+        }
+        .page-header-content + .breadcrumb-line {
+            border: 0
+        }
+        .page-title {
+            max-width: 1200px;
+            margin-right: auto;
+            margin-left: auto;
+            padding: 15px 0;
+            border-bottom: 1px solid #E0DDEF;
+        }
+        @media (max-width: 768px) {
+            .page-header-content
+            {
+                padding-right: 15px;
+                padding-left: 15px;
+            }
+        }
+    </style>
+    {{ parent() }}
+{% endblock styles %}
+
+{# {% set bodyClasses = "sidebar-xs" %} #}
+{% block content %}
+
+    <div class="modal fade success-subscribe-modal center-modal" id="paypal_plan_modal" tabindex="-1">
+        <div class="modal-dialog modal-md">
+            <div class="modal-content">
+                <div class="head">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        ×
+                    </button>
+                </div>
+                <p class="title">
+                    {{lang('success_subscribe_title')}}
+                </p>
+                <img src="view/assets/images/account/charge/fireworks.svg" alt="" class="img">
+                <p class="desc">{{lang('success_subscribe_desc')}}</p>
+                <p class="desc">{{lang('success_subscribe_sub_desc')}}</p>
+                <a href="{{link('/')}}" class="theme-btn gold-btn">
+                    {{lang('btn_go_dashboard')}}
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade success-subscribe-modal center-modal" id="paypal_downgrade_modal" tabindex="-1">
+        <div class="modal-dialog modal-md">
+            <div class="modal-content">
+                <div class="head">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        ×
+                    </button>
+                </div>
+                <p class="title">
+                    {{lang('success_downgrade_title')}}
+                </p>
+                <img src="view/assets/images/account/charge/verified.svg" alt="" class="img">
+                <p class="desc">{{lang('success_downgrade_desc')}}</p>
+                <p class="desc">{{lang('success_downgrade_sub_desc')}}</p>
+                <a href="{{link('/')}}" class="theme-btn gold-btn">
+                    {{lang('btn_go_dashboard')}}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <section class="plans-grid">
+        <div class="list-wrapper">
+            <div class="page-head">
+                <button class="link" onclick="window.history.back();">
+                    <i class="fas fa-arrow-left"></i>
+                    {{lang('text_my_expand_account')}}
+                </button>
+            </div>
+            <div class="content-inner">
+
+
+                {% if base.currentplan == 3 and base.client_suspended %}
+                <!-- upgrade plans -->
+                <p class="first-ship-alert upgrade-plan-alert">
+                    <i class="fa fa-exclamation" aria-hidden="true"></i>
+                    <span class="w-100">
+                        <b class="d-block">{{lang('update_plan_title')}}</b>
+                        {{lang('update_plan')}}
+                    </span>
+                </p>
+                <!-- upgrade plans -->
+                {% endif %}
+                <p class="title-page text-center top-title">{{lang("page_head")}}</p>
+                {# yearly and monthly plan box tabs #}
+                <ul class="plans-tabs" role="tablist">
+                    <li role="presentation" class="{{ plan_type == 'monthly' or base.currentplan == 3 ? 'active' : '' }}">
+                        <a href="#month" aria-controls="home" role="tab" data-toggle="tab">
+                            {{lang("monthly")}}
+                        </a>
+                    </li>
+                    <li role="presentation" class="{{ plan_type != 'monthly' and base.currentplan != 3 ? 'active' : '' }}">
+                        <a href="#year" aria-controls="profile" role="tab" data-toggle="tab">
+                            {{lang("yearly")}}
+                        </a>
+                    </li>
+                </ul>
+                {# <p class="section-hint">
+                    {{lang("monthly_hint")}}
+                </p> #}
+                {% set planFeatures = ["faeure_1", "faeure_1", "faeure_2", "faeure_3", "faeure_5", "faeure_6", "faeure_7"] %}
+                <!-- plans tabs -->
+                <div class="tab-content">
+                    {# monthly content #}
+                    <div role="tabpanel" class="tab-pane {{ plan_type == 'monthly' or base.currentplan == 3 ? 'active' : '' }}" id="month">
+                        <div class="grid">
+                            {# free/m plan #}
+                            <div class="plan-box active">
+                                <p class="title">
+                                    {{lang("free_title")}}
+                                </p>
+                                <p class="info-content sub-title">
+                                    {{lang("free_subtitle")}}
+                                </p>
+                                <p class="price">
+                                    0<span class="currency">/{{lang("hint_monthly")}}</span>
+                                    <span class="ever">
+                                        {{lang('text_for_ever')}}
+                                    </span>
+                                </p>
+
+                                <p class="discount-percent"></p>
+
+                                <p class="discount-percent mb-2 text-end trial-ended"></p>
+
+                                {% if plans[3] < plans[base.currentplan] %}
+                                    <button class="plan-btn downgrade-plan-btn month" data-toggle="modal" data-plan-type="monthly" data-plan-type-val="{{lang('monthly')}}"data-plan-amount="{{ pricingJSON['free']['monthly']['after'] }}" data-pid="3" data-transaction-type="free">
+                                        {{lang("text_downgrade")}}
+                                    </button>
+                                {% endif %}
+
+                                {% if plans[3] == plans[base.currentplan] %}
+                                    <button class="current-plan-btn">
+                                        {{lang("text_current")}}
+                                    </button>
+                                {% endif %}
+                                
+
+
+                                <ul class="plan-features">
+                                    {% for feature in plan_features.Free %}
+                                        <li>
+                                            <i class="fa fa-check" aria-hidden="true"></i>
+                                            {{lang('key_' ~ feature)}}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {# Professional/m plan #}
+                            <div class="plan-box popular">
+                                <span class="popular-label">
+                                    {{lang("most_popular")}}
+                                </span>
+                                <p class="title">
+                                    {{lang("professional_title")}}
+                                </p>
+                                <p class="info-content sub-title">
+                                    {{lang("professional_subtitle")}}
+                                </p>
+
+                                <p class="price">
+                                    {% if pricingJSON['professional']['monthly']['after']  %}
+                                        {{ pricingJSON['professional']['monthly']['after'] }}<span class="currency">{{ lang(pricingJSON['currency']) }}/{{lang("hint_monthly")}}</span>
+                                    {% else %}
+                                        {{ pricingJSON['professional']['monthly']['before'] }}<span class="currency">{{ lang(pricingJSON['currency']) }}/{{lang("hint_monthly")}}</span>
+                                    {% endif %}
+                                    {% if pricingJSON['professional']['monthly']['after']  %}
+                                    <span class="before">
+                                        {{ pricingJSON['professional']['monthly']['before'] }}{{ lang(pricingJSON['currency']) }}
+                                    </span>
+                                    {% endif %}
+                                </p>
+
+                                <p class="discount-percent">
+                                    {% if pricingJSON['professional']['monthly']['percentage'] %}
+                                    {{ pricingJSON['professional']['monthly']['percentage']}}% {{lang('text_discount_percent')}}
+                                    {% endif %}
+                                </p>
+
+                                <p class="discount-percent mb-2 text-end trial-ended">
+                                    {% if plans[53] > plans[base.currentplan] and (53 in trials) and (trial_plan_id != 53) %}
+                                        {{lang('text_trial_ended')}}
+                                    {% endif %}
+                                </p>
+
+                                <div class="btns">
+                                    {% if plans[53] < plans[base.currentplan] %}
+                                        <button class="plan-btn downgrade-plan-btn month" data-toggle="modal" data-plan-type="monthly" data-plan-type-val="{{lang('monthly')}}" data-plan-amount="{{ pricingJSON['professional']['monthly']['after']?pricingJSON['professional']['monthly']['after']:pricingJSON['professional']['monthly']['before'] }}" data-pid="53" data-transaction-type="downgrade">
+                                            {{lang("text_downgrade")}}
+                                        </button>
+                                    {% endif %}
+
+                                    {% if plans[53] == plans[base.currentplan] %}
+                                        {% if  plan_type == 'monthly' %}
+                                        <button class="current-plan-btn">
+                                            {{lang("text_current")}}
+                                        </button>
+                                        {% else %}
+                                        <button class="plan-btn downgrade-plan-btn month" data-toggle="modal" data-plan-type="monthly" data-plan-type-val="{{lang('monthly')}}" data-plan-amount="{{ pricingJSON['professional']['monthly']['after']?pricingJSON['professional']['monthly']['after']:pricingJSON['professional']['monthly']['before'] }}" data-pid="53" data-transaction-type="downgrade">
+                                            {{lang("text_downgrade")}}
+                                        </button>
+                                        {% endif %}
+                                    {% endif %}
+
+                                    {% if plans[base.currentplan] < plans[53] %}
+                                        <a href="{{ link('account/checkout', 'pid=53&cycle=monthly') }}" class="plan-btn month">
+                                            {{lang("text_upgrade")}}
+                                        </a>
+                                    {% endif %}
+                                    
+                                    {% if plans[53] != plans[base.currentplan] and plans[base.currentplan] < plans[53]%}
+                                        {% if trial_plan_id == 53 %}
+                                            <button class="end-trial" data-pid="53">
+                                                {{lang("text_end_trial")}}
+                                            </button>
+                                        {% else %}
+                                            {% if 53 not in trials %}
+                                                <button class="try" data-pid="53">
+                                                    {{lang("text_try")}}
+                                                </button>
+                                            {% endif %}
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+
+                                <p class="features-title info-content">
+                                    {{lang("professional_features_title")}}
+                                </p>
+                                <ul class="plan-features">
+                                    {# <li><i class="fa fa-plus" aria-hidden="true"></i></li> #}
+                                    {% for feature in plan_features.Professional %}
+                                        <li>
+                                            <i class="fa fa-check" aria-hidden="true"></i>
+                                            {{lang('key_' ~ feature)}}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {# Ultimate/m plan #}
+                            <div class="plan-box">
+                                <p class="title">
+                                    {{lang("ultimate_title")}}
+                                </p>
+                                <p class="info-content sub-title">
+                                    {{lang("unlimited_subtitle")}}
+                                </p>
+
+                                <p class="price">
+                                    {% if pricingJSON['ultimate']['monthly']['after']  %}
+                                        {{ pricingJSON['ultimate']['monthly']['after'] }}<span class="currency">{{ lang(pricingJSON['currency']) }}/{{lang("hint_monthly")}}</span>
+                                    {% else %}
+                                        {{ pricingJSON['ultimate']['monthly']['before'] }}<span class="currency">{{ lang(pricingJSON['currency']) }}/{{lang("hint_monthly")}}</span>
+                                    {% endif %}
+
+                                    {% if pricingJSON['ultimate']['monthly']['after']  %}
+                                        <span class="before">
+                                        {{ pricingJSON['ultimate']['monthly']['before'] }}{{ lang(pricingJSON['currency']) }}
+                                        </span>
+                                    {% endif %}
+                                </p>
+
+                                <p class="discount-percent">
+                                    {% if pricingJSON['ultimate']['monthly']['percentage'] %}
+                                    {{ pricingJSON['ultimate']['monthly']['percentage']}}% {{lang('text_discount_percent')}}
+                                    {% endif %}
+                                </p>
+
+
+                                <p class="discount-percent mb-2 text-end trial-ended">
+                                    {% if plans[6] > plans[base.currentplan] and (6 in trials) and (trial_plan_id != 6) %}
+                                        {{lang('text_trial_ended')}}
+                                    {% endif %}
+                                </p>
+
+                                <div class="btns">
+                                    {% if plans[6] < plans[base.currentplan] %}
+                                        <button class="plan-btn downgrade-plan-btn month" data-toggle="modal" data-plan-type="monthly" data-plan-type-val="{{lang('monthly')}}" data-plan-amount="{{ pricingJSON['ultimate']['monthly']['after']?pricingJSON['ultimate']['monthly']['after']:pricingJSON['ultimate']['monthly']['before'] }}" data-pid="6" data-transaction-type="downgrade">
+                                            {{lang("text_downgrade")}}
+                                        </button>
+                                    {% endif %}
+
+                                    {% if plans[6] == plans[base.currentplan] %}
+                                        {% if  plan_type == 'monthly' %}
+                                        <button class="current-plan-btn">
+                                            {{lang("text_current")}}
+                                        </button>
+                                        {% else %}
+                                        <button class="plan-btn downgrade-plan-btn month" data-toggle="modal" data-plan-type="monthly" data-plan-type-val="{{lang('monthly')}}" data-plan-amount="{{ pricingJSON['ultimate']['monthly']['after']?pricingJSON['ultimate']['monthly']['after']:pricingJSON['ultimate']['monthly']['before'] }}" data-pid="6" data-transaction-type="downgrade">
+                                            {{lang("text_downgrade")}}
+                                        </button>
+                                        {% endif %}
+                                    {% endif %}
+
+                                    {% if plans[base.currentplan] < plans[6] %}
+                                        <a href="{{ link('account/checkout', 'pid=6&cycle=monthly') }}" class="plan-btn month">
+                                            {{lang("text_upgrade")}}
+                                        </a>
+                                    {% endif %}
+                                    
+                                    {% if plans[6] != plans[base.currentplan] and plans[base.currentplan] < plans[6] %}
+                                        {% if trial_plan_id == 6 %}
+                                            <button class="end-trial" data-pid="6">
+                                                {{lang("text_end_trial")}}
+                                            </button>
+                                        {% else %}
+                                            {% if 6 not in trials %}
+                                                <button class="try" data-pid="6">
+                                                    {{lang("text_try")}}
+                                                </button>
+                                            {% endif %}
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+
+
+                                <p class="features-title info-content">
+                                    {{lang("unlimited_features_title")}}
+                                </p>
+                                <ul class="plan-features">
+                                    {# <li><i class="fa fa-plus" aria-hidden="true"></i></li> #}
+                                    {% for feature in plan_features.Ultimate %}
+                                        <li>
+                                            <i class="fa fa-check" aria-hidden="true"></i>
+                                            {{lang('key_' ~ feature)}}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    {# yearly content #}
+                    <div role="tabpanel" class="tab-pane {{ plan_type != 'monthly' and base.currentplan != 3 ? 'active' : '' }}" id="year">
+                        <div class="grid">
+                            {# free/y plan #}
+                            <div class="plan-box active">
+                                <p class="title">
+                                    {{lang("free_title")}}
+                                </p>
+                                <p class="info-content sub-title">
+                                    {{lang("free_subtitle")}}
+                                </p>
+
+                                <p class="price">
+                                    0<span class="currency">/{{lang("hint_monthly")}}</span>
+                                    <span class="ever">
+                                        {{lang('text_for_ever')}}
+                                    </span>
+                                </p>
+                                
+                                <p class="discount-percent"></p>
+
+                                <p class="discount-percent mb-2 text-end trial-ended"></p>
+
+                                {% if plans[3] < plans[base.currentplan] %}
+                                    <button class="plan-btn downgrade-plan-btn year" data-toggle="modal"
+                                            data-plan-type="yearly" data-plan-type-val="{{lang('yearly')}}"
+                                            data-plan-amount="{{ pricingJSON['free']['yearly']['after'] }}" data-pid="3" data-transaction-type="free">
+                                        {{lang("text_downgrade")}}
+                                    </button>
+                                {% endif %}
+
+                                {% if plans[3] == plans[base.currentplan] %}
+                                    <button class="current-plan-btn">
+                                        {{lang("text_current")}}
+                                    </button>
+                                {% endif %}
+
+                                <ul class="plan-features">
+                                    {% for feature in plan_features.Free %}
+                                        <li>
+                                            <i class="fa fa-check" aria-hidden="true"></i>
+                                            {{lang('key_' ~ feature)}}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {# Professional/y plan #}
+                            <div class="plan-box popular">
+                                <span class="popular-label">
+                                    {{lang("most_popular")}}
+                                </span>
+                                <p class="title">
+                                    {{lang("professional_title")}}
+                                </p>
+                                <p class="info-content sub-title">
+                                    {{lang("professional_subtitle")}}
+                                </p>
+
+                                <p class="price">
+                                    {% if pricingJSON['professional']['yearly']['after']  %}
+                                        {{ pricingJSON['professional']['yearly']['after'] }}<span class="currency">{{ lang(pricingJSON['currency']) }}/{{lang("hint_monthly")}}</span>
+                                    {% else %}
+                                        {{ pricingJSON['professional']['yearly']['before'] }}<span class="currency">{{ lang(pricingJSON['currency']) }}/{{lang("hint_monthly")}}</span>
+                                    {% endif %}
+
+                                    {% if pricingJSON['professional']['yearly']['after']  %}
+                                        <span class="before">
+                                        {{ pricingJSON['professional']['yearly']['before'] }}{{ lang(pricingJSON['currency']) }}
+                                        </span>
+                                    {% endif %}
+                                </p>
+
+                                <p class="discount-percent">
+                                    {{lang('text_yearly_month')}} 
+                                    <span class="m-bold">
+                                        {% if pricingJSON['professional']['yearly']['percentage'] %}
+                                            - {{ pricingJSON['professional']['yearly']['percentage']}}% {{lang('text_discount_percent')}}
+                                        {% endif %}
+                                    </span>
+                                </p>
+
+                                <p class="discount-percent mb-2 text-end trial-ended">
+                                    {% if plans[53] > plans[base.currentplan] and (53 in trials) and (trial_plan_id != 53) %}
+                                        {{lang('text_trial_ended')}}
+                                    {% endif %}
+                                </p>
+
+                                <div class="btns">
+                                    {% if plans[53] < plans[base.currentplan] %}
+                                        {% if plan_type == 'annually' %}
+                                            <button class="plan-btn downgrade-plan-btn year" data-toggle="modal" data-plan-type="yearly" data-plan-type-val="{{lang('yearly')}}" data-plan-amount="{{ pricingJSON['professional']['yearly']['final'] }}" data-pid="53" data-transaction-type="downgrade">
+                                                {{lang("text_downgrade")}}
+                                            </button>
+                                        {% else %}
+                                            <a href="{{ link('account/checkout', 'pid=53&cycle=annually') }}" class="plan-btn year">{{lang("text_downgrade")}}</a>
+                                        {% endif %}
+                                    {% endif %}
+
+                                    {% if plans[53] == plans[base.currentplan] %}
+                                        {% if  plan_type == 'annually' %}
+                                        <button class="current-plan-btn">
+                                            {{lang("text_current")}}
+                                        </button>
+                                        {% else %}
+                                        <a href="{{ link('account/checkout', 'pid=53&cycle=annually') }}" class="plan-btn year">
+                                            {{lang("text_upgrade")}}
+                                        </a>
+                                        {% endif %}
+                                    {% endif %}
+
+                                    {% if plans[base.currentplan] < plans[53] %}
+                                        <a href="{{ link('account/checkout', 'pid=53&cycle=annually') }}" class="plan-btn year">
+                                            {{lang("text_upgrade")}}
+                                        </a>
+                                    {% endif %}
+                                        
+                                    {% if plans[53] != plans[base.currentplan] and plans[base.currentplan] < plans[53]%}
+                                        {% if trial_plan_id == 53 %}
+                                            <button class="end-trial" data-pid="53">
+                                                {{lang("text_end_trial")}}
+                                            </button>
+                                        {% else %}
+                                            {% if 53 not in trials %}
+                                                <button class="try" data-pid="53">
+                                                    {{lang("text_try")}}
+                                                </button>
+                                            {% endif %}
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+
+                                <p class="features-title info-content">
+                                    {{lang("professional_features_title")}}
+                                </p>
+                                <ul class="plan-features">
+                                    {# <li><i class="fa fa-plus" aria-hidden="true"></i></li> #}
+                                    {% for feature in plan_features.Professional %}
+                                        <li>
+                                            <i class="fa fa-check" aria-hidden="true"></i>
+                                            {{lang('key_' ~ feature)}}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {# Ultimate/y plan #}
+                            <div class="plan-box">
+                                <p class="title">
+                                    {{lang("ultimate_title")}}
+                                </p>
+                                <p class="info-content sub-title">
+                                    {{lang("unlimited_subtitle")}}
+                                </p>
+
+                                <p class="price">
+                                    {% if pricingJSON['ultimate']['yearly']['after']  %}
+                                        {{ pricingJSON['ultimate']['yearly']['after'] }}<span class="currency">{{ lang(pricingJSON['currency']) }}/{{lang("hint_monthly")}}</span>
+                                    {% else %}
+                                        {{ pricingJSON['ultimate']['yearly']['before'] }}<span class="currency">{{ lang(pricingJSON['currency']) }}/{{lang("hint_monthly")}}</span>
+                                    {% endif %}
+                                    {% if pricingJSON['ultimate']['yearly']['after']  %}
+                                        <span class="before">
+                                        {{ pricingJSON['ultimate']['yearly']['before'] }}{{ lang(pricingJSON['currency']) }}
+                                        </span>
+                                    {% endif %}
+                                </p>
+
+                                <p class="discount-percent">
+                                    {{lang('text_yearly_month')}} 
+                                    <span class="m-bold">
+                                        {% if pricingJSON['ultimate']['yearly']['percentage'] %}
+                                            - {{ pricingJSON['ultimate']['yearly']['percentage']}}% {{lang('text_discount_percent')}}
+                                        {% endif %}
+                                    </span>
+                                </p>
+
+                                <p class="discount-percent mb-2 text-end trial-ended">
+                                    {% if plans[6] > plans[base.currentplan] and (6 in trials) and (trial_plan_id != 6) %}
+                                        {{lang('text_trial_ended')}}
+                                    {% endif %}
+                                </p>
+
+                                <div class="btns">
+                                    {% if plans[6] < plans[base.currentplan] %}
+                                        {% if plan_type == 'annually' %}
+                                            <button class="plan-btn downgrade-plan-btn year" data-toggle="modal" data-plan-type="yearly" data-plan-type-val="{{lang('yearly')}}" data-plan-amount="{{ pricingJSON['ultimate']['yearly']['final'] }}" data-pid="6" data-transaction-type="downgrade">
+                                                {{lang("text_downgrade")}}
+                                            </button>
+                                        {% else %}
+                                            <a href="{{ link('account/checkout', 'pid=6&cycle=annually') }}" class="plan-btn year">{{lang("text_downgrade")}}</a>
+                                        {% endif %}
+                                    {% endif %}
+
+                                    {% if plans[6] == plans[base.currentplan] %}
+                                        {% if  plan_type == 'annually' %}
+                                        <button class="current-plan-btn">
+                                            {{lang("text_current")}}
+                                        </button>
+                                        {% else %}
+                                        <a href="{{ link('account/checkout', 'pid=6&cycle=annually') }}" class="plan-btn year">
+                                            {{lang("text_upgrade")}}
+                                        </a>
+                                        {% endif %}
+                                    {% endif %}
+
+                                    {% if plans[base.currentplan] < plans[6] %}
+                                        <a href="{{ link('account/checkout', 'pid=6&cycle=annually') }}" class="plan-btn year">
+                                            {{lang("text_upgrade")}}
+                                        </a>
+                                    {% endif %}
+                                        
+                                    {% if plans[6] != plans[base.currentplan] and plans[base.currentplan] < plans[6] %}
+                                        {% if trial_plan_id == 6 %}
+                                            <button class="end-trial" data-pid="6">
+                                                {{lang("text_end_trial")}}
+                                            </button>
+                                        {% else %}
+                                            {% if 6 not in trials %}
+                                                <button class="try" data-pid="6">
+                                                    {{lang("text_try")}}
+                                                </button>
+                                            {% endif %}
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+
+                                <p class="features-title info-content">
+                                    {{lang("unlimited_features_title")}}
+                                </p>
+                                <ul class="plan-features">
+                                    {# <li><i class="fa fa-plus" aria-hidden="true"></i></li> #}
+                                    {% for feature in plan_features.Ultimate %}
+                                        <li>
+                                            <i class="fa fa-check" aria-hidden="true"></i>
+                                            {{lang('key_' ~ feature)}}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    {# end plans #}
+
+    <div class="col-sm-12" style="text-align: center; margin-top: 30px;">
+        <a target="_blank" href="https://members.expandcart.com/cart.php?gid=1">
+            <strong>
+                {{lang('have_coupon')}}
+            </strong>
+        </a>
+    </div>
+
+    <!-- start plans features -->
+    <section class="list-wrapper">
+        <div class="content-inner">
+            <div class="text-center">
+                <button class="tog-plans-features">
+                    {{lang("features_btn")}}
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+        </div>
+    </section>
+    {# //hint// in table foot there's tow kind of price and buy button toggle based on plan period from js in down  #}
+    <section class="list-wrapper features-table">
+        <div class="content-inner">
+            <!-- desktop -->
+            <table id="example" class="display  plans-datatable desktop-datatable" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>{{lang("our_features")}}</th>
+                        <th>{{lang("free_title")}}</th>
+                        <th>{{lang("professional_title")}}</th>
+                        <th>{{lang("ultimate_title")}}</th>
+                        {# <th>{{lang("enterprise_title")}}</th> #}
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="tit">{{lang('sales_channels')}}</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        {# <td></td> #}
+                    </tr>
+                    {% for key, feature in sales_channels %} 
+                        <tr>
+                            <td>
+                                <span>
+                                    {{lang(key ~ '_feature')}}
+                                </span>
+                            </td>
+                            {% for vall in feature %}
+                                {% if vall == 1 %}
+                                    <td><i class="fa fa-check" aria-hidden="true"></i></td>
+                                {% elseif vall == 0 and vall matches '/^\\d+$/' %}
+                                <td><i class="fa fa-minus" aria-hidden="true"></i></td>
+                                {# {% else %} #}
+                                {% elseif vall|first matches '/^[-+]?[1-9]*\\.?[1-9]+$/' %}
+                                <td>{{vall}}</td>
+                                {% else %}
+                                    <td>
+                                        {{lang('tval_' ~ vall)}}
+                                    </td>
+                                {% endif %}
+                                
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                    <tr>
+                        <td class="tit">{{lang('main_features')}}</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        {# <td></td> #}
+                    </tr>
+                    {% for key, feature in main_features %} 
+                        <tr>
+                            <td>
+                                <span>
+                                    {{lang(key ~ '_feature')}}
+                                </span>
+                            </td>
+                            {% for vall in feature %}
+                                {% if vall == 1 %}
+                                    <td><i class="fa fa-check" aria-hidden="true"></i></td>
+                                {% elseif vall == 0 and vall matches '/^\\d+$/' %}
+                                <td><i class="fa fa-minus" aria-hidden="true"></i></td>
+                                {# {% else %} #}
+                                {% elseif vall|first matches '/^[-+]?[1-9]*\\.?[1-9]+$/' %}
+                                <td>{{vall}}</td>
+                                {% else %}
+                                    <td>
+                                        {{lang('tval_' ~ vall)}}
+                                    </td>
+                                {% endif %}
+                                
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                    <tr>
+                        <td class="tit">{{lang('advanced_features')}}</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        {# <td></td> #}
+                    </tr>
+                    {% for key, feature in advanced_features %} 
+                        <tr>
+                            <td>
+                                <span>
+                                    {{lang(key ~ '_feature')}}
+                                </span>
+                            </td>
+                            {% for vall in feature %}
+                                {% if vall == 1 %}
+                                    <td><i class="fa fa-check" aria-hidden="true"></i></td>
+                                {% elseif vall == 0 and vall matches '/^\\d+$/' %}
+                                <td><i class="fa fa-minus" aria-hidden="true"></i></td>
+                                {# {% else %} #}
+                                {% elseif vall|first matches '/^[-+]?[1-9]*\\.?[1-9]+$/' %}
+                                <td>{{vall}}</td>
+                                {% else %}
+                                    <td>
+                                        {{lang('tval_' ~ vall)}}
+                                    </td>
+                                {% endif %}
+                                
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                    <tr>
+                        <td class="tit">{{lang('marketing_tools')}}</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        {# <td></td> #}
+                    </tr>
+                    {% for key, feature in marketing_tools %}
+                        <tr>
+                            <td>
+                                <span>
+                                    {{lang(key ~ '_feature')}}
+                                </span>
+                            </td>
+                            {% for vall in feature %}
+                                {% if vall == 1 %}
+                                    <td><i class="fa fa-check" aria-hidden="true"></i></td>
+                                {% elseif vall == 0 and vall matches '/^\\d+$/' %}
+                                <td><i class="fa fa-minus" aria-hidden="true"></i></td>
+                                {# {% else %} #}
+                                {% elseif vall|first matches '/^[-+]?[1-9]*\\.?[1-9]+$/' %}
+                                <td>{{vall}}</td>
+                                {% else %}
+                                    <td>
+                                        {{lang('tval_' ~ vall)}}
+                                    </td>
+                                {% endif %}
+                                
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                    <tr>
+                        <td class="tit">{{lang('services')}}</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        {# <td></td> #}
+                    </tr>
+                    {% for key, feature in services %} 
+                        <tr>
+                            <td>
+                                <span>
+                                    {{lang(key ~ '_feature')}}
+                                </span>
+                            </td>
+                            {% for vall in feature %}
+                                {% if vall == 1 %}
+                                    <td><i class="fa fa-check" aria-hidden="true"></i></td>
+                                {% elseif vall == 0 and vall matches '/^\\d+$/' %}
+                                <td><i class="fa fa-minus" aria-hidden="true"></i></td>
+                                {# {% else %} #}
+                                {% elseif vall|first matches '/^[-+]?[1-9]*\\.?[1-9]+$/' %}
+                                <td>{{vall}}</td>
+                                {% else %}
+                                    <td>
+                                        {{lang('tval_' ~ vall)}}
+                                    </td>
+                                {% endif %}
+                                
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                    <tr>
+                        <td class="tit">{{lang('analytics')}}</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        {# <td></td> #}
+                    </tr>
+                    {% for key, feature in analytics %} 
+                        <tr>
+                            <td>
+                                <span>
+                                    {{lang(key ~ '_feature')}}
+                                </span>
+                            </td>
+                            {% for vall in feature %}
+                                {% if vall == 1 %}
+                                    <td><i class="fa fa-check" aria-hidden="true"></i></td>
+                                {% elseif vall == 0 and vall matches '/^\\d+$/' %}
+                                <td><i class="fa fa-minus" aria-hidden="true"></i></td>
+                                {# {% else %} #}
+                                {% elseif vall|first matches '/^[-+]?[1-9]*\\.?[1-9]+$/' %}
+                                <td>{{vall}}</td>
+                                {% else %}
+                                    <td>
+                                        {{lang('tval_' ~ vall)}}
+                                    </td>
+                                {% endif %}
+                                
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                    <tr>
+                        <td class="tit">{{lang('team')}}</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        {# <td></td> #}
+                    </tr>
+                    {% for key, feature in team %} 
+                        <tr>
+                            <td>
+                                <span>
+                                    {{lang(key ~ '_feature')}}
+                                </span>
+                            </td>
+                            {% for vall in feature %}
+                                {% if vall == 1 %}
+                                    <td><i class="fa fa-check" aria-hidden="true"></i></td>
+                                {% elseif vall == 0 and vall matches '/^\\d+$/' %}
+                                <td><i class="fa fa-minus" aria-hidden="true"></i></td>
+                                {# {% else %} #}
+                                {% elseif vall|first matches '/^[-+]?[1-9]*\\.?[1-9]+$/' %}
+                                <td>{{vall}}</td>
+                                {% else %}
+                                    <td>
+                                        {{lang('tval_' ~ vall)}}
+                                    </td>
+                                {% endif %}
+                                
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                    <tr>
+                        <td class="tit">{{lang('support')}}</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        {# <td></td> #}
+                    </tr>
+                    {% for key, feature in support %} 
+                        <tr>
+                            <td>
+                                <span>
+                                    {{lang(key ~ '_feature')}}
+                                </span>
+                            </td>
+                            {% for vall in feature %}
+                                {% if vall == 1 %}
+                                    <td><i class="fa fa-check" aria-hidden="true"></i></td>
+                                {% elseif vall == 0 and vall matches '/^\\d+$/' %}
+                                <td><i class="fa fa-minus" aria-hidden="true"></i></td>
+                                {# {% else %} #}
+                                {% elseif vall|first matches '/^[-+]?[1-9]*\\.?[1-9]+$/' %}
+                                <td>{{vall}}</td>
+                                {% else %}
+                                    <td>
+                                        {{lang('tval_' ~ vall)}}
+                                    </td>
+                                {% endif %}
+                                
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th></th>
+                        {# free #}
+                        <th>
+                            <span class="popular-label" {% if true %} style="opacity: 0; visibility: hidden;" {% endif %}>
+                                {{lang("most_popular")}}
+                            </span>
+                            
+                            <div class="monthly-foot">
+                                <p class="price-offer {{ pricingJSON['free']['monthly']['before'] ? '' : 'empty' }}">
+                                    {{ pricingJSON['free']['monthly']['before'] }} 
+                                    {% if pricingJSON['free']['monthly']['before'] != "" %}
+                                        {{ lang(pricingJSON['currency']) }}
+                                    {% endif %}
+                                </p>
+                                <p class="price">
+                                    0 {{ lang(pricingJSON['currency']) }}
+                                </p>
+                                <p class="period-hint">
+                                    {{lang("monthly")}}
+                                </p>
+                                {% if plans[3] < plans[base.currentplan] %}
+                                    <button class="plan-btn downgrade-plan-btn month" data-toggle="modal" data-plan-type="monthly"
+                                            data-plan-type-val="{{lang('monthly')}}"data-plan-amount="{{ pricingJSON['free']['monthly']['after'] }}" data-pid="3"
+                                            data-transaction-type="free">
+                                        {{lang("text_downgrade")}}
+                                    </button>
+                                {% endif %}
+
+                                {% if plans[3] == plans[base.currentplan] %}
+                                    <button class="current-plan-btn">
+                                        {{lang("text_current")}}
+                                    </button>
+                                {% endif %}
+                            </div>
+                            <div class="yearly-foot">
+                                {# {% if pricingJSON['free']['yearly']['before'] != "" %} #}
+                                <p class="price-offer  empty">
+                                    <br>
+                                </p>
+                                {# {% endif %} #}
+                                <p class="price">
+                                    0 {{ lang(pricingJSON['currency']) }}
+                                </p>
+                                <p class="period-hint">
+                                    {{lang("yearly")}}
+                                </p>
+                                {% if plans[3] < plans[base.currentplan] %}
+                                    <button class="plan-btn downgrade-plan-btn year" data-toggle="modal"
+                                            data-plan-type="yearly" data-plan-type-val="{{lang('yearly')}}"
+                                            data-plan-amount="{{ pricingJSON['free']['yearly']['after'] }}" data-pid="3" data-transaction-type="free">
+                                        {{lang("text_downgrade")}}
+                                    </button>
+                                {% endif %}
+
+                                {% if plans[3] == plans[base.currentplan] %}
+                                    <button class="current-plan-btn">
+                                        {{lang("text_current")}}
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </th>
+                        {# prof #}
+                        <th>
+                            <span class="popular-label" {% if false %} style="opacity: 0; visibility: hidden;" {% endif %}>
+                                {{lang("most_popular")}}
+                            </span>
+                            
+                            <div class="monthly-foot">
+                                <p class="price-offer {{ pricingJSON['professional']['monthly']['after'] ? '' : 'hide' }}">
+                                    {{ pricingJSON['professional']['monthly']['before'] }} {{ lang(pricingJSON['currency']) }}
+                                </p>
+                                <p class="price">
+                                    {% if pricingJSON['professional']['monthly']['after']  %}
+                                        {{ pricingJSON['professional']['monthly']['after'] }} {{ lang(pricingJSON['currency']) }}
+                                    {% else %}
+                                       {{ pricingJSON['professional']['monthly']['before'] }} {{ lang(pricingJSON['currency']) }}
+                                    {% endif %}
+                                </p>
+
+                                <p class="period-hint">
+                                    {{lang("monthly")}}
+                                </p>
+                                {% if plans[53] < plans[base.currentplan] %}
+                                    <button class="plan-btn downgrade-plan-btn month" data-toggle="modal" data-plan-type="monthly" data-plan-type-val="{{lang('monthly')}}" data-plan-amount="{{ pricingJSON['professional']['monthly']['after']?pricingJSON['professional']['monthly']['after']:pricingJSON['professional']['monthly']['before'] }}" data-pid="53" data-transaction-type="downgrade">
+                                        {{lang("text_downgrade")}}
+                                    </button>
+                                {% endif %}
+                                {% if plans[53] == plans[base.currentplan] %}
+                                    {% if  plan_type == 'monthly' %}
+                                    <button class="current-plan-btn">
+                                        {{lang("text_current")}}
+                                    </button>
+                                    {% else %}
+                                    <button class="plan-btn downgrade-plan-btn month" data-toggle="modal" data-plan-type="monthly" data-plan-type-val="{{lang('monthly')}}" data-plan-amount="{{ pricingJSON['professional']['monthly']['after']?pricingJSON['professional']['monthly']['after']:pricingJSON['professional']['monthly']['before'] }}" data-pid="53" data-transaction-type="downgrade">
+                                        {{lang("text_downgrade")}}
+                                    </button>
+                                    {% endif %}
+                                {% endif %}
+
+                                {% if plans[base.currentplan] < plans[53] %}
+                                    <a href="{{ link('account/checkout', 'pid=53&cycle=monthly') }}" class="plan-btn month">
+                                        {{lang("text_upgrade")}}
+                                    </a>
+                                {% endif %}
+                            </div>
+                            <div class="yearly-foot">
+                                <p class="price-offer {{ pricingJSON['professional']['yearly']['after'] ? '' : 'empty' }}">
+                                    {% if pricingJSON['professional']['yearly']['after'] %}
+                                        {{ pricingJSON['professional']['yearly']['before'] }}
+                                        {{ lang(pricingJSON['currency']) }}
+                                    {% endif %}
+                                </p>
+                                <p class="price">
+                                    {% if pricingJSON['professional']['yearly']['after']  %}
+                                        {{ pricingJSON['professional']['yearly']['after'] }}<span class="currency">{{ lang(pricingJSON['currency']) }}/{{lang("hint_monthly")}}</span>
+                                    {% else %}
+                                        {{ pricingJSON['professional']['yearly']['before'] }}<span class="currency">{{ lang(pricingJSON['currency']) }}/{{lang("hint_monthly")}}</span>
+                                    {% endif %}
+                                </p>
+                                <p class="discount-percent">
+                                    {{lang('text_yearly_month')}} - 
+                                    <span class="m-bold">
+                                        {% if pricingJSON['professional']['yearly']['percentage'] %}
+                                            {{ pricingJSON['professional']['yearly']['percentage']}}% {{lang('text_discount_percent')}}
+                                        {% endif %}
+                                    </span>
+                                </p>
+                                {% if plans[53] < plans[base.currentplan] %}
+                                    {% if plan_type == 'annually' %}
+                                        <button class="plan-btn downgrade-plan-btn year" data-toggle="modal" data-plan-type="yearly" data-plan-type-val="{{lang('yearly')}}" data-plan-amount="{{ pricingJSON['professional']['yearly']['final'] }}" data-pid="53" data-transaction-type="downgrade">
+                                            {{lang("text_downgrade")}}
+                                        </button>
+                                    {% else %}
+                                        <a href="{{ link('account/checkout', 'pid=53&cycle=annually') }}" class="plan-btn year">{{lang("text_downgrade")}}</a>
+                                    {% endif %}
+                                {% endif %}
+
+                                {% if plans[53] == plans[base.currentplan] %}
+                                    {% if  plan_type == 'annually' %}
+                                    <button class="current-plan-btn">
+                                        {{lang("text_current")}}
+                                    </button>
+                                    {% else %}
+                                    <a href="{{ link('account/checkout', 'pid=53&cycle=annually') }}" class="plan-btn year">
+                                        {{lang("text_upgrade")}}
+                                    </a>
+                                    {% endif %}
+                                {% endif %}
+
+                                {% if plans[base.currentplan] < plans[53] %}
+                                    <a href="{{ link('account/checkout', 'pid=53&cycle=annually') }}" class="plan-btn year" >
+                                        {{lang("text_upgrade")}}
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </th>
+                        {# ultimate #}
+                        <th>
+                            <span class="popular-label" {% if true %} style="opacity: 0; visibility: hidden;" {% endif %}>
+                                {{lang("most_popular")}}
+                            </span>
+                            
+                            <div class="monthly-foot">
+                                <p class="price-offer {{ pricingJSON['ultimate']['monthly']['after'] ? '' : 'empty' }}">
+                                    {% if pricingJSON['ultimate']['monthly']['after'] %}
+                                        {{ pricingJSON['ultimate']['monthly']['before'] }}
+                                        {{ lang(pricingJSON['currency']) }}
+                                    {% endif %}
+                                </p>
+                                <p class="price">
+                                    {% if pricingJSON['ultimate']['monthly']['after']  %}
+                                        {{ pricingJSON['ultimate']['monthly']['after'] }} {{ lang(pricingJSON['currency']) }}
+                                    {% else %}
+                                        {{ pricingJSON['ultimate']['monthly']['before'] }} {{ lang(pricingJSON['currency']) }}
+                                    {% endif %}
+                                </p>
+                                <p class="period-hint">
+                                    {{lang("monthly")}}
+                                </p>
+                                {% if plans[6] < plans[base.currentplan] %}
+                                    <button class="plan-btn downgrade-plan-btn month" data-toggle="modal" data-plan-type="monthly" data-plan-type-val="{{lang('monthly')}}" data-plan-amount="{{ pricingJSON['ultimate']['monthly']['after']?pricingJSON['ultimate']['monthly']['after']:pricingJSON['ultimate']['monthly']['before'] }}" data-pid="6" data-transaction-type="downgrade">
+                                        {{lang("text_downgrade")}}
+                                    </button>
+                                {% endif %}
+
+                                {% if plans[6] == plans[base.currentplan] %}
+                                    {% if  plan_type == 'monthly' %}
+                                    <button class="current-plan-btn">
+                                        {{lang("text_current")}}
+                                    </button>
+                                    {% else %}
+                                    <button class="plan-btn downgrade-plan-btn month" data-toggle="modal" data-plan-type="monthly" data-plan-type-val="{{lang('monthly')}}" data-plan-amount="{{ pricingJSON['ultimate']['monthly']['after']?pricingJSON['ultimate']['monthly']['after']:pricingJSON['ultimate']['monthly']['before'] }}" data-pid="6" data-transaction-type="downgrade">
+                                        {{lang("text_downgrade")}}
+                                    </button>
+                                    {% endif %}
+                                {% endif %}
+
+                                {% if plans[base.currentplan] < plans[6] %}
+                                    <a href="{{ link('account/checkout', 'pid=6&cycle=monthly') }}" class="plan-btn month" data-toggle="modal" data-plan-type="monthly" data-plan-type-val="{{lang('monthly')}}" data-plan-amount="{{ pricingJSON['ultimate']['monthly']['after']?pricingJSON['ultimate']['monthly']['after']:pricingJSON['ultimate']['monthly']['before'] }}" data-pid="6">
+                                        {{lang("text_upgrade")}}
+                                    </a>
+                                {% endif %}
+                            </div>
+                            <div class="yearly-foot">
+                                <p class="price-offer {{ pricingJSON['ultimate']['yearly']['after'] ? '' : 'empty' }}">
+                                    {% if pricingJSON['ultimate']['yearly']['after'] %}
+                                        {{ pricingJSON['ultimate']['yearly']['before'] }}
+                                        {{ lang(pricingJSON['currency']) }}
+                                    {% endif %}
+                                </p>
+                                <p class="price">
+                                    {% if pricingJSON['ultimate']['yearly']['after']  %}
+                                        {{ pricingJSON['ultimate']['yearly']['after'] }}<span class="currency">{{ lang(pricingJSON['currency']) }}/{{lang("hint_monthly")}}</span>
+                                    {% else %}
+                                        {{ pricingJSON['ultimate']['yearly']['before'] }}<span class="currency">{{ lang(pricingJSON['currency']) }}/{{lang("hint_monthly")}}</span>
+                                    {% endif %}
+                                </p>
+                                <p class="discount-percent">
+                                    {{lang('text_yearly_month')}} - 
+                                    <span class="m-bold">
+                                        {% if pricingJSON['ultimate']['yearly']['percentage'] %}
+                                            {{ pricingJSON['ultimate']['yearly']['percentage']}}% {{lang('text_discount_percent')}}
+                                        {% endif %}
+                                    </span>
+                                </p>
+                                {% if plans[6] < plans[base.currentplan] %}
+                                    {% if plan_type == 'annually' %}
+                                        <button class="plan-btn downgrade-plan-btn year" data-toggle="modal" data-plan-type="yearly" data-plan-type-val="{{lang('yearly')}}" data-plan-amount="{{ pricingJSON['ultimate']['yearly']['final'] }}" data-pid="6" data-transaction-type="downgrade">
+                                            {{lang("text_downgrade")}}
+                                        </button>
+                                    {% else %}
+                                        <a href="{{ link('account/checkout', 'pid=6&cycle=annually') }}" class="plan-btn year">{{lang("text_downgrade")}}</a>
+                                    {% endif %}
+                                {% endif %}
+
+                                {% if plans[6] == plans[base.currentplan] %}
+                                    {% if  plan_type == 'annually' %}
+                                    <button class="current-plan-btn">
+                                        {{lang("text_current")}}
+                                    </button>
+                                    {% else %}
+                                    <a href="{{ link('account/checkout', 'pid=6&cycle=annually') }}" class="plan-btn year">
+                                        {{lang("text_upgrade")}}
+                                    </a>
+                                    {% endif %}
+                                {% endif %}
+
+                                {% if plans[base.currentplan] < plans[6] %}
+                                    <a href="{{ link('account/checkout', 'pid=6&cycle=annually') }}" class="plan-btn year">
+                                        {{lang("text_upgrade")}}
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </th>
+                    </tr>
+                </tfoot>
+            </table>
+            <!-- desktop -->
+
+        </div>
+    </section>
+    <!-- end plans features -->
+
+    <!-- start enterprice plan box -->
+
+    <div class="list-wrapper">
+        <div class="content-inner">
+            <div class="enterprice-plan-box">
+                <img src="view/assets/images/account/charge/enterprice-cover.png" alt="">
+                <div class="info">
+                    <p class="title">
+                        {{lang('text_e_box_title')}}
+                    </p>
+                    <p class="desc">
+                        {{lang('text_e_box_desc')}}
+                    </p>
+                    <a href="" class="link" data-toggle="modal" data-target="#plan_modal">
+                        {{lang('text_contact_us')}}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- end enterprice plan box -->
+
+	<!-- downgrade Plan Modal -->
+	<div class="modal fade upgrade-plan-modal downgrade-plan-confirm center-modal" id="downgrade_plan_modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content text-start">
+				<p class="title">
+					{{lang('downgrade_modal_title')}}
+				</p>
+                <div class="stripe-err-alert">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    {{lang('stripe_err_alert')}}
+                </div>
+				<p class="info-content">
+					{{lang('downgrade_modal_content')}}
+				</p>
+                <div class="btns text-end">
+                    <button class="theme-btn gray-white-empty"  data-dismiss="modal">
+                        {{lang("button_cancel")}}
+                    </button>
+                    <button class="theme-btn danger-btn">
+                        {{lang("downgrade_modal_btn")}}
+                    </button>
+                </div>
+			</div>
+		</div>
+	</div>
+    
+	<!-- end trial Modal -->
+	<div class="modal fade upgrade-plan-modal downgrade-plan-confirm center-modal" id="end_trial_modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content text-start">
+				<p class="title">
+					{{lang('end_trial_modal_title')}}
+				</p>
+				<p class="info-content">
+					{{lang('end_trial_modal_content')}}
+				</p>
+                <div class="btns text-end">
+                    <button class="theme-btn gray-white-empty"  data-dismiss="modal">
+                        {{lang("button_cancel")}}
+                    </button>
+                    <button class="theme-btn danger-btn action" data-dismiss="modal" data-pid="">
+                        {{lang("end_trial_modal_btn")}}
+                    </button>
+                </div>
+			</div>
+		</div>
+	</div>
+    
+	<!-- try trial Modal -->
+	<div class="modal fade upgrade-plan-modal downgrade-plan-confirm center-modal" id="try_trial_modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content text-start">
+				<p class="title">
+					{{lang('try_trial_modal_title')}}
+				</p>
+				<p class="info-content">
+					{{lang('try_trial_modal_content')}}
+				</p>
+                <div class="btns text-end">
+                    <button class="theme-btn gray-white-empty"  data-dismiss="modal">
+                        {{lang("button_cancel")}}
+                    </button>
+                    <button class="theme-btn primary-btn action" data-dismiss="modal" data-pid="">
+                        {{lang("try_trial_modal_btn")}}
+                    </button>
+                </div>
+			</div>
+		</div>
+	</div>
+
+    <!-- request-call -->
+    <div class="modal fade request-call-modal" id="plan_modal" tabindex="-1">
+        <div class="modal-dialog modal-md">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <i class="fa fa-times" aria-hidden="true"></i>
+                    </button>
+                    <h4 class="sections-title">
+                        {{ lang('text_schedule_sales_call') }}
+                    </h4>
+                </div>
+                <form class="info" id="reqCallForm">
+                    <label class="label-font mb-5">
+                        {{ lang('text_request_cal_phone') }}
+                    </label>
+                    <div class="req-call-err">
+                        <div class="custom-num-box req-call-err">
+                            <input id="cphone" name="phone" type="tel" value="{{ admin_phone }}">
+                        </div>
+                        <span class="err-msg">
+                            {{lang('req_Call_phone_err')}}
+                        </span>
+                    </div>
+                    <div class="d-flex j-content-end mt-20">
+                        <button class="button primary" id="reqCallBtn">
+                            <span class="btn-content">
+                                {{ lang('button_confirm') }}
+                            </span>
+                            <span class="load"></span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+{% block scripts %}
+    {# {{ parent() }} #}
+    <script type="text/javascript" src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/fixedheader/3.1.7/js/dataTables.fixedHeader.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+
+            // datatable configs
+            let datatableActivated = false;
+            let dataTableActivator = function() {
+                $('#example').DataTable({
+                    fixedHeader: {
+                        header: true,
+                        headerOffset: 0,
+                    },
+                    "paging":   false,
+                    "ordering": false,
+                    "info":     false,
+                    "searching": false
+                });
+            };
+            // datatable features info tooltip
+            $(function () {
+                $('[data-toggle="tooltip"]').tooltip()
+            });
+            // datatable toggle show
+            $('.tog-plans-features').click(function() {
+                $('.features-table').slideToggle();
+                $(this).toggleClass('active');
+                if($(this).hasClass('active')) {
+                    $('html').stop().animate({
+                        scrollTop: ($('.features-table').offset().top - 0 )
+                    }, 500, 'swing'); 
+                    // run datatable in first collapse
+                    !datatableActivated ? dataTableActivator() : null;
+                    datatableActivated = true;
+                } else {
+                    $('html').stop().animate({
+                        scrollTop: 0
+                    }, 500, 'swing'); 
+                }
+            });
+            // responsive plans boxs tabs
+            $('.responsive-inner button').click(function() {
+                $(this).parents('.responsive-inner').find('li').removeClass('active');
+                $(this).parents('li').addClass('active');
+                $(this).parents('.tab-pane').find('.plan-box').removeClass('active');
+                $(this).parents('.tab-pane').find('.plan-box').eq($(this).parents('li').index()).addClass('active');
+            })
+        } );
+    </script>
+    {# test script #}
+    <script type="text/javascript" src="view/assets/js/plugins/forms/styling/uniform.min.js"></script>
+    <!-- Start Edit By Mina Kamil Add JS files-->
+    <script type="text/javascript" src="view/javascript/pages/account/charge/js/card-js.min.js" defer></script>
+    <script type="text/javascript" src="view/javascript/pages/account/charge/js/main.js"></script>
+    <!-- End Edit By Mina Kamil Add JS files-->
+    <script>
+        $(document).ready(function() {
+            let monthly = '{{plan_type}}' == 'monthly';
+            if(monthly) {
+                $('.yearly-foot').fadeOut(0)
+                $('.monthly-foot').fadeIn(0)
+            } else {
+                $('.monthly-foot').fadeOut(0)
+                $('.yearly-foot').fadeIn(0)
+            }
+            // change features tables foot prices
+            $('.plans-grid .plans-tabs a').click(function() {
+                if($(this).parent().index() == 0) {
+                    $('.yearly-foot').fadeOut(0)
+                    $('.monthly-foot').fadeIn(0)
+                } else {
+                    $('.monthly-foot').fadeOut(0)
+                    $('.yearly-foot').fadeIn(0)
+                }
+            });
+
+            //====================================
+            let monthlyVal = "{{lang("monthly")}}";
+            let yearlyVal = "{{lang("yearly")}}";
+            let freeVal = "{{lang("free_title")}}";
+            let profVal = "{{lang("professional_title")}}";
+            let ultimateVal = "{{lang("ultimate_title")}}";
+            let enterpriseVal = "{{lang("enterprise_title")}}";
+
+            var planId = undefined;
+            var planType = undefined;
+
+            $('.downgrade-plan-btn').click(function() {
+                $('.downgrade-plan-confirm .stripe-err-alert').removeClass('show')
+                let plan = $(this).data();
+                planId = plan.pid;
+                planType = plan.planType;
+
+                if($(this).data('transaction-type')) {
+                    if($(this).data('transaction-type') == 'downgrade') {
+                        $('#downgrade_plan_modal .danger-btn').attr('data-target', 'downgrade');
+                    } else {
+                        $('#downgrade_plan_modal .danger-btn').attr('data-target', 'downgrade_to_free');
+                    }
+                    $('#downgrade_plan_modal').modal({
+                        backdrop: 'static',
+                        keyboard: false,
+                        show: true
+                    });
+                }
+            });
+
+            $('#downgrade_plan_modal .danger-btn').click(function() {
+                if($(this).attr('data-target') == 'downgrade') {
+                    downgrade($(this));
+                } else {
+                    downgradeToFree($(this))
+                }
+            });
+
+            let downgradeToFree = function(el) {
+                el.addClass('load-btn').attr('disabled', true);
+                $.ajax({
+                    url: urls.freeplan,
+                    method: 'POST',
+                    dataType: 'JSON',
+                    success: (r) => {
+                        el.removeClass('load-btn').attr('disabled', false);
+                        if(r.status == 'downgrade') {
+                            location.reload();
+                        } else {
+                            $('.downgrade-plan-confirm .stripe-err-alert').addClass('show')
+                        }
+                    }
+                })
+            }
+
+            let downgrade = function(el) {
+                el.addClass('load-btn').attr('disabled', true);
+                $.ajax({
+                    url: urls.downgrade,
+                    method: 'POST',
+                    dataType: 'JSON',
+                    data: {
+                        plan_id: planId,
+                        plan_type: planType
+                    },
+                    success: (r) => {
+                        el.removeClass('load-btn').attr('disabled', false);
+                        if(r.status == 'downgrade') {
+                            location.reload();
+                        } else {
+                            $('.downgrade-plan-confirm .stripe-err-alert').addClass('show')
+                        }
+                    }
+                })
+            }
+
+
+            // trial actions
+            $('.plan-box .end-trial').click(function() {
+                $('#end_trial_modal').modal('show')
+                $('#end_trial_modal .action').attr('data-pid', $(this).attr("data-pid"))
+            })
+            $('.plan-box .try').click(function() {
+                $('#try_trial_modal').modal('show')
+                $('#try_trial_modal .action').attr('data-pid', $(this).attr("data-pid"))
+            })
+            $('#try_trial_modal .action').click(function() {
+                //todo
+                let plan_id = $(this).attr("data-pid") // will return the string "123"
+                $.ajax({
+                    url: 'account/chargeV2/tryPLan',
+                    dataType: 'json',
+                    type: 'post',
+                    data: {
+                        plan_id: plan_id
+                    },
+                    beforeSend: function () {
+                        // $('#loader').css('display', 'block');
+                    },
+                    success: function (json) {
+                        if (json['success']==1) {
+                            notify("{{lang('text_succes')}}", 'success', "");
+                            location.reload();
+                        }else {
+                            notify("{{lang('text_error')}}", 'error', '');
+                        }
+
+                    }
+                });
+            })
+
+            $('#end_trial_modal .action').click(function() {
+                //todo
+                let plan_id = $(this).attr("data-pid") // will return the string "123"
+                $.ajax({
+                    url: 'account/chargeV2/endTrial',
+                    dataType: 'json',
+                    type: 'post',
+                    data: {
+                        plan_id: plan_id
+                    },
+                    beforeSend: function () {
+                        // $('#loader').css('display', 'block');
+                    },
+                    success: function (json) {
+                        if (json['success']==1) {
+                            notify("{{lang('text_succes')}}", 'success', "");
+                            location.reload();
+                        }else {
+                            notify("{{lang('text_error')}}", 'error', '');
+                        }
+
+                    }
+                });
+            })
+
+
+            let urls = {
+                'downgrade': "{{ link('account/chargeV2/downgrade','','',withStoreCodeUrl) }}",
+                'freeplan': "{{ link('account/chargeV2/freeplan','','',withStoreCodeUrl) }}",
+            };
+
+        })
+
+    </script>
+
+    {% if flash_message["status"]== "OK" %}
+    <script>
+        $(document).ready(function() {
+            $('#paypal_plan_modal').modal('show');
+        })
+    </script>
+    {% elseif flash_message["status"]== "downgrade"  %}
+    <script>
+        $(document).ready(function() {
+            $('#paypal_downgrade_modal').modal('show');
+        })
+    </script>
+    {% endif %}
+
+{% endblock scripts %}
+
+{% block endScripts %}
+    <script>
+        var telInput = jQuery("#cphone");
+        // run input number flags function
+        let iti = telInput.intlTelInput({
+            initialCountry: "auto",
+            nationalMode: true,
+            preferredCountries: [],
+            geoIpLookup: function(callback) {
+                jQuery.get('https://ipinfo.io', function() {}, "jsonp").always(function(resp) {
+                    var countryCode = (resp && resp.country) ? resp.country : "";
+                    callback(countryCode);
+                });
+            },
+            hiddenInput: "clientphone",
+            utilsScript: "{{ link('view/build/js/utils.js') }}"
+        });
+        // empty phone val when change cuntry
+        telInput.on('countrychange',function () {
+            telInput.val('')
+        });
+        telInput.on('focusout',function () {
+            if(telInput.intlTelInput("isValidNumber")) {
+                $('.req-call-err').removeClass('has-err');
+            }
+        });
+
+        // submit request call form
+        $(document).on('submit', '#reqCallForm', function (e) {
+            e.preventDefault();
+            // success function
+            let successFunc = function() {
+                $('#plan_modal').modal('hide');
+                $('.req-call-err').removeClass('has-err');
+                new PNotify({
+                    text: '{{lang('text_succes')}}',
+                    addclass: 'bg-success stack-top-right',
+                    stack: {"dir1": "down", "dir2": "right", "push": "top"}
+                });
+            }
+            // input phone validation
+            if(telInput.intlTelInput("isValidNumber")) {
+                $('.request-call-modal .button').addClass('load');
+                $.ajax({
+                    url: '{{ link('common/base/requestEnterpriseDemo') }}',
+                    type: 'post',
+                    data: $(this).serialize(),
+                    success: function (resp) {
+                        $('.request-call-modal .button').removeClass('load');
+                        let respObject = JSON.parse(resp);
+                        if(respObject.success == 1) {
+                            successFunc()
+                            telInput.val('');
+
+                            /***************** Start ExpandCartTracking #347738  ****************/
+                            trackUrl('Request enterprise demo');
+                            /***************** End ExpandCartTracking #347738  ****************/
+                        } else {
+                            $('.req-call-err').addClass('has-err');
+                        }
+                    },
+                    error: function(err) {
+                        $('.request-call-modal .button').removeClass('load');
+                        $('.request-call-modal .err.general').slideDown();
+                    }
+                }); 
+            } else {
+                $('.req-call-err').addClass('has-err');
+            }
+        });
+    </script>
+{% endblock %}

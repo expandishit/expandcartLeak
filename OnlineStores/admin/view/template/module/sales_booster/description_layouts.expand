@@ -1,0 +1,101 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% import 'controls/uploader.expand' as uploader %}
+{% set dualMenuEnabled = true %}
+
+{% block title %}
+    {{ lang('sales_booster_heading_Ltitle', 'module/sales_booster') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block secondarymenu %}
+    {% include 'module/sales_booster/sales_booster_menu.expand' with {'expand': '#sales_booster', 'active': '#layouts'} %}
+{% endblock secondarymenu %}
+
+{% block headelements %}
+    <a class="btn btn-success btn-labeled btn-xs" href="module/sales_booster/insert"><b><i class="icon-plus3"></i></b>{{ lang('button_add_layout') }}</a>
+{% endblock headelements %}
+
+{% block content %}
+<form action="" class="form" method="post" enctype="multipart/form-data">
+  <div class="tab-content" style="padding-left: 0">
+    <div class="panel panel-flat" id='layout'>
+            <table class="table table-hover datatable-pagination"  id='datatableGrid'>
+              <thead>
+                <tr>
+                  <th class="left">#</th>
+                  <th class="left">{{ lang('text_layout_name') }}</th>
+                  <th class="text-center"></th>
+                </tr>
+              </thead>
+              <tbody class="layout-list">
+                  {% if layouts is not empty %}
+                  {% for layout in layouts %}
+                    <tr id="layout-{{ layout['id'] }}">
+                      <td style="width: 100px">{{ loop.index }}</td>
+                      <td class="left">
+                        <a href="module/sales_booster/update?layout_id={{ layout['id'] }}">
+                           {{ layout['name'] }}
+                        </a>
+                      </td>
+                      <td class="text-center" style="width: 15%">
+                        <ul class="icons-list pull-right">
+                          <li class="dropdown">
+                              <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                  <i class="icon-menu9"></i>
+                              </a>
+                              <ul class="dropdown-menu dropdown-menu-right">
+                                  <li><a href="module/sales_booster/update?layout_id={{ layout['id'] }}"><i class="far fa-edit"></i> Edit</a></li>
+                                  <li><a onclick="removeLayout('{{ layout['id'] }}')" data-rowid="368"><i class="fas fa-trash"></i> Delete</a></li>
+                              </ul>
+                          </li>
+                      </ul>
+                      </td>
+                    </tr>
+          {% endfor %} 
+        {% else %}
+                <tr id='noresults'>
+                  <td class="center" colspan="4">{{ text_no_results ?? 'text_no_results' }}</td>
+                </tr>
+              {% endif %}
+              </tbody>
+            </table>
+      </div>
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript">
+// Remove Layout
+function removeLayout(id) {
+    confirmMessage(function () {
+        ajax("{{ link("module/sales_booster/delete") }}", {layout_id: id}, function (res) {
+            $('#layout-'+id).remove();
+        });  
+    });
+}
+
+$(document).ready(function() {
+  $('#datatableGrid').DataTable({
+      columnDefs: [{ 
+          orderable: false,
+          targets: [ 4 ]
+      }],
+      dom: '<"datatable-header"fl><"datatable-scroll-wrap"t><"datatable-footer"ip>',
+      language: {
+          search: '<span>' + locales['filter'] + ':</span> _INPUT_',
+          searchPlaceholder: locales['filter_placeholder'],
+          lengthMenu: '<span>' + locales['show'] + ':</span> _MENU_',
+          paginate: locales['paginate']
+      }
+
+  });
+});
+</script>
+{% endblock %}
+            

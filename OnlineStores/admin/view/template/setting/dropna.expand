@@ -1,0 +1,78 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block title %}
+    {{ lang('heading_title', 'setting/setting') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block secondarymenu %}
+    {% include 'setting/settingmenu.expand' with {'expand': '#advanced', 'active': '#dropna'} %}
+{% endblock secondarymenu %}
+
+{% block headelements %}
+
+{% endblock headelements %}
+
+{% block content %}
+    <form id="dropna-settings" action="{{ action }}" method='POST' target="_blank">
+        <!-- Fieldset legend -->
+        <div class="row">
+            <div class="col-md-12">
+                <!-- Advanced legend -->
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h5 class="panel-title">
+                            <i class="fas fa-cubes fa-lg position-left"></i>
+                            {{ lang('panel_dropna') }}
+                        </h5>
+                        
+                        <input type='hidden' name='dropna_store_code' id='dropna_store_code' value="{{ dropnaExists ? store_code : '' }}" />
+                        <input type='hidden' name='dropna_client_id' id='dropna_client_id'  value="{{ dropnaExists ? client_id : '' }}" />
+
+                        <div id="login"  class="heading-elements" {% if dropnaExists != 1 %} style='display: none' {% endif %}>
+                            Authiticated : 
+                            &nbsp; <a onclick="openDropna()" class="btn btn-primary btn-labeled btn-xs"><b><i class="icon-check"></i></b> {{ lang('btn_login') }}</a>
+                        </div>
+
+                        {% if dropnaExists != 1 %}
+                        <div id='auth' class="heading-elements">
+                            &nbsp; <a onclick="generateToken()" class="btn btn-success btn-labeled btn-xs"><b><i class="icon-plus3"></i></b> {{ lang('btn_auth') }}</a>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {#<div class="panel-body"></div>#}
+                </div>
+                <!-- /a legend -->
+            </div>
+        </div>
+        <!-- /fieldset legend -->
+    </form>
+<script>
+    function generateToken() {
+        ajax(
+            "{{ link("setting/dropna/api_generateToken") }}", 
+            {}, 
+            function(res) {
+
+                data = $.parseJSON(res);
+                if(data.success == '1'){
+                    $('#dropna_store_code').val(data.data.store_code);
+                    $('#dropna_client_id').val(data.data.client_id);
+                }
+
+               $('#login').fadeIn(300);
+               $('#auth').remove();
+        });
+    }
+
+    function openDropna() {
+        $('#dropna-settings').submit();
+    }
+</script>
+{% endblock content %}
+

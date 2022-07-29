@@ -1,0 +1,279 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block title %}
+    {{ lang('heading_title', 'module/gold') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+    {% include "includes/buttons_top.expand" %}
+{% endblock headelements %}
+
+{% block content %}
+    <!-- Start Form -->
+    <form id="setting-payment" class="form" action="{{ action }}">
+        <!-- Status -->
+        <div class="col-md-3">
+            <div class="panel panel-flat">
+                <div class="panel-body">
+                    <fieldset>
+                        
+                        <legend class="text-semibold">
+                            <i class="fas fa-check-circle fa-lg position-left"></i>
+                            {{ lang('entry_status')|trim(':') }}
+                            <a class="control-arrow" data-toggle="collapse" data-target="#panel1">
+                                <i class="icon-circle-down2"></i>
+                            </a>
+                        </legend>
+
+                        <div class="collapse in" id="panel1">
+                            <div class="form-group" id="cod_status-group">
+                                <label class="control-label">{{ lang('entry_status') }}</label>
+                                <div class="checkbox checkbox-switchery">
+                                    <label>
+                                        <input type="checkbox" onchange="changeStatus(this);" name="gold[status]" class="switchery" {{ gold['status'] in ['1', 1, 'on'] ? 'checked' }}>
+                                        <span class="switchery-status">{{ gold['status'] in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                    </label>
+                                </div>
+                                <span class="help-block"></span>
+                            </div>
+
+                        </div>
+                    </fieldset>
+                </div>
+            </div>
+        </div>
+        <!-- End of Status -->
+
+        <div class="col-md-9">
+            <div class="panel panel-flat">
+                <div class="panel-body">
+                    <fieldset>
+
+                        <legend class="text-semibold">
+                            <i class="fas fa-check-circle fa-lg position-left"></i>
+                            {{ lang('text_price_settings') }}
+                            <a class="control-arrow" data-toggle="collapse" data-target="#fields-panel">
+                                <i class="icon-circle-down2"></i>
+                            </a>
+                        </legend>
+
+                        <div class="collapse in" id="fields-panel">
+                            <table id="datatable-language" class="table datatable-highlight">
+                                <thead>
+                                <tr>
+                                    <th>{{ lang('text_caliber') }}</th>
+                                    <th>{{ lang('text_price') }}</th>
+                                    <th>{{ lang('text_manuf_price') }}</th>
+                                    <th></th>
+                                </tr>
+                                </thead>
+                                <tbody id="calibers_table">
+                                {% set last_id = 0 %}
+                                {% if calibers %}
+                                    {% for caliber in calibers %}
+                                        <tr id="row{{ caliber['id'] }}">
+                                            <input type="hidden" name="caliber[{{ caliber['id'] }}][id]" class="form-control" value="{{ caliber['id'] }}">
+                                            <td>
+                                                <div class="form-group" style="margin-bottom: 0">
+                                                    <input type="text" name="caliber[{{ caliber['id'] }}][caliber]" class="form-control" value="{{ caliber['caliber'] }}">
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="form-group" style="margin-bottom: 0">
+
+                                                    <input type="text" class="form-control touchspin-money" id="price" name="caliber[{{ caliber['id'] }}][price]"
+                                                           value="{{ caliber['price'] }}" maxlength="20"> <!--field length in DB(15,4) + include decimal point-->
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="form-group" style="margin-bottom: 0">
+                                                    <input type="text" class="form-control touchspin-money" id="manuf_price" name="caliber[{{ caliber['id'] }}][manuf_price]"
+                                                           value="{{ caliber['manuf_price'] }}" maxlength="20"> <!--field length in DB(15,4) + include decimal point-->
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <a onclick="deleteRow('{{ caliber['id'] }}', 'hard');" class="text-danger"><i class="fa fa-trash fa-2x"></i></a>
+                                            </td>
+                                        </tr>
+                                        {% set last_id = caliber['id'] %}
+                                    {% endfor %}
+                                {% else %}
+                                    <tr id="no_data">
+                                        <td colspan="4">
+                                            <div class="alert alert-warning">{{ lang('text_nodata_warning') }}</div>
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                                </tbody>
+                            </table>
+
+
+                            <hr/>
+                            <div>
+                                <a onclick="addRow();" class="btn btn-primary"><i class="fa fa-plus"></i> {{ lang('btn_add_caliber') }}</a>
+                            </div>
+                            <br/>
+                        </div>
+                    </fieldset>
+                </div>
+            </div>
+            <!-- /Acutal Fields -->
+
+{#            <div class="panel panel-flat">#}
+{#                <div class="panel-body">#}
+{#                    <fieldset>#}
+
+{#                        <legend class="text-semibold">#}
+{#                            <i class="fas fa-check-circle fa-lg position-left"></i>#}
+{#                            {{ lang('text_product_titles') }}#}
+{#                            <a class="control-arrow" data-toggle="collapse" data-target="#fields2-panel">#}
+{#                                <i class="icon-circle-down2"></i>#}
+{#                            </a>#}
+{#                        </legend>#}
+
+{#                        <div class="collapse in" id="fields2-panel">#}
+{#                            <!-- Payment Method Title -->#}
+{#                            <div class="tabbable nav-tabs-vertical nav-tabs-right">#}
+{#                                <div class="tab-content">#}
+{#                                    {% for lng in languages %}#}
+{#                                        <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}" id="caliber{{ lng['language_id'] }}">#}
+{#                                            <div class="form-group col-md-12" id="caliber_title-group">#}
+{#                                                <label for="ccod_title" class="control-label">{{ lang('caliber_title') }}</label>#}
+{#                                                <input type="text" class="form-control" name="gold[{{ lng['language_id'] }}][caliber_title]" value="{{ gold[lng['language_id']]['caliber_title'] }}">#}
+{#                                                <span class="help-block"></span>#}
+{#                                            </div>#}
+{#                                            <div class="form-group col-md-12" id="caliber_price_title-group">#}
+{#                                                <label for="ccod_title" class="control-label">{{ lang('caliber_price_title') }}</label>#}
+{#                                                <input type="text" class="form-control" name="gold[{{ lng['language_id'] }}][caliber_price_title]" value="{{ gold[lng['language_id']]['caliber_price_title'] }}">#}
+{#                                                <span class="help-block"></span>#}
+{#                                            </div>#}
+{#                                            <div class="form-group col-md-12" id="caliber_title-group">#}
+{#                                                <label for="ccod_title" class="control-label">{{ lang('caliber_manuf_price_title') }}</label>#}
+{#                                                <input type="text" class="form-control" name="gold[{{ lng['language_id'] }}][caliber_manuf_price_title]" value="{{ gold[lng['language_id']]['caliber_manuf_price_title'] }}">#}
+{#                                                <span class="help-block"></span>#}
+{#                                            </div>#}
+{#                                        </div>#}
+{#                                    {% endfor %}#}
+{#                                </div>#}
+
+{#                                <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">#}
+{#                                    {% for language in languages %}#}
+{#                                        <li class="{{ loop.first ? 'active' : '' }}">#}
+{#                                            <a href="#caliber{{ language['language_id'] }}" data-toggle="tab"#}
+{#                                               aria-expanded="false">#}
+{#                                                <img src="view/image/flags/{{ language['image'] }}"#}
+{#                                                     title="{{ language['name'] }}" class="pull-right">#}
+{#                                                <div> {{ language['name'] }}</div>#}
+{#                                            </a>#}
+{#                                        </li>#}
+{#                                    {% endfor %}#}
+{#                                </ul>#}
+{#                            </div>#}
+{#                        </div>#}
+{#                    </fieldset>#}
+{#                </div>#}
+{#            </div>#}
+        </div>
+    </form>
+    <!-- End Form -->
+
+<!-- Lower Buttons -->
+{% include "includes/buttons_bottom.expand" %}
+<!-- End Lower Buttons -->
+<script>
+    var defaultCurrency = '{{ defaultCurrency }}';
+    var last_id = parseInt('{{ last_id }}') + 1;
+    initTouch();
+
+    function addRow(){
+        $("#no_data").remove();
+
+        var newRow = '<tr id="row'+last_id+'"><td><div class="form-group" style="margin-bottom: 0">' +
+            '<input type="text" name="caliber['+last_id+'][caliber]" class="form-control">' +
+            '</div>' +
+            '</td>' +
+            '<td>' +
+            '<div class="form-group" style="margin-bottom: 0">' +
+            '<input type="text" class="form-control touchspin-money" id="price" name="caliber['+last_id+'][price]" maxlength="20">' +
+            '</div>' +
+            '</td>' +
+            '<td>' +
+            '<div class="form-group" style="margin-bottom: 0">' +
+            '<input type="text" class="form-control touchspin-money" id="manuf_price" name="caliber['+last_id+'][manuf_price]" maxlength="20">' +
+            '</div>' +
+            '</td>' +
+            '<td>' +
+            '<a onclick="deleteRow('+last_id+', \'normal\');" class="text-danger"><i class="fa fa-trash fa-2x"></i></a>' +
+            '</td>' +
+            '</tr>';
+
+        $('#calibers_table').append(newRow);
+        initTouch();
+        last_id++;
+    }
+    function deleteRow(id, typ){
+        //DB value
+        if(typ == 'hard'){
+            confirmMessage(function () {
+                $.ajax({
+                    url: '{{ link('module/gold/delete') }}',
+                    type: 'post',
+                    data: {id: id},
+                    success: function (resp) {
+                        var response = JSON.parse(resp);
+
+                        if (response.success == '1')
+                        {
+                            notify('Success', 'success', response.success_msg);
+                            $('#row'+id).remove();
+                        }
+                        else
+                        {
+                            notify('Warning', 'warning', response.error);
+                        }
+                    }
+                });
+            });
+        }
+        //just html new record
+        else if(typ == 'normal'){
+            $('#row'+id).remove();
+        }
+    }
+
+    function initTouch(){
+        $(".touchspin-money").TouchSpin({
+            'postfix': defaultCurrency,
+            min: 0,
+            max: 10000,
+            initval: 0,
+            decimals: 3,
+            step: 0.01
+        });
+    }
+
+
+    function changeStatus(checkbox)
+    {
+        var self = $(checkbox);
+        var switch_status = self.siblings('.switchery-status');
+
+        if ( self.is(':checked') )
+        {
+            switch_status.html("{{ lang('text_enabled') }}");
+
+        }
+        else
+        {
+            switch_status.html("{{ lang('text_disabled') }}");
+
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,281 @@
+<style>
+#datatableGrid tr td:nth-child(7),#datatableGrid tr td:nth-child(8),#datatableGrid tr td:nth-child(9){
+  display: none;
+}
+</style>
+<div class="container-detached">
+    <div class="content-detached">
+        <!-- Grid -->
+
+        {% set dropna_timer = 0 %}
+        <div class="alert alert-info" id="dropna_alert" style="display: {% if dropna_import and not dropna_import_closed %} block {% else %} none {% endif %}">
+                <strong style="color: #ffa62f;display: none;" id="dropna_wait">{{ lang('text_wait') }} </strong> &nbsp;
+                <i class="fa fa-exclamation-circle"></i> 
+                {% if dropna_import_progress %}
+                    {% set dropna_timer = 1 %}
+                    {{ lang('text_dropna_export') }} <strong><span id="dropna_imported">{{ dropna_import_success }}</span></strong> {{ lang('text_of') }} <strong><span id="dropna_all">{{ dropna_import_total }}</span></strong> {{ lang('text_exported') }}! <span style="font-size: 10px">({{ lang('text_dropna_update') }})</span>
+                {% else %}
+                    {{ lang('text_dropna_export') }} {{ lang('text_dropna_success') }}: <strong>{{ dropna_import_success }}</strong>, {{ lang('text_dropna_failed') }}: <strong>{{ dropna_import_failed }}</strong>
+                    <button type="button" class="close" data-dismiss="alert" onclick="updateDropnaAlert()">&times;</button>
+            {% endif %}
+        </div>
+
+
+        <div class="tab-pane fade in active" id="gridView">
+            <div class="features-table-container">
+                <div class="collapse in">
+                    <table id="datatableGrid" class="table table-hover datatable-highlight">
+                        <thead>
+                            <tr>
+                                <th>Hmm?</th>
+                                <th>{{ lang('column_image') }}</th>
+                                <th>{{ lang('column_name') }}</th>
+                                <th>{{ lang('column_model') }}</th>
+                                <th></th>
+                                <th></th>
+                                <th>{{ lang('column_price') }}</th>
+                                <th></th>
+                                <th>{{ lang('column_quantity') }}</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        {% if products is defined and products|length > 800000 %}
+            {% set row = 1 %}
+            {% for product in products %}
+
+                {% if row == 4 %}
+                    <div class="row">
+                {% endif %}
+
+                <div class="col-lg-3 col-sm-6">
+                    <div class="panel">
+                        <div class="panel-body">
+                            <div class="thumb thumb-fixed">
+                                <a href="{{ product['image'] }}" data-popup="lightbox">
+                                    <img src="{{ product['image'] }}" alt="">
+                                    <span class="zoom-image"><i class="icon-plus2"></i></span>
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="panel-body panel-body-accent text-center">
+                            <h6 class="text-semibold no-margin">
+                                <a href="/admin/catalog/product/update?product_id={{ product['product_id'] }}"
+                                   class="text-default">{{ product['name'] }}</a>
+                            </h6>
+
+                            <ul class="list-inline list-inline-separate mb-10">
+                                <li>
+                                    <a href="{{ link('catalog/category/update?category_id=' ~ product['category_id']) }}"
+                                       class="text-muted">
+                                        {{ product['category_name'] ?: '&ensp;' }}
+                                    </a>
+                                </li>
+                            </ul>
+
+                            <h3 class="no-margin text-semibold">{{ product['price'] }}</h3>
+
+                            {% if product['reviews']['count'] is defined %}
+                                <div class="text-nowrap">
+                                    {% for i in 1..5 %}
+                                        {% if i >= product['reviews']['rate'] %}
+                                            <i class="icon-star-full2 text-size-base text-warning-300"></i>
+                                        {% else %}
+                                            <i class="icon-star-empty3 text-size-base text-warning-300"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+
+                                {% if product['reviews']['count'] > 10 %}
+                                    <div class="text-muted">{{ product['reviews']['count'] }} {{ lang('reviews_label') }}</div>
+                                {% else %}
+                                    <div class="text-muted">{{ product['reviews']['count'] }} {{ lang('review_label') }}</div>
+                                {% endif %}
+                            {% else %}
+                                <div class="text-nowrap">
+                                    <i>&ensp;</i>
+                                </div>
+
+                                <div class="text-muted">&ensp;</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                {% if row == 4 %}
+                    </div>
+                {% endif %}
+
+                {% set row = row + 1 %}
+            {% endfor %}
+        {% endif %}
+
+        <!-- /grid -->
+
+
+        <!-- Pagination -->
+        <div class="hide text-center content-group-lg pt-20">
+            {{ pagination }}
+            <ul class="hide pagination">
+                <li class="disabled"><a href="#"><i class="icon-arrow-small-right"></i></a></li>
+                <li class="active"><a href="#">1</a></li>
+                <li><a href="#">2</a></li>
+                <li><a href="#">3</a></li>
+                <li><a href="#">4</a></li>
+                <li><a href="#">5</a></li>
+                <li><a href="#"><i class="icon-arrow-small-left"></i></a></li>
+            </ul>
+        </div>
+        <!-- /pagination -->
+
+    </div>
+</div>
+
+<script>
+    var links = {};
+    var configs = {};
+
+    locales['dtb_mass_edit'] = "{{ lang('dtb_mass_edit') }}";
+    locales['dtb_edit_cat'] = "{{ lang('dtb_edit_cat') }}";
+    locales['dtb_copy'] = "{{ lang('dtb_copy') }}";
+    locales['dtb_custom_col'] = "{{ lang('dtb_custom_col') }}";
+    locales['dtb_export_table'] = "{{ lang('dtb_export_table') }}";
+    locales['dtb_dropna_export'] = "{{ lang('dtb_dropna_export') }}";
+    locales['dtb_delete'] = "{{ lang('dtb_delete') }}";
+    locales['dtb_tax'] = "{{ lang('dtb_tax') }}";
+
+    var insertWizard = '{{ insertWizard }}';
+
+    links['dtHandler'] = '{{ link('catalog/product/getXHRList?view=list') }}';
+    links['dtUpdateStatus'] = '{{ link("catalog/product/dtUpdateStatus") }}';
+    links['dtDelete'] = '{{ link('catalog/product/dtDelete') }}';
+    links['insert'] = '{{ link('catalog/product/insert') }}';
+    links['update'] = '{{ link('catalog/product/update') }}';
+    links['copy'] = '{{ link('catalog/product/copy') }}';
+    links['send'] = '{{ link('catalog/product/send') }}';
+    links['mass_edit'] = '{{ link('catalog/product/massEdit') }}';
+    links['preview'] = '{{ linkfront('product/product', 'product_id=') }}';
+    links['categories_autocomplete'] = '{{ link('catalog/category/autocomplete') }}';
+    links['mass_category_update_link'] = '{{ link('catalog/product/massCategoryUpdate') }}';
+    links['dropnaExport'] = '{{ link('catalog/product/dropnaExport') }}';
+    links['dropnaScheduleDt'] = '{{ link('catalog/product/dropnaScheduleDt') }}';
+    links['updateDropnaAlert'] = '{{ link('catalog/product/updateDropnaAlert') }}';
+
+    configs['config_admin_limit'] = '{{ config('config_admin_limit') ?  config('config_admin_limit') : 10 }}';
+
+    var showOrderProductQuantity = {{ show_order_product_quantity ?? 'false' }}
+    var is_supplier     = {{ is_supplier ? 1 : 0 }};
+    var is_multiseller  = {{ is_multiseller ? 1 : 0 }};
+    var dropna_timer    = {{ dropna_timer ? 1 : 0 }};
+</script>
+
+<!-- Include Handlebars from a CDN -->
+<script src="https://cdn.jsdelivr.net/npm/handlebars@latest/dist/handlebars.js"></script>
+<script id="category-panel-template" type="text/x-handlebars-template">
+    <div style="width: 280px; left: 249px; z-index: 3;" class="cell normal pointer">
+      <div class="flex flex-auto overflow-hidden foreignRecordRendererContainer p-half">
+        {{ '{{{ items }}}' }}
+      </div>
+    </div>
+</script>
+
+<script id="category-item" type="text/x-handlebars-template">
+    <div class="foreign-key-blue rounded px-half flex-none mr-half flex-inline items-center fit truncate line-height-4 text-dark" style="height:22px" id="{{ '{{id}}' }}" image="{{ '{{image}}' }}">{{ '{{ category_name }}' }}</div>
+</script>
+
+<script id="modal-item" type="text/x-handlebars-template">
+    
+    <div class="flex relative white rounded mb2 button-stroked1 pointer" style="background-color: #f9f9f9;">
+        <div class="flex-auto flex">
+          <div class="flex-auto p1">
+            <div class="flex-inline col-12">
+              <div class="col-12 mb1 strong big truncate line-height-4">
+                <a class="text-dark" href="{{ link('catalog/category/update?category_id=' ~ '{{ id }}' ) }}">{{ '{{ name }}' }}</a>
+              </div>
+            </div>
+          </div>
+        </div>
+    </div>
+
+</script>
+
+<script src="view/javascript/pages/catalog/product/list.js?bn={{ BuildNumber }}"></script>
+
+<script>
+    $( "#datatableGrid" ).on( "click", ".cell", function() {
+
+    //remove selection from any other
+    deselect();
+
+    //set selection to this
+    $(this).addClass("selected");
+    $(this).removeClass("normal");
+
+    $('.foreignRecordRendererContainer', this).removeClass("p-half");
+    $('.foreignRecordRendererContainer', this).removeClass("overflow-hidden");
+
+    $('.selected').find('.foreign-key-blue').wrapAll('<div class="overflow-hidden flex-auto flex flex-wrap m-half content-start" style="min-height: 22px;">');
+    $('.selected').find('.content-start' ).prepend('<div class="expandButton rounded white pointer text-blue flex items-center justify-center" data-toggle="modal" data-target="#exampleModalCenter"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12" class="icon" style="shape-rendering: geometricprecision;"><path fill-rule="evenodd" class="" fill="currentColor" d="M7.75 5.25l.823.823A.25.25 0 0 0 9 5.896V3.5a.5.5 0 0 0-.5-.5H6.104a.25.25 0 0 0-.177.427l.823.823-2.5 2.5-.823-.823A.25.25 0 0 0 3 6.104V8.5a.5.5 0 0 0 .5.5h2.396a.25.25 0 0 0 .177-.427L5.25 7.75l2.5-2.5zM3 .988h6a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2z"></path></svg></div>');
+
+    if ($(this).find('.content-start').height() < $(this).find('.content-start').prop('scrollHeight') ||
+        $(this).find('.content-start').width() < $(this).find('.content-start').prop('scrollWidth')) {
+        // your element have overflow
+        $('.selected').find('.content-start' ).append('<div class="dotsButton rounded darken1-hover pointer flex-inline items-center justify-center" data-toggle="modal" data-target="#exampleModalCenter"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12" class="icon" style="shape-rendering: geometricprecision;"><path fill-rule="evenodd" class="" fill="currentColor" d="M10.5,8 C9.67157288,8 9,7.32842712 9,6.5 C9,5.67157288 9.67157288,5 10.5,5 C11.3284271,5 12,5.67157288 12,6.5 C12,7.32842712 11.3284271,8 10.5,8 Z M6,8 C5.17157288,8 4.5,7.32842712 4.5,6.5 C4.5,5.67157288 5.17157288,5 6,5 C6.82842712,5 7.5,5.67157288 7.5,6.5 C7.5,7.32842712 6.82842712,8 6,8 Z M1.5,8 C0.671572875,8 0,7.32842712 0,6.5 C0,5.67157288 0.671572875,5 1.5,5 C2.32842712,5 3,5.67157288 3,6.5 C3,7.32842712 2.32842712,8 1.5,8 Z"></path></svg></div>');
+    }
+    });
+
+
+    $(document).on('click', function (e) {
+     if($('.dtSelectAll').is(':checked'))
+         return ;
+     if ($(e.target).closest(".selected").length === 0) {
+          deselect();
+    }
+    });
+
+    const deselect = ()=>{
+    $('.selected').addClass("normal");
+
+    $('.selected .foreignRecordRendererContainer').addClass("p-half");
+    $('.selected .foreignRecordRendererContainer').addClass("overflow-hidden");
+
+    $('.selected .foreign-key-blue').unwrap();
+    $('.selected .expandButton').remove();
+    $('.selected .dotsButton').remove();
+    $('.selected').removeClass("selected");
+    }
+
+    $('#exampleModalCenter').on('show.bs.modal', function(e) {
+        let template;
+        var templateScript;
+        var context;
+        var items_html = '';
+
+        $( '.selected').find('.foreign-key-blue' ).each(function( index ) {
+            template = $('#modal-item').html();
+            templateScript = Handlebars.compile(template);
+
+            context = {
+                'name' : decodeHtml( $(this).html() ), //decode HTML 
+                'id'   : $(this).attr('id'),
+                'image': $(this).attr('image')
+                };
+            items_html += templateScript(context);
+        });
+
+        $('#exampleModalCenter').find('#items').html(items_html);
+    });
+
+
+    function decodeHtml(html) {
+        var txt = document.createElement("textarea");
+        txt.innerHTML = html;
+        var output = txt.value;
+        txt.remove();
+        return output;
+    }
+</script>

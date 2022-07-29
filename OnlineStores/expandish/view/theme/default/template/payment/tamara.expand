@@ -1,0 +1,35 @@
+<button type="button" class="btn-rect text-uppercase bg-color btn btn-inline" 
+id="confirm-payment" style="display: none" data-toggle="modal" data-target="#myModal">Confirm Payment</button>
+
+<script type="text/javascript">
+
+    if("{{ error_tamara }}"){
+        displayTamarError("{{ error_tamara }}");
+    }
+
+    //disable tamara checkout if not in limit range
+    $('.tamara_is_disabled').parent().siblings('.radio').children('span').removeClass('checked').find('input').attr("disabled","disabled");
+
+    $("#confirm-payment").click(function(event){
+        $.ajax({
+            type: 'post',
+            url : "{{ action }}",
+        }).done(function(data) {
+            let response = JSON.parse(data);
+            if (response['url'] !== null && response['success'] == '1') {
+                window.location = response['url'];
+            } else {
+                displayTamarError(response['message']);
+            }
+        }).fail(function(err) {
+            displayTamarError(response['err'])
+        });
+    });
+
+
+    function displayTamarError(errorMsg){
+        $('#error_tamara').remove();
+        let tamaraErrorElement = '<p id="error_tamara" class="alert alert-danger">'+errorMsg+'</p>';
+        $(tamaraErrorElement).insertAfter("#payment_method_wrap");
+    }
+</script>

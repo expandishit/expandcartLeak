@@ -1,0 +1,91 @@
+{% set allFeaturedCategories = getFeaturedCategories(fields['categories']['field_value'], 500, 500) %}
+{% set products_per_item = fields.noOfRows.field_value %}
+{% set prod_type = 'hoz-item' %}
+{% if products_per_item == 1 %}
+  {% set prod_type = 'ver-item' %}
+{% endif %}
+{% set Cats = allFeaturedCategories|length %}
+
+{% if Cats > 0 %}
+<div class="container">
+  <div class="product-tab-ajax title-box6" id="section-{{ section_id }}">
+    <div class="tab-pro-ajax-header">
+      {% if fields.displaysectiontitle.field_value == '1' %}
+        <h2>{{ fields.sectiontitle.field_value }}</h2>
+      {% endif %}
+      {% if Cats > 0 %}
+      <ul>
+        {% for category in allFeaturedCategories %}
+        <li class=""><a href="#{{ category['category_id'] }}{{section_id}}" data-toggle="tab">{{category.name}}</a></li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+    <div class="tab-content">
+      {% for category in allFeaturedCategories %}
+      {% set categoryProducts = getProductsByCategoryId(category['category_id'], items , 500, 500) %}
+      {% set items_products = categoryProducts|chunk(products_per_item) %}
+      <div id="{{category['category_id']}}{{section_id}}" class="tab-pane">
+        <div class="product-slider8">
+          <div class="wrap-item" data-control="190" data-pagination="false" data-navigation="false" data-itemscustom="[[0,1],[600,2],[1024,5]]">
+            {% for items_product in items_products %}
+            <div class="item-trend5">
+              {% for item_product in items_product %}
+              <div class="item-product">
+                <div class="product-thumb">
+                  <a href="{{item_product.href}}" class="product-thumb-link">
+                    <img src="{{ item_product.thumb }}" alt="{{ item_product.name }}">
+                  </a>
+                  <a href="{{item_product.href}}" class="quickview-link"></a>
+                  <div class="product-extra-link">
+                   {% if customer.isCustomerAllowedToAdd_cart and ( config('config_hide_add_to_cart') != 1 or item_product.quantity > 0 )  %}
+                      <a href="#" class="addcart-link" onclick="event.preventDefault(); addToCart({{ item_product.product_id }},1, {{ ('-1' in item_product.price) or ('-1' in item_product.special) ? 'true' : 'false' }}); return false;"><i aria-hidden="true" class="fa fa-shopping-basket"></i></a>
+                      {% endif %}
+                      <a href="#"  class="wishlist-link" onclick="event.preventDefault(); addToWishList('{{ item_product.product_id }}',1); return false;"><i class="fa fa-heart" aria-hidden="true"></i></a>
+                      <a href="#"  class="compare-link" onclick="event.preventDefault(); addToCompare('{{ item_product.product_id }}',1); return false;"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                  </div>
+                </div>
+                <div class="product-info">
+                  <h3 class="product-title"><a href="{{ item_product.href }}">{{ item_product.name }}</a></h3>
+                  {% if config('show_brands') and item_product.manufacturer %}
+                    <h5 class="product-title"><a href="{{ item_product.manufacturer_href }}" id="brand_sections" alt"{{ item_product.manufacturer }}">{{ item_product.manufacturer }}</a></h5>
+                  {% endif %}
+                  {% if ('-1' in item_product.price) or ('-1' in item_product.special) %}
+                    <ins><span class="clickable" onclick="contact_us('{{ item_product.product_id }}');">{{ lang('button_req_quote') }}</span></ins>
+                    <div id="enquiry-{{ item_product.product_id }}"  style="display:none">{{ item_product.name }}</div>
+                  {% else %}
+                    <div class="product-price">
+                      {% if item_product.special != '' %}
+                      <del><span>{{ item_product.price }}</span></del>
+                      <ins><span>{{ item_product.special }}</span></ins>
+                      {% else %}
+                      <ins><span>{{ item_product.price }}</span></ins>
+                      {% endif %}
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+      <!-- ENd Tab -->
+    </div>
+    {% if fields.advImage.field_value != '' %}
+    <div class="banner-image banner-image7">
+      <a href="{{fields.advLink.field_value}}"><img src="{{fields.advImage.field_value}}" alt=""></a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+<script>
+  $(document).ready(function() {
+    $(".tab-pro-ajax-header ul li:first-child").addClass("active");
+    $(".tab-content .tab-pane:first-child").addClass("active");
+  });
+</script>

@@ -1,0 +1,97 @@
+{% if error_paytabs %}
+    PayTabs Error<br/>
+    <style>
+    #confirm_payment .alert-danger
+    	{
+      	display:block!important;
+    	width:200px!important;
+    	height:50px !important;
+    	visibility:visible!important;
+    	}
+    </style>
+    <div class="alert alert-danger">{{ error_paytabs }}</div>
+{% endif %}
+{% if paytabs_checkout_options == 'redirect_to_payment_gateway' %}
+<form action="index.php?route=payment/paytabs/send" method="post">
+    <input type="hidden" name="hide_billing_details" value="true" />
+    <div class="buttons">
+      <div class="right">
+        <input type="submit" value="{{ lang('button_confirm') }}" class="button" />
+      </div>
+    </div>
+</form>
+
+{% include 'default/template/payment/external_payment_msg.expand' %}
+
+{% elseif paytabs_checkout_options == 'pay_on_our_site' %}
+<style>
+	.PT_express_checkout {
+		height: 320px;
+	}
+</style>
+<div>
+	<link rel="stylesheet" href="https://www.paytabs.com/theme/express_checkout/css/express.css">
+	<script src="https://www.paytabs.com/express/express_checkout_v3.js"></script>
+	<!-- Button Code for PayTabs Express Checkout -->
+	<div class="PT_express_checkout"></div>
+</div>
+<script type="text/javascript">
+// this function is to load on page paytabs when page load for first time
+    function showPayTabs(){
+        Paytabs("#express_checkout").expresscheckout({
+            settings: {
+                merchant_id:"{{ payment_data['merchant_id'] }}",
+                secret_key: "{{ payment_data['secret_key'] }}",
+                amount: "{{ payment_data['amount'] }}",
+                currency: "{{ payment_data['currency'] }}",
+                title: "{{ payment_data['title'] }}",
+                product_names:"{{ payment_data['ProductName'] }}",
+                order_id:"{{ payment_data['order_id'] }}",
+                url_redirect: "{{ payment_data['return_url'] }}",
+                display_customer_info: 1,
+                display_billing_fields: 1,
+                display_shipping_fields: 0,
+                language: "{{ payment_data['msg_lang'] }}",
+                redirect_on_reject: 1,
+                is_iframe: {
+                load: "onbodyload",
+                show: 1
+            },
+                is_self: 1,
+                url_cancel: ""
+            },
+                customer_info: {
+                first_name: "{{ payment_data['cc_first_name'] }}",
+                last_name: "{{ payment_data['cc_last_name'] }}",
+                phone_number: "{{ payment_data['phone_number'] }}",
+                email_address: "{{ payment_data['email'] }}",
+                country_code: "{{ payment_data['cc_phone_number'] }}"
+            },
+            billing_address: {
+                full_address: "{{ payment_data['billing_address'] }}",
+                city: "{{ payment_data['payment_city'] }}",
+                state: "{{ payment_data['state'] }}",
+                country: "{{ payment_data['country'] }}",
+                postal_code: "{{ payment_data['postal_code'] }}"
+            },
+            shipping_address: {
+                shipping_first_name: "{{ payment_data['shipping_first_name'] }}",
+                shipping_last_name: "{{ payment_data['shipping_last_name'] }}",
+                full_address_shipping: "{{ payment_data['address_shipping'] }}",
+                city_shipping: "{{ payment_data['city_shipping'] }}",
+                state_shipping: "{{ payment_data['state_shipping'] }}",
+                country_shipping: "{{ payment_data['country_shipping'] }}",
+                postal_code_shipping: "{{ payment_data['postal_code_shipping'] }}"
+            }
+        });
+    }
+
+    $(document).ajaxComplete(function(event,xhr,options){
+        if(options.url == 'index.php?route=module/quickcheckout/refresh_step7') {
+            showPayTabs();
+        }
+    });
+    showPayTabs();
+</script>
+
+{% endif  %}

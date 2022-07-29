@@ -1,0 +1,198 @@
+
+
+<section class="breadcrumbs  hidden-xs">
+    <div class="container">
+    <ol class="breadcrumb breadcrumb--wd pull-left">
+        {% for breadcrumb in breadcrumbs %}
+        {% if loop.last %}
+        <li class="active">{{ breadcrumb['text'] }}</li>
+        {% else %}
+        <li><a href="{{ breadcrumb['href'] }}">{{ breadcrumb['text'] }}</a></li>
+        {% endif %}
+        {% endfor %}
+    </ol>
+    </div>
+</section>
+
+<section class="content">
+    <div class="container">
+      {% if success %}
+      <div class="alert alert-success alert-dismissible" role="alert">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        {{ success }}
+      </div>
+      {% endif %}
+    <h2 class="text-uppercase">{{ lang('heading_title') }}</h2>
+  {% if products %}
+  <div class="table-cart-wrapper table-responsive">
+    <table class="compare-info table table-hover table-bordered table-striped table-responsive">
+      <thead>
+        <tr>
+          <th class="compare-product" colspan="{{ products|length + 1 }}">{{ lang('text_product') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>{{ lang('text_name') }}</td>
+          {% for product in products %}
+          <td class="name"><a href="{{ products[product['product_id']]['href'] }}">{{ products[product['product_id']]['name'] }}</a></td>
+          {% endfor %}
+        </tr>
+        <tr>
+          <td>{{ lang('text_image') }}</td>
+          {% for product in products %}
+          <td>{% if products[product['product_id']]['thumb'] %}
+            <img src="{{ image(products[product['product_id']]['image'], 300, 300)}} " alt="{{ products[product['product_id']]['name'] }}" style="max-width:100px;" />
+            {% endif %}</td>
+          {% endfor %}
+        </tr>
+        <tr>
+          <td>{{ lang('text_price') }}</td>
+          {% for product in products %}
+          <td>
+              {% if ('-1' in product.price) or ('-1' in product.special) %}
+
+              {% else %} 
+                {% if products[product['product_id']]['price'] %}
+                  {% if not products[product['product_id']]['special'] %}
+                  {{ products[product['product_id']]['price'] }}
+                  {% else %}
+                  <span class="price-old">{{ products[product['product_id']]['price'] }}</span> <span class="price-new">{{ products[product['product_id']]['special'] }}</span>
+                  {% endif %}
+                {% endif %}
+              {% endif %}
+          </td>
+          {% endfor %}
+        </tr>
+        <tr>
+          <td>{{ lang('text_model') }}</td>
+          {% for product in products %}
+          <td>{{ products[product['product_id']]['model'] }}</td>
+          {% endfor %}
+        </tr>
+        <tr>
+          <td>{{ lang('text_manufacturer') }}</td>
+          {% for product in products %}
+          <td>{{ products[product['product_id']]['manufacturer'] }}</td>
+          {% endfor %}
+        </tr>
+        <tr>
+          <td>{{ lang('text_availability') }}</td>
+          {% for product in products %}
+          <td>{{ products[product['product_id']]['availability'] }}</td>
+          {% endfor %}
+        </tr>
+      {% if review_status %}
+        <tr>
+          <td>{{ lang('text_rating') }}</td>
+          {% for product in products %}
+          <td><img src="expandish/view/theme/clearion/image/stars-{{ products[product['product_id']]['rating'] }}.png" alt="{{ products[product['product_id']]['reviews'] }}" /><br />
+            {{ products[product['product_id']]['reviews'] }}</td>
+          {% endfor %}
+        </tr>
+        {% endif %}
+      <tr>
+          <td>{{ lang('text_summary') }}</td>
+          {% for product in products %}
+              <td>
+                  <div id="description_{{ loop.index }}" class="description">{{ products[product['product_id']]['description'] }}</div>
+                  <div id="full_description_{{ loop.index }}" class="full_description" hidden="hidden">{{ products[product['product_id']]['full_description'] }}</div>
+                  <a class="toggle_button_{{ loop.index }}" onclick="toggleDescription({{ loop.index }});" style="color:blue" href="javascript:void(0);">
+                      <span id="more_description_{{ loop.index }}">{{ lang('text_show_more') }}</span>
+                      <span id="less_description_{{ loop.index }}" hidden="hidden">{{ lang('text_show_less') }}</span>
+                  </a>
+              </td>
+          {% endfor %}
+        </tr>
+        <tr>
+          <td>{{ lang('text_weight') }}</td>
+          {% for product in products %}
+          <td>{{ products[product['product_id']]['weight'] }}</td>
+          {% endfor %}
+        </tr>
+        <tr>
+          <td>{{ lang('text_dimension') }}</td>
+          {% for product in products %}
+          <td>{{ products[product['product_id']]['length'] }} x {{ products[product['product_id']]['width'] }} x {{ products[product['product_id']]['height'] }}</td>
+          {% endfor %}
+        </tr>
+      </tbody>
+      {% for attribute_group in attribute_groups %}
+      <thead>
+        <tr>
+          <th class="compare-attribute" colspan="{{ products|length + 1 }}">{{ attribute_group['name'] }}</th>
+        </tr>
+      </thead>
+      {% for key, attribute in attribute_group['attribute'] %}
+      <tbody>
+        <tr>
+          <td>{{ attribute['name'] }}</td>
+          {% for product in products %}
+          {% if products[product['product_id']]['attribute'][key] %}
+          <td>{{ products[product['product_id']]['attribute'][key] }}</td>
+          {% else %}
+          <td></td>
+          {% endif %}
+          {% endfor %}
+        </tr>
+      </tbody>
+      {% endfor %}
+      {% endfor %}
+      <tr>
+        <td></td>
+        {% for product in products %}
+        {% if viewAddToCart %}
+        <td><input type="button" value="{{ ('-1' in product.price) or ('-1' in product.special) ? lang('button_req_quote') : lang('button_cart') }}" onclick="addToCart('{{ product['product_id'] }}',1, {{ ('-1' in product.price) or ('-1' in product.special) ? 'true' : 'false' }});" class="btn btn-primary" /></td>
+        {% endif %}
+            <div id="enquiry-{{ product.product_id }}"  style="display:none">{{ product.name }}:</div>
+        {% endfor %}
+      </tr>
+      <tr>
+        <td></td>
+        {% for product in products %}
+        <td class="remove"><a href="{{ product['remove'] }}" class="btn btn-danger">{{ lang('button_remove') }}</a></td>
+        {% endfor %}
+      </tr>
+    </table>
+  </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="pull-left">
+                <a href="{{ link('common/home') }}"  class="btn btn--wd animation animated fadeInUp" data-animation="fadeInUp" data-animation-delay="0.5s"  >{{ lang('button_continue') }}</a>
+            </div>
+        </div>
+    </div>
+
+  {% else %}
+    <br>
+
+    <br>
+
+    <div class="content">{{ lang('text_empty') }}</div>
+
+    <br>
+
+    <br>
+
+    <br>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="pull-left">
+                <a href="{{ link('common/home') }}"  class="btn btn--wd animation animated fadeInUp" data-animation="fadeInUp" data-animation-delay="0.5s"  >{{ lang('button_continue') }}</a>
+            </div>
+        </div>
+    </div>
+
+  {% endif %}
+  </div>
+    <script>
+        function toggleDescription(description_id)
+        {
+            $("#description_"+description_id).toggle();
+            $("#full_description_"+description_id).toggle();
+            $("#more_description_"+description_id).toggle();
+            $("#less_description_"+description_id).toggle();
+        }
+    </script>
+  </section>

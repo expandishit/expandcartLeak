@@ -1,0 +1,83 @@
+<script type="text/javascript">
+  $("body").append(`<!-- Modal -->
+      <div class="modal" id="abandoned_cart_popup" tabindex="-1" data-keyboard="false" role="dialog" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+      <div class="modal-content">
+      <div class="modal-header">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+  </button>
+  </div>
+  <div class="modal-body">
+      <div class="row">
+          <div class="col-md-12 mt20">
+              <p class="text-muted">{{ lang('popup_header') }}</p>
+          </div>
+          <div class="col-md-12 mt20 email-form-group">
+              <label for="abandoned_cart_popup_email">{{ lang('email') }}:</label>
+              <input type="text" class="form-control abandoned_cart_popup_input" id="abandoned_cart_popup_email" autocomplete="off" placeholder="Email Address" value="{{ checkout['payment_address']['email'] }}">
+                  <p class="error" id="abandoned_cart_popup_email_error" style="text-align:left; padding:5px 2px"></p>
+          </div>
+          <div class="col-md-12 phone-form-group">
+              <label for="abandoned_cart_popup_phone">{{ lang('phone') }}:</label>
+              <input type="text" class="form-control abandoned_cart_popup_input" id="abandoned_cart_popup_phone" autocomplete="off" placeholder="Mobile" value="{{ checkout['payment_address']['telephone'] }}">
+                  <p class="error" id="abandoned_cart_popup_phone_error" style="text-align:left; padding:5px 2px"></p>
+          </div>
+          <div class="col-md-12">
+              <button type="button" class="abandoned_cart_popup_btn btn">{{ lang('submit') }}</button>
+          </div>
+      </div>
+  </div>
+  </div>
+  </div>
+  </div>
+  `);
+</script>
+
+<script type="text/javascript">
+  $('button.abandoned_cart_popup_btn').on('click', function() {
+
+      //validation 
+      if($('input#abandoned_cart_popup_email').val().length === 0){
+        $('input#abandoned_cart_popup_email').css('border', 'red solid 1px');
+        $('#abandoned_cart_popup p#abandoned_cart_popup_email_error').html('A valid email is required');
+        return;
+      }
+      if($('input#abandoned_cart_popup_phone').val().length === 0){
+        $('input#abandoned_cart_popup_phone').css('border', 'red solid 1px');
+        $('#abandoned_cart_popup p#abandoned_cart_popup_phone_error').html('A valid phone number is required');
+        return;
+      }
+      //ajax call to save customer mail to this order
+      $email = $('input#abandoned_cart_popup_email').val();
+      $phone = $('input#abandoned_cart_popup_phone').val();
+
+      $.ajax({
+        url: '{{ link("module/abandoned_cart/saveCustomerEmailToOrder") }}',
+        data: {
+          email: $email, //email
+          phone: $phone
+        },
+        method: "POST",
+        dataType: 'json'
+      }).done(function(response){
+          if(response.success == 0){
+              if(response.message.email_error){
+                  $('input#abandoned_cart_popup_email').css('border', 'red solid 1px');
+                  $('#abandoned_cart_popup p#abandoned_cart_popup_email_error').html(response.message.email_error);
+              }
+              else if(response.message.phone_error){
+                  $('input#abandoned_cart_popup_phone').css('border', 'red solid 1px');
+                  $('#abandoned_cart_popup p#abandoned_cart_popup_phone_error').html(response.message.phone_error);       
+              }
+          }
+          else if(response.success == 1){
+              $('#abandoned_cart_popup').modal('hide');
+              $('#payment_address_email').val($email);
+              $('#payment_address_telephone').val($phone);
+              refreshCheckout(0);
+          }
+      });
+  });
+
+</script>

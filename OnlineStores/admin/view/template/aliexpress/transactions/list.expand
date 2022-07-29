@@ -1,0 +1,113 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+
+{% block title %}
+    {{ lang('heading_title') }}
+{% endblock title %}
+
+{% set dualMenuEnabled = true %}
+{% block secondarymenu %}
+    {% include 'aliexpress/menu.expand' with {'active': '#tab-transactions-log'} %}
+{% endblock secondarymenu %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+    <button type="button" class="btn btn-primary btn-ladda btn-ladda-spinner top-save-button"
+        data-style="zoom-in" onclick="$('#transactions-form').submit();">
+        <i class="far fa-save fa-lg position-left"></i> {{ lang('button_save') }}
+    </button>
+{% endblock headelements %}
+
+{% block content %}
+<form id="transactions-form" action="{{ link('aliexpress/transactions/addTransactionlog') }}" method="POST">
+<div class="row">
+    <div class="col-md-12">
+        <div class="panel panel-white">
+            <div class="panel-heading">
+                <h6 class="panel-title">
+                    <span class="text-bold">
+                        <i class="fa fa-cog"></i>
+                        <span>{{ lang('heading_title') }}</span>
+                    </span>
+                </h6>
+                <div class="heading-elements not-collapsible">
+                    <ul class="icons-list">
+                        <li>
+                            <a data-action="collapse" class=""></a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="panel-body">
+                <div class="row">
+                    <table class="table table-bordered table-hover">
+                        <thead>
+                            <tr>
+                                <td style="width: 1px;" class="text-center">
+                                    <input type="checkbox" name="selected[]"
+                                        onclick="$('input[name*=\'selected\']').prop('checked', this.checked);"
+                                        value="0" />
+                                </td>
+                                <td class="text-left">{{ lang('column_order_id') }}</td>
+                                <td class="text-left">{{ lang('column_product_name') }}</td>
+                                <td class="text-left">{{ lang('column_product_model') }}</td>
+                                <td class="text-left">{{ lang('column_order_total') }}</td>
+                                <td class="text-left">{{ lang('column_admin_amount') }}</td>
+                                <td class="text-left">{{ lang('column_warehouse_amount') }}</td>
+                                <td class="text-left">{{ lang('column_order_status') }}</td>
+                                <td class="text-left">{{ lang('column_order_date') }}</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if orders %}
+                            {% for order in orders %}
+                            <tr>
+                                <td style="width: 1px;" class="text-center">
+                                    <input type="checkbox" checked name="selected[]" value="{{ order.warehouse_order_id }} " />
+                                    <input type="hidden" value="{{ order.paybale_amount }}  " />
+                                </td>
+                                <td class="text-left">{{ "#"~order.order_id }} </td>
+                                <td class="text-left">{{ order.product_name }} </td>
+                                <td class="text-left">{{ order.model }} </td>
+                                <td class="text-left">{{ order.total }} </td>
+                                <td class="text-left">{{ order.admin_amount }} </td>
+                                <td class="text-left">{{ order.warehouse_amount }} </td>
+                                <td class="text-left">{{ order.order_status }} </td>
+                                <td class="text-left">{{ order.order_date }} </td>
+                            </tr>
+                            {% endfor %}
+                            {% else %}
+                            <tr>
+                                <td class="text-center" colspan="9">{{ lang('text_no_results') }} </td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6">{{ pagination }} </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</form>
+
+<script>
+    $('input[name="selected[]"]').on('click', function () {
+        $inputs = $('input[name="selected[]"]:checked');
+        var payableAmount = 0;
+        $.each($inputs, function(index, value) {
+            amount = $(this).next('input[type="hidden"]').val()
+            if(amount != undefined) {
+                payableAmount = payableAmount + parseFloat(amount);
+            }
+        })
+        $('#payable-block').html('<b>'+payableAmount+'</b>');
+    })
+</script>
+{% endblock %}

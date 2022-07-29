@@ -1,0 +1,403 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block title %}
+    {{ lang('create_heading_title') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+    {% include "includes/buttons_top.expand" %}
+{% endblock headelements %}
+
+{% block content %}
+
+	<form class="form" method="POST" action="{{ link('sale/beez_shipment_order/store') }}">
+		<input type="hidden" name="order_id" value="{{ order.order_id }}">
+
+
+    	{# Pickup Details #}
+		<div class="col-md-12">
+	    	<div class="panel panel-white">
+
+		        {# Header #}
+		        <div class="panel-heading">
+		            <h6 class="panel-title"><span class="text-bold">{{ lang('text_pickup_details') }}</span></h6>
+		            <div class="heading-elements not-collapsible">
+		                <ul class="icons-list">
+		                    <li><a data-action="collapse" class=""></a></li>
+		                </ul>
+		            </div>
+		        </div>
+
+		 		{# Body #}
+		        <div class="panel-body">
+		            <div class="collapse in" id="panel1">
+
+                    <!-- shipment_type -->
+                    <div class="form-group col-md-4">
+                      <label for="shipment_type" class="control-label">{{ lang('entry_shipment_type') }} <span style="color:red;">*</span></label>
+                      <select class="form-control" name="beez_order[shipping_type]" id="shipment_type">
+                        <option value="D" selected>{{ lang('text_dry') }}</option>
+                        <option value="C">{{ lang('text_cold') }}</option>
+                      </select>
+                    </div>               
+
+
+                    <!-- PickupLocation -->
+                    {#<div class="form-group col-md-4">
+                      <label for="pickup_location" class="control-label">{{ lang('entry_pickup_location') }}</label>
+                      <input class="form-control" type="text" name="beez_order[pickup_location]" value="{{ shipper_location }}" id="warehouse_name" required>
+                    </div>#}
+
+
+                    <!-- Cod Amount -->
+                    <div class="form-group col-md-4">
+                      <label for="cod_amount" class="control-label">{{ lang('entry_cod_amount') }} <span style="color:red;">*</span></label>
+                      <div class='input-group'>
+                        <input class="form-control" type="text" name="beez_order[cod]" value="{{ order['total'] ?: 0.00  }}" id="cod_amount" {{ order.payment_code in ['cod', 'ccod'] ? 'readonly' : ''  }}>
+                        <span class="input-group-addon">
+                                <span>{{order.currency_code}}</span>
+                        </span>
+                      </div>
+                    </div>
+
+                    <!-- products -->
+                    <div class="form-group col-md-4">
+                      <label for="products" class="control-label">{{ lang('entry_products_to_ship') }} <span style="color:red;">*</span></label>
+                      <select class="form-control" name="beez_order[products][]" id="products" multiple="multiple">
+                          {% for product_id, product_name  in products %}
+                          <option value="{{ product_id }}" selected>{{ product_name }}</option> 
+                          {% endfor %}                      
+                      </select>
+                    </div>
+
+                    <!-- CustomerNote -->
+	            	<div class="form-group col-md-4">
+	            		<label for="customer_note" class="control-label">{{ lang('entry_customer_note') }}</label>
+	            		<textarea name="beez_order[customer_note]" id="customer_note" class="form-control">{{ order.comment }}</textarea>
+	            	</div>
+
+	                  <!-- Description -->
+		              <div class="form-group col-md-4">
+		            		<label for="description" class="control-label">{{ lang('entry_shipment_description') }}</label>
+		            		<textarea name="beez_order[description]" id="description" class="form-control" placeholder="describe your order "></textarea>
+		               </div>
+
+		            </div>
+		        </div>
+
+
+		    </div>
+		</div>
+
+
+
+		{# Billing Address #}
+		<div class="col-md-12">
+		    <div class="panel panel-white">
+
+		        {# Header #}
+		        <div class="panel-heading">
+		            <h6 class="panel-title"><span class="text-bold">{{ lang('entry_billing_address') }}</span></h6>
+		            <div class="heading-elements not-collapsible">
+		                <ul class="icons-list">
+		                    <li><a data-action="collapse" class=""></a></li>
+		                </ul>
+		            </div>
+		        </div>
+
+		        {# Body #}
+		        <div class="panel-body">
+		            <div class="collapse in" id="panel1">
+		               
+			              <!-- CustomerFirstname -->
+			              <div class="form-group col-md-4">
+			                <label for="billing_customer_first_name" class="control-label">{{ lang('entry_customer_first_name') }} <span style="color:red;">*</span></label>
+			                <input class="form-control" type="text" name="beez_order[billing_address][CustomerFirstname]" value="{{ order.payment_firstname }}" id="billing_customer_first_name" required>
+			              </div>
+
+			              <!-- CustomerLastname -->
+			              <div class="form-group col-md-4">
+			                <label for="billing_customer_last_name" class="control-label">{{ lang('entry_customer_last_name') }} <span style="color:red;">*</span></label>
+			                <input class="form-control" type="text" name="beez_order[billing_address][CustomerLastname]" value="{{ order.payment_lastname }}" id="billing_customer_last_name" required>
+			              </div>
+
+			              <!-- CustomerEmail -->
+			              <div class="form-group col-md-4">
+			                <label for="billing_customer_email" class="control-label">{{ lang('entry_customer_email') }} <span style="color:red;">*</span></label>
+			                <input class="form-control" type="text" name="beez_order[billing_address][CustomerEmail]" value="{{ order.email }}" id="billing_customer_email" required>
+			              </div>
+
+			              <!-- CustomerPhone1 -->
+			              <div class="form-group col-md-4">
+			                <label for="billing_customer_phone1" class="control-label">{{ lang('entry_customer_phone') ~ ' 1' }} <span style="color:red;">*</span></label>
+			                <input class="form-control" type="text" name="beez_order[billing_address][CustomerPhone1]" value="{{ '+' ~ order.payment_phonecode ~ (order.payment_telephone)|trim('0', 'left') }}" id="billing_customer_phone1" required>
+			              </div>
+
+			              <!-- CustomerPhone2 -->
+			              <div class="form-group col-md-4">
+			                <label for="billing_customer_phone2" class="control-label">{{ lang('entry_customer_phone') ~ ' 2' }}</label>
+			                <input class="form-control" type="text" name="beez_order[billing_address][CustomerPhone2]" value="{{ '+' ~ order.payment_phonecode ~ (order.payment_telephone)|trim('0', 'left') }}" id="billing_customer_phone2" required>
+			              </div>
+
+			              <!-- Lat -->
+			              <div class="form-group col-md-4">
+			                <label for="billing_lat" class="control-label">{{ lang('entry_lat') }}</label>
+			                <input class="form-control" type="text" name="beez_order[billing_address][Lat]" value="{{ (order.payment_address_location|split(', '))[0] }}" id="billing_lat" required>
+			              </div>
+
+			              <!-- lng -->
+			              <div class="form-group col-md-4">
+			                <label for="billing_lng" class="control-label">{{ lang('entry_lng') }}</label>
+			                <input class="form-control" type="text" name="beez_order[billing_address][Lng]" value="{{ (order.payment_address_location|split(', '))[1] }}" id="billing_lng" required>
+			              </div>
+
+			              <!-- Line1 -->
+			              <div class="form-group col-md-4">
+			                <label for="billing_line1" class="control-label">{{ lang('entry_address_line')~' 1' }} <span style="color:red;">*</span></label>
+			                <input class="form-control" type="text" name="beez_order[billing_address][Line1]" value="{{ order.payment_address_1 }}" id="billing_line1" required>
+			              </div>
+
+			              <!-- Line2 -->
+			              <div class="form-group col-md-4">
+			                <label for="billing_line2" class="control-label">{{ lang('entry_address_line')~' 2' }}</label>
+			                <input class="form-control" type="text" name="beez_order[billing_address][Line2]" value="{{ order.payment_address_2 }}" id="billing_line2" required>
+			              </div>
+
+			              <!-- District -->
+			              <div class="form-group col-md-4">
+			                <label for="billing_district" class="control-label">{{ lang('entry_district') }} <span style="color:red;">*</span></label>
+			                <input class="form-control" type="text" name="beez_order[billing_address][District]" value="{{ order.payment_area }}" id="billing_district" required>
+			              </div>
+
+			              <!-- PostCode -->
+			              <div class="form-group col-md-4">
+			                <label for="billing_postcode" class="control-label">{{ lang('entry_postcode') }}</label>
+			                <input class="form-control" type="text" name="beez_order[billing_address][PostCode]" value="{{ order.payment_postcode }}" id="billing_postcode" required>
+			              </div>
+
+			              <!-- Province -->
+			              <div class="form-group col-md-4">
+			                <label for="billing_province" class="control-label">{{ lang('entry_province') }} <span style="color:red;">*</span></label>
+			                <input class="form-control" type="text" name="beez_order[billing_address][Province]" value="{{ order.payment_zone }}" id="billing_province" required>
+			              </div>
+
+			              <!-- City -->
+			              <div class="form-group col-md-4">
+			                <label for="billing_city" class="control-label">{{ lang('entry_city') }} <span style="color:red;">*</span></label>
+			                <input class="form-control" type="text" name="beez_order[billing_address][City]" value="{{ order.payment_city }}" id="billing_city" required>
+			              </div>
+
+			              <!-- country -->
+			              <div class="form-group col-md-4">
+			                <label for="country_select" class="control-label">{{ lang('entry_country') }} <span style="color:red;">*</span></label>
+			                <select class="form-control" name="beez_order[billing_address][Country]" id="country_select">
+			                  <option value="">{{ lang('text_select') }}</option>
+			                  {% for country in countries %}
+			                    <option data-country-id="{{ country.country_id }}" value="{{ country.name }}" {{ order.shipping_country_id == country.country_id ? 'selected':'' }}>{{ country.name }}</option>
+			                  {% endfor %}
+			                </select>
+			              </div>
+		            </div>
+		        </div>
+
+
+		    </div>
+		</div>
+
+
+
+		{# Shipping Address #}
+		<div class="col-md-12">
+		    <div class="panel panel-white">
+
+		        {# Header #}
+		        <div class="panel-heading">
+		            <h6 class="panel-title"><span class="text-bold">{{ lang('entry_shipping_address') }}</span></h6>
+		            <div class="heading-elements not-collapsible">
+		                <ul class="icons-list">
+		                    <li><a data-action="collapse" class=""></a></li>
+		                </ul>
+		            </div>
+		        </div>
+
+		        {# Body #}
+		        <div class="panel-body">
+		            <div class="collapse in" id="panel1">
+		               
+		              <!-- CustomerFirstname -->
+		              <div class="form-group col-md-4">
+		                <label for="shipping_customer_first_name" class="control-label">{{ lang('entry_customer_first_name') }} <span style="color:red;">*</span></label>
+		                <input class="form-control" type="text" name="beez_order[shipping_address][CustomerFirstname]" value="{{ order.shipping_firstname ?: order.payment_firstname }}" id="shipping_customer_first_name" required>
+		              </div>
+
+		              <!-- CustomerLastname -->
+		              <div class="form-group col-md-4">
+		                <label for="shipping_customer_last_name" class="control-label">{{ lang('entry_customer_last_name') }} <span style="color:red;">*</span></label>
+		                <input class="form-control" type="text" name="beez_order[shipping_address][CustomerLastname]" value="{{ order.shipping_lastname ?: order.payment_lastname }}" id="shipping_customer_last_name" required>
+		              </div>
+
+		              <!-- CustomerEmail -->
+		              <div class="form-group col-md-4">
+		                <label for="shipping_customer_email" class="control-label">{{ lang('entry_customer_email') }} <span style="color:red;">*</span></label>
+		                <input class="form-control" type="text" name="beez_order[shipping_address][CustomerEmail]" value="{{ order.email }}" id="shipping_customer_email" required>
+		              </div>
+
+		              <!-- CustomerPhone1 -->
+		              <div class="form-group col-md-4">
+		                <label for="shipping_customer_phone1" class="control-label">{{ lang('entry_customer_phone') ~ ' 1' }} <span style="color:red;">*</span></label>
+		                <input class="form-control" type="text" name="beez_order[shipping_address][CustomerPhone1]" value="{{ '+' ~ order.shipping_phonecode ~ (order.shipping_telephone ?: order.payment_telephone)|trim('0', 'left') }}" id="shipping_customer_phone1" required>
+		              </div>
+
+		              <!-- CustomerPhone2 -->
+		              <div class="form-group col-md-4">
+		                <label for="shipping_customer_phone2" class="control-label">{{ lang('entry_customer_phone') ~ ' 2' }}</label>
+		                <input class="form-control" type="text" name="beez_order[shipping_address][CustomerPhone2]" value="{{ '+' ~ order.shipping_phonecode ~ (order.shipping_telephone ?: order.payment_telephone)|trim('0', 'left') }}" id="shipping_customer_phone2" required>
+		              </div>
+
+		              <!-- Lat -->
+		              <div class="form-group col-md-4">
+		                <label for="shipping_lat" class="control-label">{{ lang('entry_lat') }} <span style="color:red;">*</span></label>
+		                <input class="form-control" type="text" name="beez_order[shipping_address][Lat]" value="{{ ( (order.shipping_address_location ?: order.payment_address_location )|split(', '))[0] }}" id="shipping_lat" required>
+		              </div>
+
+		              <!-- lng -->
+		              <div class="form-group col-md-4">
+		                <label for="shipping_lng" class="control-label">{{ lang('entry_lng') }} <span style="color:red;">*</span></label>
+		                <input class="form-control" type="text" name="beez_order[shipping_address][Lng]" value="{{ ( (order.shipping_address_location ?: order.payment_address_location )|split(', '))[1] }}" id="shipping_lng" required>
+		              </div>
+
+		              <!-- Line1 -->
+		              <div class="form-group col-md-4">
+		                <label for="shipping_line1" class="control-label">{{ lang('entry_address_line')~' 1' }} <span style="color:red;">*</span></label>
+		                <input class="form-control" type="text" name="beez_order[shipping_address][Line1]" value="{{ order.shipping_address_1 }}" id="shipping_line1" required>
+		              </div>
+
+		              <!-- Line2 -->
+		              <div class="form-group col-md-4">
+		                <label for="shipping_line2" class="control-label">{{ lang('entry_address_line')~' 2' }}</label>
+		                <input class="form-control" type="text" name="beez_order[shipping_address][Line2]" value="{{ order.shipping_address_2 }}" id="shipping_line2" required>
+		              </div>
+
+		              <!-- District -->
+		              <div class="form-group col-md-4">
+		                <label for="shipping_district" class="control-label">{{ lang('entry_district') }} <span style="color:red;">*</span></label>
+		                <input class="form-control" type="text" name="beez_order[shipping_address][District]" value="{{ order.shipping_area }}" id="shipping_district" required>
+		              </div>
+
+		              <!-- PostCode -->
+		              <div class="form-group col-md-4">
+		                <label for="shipping_postcode" class="control-label">{{ lang('entry_postcode') }}</label>
+		                <input class="form-control" type="text" name="beez_order[shipping_address][PostCode]" value="{{ order.shipping_postcode }}" id="shipping_postcode" required>
+		              </div>
+
+		              <!-- Province -->
+		              <div class="form-group col-md-4">
+		                <label for="shipping_province" class="control-label">{{ lang('entry_province') }} <span style="color:red;">*</span></label>
+		                <input class="form-control" type="text" name="beez_order[shipping_address][Province]" value="{{ order.shipping_zone }}" id="shipping_province" required>
+		              </div>
+
+		              <!-- City -->
+		              <div class="form-group col-md-4">
+		                <label for="shipping_city" class="control-label">{{ lang('entry_city') }} <span style="color:red;">*</span></label>
+		                <input class="form-control" type="text" name="beez_order[shipping_address][City]" value="{{ order.shipping_city }}" id="shipping_city" required>
+		              </div>
+
+		              <!-- country -->
+		              <div class="form-group col-md-4">
+		                <label for="country_select" class="control-label">{{ lang('entry_country') }} <span style="color:red;">*</span></label>
+		                <select class="form-control" name="beez_order[shipping_address][Country]" id="country_select">
+		                  <option value="">{{ lang('text_select') }}</option>
+		                  {% for country in countries %}
+		                    <option data-country-id="{{ country.country_id }}" value="{{ country.name }}" {{ order.shipping_country_id == country.country_id ? 'selected':'' }}>{{ country.name }}</option>
+		                  {% endfor %}
+		                </select>
+		              </div>
+
+		            </div>
+		        </div>
+
+
+		    </div>
+		</div>
+
+</form>
+
+<script type="text/javascript">
+ 	$('select').select2();
+  $("#pickup_due_date").AnyTime_picker({
+    format: "%Y-%m-%d %I:%i%p",
+    labelTitle: "{{ lang('text_select_datetime') }}",
+    labelHour: "{{ lang('text_hour') }}",
+    labelMinute: "{{ lang('text_minute') }}",
+    labelYear: "{{ lang('text_year') }}",
+    labelMonth: "{{ lang('text_month') }}",
+    labelDayOfMonth: "{{ lang('text_day_of_month') }}",
+  });
+
+
+$(document).ready(()=>{
+  let shipping_zone_code= "{{ order.shipping_zone_code }}";
+  let order_area_code = "{{ order.shipping_area_code }}";
+
+  //Change country ajax call
+  $('#country_select').on('change', ()=>{
+    let selected_country_id = $('#country_select option:selected').data('country-id');
+    $('#city_select option').remove();
+   
+    $.ajax({
+      url: '{{ link("sale/beez_shipment_order/getCities") }}',
+      method: 'POST',
+      data: {country_id: selected_country_id}
+    }).done((data)=>{
+      let result = JSON.parse(data);
+      $.each(result, function(key, value) {
+          $('#city_select').append(
+            $("<option />").
+            val(value.code).
+            text(value.name).
+            attr('data-city-id', value.zone_id)
+            );
+          if( value.code == shipping_zone_code){
+            $('#city_select').val(shipping_zone_code);
+          }
+      });
+      $('#city_select').trigger('change');
+    });
+  });
+
+
+  $('#city_select').on('change', ()=>{
+    $('#neighborhood_select option').remove();
+    let selected_city_id = $('#city_select option:selected').data('city-id');
+
+    $.ajax({
+      url: '{{ link("sale/beez_shipment_order/getNeighbourhoods") }}',
+      method: 'POST',
+      data: {city_id: selected_city_id}
+    }).done((data)=>{
+      let result = JSON.parse(data);
+
+      $.each(result, function(key, value) {
+          $('#neighborhood_select').append($("<option />").val(value.code).text(value.name).attr('data-area-id', value.area_id));
+          if( value.code == order_area_code){
+            $('#neighborhood_select').val(order_area_code);
+          }
+      });
+    });
+  });
+
+  
+  $('#country_select').trigger('change');
+
+});
+</script>
+
+{% endblock %}
+
+

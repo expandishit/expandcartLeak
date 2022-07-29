@@ -1,0 +1,260 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block title %}
+    {{ lang('heading_title') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block content %}
+
+  {% include "wkpos/reports/tabs.expand" %}
+  <style>
+    .table > thead > tr > th, .table > tbody > tr > th, .table > tfoot > tr > th, .table > thead > tr > td, .table > tbody > tr > td,
+     .table > tfoot > tr > td {
+    padding: 6px 5px !important;
+  </style>
+<div class="tab-content">
+  <!-- BEGIN Sale TAB -->
+  <div class="tab-pane active" id="tab-sale">
+    <div class="col-md-10" style="padding-left: 0; padding-right: 0">
+        <div class="panel panel-flat">
+          <div class="panel-body" style="padding: 0">
+              <table class="table table-striped table-hover" id="sale-report">
+                <thead>
+                    <th>{{ column_username }}</th>
+                    <th>{{ column_name }}</th>
+                    <th>{{ column_email }}</th>
+                    <th>{{ column_outlet }}</th>
+                    <th>{{ column_total_cash }}</th>
+                    <th>{{ column_total_card }}</th>
+                    <th>{{ column_total_expenses }}</th>
+                    <th>{{ column_total }}</th>
+                    <th style="text-align: center;">{{ column_orders }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colspan="8" id="sale-footer" class="text-center alert alert-info"><span class="one"></span><span class="two" style="display:none;cursor:pointer;">{{ column_show_next }}</span></td>
+                  </tr>
+                </tfoot>
+              </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-2">
+        <div class="panel panel-flat">
+          <div class="panel-heading">
+            <h6 class="panel-title"><span class="text-bold">{{ text_filter }}</span><a class="heading-elements-toggle"><i class="icon-more"></i></a></h6>
+            <div class="heading-elements not-collapsible">
+                <ul class="icons-list">
+                    <li><a data-action="collapse" class=""></a></li>
+                </ul>
+            </div>
+        </div>
+          <div class="panel-body">
+              <div class="row">
+                <div class="col-sm-12">
+                  <div class="form-group">
+                    <label for="input-soutlet">{{ column_outlet }}</label>
+                    <select class="form-control select" id="input-soutlet">
+                      <option value="">{{ text_none }}</option>
+                      {% for outlet in outlets %}
+                        <option value="{{ outlet['outlet_id'] }}">{{ outlet['name'] }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+
+                </div>
+                <div class="col-sm-12">
+                  <div class="form-group">
+                    <label for="input-user">{{ column_user }}</label>
+                    <select class="form-control select" id="input-user">
+                      <option value="">{{ text_none }}</option>
+                      {% for user in users %}
+                        <option value="{{ user['user_id'] }}">{{ user['firstname'] ~ ' ' ~ user['lastname'] }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>{{ column_date_between }}</label>
+                    <div class="col-sm-12" style="padding:0;">
+                      <div class="col-sm-6 padding-0">
+                        <div class="input-group">
+                          <input type="text" class="form-control datepicker" id="date-from">
+                        </div>
+                      </div>
+                      <div class="col-sm-6 padding-0">
+                        <div class="input-group">
+                          <input type="text" style="margin-left: 3%;" class="form-control datepicker" id="date-to">
+                          
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-md-12" style="margin-top: 15px;">
+                    <div class="form-group" style="text-align: right;">
+                      <button type="button" class="btn btn-warning" id="button-clear"> <i class="fa fa-refresh"></i> {{ button_clear }}</button>
+                      <button type="button" class="btn btn-primary" id="button-filter"> <i class="fa fa-filter"></i> {{ button_filter }}</button>
+                    </div>
+                  </div>
+              </div>
+          </div>
+        </div>
+      </div>
+      <!-- Filter Ended -->
+      
+  </div>
+  <!-- END Sale TAB -->
+</div>
+
+<script type="text/javascript">
+// Sale reports
+var sale_page = 1;
+var text_sale_listed = '{{ text_listed }}';
+var text_no_data = '{{ text_no_data }}';
+var sale_listed = 0;
+var sale_total = 0;
+var sale_url = '';
+$(document).on('click', '#sale-footer', function(){
+  if (sale_listed < sale_total) {
+    sale_page = sale_page + 1;
+    saleReport();
+  }
+});
+saleReport();
+function saleReport() {
+  sale_url = 'wkpos/reports/userReport?page=' + sale_page;
+  console.log(sale_url);
+
+  var filter_user = $('#input-user').val();
+  var filter_outlet = $('#input-soutlet').val();
+  var filter_date_from = $('#date-from').val();
+  var filter_date_to = $('#date-to').val();
+
+  if (filter_user) {
+    sale_url +='&filter_user=' + encodeURIComponent(filter_user);
+  }
+  if (filter_outlet) {
+    sale_url +='&filter_outlet=' + encodeURIComponent(filter_outlet);
+  }
+  if (filter_date_from) {
+    sale_url +='&filter_date_from=' + encodeURIComponent(filter_date_from);
+  }
+  if (filter_date_to) {
+    sale_url +='&filter_date_to=' + encodeURIComponent(filter_date_to);
+  }
+
+  $.ajax({
+    url: sale_url,
+    type: 'post',
+    datType: 'json',
+    beforeSend: function() {
+      $('#sale-footer').prepend('<i class="fa fa-spin fa-spinner"></i>');
+    },
+    success: function(json) {
+      $('#sale-report tbody').html('');
+      var sale = '';
+
+      if (json['users'] && json['users'].length > 0) {
+        sale_total = json['total'];
+        for (var i = 0; i < json['users'].length; i++) {
+          sale += '<tr style="display:none" class="last-row">';
+          sale += '<td>' + json['users'][i]['username'] + '</td>';
+          sale += '<td>' + json['users'][i]['name'] + '</td>';
+          sale += '<td>' + json['users'][i]['email'] + '</td>';
+          sale += '<td>' + json['users'][i]['outlet'] + '</td>';
+          sale += '<td>' + json['users'][i]['total_cash'] + '</td>';
+          sale += '<td>' + json['users'][i]['total_card'] + '</td>';
+          //expenses
+          sale += '<td>' + json['users'][i]['expenses'] + '</td>';
+
+          sale += '<td>' + json['users'][i]['total'] + '</td>';
+          sale += '<td style="text-align: center;"><a href="wkpos/reports/userOrders?user_id='+json['users'][i]['user_id']+'"><i class="icon-list2"></i></a></td>';
+          sale += '</tr>';
+          if (sale_listed < sale_total) {
+            sale_listed += 1;
+          }
+        }
+
+      }else{
+        sale += '<tr>';
+        sale += '<td colspan="8" style="text-align: center">'+text_no_data+'</td>';
+        sale += '</tr>';
+      }
+      $('#sale-report tbody').append($(sale));
+      $('#sale-report .last-row').slideDown(2000);
+      $('#sale-footer .one').text((text_sale_listed.replace('_listed',sale_listed)).replace('_total', json['total']));
+    },
+    complete: function() {
+      $('#sale-footer').find('i').remove();
+    }
+  });
+}
+
+$(document).on('ready', function(){
+  $('#sale-footer').mouseover(function(){
+    if (sale_listed < sale_total) {
+    $(this).find('.one').hide();
+    $(this).find('.two').show();
+  } else if (sale_listed == sale_total ) {
+    $(this).find('.one').show();
+    $(this).find('.two').hide();
+  }
+  });
+  $('#sale-footer').mouseout(function(){
+    if (sale_listed < sale_total) {
+      $(this).find('.two').hide();
+      $(this).find('.one').show();
+    } else if (sale_listed == sale_total ) {
+      $(this).find('.one').show();
+      $(this).find('.two').hide();
+    }
+  });
+});
+
+$('.datepicker').datepicker({dateFormat: 'yy-mm-dd'});
+
+$(document).on('click', '.btn-info.from', function(){
+  $('#date-from').trigger('click');
+});
+$(document).on('click', '.btn-info.to', function(){
+  $('#date-to').trigger('click');
+});
+
+$(document).on('click', '#button-filter', function(){
+  sale_listed = 0;
+  sale_page = 1;
+  saleReport();
+});
+$(document).on('click', '#button-clear', function(){
+  sale_listed = 0;
+  sale_page = 1;
+  $('#input-soutlet option:first').prop('selected', true);
+  $('#input-user option:first').prop('selected', true);
+  $('#input-customer').val('');
+  $('#date-from').val('');
+  $('#date-to').val('');
+  $('.radius-0').val('');
+  saleReport();
+});
+</script>
+<style>
+.radius-0 {
+  border-radius: 0;
+}
+.padding-0 {
+  padding: 0;
+}
+</style>
+  {% endblock %}

@@ -1,0 +1,382 @@
+         <div id="content row">
+	<!-- breadcrumb -->
+	<div class="breadcrumb-page">
+		<div class="container">
+            <div class="row">
+                <div class="col-xs-12">
+                    <ol class="breadcrumb">
+                        {% for breadcrumb in breadcrumbs %}
+                            {% if loop.last %}
+                                <li class="active">{{ breadcrumb['text'] }}</li>
+                            {% else %}
+                                <li>
+                                    <a href="{{ breadcrumb['href'] }}">{{ breadcrumb['text'] }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                    </ol>
+                </div>
+            </div>
+        </div>
+	</div>
+	<!-- breadcrumb -->
+    
+  <section class="search"><!--Start search-->
+            <div class="container"><!--Start container-->
+                <section class="trip-details product-add-form">
+                    <div class="row"><!--Start row-->
+                        <div class="col-md-6">
+                            <div class="">
+                                <div class="trips--info">
+                                    <h1 class="trips--heading"> {{ product_info['name'] }}</h1>
+                                    <h2 class="trip--header">
+                                        <span>
+                                            <img src="expandish/view/theme/default/image/trips/maps-and-flags.svg" alt="">
+                                           {{ tripData['area'] }}
+                                        </span>
+                                        <span>{{trip_price}}</span>
+                                    </h2>
+    
+                                    <ul class="trip-details-dating list-unstyled list-inline">
+                                        <li>
+                                            <img src="expandish/view/theme/default/image/trips/calendar.png" alt="">
+                                            <span>{{ tripData['from_date'] }} to  {{ tripData['to_date'] }}</span>
+                                        </li>
+                                    </ul>
+    
+                                    <h4 class="trips--label">{{lang('details')}}</h4>
+                                    <ul class="trips--information list-unstyled">
+                                        <li>{{lang('city')}} :  {{ tripData['area'] }}</li>
+                                         <li><span> {{lang('pickup_point')}} :</span>  {{ tripData['pickup_point'] }}  </li>
+                                        <li><span>{{lang('destination_point')}} :</span>  {{ tripData['destination_point'] }}  </li>
+                                        <li>{{lang('duration')}} :   {{ tripData['duration'] }} {{lang('days')}}</li>
+                                        <li>{{lang('seats')}} :   {{ product_info['quantity'] }} {{lang('seats')}} </li>
+                                    </ul>
+    
+                                    <h4 class="trips--label">{{lang('description')}}</h4>
+                                    <p class="trips--paragraph">
+                                      {{ product_info['description'] }}
+                                    </p>
+                                </div>
+                            </div>
+                            <input type="hidden"  id="product_id" name="product_id" size="2" value="{{ product_info['product_id'] }}"/>
+                            <div class="">
+                                <div class="trips--info" >
+                                    <h1 class="trips--label trips--label-toggle">
+                                        <span>{{lang('questionare')}}</span>
+                                        <span>
+                                            <i class="fas fa-chevron-down fa-fw"></i>
+                                        </span>
+                                    </h1>
+                            {% if options %}
+                                                <div class="product-options-wrapper product-options-wrapper-q">
+                                                    <div class="options">
+                                                        {% for option in options %}
+    
+                                                        <!-- ######################### Select -->
+    
+                                                        {% if option.type == 'select' %}
+                                                        <div id="option-{{ option.product_option_id }}"
+                                                            class="option form-group">
+                                                            <label
+                                                                for="option[{{ option.product_option_id }}]">{{ option.name }}{{ option.required ? '<sup>*</sup>' : '' }}
+                                                                 <span
+                                                                    id="relational_option_loading-{{ option.option_id }}"
+                                                                    style="display: none">&nbsp;&nbsp;<img
+                                                                        src="/expandish/view/theme/default/image/spinners/spinner_1.gif"></span></label>
+                                                            <div class="control">
+                                                                <select name="option[{{ option.product_option_id }}]"
+                                                                    id="option[{{ option.product_option_id }}]"
+                                                                    class="form-control relational_option_{{ option.option_id }}"
+                                                                    onchange="getSelectPrice(this.value,'{{ option.product_option_id }}', {{ option.option_id }}, {{ opt_relational_status }})" {% if ( (opt_relational_status and option.option_id in opt_relational_parents)
+                                                                                or
+                                                                                (opt_relational_status and opt_elements_parents[option.option_id])
+                                                                                )
+                                                                            %}
+                                                                    {{ 'data-relations="' ~ option.option_id ~ '"' }}
+                                                                    {{ 'data-relationalparents="' ~ opt_elements_parents[option.option_id] ~ '"' }}
+                                                                    {{ 'data-relationalchild="' ~ opt_relational_relations[option.option_id] ~ '"' }}
+                                                                    {{ 'data-option_id="' ~ option.option_id ~ '"' }}
+                                                                    {% endif %}>
+                                                                    <option value="">{{ lang('text_select') }}</option>
+                                                                    {% if (not opt_relational_status) or (opt_relational_status and option.option_id not in opt_relational_childs) %}
+                                                                    {% for option_value in option.option_value %}
+                                                                    <option
+                                                                        value="{{ option_value.product_option_value_id }}"
+                                                                        {% if option_value.quantity <= 0 %}disabled="disabled"
+                                                                        {% endif %}>{{ option_value.name }}
+                                                                        <!-- Option Quantity Check -->
+                                                                        {% if option_value.quantity <= 0 %}
+                                                                        ({{ lang('text_notavailable') }})
+                                                                        {% endif %}
+                                                                        <!-- End Option Quantity Check   -->
+    
+                                                                        {# OPTION PRICE #}
+                                                                        {% if config('config_show_option_prices') == '1' %}
+                                                                        {% if option_value.price %}
+                                                                        ({{ option_value.price_prefix }}{{ option_value.price }})
+                                                                        {% endif %}
+                                                                        {% endif %}
+                                                                        {# /OPTION PRICE #}
+                                                                    </option>
+                                                                    {% endfor %}
+                                                                    {% endif %}
+                                                                </select>
+                                                                <div id="relational_option_hidden_{{ option.option_id }}">
+                                                                    {% if (not opt_relational_status) or (opt_relational_status and option.option_id not in opt_relational_childs) %}
+                                                                    {% for option_value in option.option_value %}
+                                                                    <input type="hidden"
+                                                                        id="select-price-{{ option_value.product_option_value_id }}"
+                                                                        value="{{ option_value.price_value }}">
+                                                                    <input type="hidden"
+                                                                        id="select-prifex-{{ option_value.product_option_value_id }}"
+                                                                        value="{{ option_value.price_prefix }}">
+                                                                    {% endfor %}
+                                                                    {% endif %}
+                                                                </div>
+                                                            </div>
+                                                            <input type="hidden"
+                                                                id="old_select_price-{{ option.product_option_id }}"
+                                                                value="">
+                                                            <input type="hidden"
+                                                                id="old_select_prefix-{{ option.product_option_id }}"
+                                                                value="">
+                                                        </div>
+                                                        {% endif %}
+    
+                                                        <!-- ######################### Radio -->
+    
+                                                        {% if option.type == 'radio' %}
+                                                        <fieldset id="option-{{ option.product_option_id }}"
+                                                            class="questionare--block">
+                                                                <h4  for="option[{{ option.product_option_id }}]" class="questionare--block-question">{{ option.name }} {{ option.required ? '<sup>*</sup>' : '' }} </h4>
+                                                            {% for option_value in option.option_value %}
+                                                          
+                                                            <label class="container--label"> {{ option_value['name'] }}
+                                                <input type="radio" class="form-check-input"
+                                                                        name="option[{{ option['product_option_id'] }}]"
+                                                                        id="option-value-{{ option_value['product_option_value_id'] }}"
+                                                                        value="{{ option_value['product_option_value_id'] }}"
+                                                                        onclick="getRadioPrice('{{ option_value['price_value'] }}', '{{ option_value['price_prefix'] }}','{{ option.product_option_id }}', 'radio')"
+                                                                        {% if option_value.quantity <= 0 %}disabled="disabled"
+                                                                        {% endif %}>
+                                                <span class="checkmark"></span>
+                                              </label>
+                                                             
+                                                            {% endfor %}
+                                                            <input type="hidden"
+                                                                id="old_radio_price-{{ option.product_option_id }}"
+                                                                value="">
+                                                            <input type="hidden"
+                                                                id="old_radio_prefix-{{ option.product_option_id }}"
+                                                                value="">
+                                                        </fieldset>
+                                                        {% endif %}
+    
+                                                      
+    
+                                                        {% endfor %}
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                                
+                                  {% if product_info['quantity'] >  tripData['min_no_seats']  %}
+                                <div class="quantity-show" >
+                                    
+                                    <div class="">
+                                        <!-- Show Quantity box -->
+                                        <div class="block-product-info block-product-info-toggle"  style="margin-bottom: 20px;margin-top: 20px;">
+                                        <h4 class="trips--label">{{lang('number_seates')}}</h4>
+                                        
+                                            <table  class="variations-table">
+                                                <tr>
+                                                    <td class="table-value">
+                                                        <div class="box-qty">
+                                                            <a class="quantity-minus"
+                                                                onclick="$('#qty').val(
+                                                                    parseInt($('#qty').val()) > 0 ? parseInt($('#qty_{{ product.product_id }}').val())- 1 : 0)"><i
+                                                                    class="fa fa-minus fa-fw" aria-hidden="true"></i></a>
+                                                            <input type="text"
+                                                                class="form-control qty qty-val input-qty quantity"
+                                                                name="quantity"
+                                                                id="qty"
+                                                                name="qty{{ product_info['product_id'] }}" value="{{ tripData['min_no_seats'] }}" maxlength="{{ tripData['mas_no_seats'] }}"
+                                                                minlength="{{ tripData['mas_no_seats'] }}" min="{{ tripData['min_no_seats'] }}">
+                                                            <a class="quantity-plus"
+                                                                onclick="$('#qty').val(
+                                                                parseInt($('#qty').val()) + 1 )"><i
+                                                                    class="fa fa-plus fa-fw" aria-hidden="true"></i></a>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            <div id="maxSeats_error"></div>
+                                        </div>
+                                        <!-- /Show Quantity box -->
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="form-group">
+                                        <button  onclick="event.preventDefault(); bookNow()" class="submitting"><span>{{ lang('book_now') }}</span> <img src="expandish/view/theme/default/image/trips/right-arrow (2).svg" alt=""></button>
+                                    </div>
+    
+                                </div>
+                           
+    
+                                </div>
+                            </div>
+                        </div>
+                         
+                        <div class="col-md-6">
+                            <div class="trips--slider">
+                                <div id="myCarousel" class="carousel slide" data-ride="carousel">
+                                    <!-- Indicators -->
+                                    <ol class="carousel-indicators">
+                                    <li data-target="#myCarousel" data-slide-to="0" class="active"></li>
+                                     {% set key=1 %}
+                                     {% for key,image in product_images %}
+                                        <li data-target="#myCarousel" data-slide-to="{{key}}"></li>
+                                     {% endfor %}
+                                    </ol>
+                                  
+                                    <!-- Wrapper for slides -->
+                                    <div class="carousel{{ key == 1 ? '-inner' : '' }}">
+                                     <div class="item active">
+                                            <img src="{{main_image}}" alt="">
+                                        </div>
+                                    {% for key,image in product_images %}
+                                        <div class="item">
+                                            <img src="{{image['image']}}" alt="">
+                                        </div>
+                                         {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    
+                    </div><!--End row-->
+                </section>
+
+                <section class="popular--trips">
+                    <section class="cards"><!--Start cards-->
+                        <div class="row"><!--Start row-->
+                        
+                            <div class="col-md-12 col-sm-6 col-sx-12">
+                            <h2 class="cards--header">
+                                    <span>{{lang('popular_trips')}}</span>
+                                </h2>
+                                <div class="row"><!--Start row branched-->
+                                  
+                               {% if popular_trips %}
+                               
+                                {% for trip in popular_trips %}  
+                                 <div class="col-md-4">  
+                                <div class="card--block">
+                                    <a href="{{ trip['href'] }}">
+                                        <div class="card--block-img">
+                                            <img src="{{ trip['thumb'] }}" alt="">
+                                            <div class="card--block-img-overlay">
+                                                <span class="flag text-center">{{ trip['price'] }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="card--block-info">
+                                            <h5 class="card--block-info-heading">{{ trip['name'] }}</h5>
+                                            <ul class="list-unstyled list-inline">
+                                                <li>
+                                                    <img src="expandish/view/theme/default/image/trips/maps-and-flags.png" alt="">
+                                                    <span>{{ trip['trip_data']['area'] }}</span>
+                                                </li>
+                                                <li>
+                                                    <img src="expandish/view/theme/default/image/trips/calendar.png" alt="">
+                                                    <span>{{ trip['trip_data']['duration'] }} Days</span>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </a>
+                                </div>
+                                </div>
+                                 {% endfor %}
+                                 {% endif %}
+                
+                                </div><!--End Row branched-->
+                            </div>
+                        </div><!--End row-->
+                    </section><!--End cards-->
+                </section>
+            </div><!--End container-->
+        </section><!--End search-->
+<script>
+
+function bookNow() {
+   var quantity=$('#qty').val();
+   $('#maxSeats_error').html('');
+   var maxNoOfSeats = parseInt('{{ tripData['max_no_seats'] }}');
+   var minNoOfSeats = parseInt('{{ tripData['min_no_seats'] }}');
+    if (quantity < minNoOfSeats || quantity> maxNoOfSeats)
+   {
+        $('#maxSeats_error').append('<span style="color:red;" class="error">{{lang('minSeats_error')}} '+minNoOfSeats+' {{lang('and')}} {{lang('maxSeats_error')}} '+maxNoOfSeats+' </span>');
+   }
+   
+    else{
+    $('#maxSeats_error').html('');
+	data = $('.product-add-form input[type=\'text\'], .product-add-form input[type=\'hidden\'], .product-add-form input[type=\'radio\']:checked, .product-add-form input[type=\'checkbox\']:checked, .product-add-form select, .product-add-form textarea, #minimum_deposit_customer_price,#minimum_deposit_price');
+    console.log(data);
+	$.ajax({
+		url: 'index.php?route=checkout/cart/add',
+		type: 'post',
+		data: data,
+		dataType: 'json',
+		success: function(json) {			
+        
+            $('.alert-success, .alert-warning, .alert-attention, .alert-information, .alert-error').remove();
+         
+			if (json['success']) {
+				if (json['fb_data_track']) {
+					fbq('track', json['fb_data_track']['event'], {
+						"Product Name": json['fb_data_track']['product_name'],
+						"content_type":json['fb_data_track']['content_type'],
+						"content_ids":json['fb_data_track']['content_ids'],
+						"value":json['fb_data_track']['value'],
+						"currency":json['fb_data_track']['currency'],
+						"product_catalog_id":json['fb_data_track']['product_catalog_id']
+					});
+				}
+				$('#notification').html('<br><div class="alert alert-success alert-dismissible" style="display: none;" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>' + json['success'] + '</div>');
+				
+				$('.alert-success').fadeIn('slow');
+				$('.alert-success').delay(3000).fadeOut('slow');
+				$('#counterLabel').html(json['product_count']);
+				$('#minicounterLabel').html(json['product_count']);
+
+                $.get('index.php?route=common/cart', function(html) {
+                    $('#cartDropList').html(html);
+                    $('#minicartDropList').html(html);
+                });
+			
+              
+			}
+              if (typeof(json['error']) != "undefined") {
+                    if(typeof(json['error']['option']) != "undefined") {
+                    $.each(json['error']['option'], function(index, error) {
+                        $('#notification').html('<br><div class="alert alert-warning alert-dismissible" style="display: none;" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>' + error + '</div>');
+
+                        $('.alert-warning').fadeIn('slow');
+
+                        $('html, body').animate({ scrollTop: 0 }, 'slow');
+                    });
+                    }
+                    else{
+                    $.each(json['error'], function(index, error) {
+                        $('#notification').html('<br><div class="alert alert-warning alert-dismissible" style="display: none;" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>' + error + '</div>');
+
+                        $('.alert-warning').fadeIn('slow');
+
+                        $('html, body').animate({ scrollTop: 0 }, 'slow');
+                    });    
+                    }
+                }
+		}
+	});
+   }
+}
+</script>

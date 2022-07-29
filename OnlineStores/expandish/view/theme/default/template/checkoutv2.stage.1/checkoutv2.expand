@@ -1,0 +1,588 @@
+<html lang="en" class="">
+<head>
+    <title>{{title}}</title>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset=utf-8>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+   
+    {% if store_icon != '' %} <link href="{{ store_icon }}" rel="icon" /> {% endif %}
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="index.php?route=common/style{{ isdraft == 1 ? '&isdraft=1' : '' }}">
+    <link rel="stylesheet" type="text/css" href="/expandish/view/theme/default/css/sass/style.css" />
+    <link rel="stylesheet" type="text/css" href="/expandish/view/theme/default/template/checkoutv2/css/checkout_main.css" />
+
+    <script type="text/javascript" src="{{ jslink('js/jquery.min.js') }}"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js" integrity="sha384-LtrjvnR4Twt/qOuYxE721u19sVFLVSA4hf/rRt6PrZTmiPltdZcI7q7PXQBYTKyf" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/js/select2.min.js"></script>
+    <script type="text/javascript" src="{{ jslink('js/jquery-ui.min.js') }}"></script>
+    <link rel="stylesheet" type="text/css" href="{{ csslink('css/jquery-ui-1.8.16.custom.css') }}" />
+    <link rel="stylesheet" type="text/css" href="{{ csslink('js/jquery/ui/themes/ui-lightness/jquery-ui-1.8.16.custom.css') }}" />
+	{% for script in inline_scripts %}{% if script['type'] == 'callable' %}{{ script['script']|base64_decode }}{% endif %}{% endfor %}
+    <style>
+        .map_cont #pac-input {
+            background-color: #fff;
+            font-family: Roboto;
+            font-size: 15px;
+            font-weight: 300;
+            margin-left: 12px;
+            margin-right: 12px;
+            padding: 0 11px 0 13px;
+            text-overflow: ellipsis;
+            width: auto;
+        }
+        .map_cont .controls {
+            margin-top: 10px;
+            border: 1px solid transparent;
+            border-radius: 2px 0 0 2px;
+            box-sizing: border-box;
+            -moz-box-sizing: border-box;
+            height: 32px;
+            outline: none;
+            box-shadow: 0 2px 6px rgb(0 0 0 / 30%);
+        }
+        .address-toogle {display: none;}
+        .modal-backdrop.show {z-index: 1000 !important;}
+        #quickcheckout #confirm_payment {
+            width: 100%;
+        }
+        #quickcheckout .alert.alert-danger {
+            margin: 10px 25px;
+            background-color: #fffaf6;
+            background-image: none;
+            font-weight: bold;
+        }
+        #quickcheckout .alert .close {
+            display: none;
+        }
+        #quickcheckout .alert.alert-danger ul::before {
+            content: "\f129";
+            font-family: Font Awesome\ 5 Free;
+            border: 1px solid;
+            padding: 5px;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 10px;
+        }        
+        body[dir="rtl"] #quickcheckout .alert.alert-danger ul::before {
+            margin-left: 10px;
+            margin-right: 0;
+        }
+        #quickcheckout .alert.alert-danger ul {
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+        }
+    </style>
+</head>
+    <body dir="{{ lang('direction') == 'rtl' ? 'rtl' : 'ltr' }}">
+        <div class="content position-static">
+            <div id="quickcheckout" class="position-static">
+                <div class="wait" style="display:none;">
+                    <span class="preloader">
+                        <img src="expandish/view/theme/default/image/spinners/spinner_1.gif" alt="">
+                    </span>
+                </div>
+                
+                <div class="processing-payment"><span class="preloader"></span><span class="text">{{ lang('text_processing') }}</span></div>
+                
+                <div class="wrap position-static">
+                
+                    {# Checkout logo #}
+                    <div class="checkout-logo-container">
+                        <div class="row">
+                            <div class="col-md-9">
+                                <div class="checkout-logo checkout_cont">
+                                    <h1 class="{{store_logo != '' ? 'hidden' : 'checkout-logo__title'}}">{{ store_name }}</h1>
+                                    {% if store_logo != '' %}
+                                        <img class="checkout-logo__image" src="{{ store_logo }}" title="{{ store_name }}" alt="{{ store_name }}"/>
+                                    {% endif %}
+                                </div>
+                            </div>
+                                <button class="btn-summary">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="13.877" height="13.061" viewBox="0 0 13.877 13.061">
+                                        <g id="shopping-cart-empty-side-view" transform="translate(0 -13.148)">
+                                        <path id="Path_12202" data-name="Path 12202" d="M13.8,15.639a.445.445,0,0,0-.346-.19l-8.608-.371a.445.445,0,0,0-.038.89l8.025.346-1.578,4.923H4.23L2.961,14.329A.445.445,0,0,0,2.686,14L.608,13.179a.445.445,0,1,0-.326.829l1.848.726,1.291,7.029a.445.445,0,0,0,.438.365h.214l-.489,1.358a.371.371,0,0,0,.349.5h.343a1.336,1.336,0,1,0,1.986,0H9.174a1.336,1.336,0,1,0,1.986,0h.417a.371.371,0,1,0,0-.742H4.461l.4-1.113h6.715A.445.445,0,0,0,12,21.818l1.855-5.788A.444.444,0,0,0,13.8,15.639ZM5.269,25.467a.594.594,0,1,1,.594-.594A.594.594,0,0,1,5.269,25.467Zm4.9,0a.594.594,0,1,1,.594-.594A.594.594,0,0,1,10.167,25.467Z" transform="translate(0)" fill="#155ebc"/>
+                                        </g>
+                                    </svg>
+                                    <span class="btn-summary__title" >{{ lang('summary') }}</span>
+                                    <span class="btn-summary__price" id="mobile_summery_holder"></span>
+                                </button>
+                        </div>
+                 </div>
+                    {% if not session_data.ismobile == 1 %}
+                        <!-- breadcrumb -->
+                        {# <div class="breadcrumb-page quickcheckout__breadcrumb">
+                            <div class="breadcrumb">
+                                <button class="btn-summary">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="13.877" height="13.061" viewBox="0 0 13.877 13.061">
+                                        <g id="shopping-cart-empty-side-view" transform="translate(0 -13.148)">
+                                          <path id="Path_12202" data-name="Path 12202" d="M13.8,15.639a.445.445,0,0,0-.346-.19l-8.608-.371a.445.445,0,0,0-.038.89l8.025.346-1.578,4.923H4.23L2.961,14.329A.445.445,0,0,0,2.686,14L.608,13.179a.445.445,0,1,0-.326.829l1.848.726,1.291,7.029a.445.445,0,0,0,.438.365h.214l-.489,1.358a.371.371,0,0,0,.349.5h.343a1.336,1.336,0,1,0,1.986,0H9.174a1.336,1.336,0,1,0,1.986,0h.417a.371.371,0,1,0,0-.742H4.461l.4-1.113h6.715A.445.445,0,0,0,12,21.818l1.855-5.788A.444.444,0,0,0,13.8,15.639ZM5.269,25.467a.594.594,0,1,1,.594-.594A.594.594,0,0,1,5.269,25.467Zm4.9,0a.594.594,0,1,1,.594-.594A.594.594,0,0,1,10.167,25.467Z" transform="translate(0)" fill="#155ebc"/>
+                                        </g>
+                                      </svg>
+                                     <span class="btn-summary__title" >{{ lang('summary') }}</span>
+                                     <span class="btn-summary__price" id="mobile_summery_holder"></span>
+                                </button>
+                            </div>
+                        </div>  #}
+                        <!-- breadcrumb -->
+                    {% endif %}
+                    
+                    {% if checkout_mode == 3 %}
+                        {{ include('/default/template/checkoutv2/three_steps.expand') }}
+                    {% else %}
+                        {{ include('/default/template/checkoutv2/one_page.expand') }}
+                    {% endif %}
+                   
+                    <!-- {{ quickcheckout }} -->
+                </div>
+            </div>
+        </div>
+
+        <input class="cont-shipping" type="hidden" value="{{ lang('continue_to_shipiing') }}">
+        <input class="cont-payment" type="hidden" value="{{ lang('Continue_to_payments') }}">
+
+        {{ include('/default/template/checkoutv2/script.expand') }}
+
+        <!-- Quick Checkout v4.3.1
+            by Dreamvention.com module/quickcheckout.tpl -->
+        <style>
+            .blocks{
+                display:none}
+            .step_1{
+                display:block}
+
+            .sms-conf-dialog {
+                font-size: 16px;
+            }
+
+            #resend_message_a_tag
+            {
+                font-weight: bold;
+                text-decoration: underline;
+            }
+
+            #resend_message_a_tag:hover
+            {
+                cursor: pointer;
+            }
+
+            .sms-conf-dialog .ui-dialog-titlebar.ui-widget-header.ui-corner-all.ui-helper-clearfix {display: none;}
+        </style>
+
+
+        <script><!--
+
+
+            if (!window.console) window.console = {};
+            if (!window.console.log) window.console.log = function (){ } ;
+
+            $(document).ready(function(){
+                $('.wait').hide();
+                {% if settings['general']['only_quickcheckout'] %}
+
+                $('body > div').hide()
+                $('#quickcheckout').prependTo("body")
+                {% endif %}
+
+                $('.blocks').fadeIn("slow", function(){
+                    debug_update()
+
+                });
+            })
+
+
+
+            /* 	Core refresh functions
+            *
+            *	1 Full Checkout refresh (level 1)
+            *	2 Payment address + Shipping address + Shipping method + Payment method + Confirm (level 2)
+            *	3 Shipping address + Shipping method + Payment method + Confirm (level 3)
+            *	4 Shipping method + Payment method + Confirm (level 4)
+            *	5 Payment method + Confirm (level 5)
+            *	6 Confirm (level 6)
+            *	0 Session (level 0)
+            */
+
+            {# $(document).ready(function() {
+            refreshStep(6);
+        }); #}
+
+
+            /*
+            *	Login
+            */
+            $(document).on('click', '#button_login', function() {
+                $.ajax({
+                    url: 'index.php?route=module/quickcheckoutv2/login_validate',
+                    type: 'post',
+                    data: $('#quickcheckout .step_1 #option_login input'),
+                    dataType: 'json',
+                    beforeSend: function() {
+                        $('#button_login').attr('disabled', true);
+
+                    },
+                    complete: function() {
+                        $('#button_login').attr('disabled', false);
+
+                    },
+                    success: function(json) {
+                        console.log(json)
+                        $('.warning, .error').remove();
+
+                        if ("error" in json) {
+                            $('#quickcheckout > .wrap').prepend('<div class="warning" style="display: none;">' + json['error']['warning'] + '</div>');
+
+                            $('.warning').fadeIn('slow');
+                        } else if(json['reload'])   {
+                            location.reload()
+                        } else {
+                            refreshAllSteps()
+                        }
+                    },
+                    error: function(xhr, ajaxOptions, thrownError) {
+                        console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                    }
+                });
+            });
+
+            $(document).on('click', '#button_login_popup', function() {
+                $.ajax({
+                    url: 'index.php?route=module/quickcheckoutv2/login_validate',
+                    type: 'post',
+                    data: $('#option_login_popup input'),
+                    dataType: 'json',
+                    beforeSend: function() {
+
+                        $('#button_login_popup').attr('disabled', true);
+
+                    },
+                    complete: function() {
+                        $('#button_login_popup').attr('disabled', false);
+
+                    },
+                    success: function(json) {
+                        console.log(json)
+                        $('.warning, .error').remove();
+
+                        if ("error" in json) {
+                            $('#option_login_popup').prepend('<div class="warning" style="display: none;">' + json['error']['warning'] + '</div>');
+
+                            $('.warning').fadeIn('slow');
+                        } else if(json['reload'])   {
+                            location.reload()
+                        } else {
+                            refreshAllSteps()
+                            $('#option_login_popup_wrap').fadeOut('slow')
+                        }
+                    },
+                    error: function(xhr, ajaxOptions, thrownError) {
+                        console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                    }
+                });
+            });
+            /*
+            *	Registration button click
+            */
+            var isPhoneVerified=0;
+
+            var smsDialog;
+
+
+
+
+
+            /*
+            *	Actions
+            */
+            $(document).on('focus', 'input[name=\'payment_address[password]\']', function() {
+                var input_field = $(this);
+                setTimeout(function () {
+                    input_field.on('change', function() {
+                        $('input[name=\'payment_address[confirm]\']').next('.error').remove()
+                    });
+                }, 100)
+            });
+
+            /*$(document).on('click', '#quickcheckout input[name="payment_address[shipping]"]', function(event) {
+                {% if not settings['general']['uniform'] %}
+                if ($(this).is(':checked')) {
+                    $(this).val(1)
+                } else {
+                    $(this).val(0)
+                }
+                {% endif %}
+                refreshCheckout(3)
+                event.stopImmediatePropagation()
+            });*/
+
+            /*
+            *	Change values of text or select(dropdown)
+            */
+            $('[name = "payment_address[address_id]"]').on("click", function(){
+                if($('[name = "payment_address[address_id]"]:checked').val() != 0)
+                    $('#payment_address_shipping').val(0);
+            })
+
+            $(document).on('click', '#quickcheckout .qc-quantity span', function(event){
+                if($(this).hasClass('increase')){
+                    $(this).parent().children('input').val(parseInt($(this).parent().children('input').val())+1)
+                }else{
+                    $(this).parent().children('input').val(parseInt($(this).parent().children('input').val())-1)
+                }
+                refreshCheckout(4)
+                event.stopImmediatePropagation()
+            })
+
+            function confirm_coupon(){
+                var couponInput = $('#coupon');
+                $.ajax({
+                    url: 'index.php?route=checkout/checkoutv2/validate_coupon',
+                    type: 'post',
+                    data: couponInput,
+                    dataType: 'json',
+                    beforeSend: function() {
+                        couponInput.removeClass('is-invalid').removeClass('is-valid');
+                        couponInput.closest('.summaray__control').find('.valid-feedback').text("");
+                        couponInput.closest('.summaray__control').find('.invalid-feedback').text("");
+                        
+                        /*$('#validate_errors').html("");
+                        $('#validate_success').html("");*/
+                    },
+                    complete: function() {
+
+                    },
+                    success: function(json) {
+
+                        if (json['error']) {
+                            couponInput.addClass('is-invalid');
+                            couponInput.closest('.summaray__control').find('.invalid-feedback').text(json['error']);
+                            confirm_voucher();
+                            // $('#quickcheckout #validate_errors').prepend('<div class="error" >' + json['error'] + '</div>');
+                            // $('#quickcheckout #coupon').val('');
+                        }
+                        
+                        if (json['success']) {
+                            // couponInput.addClass('is-valid');
+                            // couponInput.closest('.summaray__control').find('.valid-feedback').text(json['success']);
+                            
+                            // $('#quickcheckout #validate_success').prepend('<div class="success" >' + json['success'] + '</div>');
+                            refreshCheckout(4);
+                        }
+                    },
+                    error: function(xhr, ajaxOptions, thrownError) {
+                        console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                    }
+                });
+                event.stopImmediatePropagation()
+            }
+
+            function confirm_voucher(){
+                var discountCodeInput = $('#coupon');
+                $.ajax({
+                    url: 'index.php?route=checkout/checkoutv2/validate_voucher',
+                    type: 'post',
+                    data: {voucher: discountCodeInput.val()},
+                    dataType: 'json',
+                    beforeSend: function() {
+                        $('#quickcheckout #validate_errors').html("");
+                        $('#quickcheckout #validate_success').html("");
+                    },
+                    complete: function() {
+
+                    },
+                    success: function(json) {
+
+                        if(json['error']){
+                            $('#quickcheckout #validate_errors').prepend('<div class="error" >' + json['error'] + '</div>');
+                        }
+                        
+                        if(json['success']){
+                            $('#coupon').removeClass('is-invalid').removeClass('is-valid');
+                            $('#coupon').closest('.summaray__control').find('.valid-feedback').text("");
+                            $('#coupon').closest('.summaray__control').find('.invalid-feedback').text("");
+                        
+                            $('#quickcheckout #validate_success').prepend('<div class="success" >' + json['success'] + '</div>');
+                            refreshCheckout(4)
+                        }
+                    },
+                    error: function(xhr, ajaxOptions, thrownError) {
+                        console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                    }
+                });
+                event.stopImmediatePropagation()
+            }
+            
+            $(document).on('click', '#confirm_coupon', function(event){
+                confirm_coupon();
+            })
+
+            $(document).on('click', '#quickcheckout #confirm_reward', function(event){
+                $.ajax({
+                    url: 'index.php?route=checkout/checkoutv2/validate_reward',
+                    type: 'post',
+                    data: $('#quickcheckout #reward'),
+                    dataType: 'json',
+                    beforeSend: function() {
+                        $('#quickcheckout #validate_errors').html("");
+                        $('#quickcheckout #validate_success').html("");
+                    },
+                    complete: function() {
+
+                    },
+                    success: function(json) {
+                        refreshCheckout(4);
+                        /*if(json['error']){
+                            $('#quickcheckout #validate_errors').prepend('<div class="text-error" >' + json['error'] + '</div>');
+                        }
+                        if(json['success']){
+                            $('#quickcheckout #validate_success').prepend('<div class="text-success" >' + json['success'] + '</div>');
+                            refreshCheckout(4)
+                        }*/
+                    },
+                    error: function(xhr, ajaxOptions, thrownError) {
+                        console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                    }
+                });
+                event.stopImmediatePropagation()
+            })
+
+            /*
+            *	Change values of checkbox or radio or select(click)
+            */
+
+
+            /*$(document).on('click', '#quickcheckout  input[type=checkbox]', function(event) {
+                console.log('#quickcheckout  input[type=checkbox]') ;
+                {% if not settings['general']['uniform'] %}
+                if ($(this).is(':checked')) {
+                    $(this).val(1)
+                } else {
+                    $(this).val(0)
+                }
+                {% endif %}
+                validateCheckbox( $(this).attr('id'))
+                refreshCheckout($(this).attr('data-refresh'))
+                event.stopImmediatePropagation()
+            });*/
+            $(document).on('change', '#quickcheckout  input[type=radio]', function(event) {
+                var stepNo = Number($(this).attr('data-refresh'));
+                if (!stepNo || isNaN(stepNo)) return;
+                
+                if($('[name="payment_address[address_id]"]:checked').val() != 0)
+                    $('#payment_address_shipping').val(0);
+                // console.log(' #quickcheckout  input[type=radio]')
+                // validateRadiobutton( $(this).attr('id'))
+                refreshCheckout(stepNo);
+                event.stopImmediatePropagation();
+            });
+
+
+            {% if settings['general']['debug'] %}
+            var count = 0;
+            var timer = $.timer(function() {
+                $('#timer').html(++count);
+            });
+
+            timer.set({ time : 100, autostart : false });
+            {% endif %}
+
+            $(document).ajaxStart(function(){
+                //$(".wait").show();
+                $('#qc_confirm_order').attr('disabled', true);
+                {% if settings['general']['debug'] %}
+                timer.reset();
+                timer.play();
+                {% endif %}
+            })
+            $(document).ajaxStop(function(){
+                $(".wait").hide();
+                $('.processing-payment').hide()
+                $('#qc_confirm_order').attr('disabled', false);
+                {% if settings['general']['debug'] %}
+                timer.pause();
+                {% endif %}
+            });
+            function debug_update(){
+                {% if settings['general']['debug'] %}
+                console.log('refreshAllSteps debug');
+                $.ajax({
+                    url: 'index.php?route=module/quickcheckoutv2/debug',
+                    type: 'post',
+                    data: $('#quickcheckout input[type=\'text\'], #quickcheckout input[type=\'number\'], #quickcheckout input[type=\'password\'], #quickcheckout input[type=\'checkbox\']:checked, #quickcheckout input[type=\'radio\']:checked, #quickcheckout select,  #quickcheckout textarea'),
+                    dataType: 'html',
+                    beforeSend: function() {
+
+                    },
+                    complete: function() {
+
+                    },
+                    success: function(html) {
+                        $('#quickcheckout #debug_block').html(html)
+                    },
+                    error: function(xhr, ajaxOptions, thrownError) {
+                        console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                    }
+                });
+                {% endif %}
+            }
+
+            //Only quickcheckout
+
+
+
+
+            $(document).on('click', '#quickcheckout .button-toggle', function(event){
+                console.log('click debug' + $('#quickcheckout_debug .debug-content').hasClass('hide'));
+                if ($('#quickcheckout_debug .debug-content').hasClass('hide')) {
+                    $('#quickcheckout_debug .debug-content').removeClass('hide')
+                }else{
+                    $('#quickcheckout_debug .debug-content').addClass('hide')
+                }
+                event.stopImmediatePropagation()
+            })
+
+            //switchery
+            //var elems = Array.prototype.slice.call(document.querySelectorAll('.styled'));
+
+            // elems.forEach(function(html) {
+            //   var switchery = new Switchery(html);
+            // });
+            //-->
+            $(document).ready(function (){
+                $('.btn-summary').click(function (){
+                    $('#cart_wrap').addClass('active');
+                    $('body').css('overflow-y', 'hidden');
+                });
+          
+                $( "body" ).on( "click", ".cart-view__close", function() {
+                    $('#cart_wrap').removeClass('active');
+                    $('body').css('overflow-y', 'visible');
+                });
+                /*var textVal = $('.cont-shipping').val();
+                var textValShipiing = $('.cont-payment').val();
+                $('.steps li').click(function (){
+                    changeNaming();
+                });
+                changeNaming();
+                function changeNaming(){
+                    if($('.register_payment').hasClass('current')){
+                        $('.actions a[href="#next"]').text(textVal);
+                    }
+                    if($('.ship_address').hasClass('current')){
+                        $('.actions a[href="#next"]').text(textValShipiing);
+                    }
+                }*/
+            }); 
+            // cont-payment
+
+            </script>
+    </body>
+</html>

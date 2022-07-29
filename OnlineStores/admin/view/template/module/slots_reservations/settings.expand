@@ -1,0 +1,271 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block title %}
+    {{ lang('slots_reservations_heading_title', 'module/slots_reservations') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+    <a href="{{ cancel }}" class="btn btn-default top-cancel-button"> {{ lang('button_cancel') }}</a>
+    <button type="button" class="slots-reservations-trigger btn btn-primary btn-ladda btn-ladda-spinner top-save-button"
+        data-style="zoom-in">
+        <i class="far fa-save fa-lg position-left"></i> {{ lang('button_save') }}
+    </button>
+{% endblock headelements %}
+
+{% set dualMenuEnabled = true %}
+{% block secondarymenu %}
+<div class="sidebar-category filterable">
+    <div class="category-title cursor-pointer {{ expand!="#store" ? 'category-collapsed' }}">
+        <span>{{ lang('slot_reservations_menu') }}</span>
+        <ul class="icons-list">
+            <li><a href="#" data-action="collapse"></a></li>
+        </ul>
+    </div>
+
+    <div class="category-content no-padding">
+        <ul class="navigation navigation-alt navigation-accordion">
+            <li class="active">
+                <a href="{{ link('module/slots_reservations') }}">
+                    <i class="icon-settings"></i><span>{{ lang('slots_reservations_heading_title') }}</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ link('module/slots_reservations/browse') }}">
+                    <i class="icon-address"></i><span>{{ lang('slots_reservations_grid') }}</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+{% endblock secondarymenu %}
+
+{% block content %}
+<!-- Start Form -->
+<form id="slots-reservations" data-action="{{ links['submit'] }}">
+    <!-- Status -->
+    <div class="col-md-3">
+        <div class="panel panel-flat">
+            <div class="panel-body">
+                <fieldset>
+                    
+                    <legend class="text-semibold">
+                        <i class="fas fa-check-circle fa-lg position-left"></i>
+                        {{ lang('general_settings') }}
+                        <a class="control-arrow" data-toggle="collapse" data-target="#panel1">
+                            <i class="icon-circle-down2"></i>
+                        </a>
+                    </legend>
+
+                    <div class="collapse in" id="panel1" style="text-align:center;">
+                        <div class="form-group" id="cod_status-group">
+                            <label class="control-label">{{ lang('entry_status') }}</label>
+                            <!-- Switchery -->
+                            <div class="checkbox checkbox-switchery">
+                                <label>
+                                    <input type="checkbox" onchange="changeStatus(this);"
+                                    name="slots_reservations[status]"
+                                    value="1"
+                                    class="switchery" {{ status in ['1', 1, 'on'] ? 'checked' }}>
+                                    <span class="switchery-status">{{ status in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                </label>
+                            </div>
+                            <!-- /Switchery -->
+                            <span class="help-block"></span>
+                        </div>
+
+                        <div class="form-group col-md-12" id="cod_settings-group">
+                            <label class="col-md-12 control-label">{{ lang('required_fields') }}</label>
+                            <div class="col-md-12" style="display: flex; margin-bottom: 5px;">
+                                <input class="styled" type="checkbox" value="name"
+                                    id="required-name" name="required_fields[]"
+                                    {{ 'name' in required_fields ? 'checked' : '' }}/>
+                                <label for="required-name" style="margin: 0px 10px">{{ lang('required_name') }}</label>
+                            </div>
+                            <div class="col-md-12" style="display: flex; margin-bottom: 5px;">
+                                <input class="styled" type="checkbox" value="email"
+                                    id="required-email" name="required_fields[]"
+                                    {{ 'email' in required_fields ? 'checked' : '' }}/>
+                                <label for="required-email" style="margin: 0px 10px">{{ lang('required_email') }}</label>
+                            </div>
+                            <div class="col-md-12" style="display: flex; margin-bottom: 5px;">
+                                <input class="styled" type="checkbox" value="phone"
+                                    id="required-phone" name="required_fields[]"
+                                    {{ 'phone' in required_fields ? 'checked' : '' }}/>
+                                <label for="required-phone" style="margin: 0px 10px">{{ lang('required_phone') }}</label>
+                            </div>
+                            <span class="help-block"></span>
+                        </div>
+
+                        <div class="form-group col-md-12" id="cod_settings-group">
+                            <label class="col-md-12 control-label">{{ lang('notify_user') }}</label>
+                            <div class="col-md-12" style="display: flex; margin-bottom: 5px;">
+                                <input class="styled" type="checkbox" value="1"
+                                    id="notify-name" name="slots_reservations[notify_by_mail]"
+                                    {{ notify_by_mail == '1' ? 'checked' : '' }}/>
+                                <label for="notify-name" style="margin: 0px 10px">{{ lang('notify_by_mail') }}</label>
+                            </div>
+                            <div class="col-md-12" style="display: flex; margin-bottom: 5px;">
+                                <input class="styled" type="checkbox" value="1"
+                                    id="notify-sms" name="slots_reservations[notify_by_sms]"
+                                    {{ notify_by_sms == '1' ? 'checked' : '' }}/>
+                                <label for="notify-sms" style="margin: 0px 10px">{{ lang('notify_by_sms') }}</label>
+                            </div>
+                            <span class="help-block"></span>
+                        </div>
+                    </div>
+                </fieldset>
+            </div>
+        </div>
+    </div>
+    <!-- End of Status -->
+
+    <!-- Fields -->
+    <div class="col-md-9">
+        <div class="panel panel-flat">
+            <div class="panel-body">
+                <fieldset>
+                    <legend class="text-semibold">
+                        <i class="fas fa-check-circle fa-lg position-left"></i>
+                        {{ lang('days_heading_title') }}
+                        <a class="control-arrow" data-toggle="collapse" data-target="#fields-panel">
+                            <i class="icon-circle-down2"></i>
+                        </a>
+                    </legend>
+
+                    <div class="collapse in" id="fields-panel">
+                        {% for day in [1,2,3,4,5,6,7] %}
+                        <div id="day-{{day}}">
+                            <div class="col-md-12 day-header" style="display: flex;justify-content: space-between;">
+                                <label>{{ lang('day_' ~ day) }}</label>
+                                <label class='error-hint' style="color: red;"></label>
+                            </div>
+                            <div class="col-md-12 day-body" style="display: flex;">
+                                <div class="form-group" style="padding-left: 2px; padding-right: 2px;">
+                                    <label>{{ lang('open_at') }}</label>
+                                    <input type="text" name="days[{{ day }}][open_at]" class="form-control timepicker"
+                                        value="{{ days[day]['open_at'] }}" />
+                                </div>
+                                <div class="form-group" style="padding-left: 2px; padding-right: 2px;">
+                                    <label>{{ lang('close_at') }}</label>
+                                    <input type="text" name="days[{{ day }}][close_at]" class="form-control timepicker"
+                                        value="{{ days[day]['close_at'] }}"/>
+                                </div>
+                                <div class="form-group" style="padding-left: 2px; padding-right: 2px;">
+                                    <label>{{ lang('slot_size') }}</label>
+                                    <select class="form-control select2" name="days[{{ day }}][slot_size]">
+                                        <option value="15" {{ days[day]['slot_size'] == '15' ? 'selected' : '' }}>
+                                            15
+                                        </option>
+                                        <option value="30" {{ days[day]['slot_size'] == '30' ? 'selected' : '' }}>
+                                            30
+                                        </option>
+                                        <option value="45" {{ days[day]['slot_size'] == '45' ? 'selected' : '' }}>
+                                            45
+                                        </option>
+                                        <option value="60" {{ days[day]['slot_size'] == '60' ? 'selected' : '' }}>
+                                            60
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="form-group" style="padding-left: 2px; padding-right: 2px;">
+                                    <label>{{ lang('max_visitors') }}</label>
+                                    <input type="text" name="days[{{ day }}][max_visitors]" class="form-control"
+                                        value="{{ days[day]['max_visitors'] }}"/>
+                                </div>
+                                <div class="form-group" style="padding-left: 2px; padding-right: 2px; min-width: 10%; text-align: center;">
+                                    <label>{{ lang('day_open') }}</label>
+                                    <div style="display: flex; justify-content: center;">
+                                        <input type="checkbox" name="days[{{ day }}][work_day]" value="1"
+                                            class="form-control styled"
+                                            {{ days[day]['work_day'] == 1 ? 'checked' : '' }}/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </fieldset>
+            </div>
+        </div>
+    </div>
+    <!-- End of Fields -->
+</form>
+<!-- End Form -->
+
+<!-- Lower Buttons -->
+<div class="row">
+    <div class="col-md-12 text-right">
+        <hr/>
+        <a  href="{{ cancel }}" class="btn btn-default bottom-cancel-button"> {{ lang('button_cancel') }}</a>
+        <button type="button"
+            class="slots-reservations-trigger btn btn-primary btn-ladda btn-ladda-spinner bottom-save-button"
+            data-style="zoom-in">
+            <i class="far fa-save fa-lg position-left"></i> {{ lang('button_save') }}
+        </button>
+    </div>
+</div>
+<!-- End Lower Buttons -->
+
+<script>
+    $(document).ready(function() {
+
+        $('.slots-reservations-trigger').click(function () {
+
+            let f = $('#slots-reservations');
+            let d = f.serialize();
+
+            $('.error-hint').html('');
+
+            $.ajax({
+                url: f.data('action'),
+                data: d,
+                dataType: 'JSON',
+                method: 'POST',
+                success: (r) => {
+                    if (typeof r.status != 'undefined' && r.status == 'OK') {
+                        Ladda.stopAll();
+                        return;
+                    }
+
+                    for (i in r.errors.days) {
+                        let e = r.errors.days[i];
+                        $(`#day-${i}`).find('.error-hint').append(e + '<br/>');
+                    }
+                    Ladda.stopAll();
+                }
+            });
+
+        });
+
+        $('select').select2({
+            minimumResultsForSearch: 5,
+        });
+        $('.timepicker').pickatime({
+            hiddenName: true,
+            interval: 15,
+        });
+    });
+    
+function changeStatus(checkbox)
+{
+    var self = $(checkbox);
+    var switch_status = self.siblings('.switchery-status');
+
+    if ( self.is(':checked') )
+    {
+        switch_status.html("{{ lang('text_enabled') }}");
+    }
+    else
+    {
+        switch_status.html("{{ lang('text_disabled') }}");
+    }
+}
+</script>
+{% endblock %}

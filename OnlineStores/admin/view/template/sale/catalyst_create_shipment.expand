@@ -1,0 +1,490 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block title %}
+    {{ lang('catalyst_create_shipment') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+    {% if shipment_details is not defined %}
+        <a onclick="$('#catalyst-shipment').submit()" class="btn btn-primary btn-ladda btn-ladda-spinner top-save-button ladda-button">{{ lang('catalyst_create_shipment') }}</a>
+    {% endif %}
+{% endblock headelements %}
+
+{% block content %}
+    <form enctype="multipart/form-data" method="post" class="form" id="catalyst-shipment" novalidate="novalidate" action="{{ create_shipment_link }}">
+
+        <input type="hidden" name="order_id" value="{{ order_info['order_id'] }}"/>
+
+        <div class="row">
+            <!-- Customer Details -->
+            <div class="col-md-6">
+                <div class="panel panel-white">
+                    <div class="panel-heading">
+                        <h6 class="panel-title"><span class="text-bold">{{ shipment_details is defined ? lang('catalyst_shipment_details') : lang('catalyst_customer_details') }}</span></h6>
+                        <div class="heading-elements not-collapsible">
+                            <ul class="icons-list">
+                                <li><a data-action="collapse" class=""></a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="collapse in" id="fields-panel">
+                            
+                            {% if shipment_details is defined %}
+
+                                <table class="table table-bordered">
+                                    <tr>
+                                        <td>{{ lang('catalyst_order_id') }}</td>
+                                        <td>{{ shipment_details['catalyst_id'] }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>{{ lang('catalyst_customer_name') }}</td>
+                                        <td>{{ shipment_details['customerName'] }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>{{ lang('catalyst_customer_language') }}</td>
+                                        <td>{{ languages[shipment_details['customerLang']]['name'] }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>{{ lang('catalyst_customer_phone') }}</td>
+                                        <td>{{ shipment_details['customerPhone'] }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>{{ lang('catalyst_promise_time') }}</td>
+                                        <td>{{ shipment_details['promiseTime'] }} {{ lang('catalyst_minute') }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>{{ lang('catalyst_preparation_time') }}</td>
+                                        <td>{{ shipment_details['preparationTime'] }} {{ lang('catalyst_minute') }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>{{ lang('catalyst_branch_id') }}</td>
+                                        <td>{{ shipment_details['branchId'] }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>{{ lang('catalyst_time_of_order') }}</td>
+                                        <td>{{ shipment_details['timeOfOrder'] }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>{{ lang('catalyst_total_price') }}</td>
+                                        <td>{{ shipment_details['totalPrice'] }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>{{ lang('catalyst_payment_method') }}</td>
+                                        <td>
+                                            {% for payment_method in catalyst_payment_methods %}
+                                                {% if payment_method['value'] == shipment_details['paymentMethod'] %}
+                                                    {{ payment_method['text'] }}
+                                                {% endif %}
+                                            {% endfor %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>{{ lang('catalyst_notes') }}</td>
+                                        <td>{{ shipment_details['notes'] }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>{{ lang('catalyst_address') }}</td>
+                                        <td>{{ shipment_details['address']['address'] }}</td>
+                                    </tr>
+                                    {# Disabled temporary #}
+                                    {# <tr>
+                                        <td>{{ lang('catalyst_address_name') }}</td>
+                                        <td>{{ shipment_details['address']['name'] }}</td>
+                                    </tr> #}
+                                    <tr>
+                                        <td>{{ lang('catalyst_address_notes') }}</td>
+                                        <td>{{ shipment_details['address']['notes'] }}</td>
+                                    </tr>
+                                    {% if shipment_details['address']['coordinates']['lat'] and shipment_details['address']['coordinates']['lng'] %}
+                                    <tr>
+                                        <td>{{ lang('catalyst_location') }}</td>
+                                        <td><div id="order-map" style="height:250px"></div></td>
+                                        <script>
+                                            window.addEventListener('load', function () {
+                                                initMap("{{ shipment_details['address']['coordinates']['lat'] }}", "{{ shipment_details['address']['coordinates']['lng'] }}", 'order-map');
+                                            });
+                                        </script>
+                                    </tr>
+                                    {% endif %}
+                                </table>
+
+                            {% else %}
+
+                                <!-- Language -->
+                                <input type="hidden" name="catalyst_customer_language" value="{{ order_info['language_code'] }}"/>
+                                <!-- Language -->
+
+                                <!-- Address coordinates -->
+                                <input type="hidden" name="coordinates" value="{{ order_info['shipping_address_location'] }}"/>
+                                <!-- Address coordinates -->
+
+                                <!-- Name -->
+                                <div class="form-group col-md-6">
+                                    <label for="catalyst_customer_name" class="control-label">{{ lang('catalyst_customer_name') }} <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="catalyst_customer_name" name="catalyst_customer_name" value="{{ order_info['firstname'] }} {{ order_info['lastname'] }}">
+                                </div>
+                                <!-- Name -->
+
+                                <!-- Phone -->
+                                <div class="form-group col-md-6">
+                                    <label for="catalyst_customer_phone" class="control-label">{{ lang('catalyst_customer_phone') }} <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="catalyst_customer_phone" name="catalyst_customer_phone" value="{{ order_info['telephone'] }}">
+                                </div>
+                                <!-- Phone -->
+
+                                <!-- Payment method -->
+                                <div class="form-group col-md-6">
+                                    <label for="catalyst_payment_method" class="control-label">{{ lang('catalyst_payment_method') }} <span class="text-danger">*</span></label>
+                                    <select id="catalyst_payment_method" name="catalyst_payment_method" class="form-control select">
+                                        <option selected value="-1">{{ lang('catalyst_select_payment_method') }}</option>
+                                        {% for payment_method in catalyst_payment_methods %}
+                                            <option value="{{ payment_method['value'] }}"
+                                                    {{ ( (payment_method['value'] == 0 and order_info['payment_code'] == 'cod') or payment_method['value'] == 1 and order_info['payment_code'] != 'cod') ? 'selected=""' : "" }}
+                                            >{{ payment_method['text'] }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <!-- Payment method -->
+
+                                <!-- Total price -->
+                                <div class="form-group col-md-6">
+                                    <label for="catalyst_total_price" class="control-label">{{ lang('catalyst_total_price') }} <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" id="catalyst_total_price" name="catalyst_total_price" value="{{ order_info['total'] }}" min="0">
+                                </div>
+                                <!-- Total price -->
+
+                                {# Disabled temporary #}
+                                {# <!-- Language -->
+                                <div class="form-group col-md-6">
+                                    <label for="catalyst_customer_language" class="control-label">{{ lang('catalyst_customer_language') }}</label>
+                                    <select class="form-control" id="catalyst_customer_language" name="catalyst_customer_language">
+                                        <option selected value="0">{{ lang('catalyst_select_language') }}</option>
+                                        {% for language in languages %}
+                                            <option value="{{ language['code'] }}">{{ language['name'] }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <!-- Language -->
+
+                                <!-- Branch ID -->
+                                <div class="form-group col-md-6">
+                                    <label for="catalyst_branch_id" class="control-label">{{ lang('catalyst_branch_id') }}</label>
+                                    <input type="text" class="form-control" id="catalyst_branch_id" name="catalyst_branch_id">
+                                </div>
+                                <!-- Branch ID -->
+
+                                <!-- Promise time  -->
+                                <div class="form-group col-md-6">
+                                    <label for="catalyst_promise_time" class="control-label">{{ lang('catalyst_promise_time') }} ({{ lang('catalyst_minute') }})</label>
+                                    <input type="number" class="form-control" id="catalyst_promise_time" name="catalyst_promise_time" min="0">
+                                </div>
+                                <!-- Promise time  -->
+
+                                <!-- Preparation time  -->
+                                <div class="form-group col-md-6">
+                                    <label for="catalyst_preparation_time" class="control-label">{{ lang('catalyst_preparation_time') }} ({{ lang('catalyst_minute') }})</label>
+                                    <input type="number" class="form-control" id="catalyst_preparation_time" name="catalyst_preparation_time" min="0">
+                                </div>
+                                <!-- Preparation time  --> #}
+
+                                <!-- Notes -->
+                                <div class="form-group col-md-12">
+                                    <label for="catalyst_notes" class="control-label">{{ lang('catalyst_notes') }}</label>
+                                    <textarea class="form-control" id="catalyst_notes" name="catalyst_notes">{{ order_info['comment'] }}</textarea>
+                                </div>
+                                <!-- Notes -->
+
+                            {% endif %}
+
+                        </div>
+                    </div>
+                </div>
+
+                {% if shipment_details is not defined %}
+                <div class="panel panel-white">
+                    <div class="panel-heading">
+                        <h6 class="panel-title"><span class="text-bold">{{ lang('catalyst_address_details') }}</span></h6>
+                        <div class="heading-elements not-collapsible">
+                            <ul class="icons-list">
+                                <li><a data-action="collapse" class=""></a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="collapse in" id="fields-panel">
+
+                            <!-- Address -->
+                            <div class="form-group col-md-12">
+                                <label for="catalyst_address" class="control-label">{{ lang('catalyst_address') }} <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="catalyst_address" name="catalyst_address[address]" value="{{ catalys_address }}">
+                            </div>
+                            <!-- Address -->
+
+                            {# Disabled temporary #}
+                            {# <!-- Address Name -->
+                            <div class="form-group">
+                                <label for="catalyst_address_name" class="control-label">{{ lang('catalyst_address_name') }}</label>
+                                <input type="text" class="form-control" id="catalyst_address_name" name="catalyst_address[name]">
+                            </div>
+                            <!-- Address Name --> #}
+
+                            <!-- Address Notes -->
+                            <div class="form-group col-md-12">
+                                <label for="catalyst_address_notes" class="control-label">{{ lang('catalyst_address_notes') }}</label>
+                                <textarea class="form-control" id="catalyst_address_notes" name="catalyst_address[notes]"></textarea>
+                            </div>
+                            <!-- Address Notes -->
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+            </div>
+            <!-- Customer Details -->
+
+            <!-- Products Details -->
+            <div class="col-md-6">
+                <div class="panel panel-white">
+                    <div class="panel-heading">
+                        <h6 class="panel-title"><span class="text-bold">{{ lang('catalyst_products_details') }}</span></h6>
+                        <div class="heading-elements not-collapsible">
+                            <ul class="icons-list">
+                                <li><a data-action="collapse" class=""></a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="collapse in" id="fields-panel">
+                            <table class="table table-bordered table-striped">
+                                <thead>
+                                    <th>{{ lang('catalyst_product_name') }}</th>
+                                    <th>{{ lang('catalyst_product_quantity') }}</th>
+                                </thead>
+                                <tbody>
+                            
+                                    {% set qty = 0 %}
+
+                                    {% for product in products %}
+                                    
+                                        <tr id="item{{ product['order_product_id'] }}" style="width: 100%;">
+
+                                            <td>
+                                                <span title="{{ product['name'] }}">{{ product['name'] }}</span>
+                                                <input type="hidden" value="{{ product['quantity'] }}" name="product[{{ product['order_product_id'] }}]">
+                                            </td>
+
+                                            <td>
+                                            
+                                                <label class="label label-success" style="padding:5px 10px"> {{ product['quantity'] }} </label>
+
+                                                <input type="hidden" value="{{ product['quantity'] }}" name="{{ op['order_product_id'] }}" class="valid" readonly>
+
+                                                <input type="hidden" value="{{ product['price'] }}" name="catalyst_items_base_price_{{ op['order_product_id'] }}">
+                                                <input type="hidden" value="{{ product['weight'] }}" name="catalyst_items_base_weight_{{ op['order_product_id'] }}">
+                                                <input type="hidden" value="{{ product['quantity'] }}" name="catalyst_items_total_{{ op['order_product_id'] }}">
+                                            </td>
+                                        </tr>
+
+                                        {% set qty = qty + product['quantity'] %}
+
+                                    {% endfor %}
+                                
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <!-- Products Details -->
+
+                {% if shipment_details is defined %}
+                <input type="hidden" name="catalyst_id" id="catalyst_id" value="{{ shipment_details['catalyst_id'] }}"/>
+
+                <!-- Tracking modal -->
+                <div class="modal fade" id="tracking-modal" tabindex="-1" role="dialog" aria-labelledby="catalystTracking" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">{{ lang('catalyst_detailed_track_order') }}</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ lang('catalyst_close') }}</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Tracking modal -->
+
+                <div class="panel panel-white">
+                    <div class="panel-heading">
+                        <h6 class="panel-title"><span class="text-bold">{{ lang('catalyst_detailed_track_order') }}</span></h6>
+                        <div class="heading-elements not-collapsible">
+                            <ul class="icons-list">
+                                <li><a data-action="collapse" class=""></a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="form-group col-md-12">
+                            <button id="catalyst-track-order" class="btn btn-success" type="button">{{ lang('catalyst_track_order') }}</button>
+                        </div>
+                    </div>
+                </div>
+
+                {# Disabled Temporary #}
+                {# <div class="panel panel-white">
+                    <div class="panel-heading">
+                        <h6 class="panel-title"><span class="text-bold">{{ lang('catalyst_update_order_status') }}</span></h6>
+                        <div class="heading-elements not-collapsible">
+                            <ul class="icons-list">
+                                <li><a data-action="collapse" class=""></a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="form-group col-md-12">
+                            <lable for="catalyst_order_status">{{ lang('catalyst_order_status') }}</label>
+                            <select id="catalyst_order_status" name="catalyst_order_status" class="form-control">
+                                <option selected value="-1">{{ lang('catalyst_select_order_status') }}</option>
+                                {% for order_status in catalyst_order_status %}
+                                    <option value="{{ order_status['value'] }}" {{ shipment_details['shipment_status'] == order_status['value'] ? 'selected' : '' }}>{{ order_status['text'] }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group col-md-12">
+                            <button id="catalyst-update-order-status" class="btn btn-success" type="button">{{ lang('catalyst_update_order_status') }}</button>
+                        </div>
+                    </div>
+                </div> #}
+
+                <div class="panel panel-white">
+                    <div class="panel-heading">
+                        <h6 class="panel-title"><span class="text-bold">{{ lang('catalyst_cancel_order') }}</span></h6>
+                        <div class="heading-elements not-collapsible">
+                            <ul class="icons-list">
+                                <li><a data-action="collapse" class=""></a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <input type="hidden" name="catalyst_id" value="{{ shipment_details['catalyst_id'] }}"/>
+                        <div class="form-group col-md-12">
+                            <lable for="catalyst_cancel_notes">{{ lang('catalyst_cancel_notes') }}</label>
+                            <textarea id="catalyst_cancel_notes" name="catalyst_cancel_notes" class="form-control"></textarea>
+                        </div>
+                        <div class="form-group col-md-12">
+                            <button id="catalyst-cancel-order" class="btn btn-danger" type="button">{{ lang('catalyst_cancel') }}</button>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+            </div>
+            
+        </div>
+
+        {% if shipment_details is not defined %}
+            <div class="row">
+                <div class="col-md-12 text-right">
+                    <hr/>
+                    <a onclick="$('#catalyst-shipment').submit()" class="btn btn-primary btn-ladda btn-ladda-spinner top-save-button ladda-button">{{ lang('catalyst_create_shipment') }}</a>
+                </div>
+            </div>
+        {% endif %}
+
+    </form>
+
+    <script>
+        var translation = {
+            "no_driver_name": "{{ lang('catalyst_no_driver_name') }}",
+            "no_driver_location": "{{ lang('catalyst_no_driver_location') }}",
+            "no_next_point": "{{ lang('catalyst_no_next_point') }}",
+            "catalyst_status_0": "{{ lang('catalyst_status_0') }}",
+            "catalyst_status_1": "{{ lang('catalyst_status_1') }}",
+            "catalyst_status_2": "{{ lang('catalyst_status_2') }}",
+            "catalyst_status_3": "{{ lang('catalyst_status_3') }}",
+            "catalyst_status_4": "{{ lang('catalyst_status_4') }}",
+            "catalyst_status_5": "{{ lang('catalyst_status_5') }}",
+            "catalyst_status_6": "{{ lang('catalyst_status_6') }}"
+        };
+        var trackOrderUrl = "{{ order_status_track_link }}";
+        trackOrderUrl = trackOrderUrl.replace('%s', $('#catalyst_id').val());
+
+        $('#catalyst-cancel-order').on('click', function () {
+            confirmMessage(function () {
+                $('.form').attr('action', '{{ cancel_shipment_link }}').submit();
+            });
+        });
+        
+        $('#catalyst-update-order-status').on('click', function () {
+            $('.form').attr('action', '{{ order_status_update_link }}').submit();
+        });
+
+        $('#catalyst-track-order').on('click', function () {
+            var element = $(this);
+            var elementHTML = element.html();
+            element.attr('disabled', 'disabled').html('<i class="fa fa-spinner fa-pulse fa-fw"></i>');
+            fetch(trackOrderUrl, {
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer {{ catalyst_auth_token }}'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                var locationMap = translation["no_driver_location"];
+                if (data.driverLocation) {
+                    locationMap = '<div id="track-map" style="height:250px"></div>';
+                }
+                $('#tracking-modal .modal-body').html(`
+                    <table class="table table-bordered">
+                        <tr>
+                            <td>{{ lang('catalyst_driver_name') }}</td>
+                            <td>{{ '${data.driverName || translation["no_driver_name"]}' }}</td>
+                        </tr>
+                        <tr>
+                            <td>{{ lang('catalyst_driver_location') }}</td>
+                            <td>{{ '${locationMap}' }}</td>
+                        </tr>
+                        <tr>
+                            <td>{{ lang('catalyst_next_point') }}</td>
+                            <td>{{ '${data.nextPointETA || translation["no_next_point"]}' }}</td>
+                        </tr>
+                        <tr>
+                            <td>{{ lang('catalyst_order_status') }}</td>
+                            <td>{{ '${translation["catalyst_status_" + data.status]}' }}</td>
+                        </tr>
+                    </table>
+                `);
+                $('#tracking-modal').modal('toggle');
+                element.removeAttr('disabled').html(elementHTML);
+                if (data.driverLocation) {
+                    initMap(data.driverLocation.lat, ata.driverLocation.lng, 'track-map');
+                }
+            });
+        });
+
+        function initMap(lat, lng, selector) {
+            lat = parseFloat(lat);
+            lng = parseFloat(lng);
+            new google.maps.Map(document.getElementById(selector), {
+                center: {lat: lat, lng: lng},
+                zoom: 15
+            });
+        }
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ catalyst_google_api_key }}" async defer></script>
+
+{% endblock content %}

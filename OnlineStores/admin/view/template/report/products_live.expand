@@ -1,0 +1,125 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% set dualMenuEnabled = false %}
+
+{% block title %}
+    {{ lang('heading_title') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+    <button type="button" class="btn btn-primary" id="reset"><i class="far fa-save fa-lg position-left"></i> {{ lang('button_reset') }}</button>
+{% endblock headelements %}
+
+{% block content %}
+<div class="container-detached">
+    <div class="content-detached">
+        <div class="panel panel-flat">
+            <div class="features-table-container basic-btns rounded">
+                <table class="table datatable-basic" id="live-products">
+                    <thead>
+                    <tr>
+                        <th>{{ lang('category_title') }}</th>
+                        <th>{{ lang('live_items_count') }}</th>
+                        <th>{{ lang('live_items_quantity') }}</th>
+                        <th>{{ lang('disabled_items') }}</th>
+                    </tr>
+                    </thead>
+                    {#<tbody>
+                        {% for k, category in categories %}
+                        <tr>
+                            {% if k == 0 %}
+                            <td rowspan="25">Hello!</td>
+                            {% endif %}
+                            <td>{{ category['name'] }}</td>
+                            <td>{{ category['live_count'] }}</td>
+                            <td>{{ category['live_quantity'] }}</td>
+                            <td>{{ category['paused_count'] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>#}
+                </table>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    var listProducts = '{{ link("report/products_live/list") }}';
+
+    $(function () {
+        $.extend($.fn.dataTable.defaults, {
+            autoWidth: false,
+            columnDefs: [{
+                orderable: false,
+                width: '100px',
+            }],
+            dom: '<"datatable-header"fB><"datatable-scroll-wrap"t><"datatable-footer"lip>',
+            
+                language: {
+                    ...locales['dt_language'],
+                    search: ''
+                },
+            buttons: [
+                {
+                    extend: 'excelHtml5',
+                    text: `{% if base.currentplan == "53" and base.platform_version >= base.current_version %}<i class="fas fa-lock gray-lock"></i>{% else %}<i class='icon-drawer-out'></i>{% endif %} {{ lang('entry_export_excel') }}`,
+                    className: `btn btn-default {% if base.currentplan == "53" and base.platform_version >= base.current_version %}plan-lock-btn disabled{% endif %}`,
+                },
+            ],
+            drawCallback: function () {
+                $(this).find('tbody tr').slice(-3).find('.dropdown, .btn-group').addClass('dropup');
+            },
+            preDrawCallback: function () {
+                $(this).find('tbody tr').slice(-3).find('.dropdown, .btn-group').removeClass('dropup');
+            }
+        });
+
+        var table =  $('#live-products').DataTable({
+            "processing": true,
+            "serverSide": true,
+            stateSave: true,
+            
+                language: {
+                    ...locales['dt_language'],
+                    search: ''
+                },
+            "ajax": {
+                url: listProducts,
+                type: "post",
+                error: function () {
+                    $("#reports-sales-error").html(" ");
+                    $("#reports-sales").append('<tbody id="reports-sales-error"><tr><th colspan="6">No data found in the server</th></tr></tbody>');
+                    $("#reports-sales_processing").css("display", "none");
+
+                }
+            },
+            columns: [
+                {data: 'name',},
+                {data: 'live_count'},
+                {data: 'live_quantity'},
+                {data: 'paused_count'},
+            ],
+        });
+
+        var intervalId;
+        $(window).focus(function () {
+            if (!intervalId)
+                intervalId = setInterval(() => {
+                    table.ajax.reload();
+                }, 2000);
+        });
+
+        $(window).blur(function () {
+            clearInterval(intervalId);
+            intervalId = 0;
+        });
+    });
+</script>
+
+{% endblock content %}

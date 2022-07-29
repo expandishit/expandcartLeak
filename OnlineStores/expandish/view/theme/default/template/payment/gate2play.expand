@@ -1,0 +1,102 @@
+<style>
+  .wpwl-wrapper-radio-mobile, .wpwl-wrapper-radio-qrcode {
+    display: block;
+  }
+  #paymentBrand{margin-top: 5px !important;}
+</style>
+
+<div id = "payment_methods_options" style="display: none">
+  <form>
+  <div class="form-group">
+      <select class="form-control" id="paymentBrand">
+        <option value="">--- {{ lang('text_payment_brand') }}---</option>
+        {% for brand in active_brands %}
+          <option value="{{ brand['name']|upper }}">{{ brand['name'] }}</option>
+        {% endfor %}
+      </select>
+  </div>
+  </form>
+</div>
+
+<div id="pay_content" style="display:none">
+  <div>
+    <form action="{{ postbackURL }}" class="paymentWidgets" id="g2p_payment" data-brands="{{payment_brands}}"></form>
+  </div>  
+  <div class="buttons">
+    <div class="right">
+      <input type="button" class="btn-inline" value="{{ lang('button_confirm') }}" onclick="$('#g2p_payment').submit();">
+      <a id="button-confirm-gate2play" class="btn btn-inline">{{ lang('button_confirm') }}</a>
+    </div>
+  </div>
+</div>
+
+<script src="{{ scriptURL }}"></script>
+<script>
+  $.ajaxSetup({
+        // Disable caching of AJAX responses
+        cache: true
+    });
+  var lang = $("html").attr("lang");
+  if (lang){lang=lang;}else lang='en';
+  var wpwlOptions = {locale: lang, style:"{{formStyle}}"}
+  $(function () 
+  {
+    var paymentMethodsOptions = $("#payment_methods_options");
+
+    function displayPaymentAfterLoad()
+    {
+      var selectedOption = ($('#gate2play').is(':checked')) ? 'gate2play' : '';
+      displayPaymentOptions(selectedOption);
+    }
+
+    displayPaymentAfterLoad();
+
+    function displayPaymentOptions(chosenOption)
+    {
+      if (chosenOption == 'gate2play')
+      {
+          paymentMethodsOptions.insertAfter("label[for='gate2play']").show();
+      } else {
+        paymentMethodsOptions.insertAfter("label[for='gate2play']").remove();
+      }
+    }
+
+  });
+
+  var currentPaymentBrand = '';
+   $('#paymentBrand').on('change', function() {
+     var val = $(this).val();
+     if(currentPaymentBrand == val){
+       return;
+     }
+     currentPaymentBrand = val;
+     $.ajax({
+       method: 'POST',
+       url: '{{ setChoosenBrandURL }}',
+       data: {
+         "choosenBrand" : val
+       },
+       success: function() {
+         $.ajax({
+           url: 'index.php?route=module/quickcheckout/refresh_step_view7',
+           type: 'post',
+           dataType: 'html',
+           beforeSend: function() {
+           },
+           complete: function() {
+           },
+           success: function(html) {
+             $('#confirm_payment').html(html);
+             $('#pay_content').fadeIn();
+             $('div.buttons').fadeOut();
+           },
+           error: function(xhr, ajaxOptions, thrownError) {
+             console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+           }
+         });
+       }
+     });
+   
+  });
+</script>
+

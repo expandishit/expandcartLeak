@@ -1,0 +1,223 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block title %}
+    {{ lang('heading_title') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+    {% include "includes/buttons_top.expand" %}
+{% endblock headelements %}
+
+{% block content %}
+    <style>
+        ul.ui-autocomplete {
+            z-index: 1100;
+        }
+
+        .rating_star:hover, .rating_star_off:hover
+        {
+            cursor: pointer;
+        }
+    </style>
+
+    <div class="row">
+        <form class="form" method="post" action="{{ links['submit'] }}">
+            <div class="col-md-12">
+                <div class="panel panel-flat">
+                    <div class="panel-body">
+                        <fieldset>
+
+                        <div class="collapse in form-group col-md-12" id="panel1">
+                            <!-- Status -->
+                            <div class="form-group" id="product_review-group">
+                                <label class="control-label">{{ lang('entry_status') }}</label>
+                                <div class="checkbox checkbox-switchery">
+                                    <label>
+                                        <input type="checkbox" onchange="changeStatus(this);" name="status" class="switchery" {{ status in ['1', 1, 'on'] ? 'checked' }}>
+                                        <span class="switchery-status">{{ status in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                    </label>
+                                </div>
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- Status -->
+                            <!-- Author -->
+                            <div class="form-group col-md-6" id="author-group">
+                                <label for="author" class="control-label">{{ lang('entry_author') }} <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="author" value="{{ author }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Author -->
+                            <!-- Product -->
+                            <div class="form-group col-md-6" id="product_id-group">
+                                <label for="product" class="control-label">{{ lang('entry_product') }} <span class="text-danger">*</span></label>
+                                <select name="product_id" id="product" class="form-control">
+                                </select>
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Product -->
+                            <!-- Review_options_text -->
+                            {%if review_options_text%}
+                                {%for review_text in review_options_text%}
+                                    <div class="form-group col-md-6" id="author-group">
+                                        <label for="author" class="control-label">{{ review_text['name'] }} <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" name="{{review_text['enName']}}" value="{{rating[review_text['enName']]}}">
+                                        <span class="help-block"></span>
+                                    </div>
+                                {%endfor%}
+                            {%endif%}
+                            <!-- /Review_options_text -->
+                            <!-- Text -->
+                            <div class="form-group col-md-12" id="text-group">
+                                <label for="text" class="control-label">{{ lang('entry_text') }}
+                                </label>
+                                <textarea name="text" id="text" class="form-control" cols="30"
+                                          rows="10">{{ text }}</textarea>
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Text -->
+                            <!-- Rating -->
+                            {%if review_options_rate%}
+                            {%for review_rate in review_options_rate%}
+                                {% set rating_value = rating[review_rate['enName']] ? rating[review_rate['enName']] : 1 %}
+
+                                <div class="form-group col-md-12" id="rating-group">
+                                    <label for="text" class="control-label">{{ review_rate['name'] }} <span
+                                                class="text-danger">*</span></label>
+                                    <input type="hidden" name="{{review_rate['enName']}}" value="{{ rating_value }}">
+                                    <br>
+                                    {% set rating_index = 1 %}
+                                    {% for current_rating in range(1, rating_value) %}
+                                        <img src="view/image/rating_star.png" alt="{{ rating_index }}" class="rating_star"
+                                            style="display: inline-block;" width="40" height="40">
+                                        {% set rating_index = rating_index + 1 %}
+                                    {% endfor %}
+
+                                    {% if rating_value < 5 %}
+                                        {% for current_rating in range(1, 5 - rating_value) %}
+                                            <img src="view/image/rating_star_off.png" alt="{{ rating_index }}"
+                                                class="rating_star_off" style="display: inline-block;" width="40" height="40">
+                                            {% set rating_index = rating_index + 1 %}
+                                        {% endfor %}
+                                    {% endif %}
+                                    <span class="help-block"></span>
+                                    <span class="text-muted">{{ lang('text_original_rating') }} = ( {{ rating_value }} / 5 ) </span>
+                                    <br>
+                                    <span class="text-muted">{{ lang('text_current_rating') }} = ( <span
+                                                class="current_rating">{{ rating_value }}</span> / 5 ) </span>
+                                </div>
+                            {%endfor%}
+                            {%else%}
+                            {%if rating is iterable%}
+                                {% set rating = 1 %}
+                            {%endif%}
+                            <div class="form-group col-md-12" id="rating-group">
+                                <label for="text" class="control-label">{{ lang('entry_rating') }} <span
+                                            class="text-danger">*</span></label>
+                                <input type="hidden" name="rating" value="{{ rating }}">
+                                <br>
+                                {% set rating_index = 1 %}
+                                {% for current_rating in range(1, rating) %}
+                                    <img src="view/image/rating_star.png" alt="{{ rating_index }}" class="rating_star"
+                                         style="display: inline-block;" width="40" height="40">
+                                    {% set rating_index = rating_index + 1 %}
+                                {% endfor %}
+
+                                {% if rating < 5 %}
+                                    {% for current_rating in range(1, 5 - rating) %}
+                                        <img src="view/image/rating_star_off.png" alt="{{ rating_index }}"
+                                             class="rating_star_off" style="display: inline-block;" width="40" height="40">
+                                        {% set rating_index = rating_index + 1 %}
+                                    {% endfor %}
+                                {% endif %}
+                                <span class="help-block"></span>
+                                <span class="text-muted">{{ lang('text_original_rating') }} = ( {{ rating }} / 5 ) </span>
+                                <br>
+                                <span class="text-muted">{{ lang('text_current_rating') }} = ( <span
+                                            class="current_rating">{{ rating }}</span> / 5 ) </span>
+                            </div>
+                            {%endif%}
+                            <!-- /Rating -->
+                            </div>
+
+                        </fieldset>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+{% set cancel = link('module/product_review/reviews') %}
+<!-- Lower Buttons -->
+{% include "includes/buttons_bottom.expand" %}
+<!-- End Lower Buttons -->
+    </div>
+
+    <script type="text/javascript" src="view/assets/js/core/libraries/jquery_ui/widgets.min.js"></script>
+
+    <script>
+        $('select').select2();
+    </script>
+<script>
+    var links = {};
+    links['submit'] = "{{ links['submit'] }}";
+</script>
+<script src="view/javascript/pages/catalog/review.js?bn={{ BuildNumber }}"></script>
+<script>
+    function changeStatus(checkbox)
+    {
+        var self = $(checkbox);
+        var switch_status = self.siblings('.switchery-status');
+
+        if ( self.is(':checked') )
+        {
+            switch_status.html("{{ lang('text_enabled') }}");
+        }
+        else
+        {
+            switch_status.html("{{ lang('text_disabled') }}");
+        }
+    }
+
+    $(document).ready(function () {
+        let selectedProduct =  {{ selectedProduct|json_encode }};
+        if(selectedProduct){
+            $("#product").append('<option value="' +selectedProduct['product_id']+'" selected>'+selectedProduct['name']+' </option>');
+        }
+
+        $("#product").select2({
+            tokenSeparators: [','],
+            closeOnSelect: false,
+            ajax: {
+                url: '{{ link("catalog/product/autocomplete") }}',
+                dataType: 'json',
+                type: 'GET',
+                delay: 250,
+                data: function (params) {
+                    return {
+                        filter_name: params.term
+                    };
+                },
+                processResults: function (data) {
+                    return {
+                        results: $.map(data, function (item, index) {
+
+                            return {
+                                id: item.product_id,
+                                text: item.name
+                            }
+                        })
+                    };
+                },
+                cache: true
+            }
+        });
+    });
+
+
+</script>
+{% endblock content %}

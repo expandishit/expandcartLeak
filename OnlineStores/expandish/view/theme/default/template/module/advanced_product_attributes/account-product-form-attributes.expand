@@ -1,0 +1,55 @@
+<div class="ms-advanced-attributes" style="z-index: -1; height: 400px;">
+	<p class="error" id="error_attributes"></p>
+
+	<div style="margin-bottom: 20px;">
+		<label for="select-advanced-attributes">{{ lang('ms_advanced_attributes_add') }}</label>
+		<select name="advanced_attributes[0]" class="select_advanced_attributes" multiple="multiple" id="select-advanced-attributes">
+			{% for attribute in advanced_attributes  %}
+			<option data-attr_name="{{ attribute['name'] }}" 
+				value="{{ attribute['advanced_attribute_id'] }}" 
+				{{ (attribute['advanced_attribute_id'] in selected_values) ? 'selected' : '' }}>
+				{{ attribute['name'] }}
+			</option>
+			{% endfor %}
+		</select>
+	</div>
+
+	<div class="advanced-attributes"></div>
+
+</div>
+
+
+<!-- Initialize the plugin: -->
+<script type="text/javascript">
+    $(document).ready(function() {
+        $('#select-advanced-attributes').multiselect({
+        	includeSelectAllOption: false,
+            nonSelectedText: "{{ lang('search_advanced_attribute') }}",
+            enableCaseInsensitiveFiltering: true,
+            filterPlaceholder:  "{{ lang('search_advanced_attribute') }}",
+            // setAllSelectedText: "{{ lang('all_selected_text') }}",
+            allSelectedText: "{{ lang('all_selected_text') }}",
+            onChange: function(option, checked) {
+	           	var advanced_attribute_id = option.val();
+
+            	if(!checked){
+            		//Remove Attribute Block
+					var attribute_block = $('input[type="hidden"][name="product_advanced_attribute_data[' + advanced_attribute_id + '][advanced_attribute_id]"][value="' + advanced_attribute_id + '"]');
+					attribute_block.closest('.advanced-attribute').remove();
+					return;
+            	}
+
+            	//Adding Attribute Block			   	
+				var select = $('.select_advanced_attribute');
+
+				$.get($('base').attr('href') + 'index.php?route=module/advanced_product_attributes/jxRenderAttributesValues&advanced_attribute_id=' + advanced_attribute_id, function(data) {
+					$('div.advanced-attributes').append(data);
+				});
+				$('#attributes_language-tabs a.lang').tabs();
+
+				$('.select_advanced_attribute').val(0);
+	        }
+        });
+		
+    });
+</script>

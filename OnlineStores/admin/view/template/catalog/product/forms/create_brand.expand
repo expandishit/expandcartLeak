@@ -1,0 +1,76 @@
+<div class="modal fade create-category-modal center-modal" id="create_brand_modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+
+            <div class="head">
+                <p class="title">
+                    {{lang('text_create_brand')}}
+                </p>
+                <i class="fas fa-times close-modal" data-dismiss="modal"></i>
+            </div>
+
+            <form id="setting-payment" class="brand-form" action="{{ link('catalog/manufacturer/insert') }}">
+
+                <div class="form-group" id="name-group">
+                    <label for="name" class="control-label">
+                        {{ lang('entry_name', 'catalog/manufacturer') }} <span class="text-danger">*</span>
+                    </label>
+                    <input type="text" class="form-control" id="name" name="name" value="" >
+                    <span class="help-block"></span>
+                    <input type="hidden" name="manufacturer_store[]" value="0" />
+                </div>
+
+            </form>
+
+            <div class="text-right">
+                <button type="button" class="theme-btn primary-btn" onclick="$('.brand-form').submit();"> {{ lang('button_save') }}</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    let addBrandSuccess = function(text, id) {
+        $('#create_brand_modal').modal('hide');
+        var data = {
+            id: id,
+            text: text,
+            selected: true
+        };
+
+        var newOption = new Option(data.text, data.id, true, true);
+        $('#manufacturers-autocomplete').append(newOption).trigger('change');
+    }
+
+    $('.brand-form').submit(function(e) {
+        e.preventDefault();
+
+        let form = $(this);
+
+
+        var $formData = $(this).serialize();
+        var $action = $(this).attr('action');
+        form.siblings(".text-right").find('.theme-btn').addClass("load-btn");
+
+        $.ajax({
+            url: $action,
+            method: 'POST',
+            dataType: 'JSON',
+            data: $formData,
+            success: function (response) {
+                console.log(response)
+                form.siblings(".text-right").find('.theme-btn').removeClass("load-btn");
+                if (response.success == '0') {
+                    for (error in response.errors) {
+                        var $formGroup = $('#' + error).parents('.form-group');
+                        $formGroup.addClass('has-error');
+                        $('.help-block', $formGroup).text(response.errors[error]);
+                    }
+                } else {
+                    addBrandSuccess(response.name, response.manufacturer_id)
+                }
+            }
+        });
+    })
+</script>

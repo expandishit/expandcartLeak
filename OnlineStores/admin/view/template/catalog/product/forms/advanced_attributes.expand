@@ -1,0 +1,147 @@
+<div class="panel panel-flat">
+    <div class="panel-heading">
+        <h6 class="panel-title"><span class="text-bold">{{ lang('tab_advanced_attribute') }}</span><a
+                    class="heading-elements-toggle"><i class="icon-more"></i></a></h6>
+        <div class="heading-elements not-collapsible">
+            <ul class="icons-list">
+                <li><a data-action="collapse" class=""></a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="panel-body">
+
+        <div class="content-group-sm">
+            <p class="content-group-sm">{{ lang('text_advanced_attribute_add_help') }}</p>
+            <div class="input-group">
+                <select multiple="multiple" id="advanced-attribute-autocomplete">
+                    {% for groupId, group in advanced_attributes_by_groups %}
+                    {% if group.advanced_attributes|length > 0 and (group.advanced_attributes|first).advanced_attribute_id is not null %}
+                        <optgroup class="advanced-attributes-group" label="{{ group['group_name'] }}"
+                                  data-group-id="{{ groupId }}">
+                            {% for attrKey, attribute in group['advanced_attributes'] %}
+                                {% if attribute['attribute_name'] %}
+                                    <option {{ attrKey in product_advanced_attributes_ids ? 'selected' : '' }}
+                                            data-attribute-id="{{ attrKey }}"
+                                            value="{{ attrKey }}">{{ attribute['attribute_name'] | escape }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </optgroup>
+                    {% endif %}
+                    {% endfor %}
+                </select>
+                <span class="input-group-btn">
+                <a 
+                   href="{{ link('module/advanced_product_attributes/insertAttribute') }}"
+                   class="btn-primary btn btn-lg">{{ lang('btn_add_new_attribute') }}</a>
+                </span>
+            </div>
+        </div>
+
+        <table class="table table-hover table-framed  datatable-highlight attributeTable {{ product_advanced_attributes|length < 1 ? 'hidden' : ''}}" id="advancedAttributeTable">
+            <thead>
+            <tr>
+                <th>{{ lang('entry_advanced_attribute') }}</th>
+                <th>{{ lang('entry_attribute_group') }}</th>
+                <th>{{ lang('entry_value') }}</th>
+                <th>{{ lang('entry_action') }}</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for key, attribute in product_advanced_attributes %}
+                {% set key = attribute['advanced_attribute_id'] %}
+
+                <tr id="advanced-attribute-row-{{ key }}">
+
+
+                    {# Attribute Name #}
+                    <td class="col-md-4">
+                        {{ attribute['name'] }}
+                        <input type="hidden" name="product_advanced_attribute[{{ key }}][advanced_attribute_id]"
+                               value="{{ attribute['advanced_attribute_id'] }}"/>
+                        <input type="hidden" name="product_advanced_attribute[{{ key }}][type]"
+                               value="{{ attribute['type'] }}"/>                    
+                    </td>
+
+
+
+                    {# Attribute Group #}
+                    <td class="col-md-2">
+                        {{ attribute['GroupName'] }}
+                    </td>
+
+
+                    {# Attribute value #}
+                    <td class="col-md-4">
+
+
+                        {# Attribute type TEXT #}
+                        {% if attribute['type'] == 'text' %}
+                        <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                            <div class="tab-content">
+                                {% for lng in languages %}
+                                    <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}"
+                                         id="advancedAttributeLangTab-{{ key }}-{{ lng['language_id'] }}">
+                                        <div class="form-group"
+                                             id="opt-name-group_{{ lng['language_id'] }}">
+                                            <label class="control-label"></label>
+                                            <input type="text" class="form-control"
+                                                   name="product_advanced_attribute[{{ key }}][product_attribute_description][{{ lng['language_id'] }}][text]"
+                                                   value="{{ attribute['product_attribute_description'][lng['language_id']]['text'] }}"/>
+                                            <span class="help-block"></span>
+                                            <span class="text-muted"></span>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                                {% for language in languages %}
+                                    <li class="{{ loop.first ? 'active' : '' }}">
+                                        <a href="#advancedAttributeLangTab-{{ key }}-{{ language['language_id'] }}"
+                                           data-toggle="tab"
+                                           aria-expanded="false">
+                                            <img src="view/image/flags/{{ language['image'] }}"
+                                                 title="{{ language['name'] }}" class="pull-right">
+                                            <div> {{ language['name'] }}</div>
+                                        </a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        
+
+                        {# Attribute Type SELECT SINGLE #}
+                        {% elseif attribute['type'] == 'single_select' %}
+                            <select name="product_advanced_attribute[{{ key }}][values][]" class="attribute-value-select">
+                                {% for attribute_value in attribute['values'] %}
+                                    <option value="{{ attribute_value.id }}" {{ attribute_value.id in attribute['selected_values'] ? 'selected':'' }}>{{ attribute_value.name }}</option>
+                                {% endfor %}
+                            </select>
+
+
+
+                        {# Attribute Type SELECT MULTIPLE #}
+                        {% elseif attribute['type'] == 'multi_select' %}
+                            <select name="product_advanced_attribute[{{ key }}][values][]" multiple class="attribute-value-select">
+                                {% for attribute_value in attribute['values'] %}
+                                    <option value="{{ attribute_value.id }}" {{ attribute_value.id in attribute['selected_values'] ? 'selected':'' }}>{{ attribute_value.name }}</option>
+                                {% endfor %}
+                            </select>
+                        {% endif %}
+                    </td>
+
+
+                    {# REMOVE ROW BUTTON #}
+                    <td class="col-md-2">
+                        <a onclick="$('#advanced-attribute-row-{{ key }}').remove();"
+                           class="button btn btn-danger"><i class="icon-trash"></i>
+                        </a>
+                    </td>
+
+
+
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>

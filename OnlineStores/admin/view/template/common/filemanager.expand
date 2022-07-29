@@ -1,0 +1,434 @@
+<link rel="stylesheet" type="text/css" href="view/stylesheet/cube/css/libs/font-awesome.css"/>
+
+
+<div class="modal-dialog modal-lg">
+    <div class="modal-content">
+        <div class="modal-header">
+            <button type="button" class="md-close close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h4 class="modal-title">{{ lang('heading_title') }}</h4>
+        </div>
+        <div class="modal-body">
+            <div class="row">
+                <div class="col-sm-5">
+                    <a href="{{ parent }}" data-toggle="tooltip" title="{{ lang('button_parent') }}"
+                       id="button-parent" class="btn btn-default"><i class="fa fa-level-up"></i></a>
+                    <a href="{{ refresh }}" data-toggle="tooltip" title="{{ lang('button_refresh') }}"
+                       id="button-refresh" class="btn btn-default"><i class="fa fa-refresh"></i></a>
+                    <button type="button" data-toggle="tooltip" title="{{ lang('button_upload') }}"
+                            id="button-upload" class="btn btn-primary"><i class="fa fa-upload"></i></button>
+                    <button type="button" data-toggle="tooltip" title="{{ lang('button_folder') }}"
+                            id="button-folder" class="btn btn-default"><i class="fa fa-folder"></i></button>
+                    <button type="button" data-toggle="tooltip" title="{{ lang('button_delete') }}"
+                            id="button-delete" class="btn btn-danger"><i class="fa fa-trash-o"></i></button>
+                </div>
+                <div class="col-sm-7">
+                    <div class="input-group">
+                        <input type="text" name="search" value="{{ filter_name }}"
+                               placeholder="{{ entry_search }}" class="form-control">
+                        <span class="input-group-btn">
+            <button type="button" data-toggle="tooltip" title="{{ button_search }}" id="button-search"
+                    class="btn btn-primary"><i class="fa fa-search"></i></button>
+            </span></div>
+                </div>
+            </div>
+            <hr/>
+            <div class="alert alert-success uploadHelp">
+                <i class="fa fa-check-circle fa-fw fa-lg"></i>
+                {{ lang('text_upload_help') }}
+            </div>
+            <form action="/upload-target" class="dropzone uploadZoneFileManager"></form>
+            {% if editorFunc != 'summernoteImageManagerCallback' %}
+            <div class="row" style="padding: 30px 30px 0;">
+                <div class="col-12">
+                    <a data-toggle="tooltip" title="{{ lang('button_select_checked') }}"
+                       id="button-select-checked" class="btn btn-success">
+                       <i class="fa fa-check-square"></i>
+                       {{ lang('button_select_checked') }}
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            {% for images_array in images|batch(4) %}
+            <div class="row">
+                {% for image in images_array %}
+                <div class="col-sm-3 col-xs-6 text-center">
+                    {% if(image['type'] == 'directory') %}
+                    <div class="text-center"><a href="{{ image['href'] }}" class="directory"
+                                                style="vertical-align: middle;"><i class="fa fa-folder fa-5x"
+                                                                                   style="width: 150px; height: 150px; line-height: 150px;"></i></a>
+                    </div>
+                    <label>
+                        <input type="checkbox" name="path[]" value="{{ image['path'] }}"/>
+                        {{ image['name'] }}</label>
+                    {% endif %}
+                    {% if(image['type'] == 'image') %}
+                        <a href="{{ image['href'] }}" class="thumbnail"
+                           data-filename="{{ image['name'] }}"
+                           data-filethumb="{{ image['thumb'] }}"
+                           data-filepath="{{ image['path'] }}"
+                           data-filesize="{{ image['size'] }}">
+                            <img src="{{ image['thumb'] }}"
+                                 alt="{{ image['name'] }}"
+                                 title="{{ image['name'] }}" style="width: 150px; height: 150px; line-height: 150px;" /></a>
+                    <label>
+                        <input 
+                            type="checkbox" 
+                            name="path[]" 
+                            class="image-checkbox"
+                            value="{{ image['path'] }}"
+                            data-filename="{{ image['name'] }}"
+                            data-filethumb="{{ image['thumb'] }}"
+                            data-filepath="{{ image['path'] }}"
+                            data-filesize="{{ image['size'] }}"/>
+
+                        {{ image['name'] }}</label>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            <br/>
+            {% endfor %}
+        </div>
+        <div class="modal-footer">{{ pagination }}</div>
+    </div>
+</div>
+<script type="text/javascript"><!--
+    $('.uploadHelp').hide();
+    var url = '{{ link('common/filemanager/upload') }}?directory={{ directory }}';
+    //var editorFunc = "{{ editorFunc }}";
+    var myDropzone = new Dropzone(".uploadZoneFileManager", {url: url, clickable: '#button-upload, .uploadZoneFileManager'});
+    myDropzone.on("success", function (file, resp) {
+        $(file.previewElement).data("fileData", resp.fileData);
+        $(file.previewElement).click(function () {
+            thumbClick(this);
+        });
+        $('.uploadHelp').slideDown("slow");
+    });
+
+
+    function thumbClick(clickEventElem) {
+        var fileData = $(clickEventElem).data('fileData');
+
+        {% if editorFunc != 'null' %}
+            if (typeof window["{{ editorFunc }}"] == 'function') {
+                window["{{ editorFunc }}"]("{{ target }}", "{{ thumb }}", fileData.href, fileData.path, fileData.thumb);
+            }
+        {% else %}
+            $('#{{ target }}').val(fileData.path).trigger('change');
+
+            {% if thumb is defined %}
+                {% if thumb in "img-slayerID" %}
+
+                    var $parentDiv = $('#{{ thumb }}').parent();
+                    $('#{{ thumb }}').remove();
+                    $parentDiv.append("<img src='" + fileData.href + "' alt='' id='" + "{{ thumb }}" + "' />");
+                    $pavoEditor.storeCurrentLayerData();
+                {% elseif thumb == "imgMgrThumb" %}
+                    $('#{{ thumb }}').attr('src', fileData.href);
+                {% else %}
+                    $('#{{ thumb }}').attr('src', fileData.thumb);
+                {% endif %}
+            {% endif %}
+        {% endif %}
+
+        $('#modal-image').modal('hide');
+    }
+
+    {% if target is defined %}
+    $('a.thumbnail').on('click', function (e) {
+        e.preventDefault();
+
+        {% if editorFunc != 'null' %}
+        {% if callerName == 'ckeditor' %}
+        CKEDITOR.tools.callFunction('{{ editorFunc }}', $(this).attr('href'));
+        {% elseif callerName == 'dropzone-editor' %}
+
+        var evt = new CustomEvent('ec:imagemanager:thumb-click', {
+            detail: {
+                fileName: $(this).attr('data-filename'),
+                fileSize: $(this).attr('data-filesize'),
+                fileThumb: $(this).attr('data-filethumb'),
+                filePath: $(this).attr('data-filepath')
+            }
+        });
+
+        window.dispatchEvent(evt);
+
+        {% else %}
+        if (typeof window["{{ editorFunc }}"] == 'function') {
+            window["{{ editorFunc }}"]("{{ target }}", "{{ thumb }}", $(this).attr('href'), $(this).parent().find('input').attr('value'), $(this).find('img').attr('src'));
+        }
+        {% endif %}
+        {% else %}
+        $('#{{ target }}').val($(this).parent().find('input').attr('value')).trigger('change');
+
+        {% if thumb is defined %}
+        {% if thumb in "img-slayerID" %}
+
+        var $parentDiv = $('#{{ thumb }}').parent();
+        $('#{{ thumb }}').remove();
+        $parentDiv.append("<img src='" + $(this).attr("href") + "' alt='' id='" + "{{ thumb }}" + "' />");
+        $pavoEditor.storeCurrentLayerData();
+        {% elseif thumb == "imgMgrThumb" %}
+        $('#{{ thumb }}').attr('src', $(this).attr('href'));
+        {% else %}
+        $('#{{ thumb }}').attr('src', $(this).find('img').attr('src'));
+        {% endif %}
+        {% endif %}
+        {% endif %}
+
+        $('#modal-image').modal('hide');
+    });
+
+    $('#button-select-checked').on('click', function (e) {
+        e.preventDefault();
+
+        $.each($('.image-checkbox:checked'),function(){
+            {% if editorFunc != 'null' %}
+            {% if callerName == 'ckeditor' %}
+            CKEDITOR.tools.callFunction('{{ editorFunc }}', $(this).attr('data-filethumb'));
+            {% elseif callerName == 'dropzone-editor' %}
+
+            var evt = new CustomEvent('ec:imagemanager:thumb-click', {
+                detail: {
+                    fileName: $(this).attr('data-filename'),
+                    fileSize: $(this).attr('data-filesize'),
+                    fileThumb: $(this).attr('data-filethumb'),
+                    filePath: $(this).attr('data-filepath')
+                }
+            });
+
+            window.dispatchEvent(evt);
+
+            {% else %}
+            if (typeof window["{{ editorFunc }}"] == 'function') {
+                window["{{ editorFunc }}"]("{{ target }}", "{{ thumb }}", $(this).attr('href'), $(this)
+                    .parent().find('input').attr('value'), $(this).find('img').attr('src'));
+            }
+            {% endif %}
+            {% else %}
+            $('#{{ target }}').val($(this).parent().find('input').attr('value')).trigger('change');
+
+            {% if thumb is defined %}
+            {% if thumb in "img-slayerID" %}
+
+            var $parentDiv = $('#{{ thumb }}').parent();
+            $('#{{ thumb }}').remove();
+            $parentDiv.append("<img src='" + $(this).attr("href") + "' alt='' id='" + "{{ thumb }}" + "' />");
+            $pavoEditor.storeCurrentLayerData();
+            {% elseif thumb == "imgMgrThumb" %}
+            $('#{{ thumb }}').attr('src', $(this).attr('href'));
+            {% else %}
+            $('#{{ thumb }}').attr('src', $(this).find('img').attr('src'));
+            {% endif %}
+            {% endif %}
+            {% endif %}
+
+            $('#modal-image').modal('hide');
+        });
+    });
+    {% endif %}
+    let pageIndex;
+    $('a.directory').on('click', function (e) {
+        e.preventDefault();
+
+        $('#modal-image').load($(this).attr('href'));
+
+        ++pageIndex;
+        $('#button-parent').attr('disabled', false);
+    });
+
+    $('.pagination a').on('click', function (e) {
+        e.preventDefault();
+
+        $('#modal-image').load($(this).attr('href'));
+    });
+
+    $('#button-parent').on('click', function (e) {
+        e.preventDefault();
+
+        if (pageIndex === 0) {
+            $(this).attr('disabled', true);
+            return;
+        }
+
+        $('#modal-image').load($(this).attr('href'));
+
+        if (pageIndex !== 0) {
+            pageIndex--
+        }
+    });
+
+    $('#button-refresh').on('click', function (e) {
+        e.preventDefault();
+
+        $('#modal-image').load($(this).attr('href'));
+    });
+
+    $('input[name=\'search\']').on('keydown', function (e) {
+        if (e.which == 13) {
+            $('#button-search').trigger('click');
+        }
+    });
+
+    $('#button-search').on('click', function (e) {
+        var url = '{{ link('common/filemanager') }}?directory={{ directory }}';
+
+        var filter_name = $('input[name=\'search\']').val();
+
+        if (filter_name) {
+            url += '&filter_name=' + encodeURIComponent(filter_name);
+        }
+
+        {% if thumb is defined %}
+        url += '&thumb=' + '{{ thumb }}';
+        {% endif %}
+
+        {% if target is defined %}
+        url += '&target=' + '{{ target }}';
+        {% endif %}
+
+        {% if editorFunc != '' %}
+        url += '&editorFunc=' + '{{ editorFunc }}';
+        {% endif %}
+
+        {% if callerName != '' %}
+        url += '&callerName=' + '{{ callerName }}';
+        {% endif %}
+
+        $('#modal-image').load(url);
+    });
+
+
+    //--></script>
+<script type="text/javascript"><!--
+    $('#NOTWORKINGNOW').on('click', function () {
+        $('#form-upload').remove();
+
+        $('body').prepend('<form enctype="multipart/form-data" id="form-upload" style="display: none;"><input type="file" name="file" value="" /></form>');
+
+        $('#form-upload input[name=\'file\']').trigger('click');
+
+        if (typeof timer != 'undefined') {
+            clearInterval(timer);
+        }
+
+        timer = setInterval(function () {
+            if ($('#form-upload input[name=\'file\']').val() != '') {
+                clearInterval(timer);
+
+                $.ajax({
+                    url: '{{ link('common/filemanager/upload') }}?directory={{ directory }}',
+                    type: 'post',
+                    dataType: 'json',
+                    data: new FormData($('#form-upload')[0]),
+                    cache: false,
+                    contentType: false,
+                    processData: false,
+                    beforeSend: function () {
+                        $('#button-upload i').replaceWith('<i class="fa fa-circle-o-notch fa-spin"></i>');
+                        $('#button-upload').prop('disabled', true);
+                    },
+                    complete: function () {
+                        $('#button-upload i').replaceWith('<i class="fa fa-upload"></i>');
+                        $('#button-upload').prop('disabled', false);
+                    },
+                    success: function (json) {
+                        if (json['error']) {
+                            alert(json['error']);
+                        }
+
+                        if (json['success']) {
+                            alert(json['success']);
+
+                            $('#button-refresh').trigger('click');
+                        }
+                    },
+                    error: function (xhr, ajaxOptions, thrownError) {
+                        alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                    }
+                });
+            }
+        }, 500);
+    });
+
+    $('#button-folder').popover({
+        html: true,
+        placement: 'bottom',
+        trigger: 'click',
+        title: '{{ entry_folder }}',
+        content: function () {
+            html = '<div class="input-group">';
+            html += '  <input type="text" name="folder" value="" placeholder="{{ entry_folder }}" ' +
+                'class="form-control">';
+            html += '  <span class="input-group-btn"><button type="button" title="{{ button_folder }}" ' +
+                'id="button-create" class="btn btn-primary"><i class="fa fa-plus-circle"></i></button></span>';
+            html += '</div>';
+
+            return html;
+        }
+    });
+
+    $('#button-folder').on('shown.bs.popover', function () {
+        $('#button-create').on('click', function () {
+            $.ajax({
+                url: '{{ link('common/filemanager/folder') }}?directory={{ directory }}',
+                type: 'post',
+                dataType: 'json',
+                data: 'folder=' + encodeURIComponent($('input[name=\'folder\']').val()),
+                beforeSend: function () {
+                    $('#button-create').prop('disabled', true);
+                },
+                complete: function () {
+                    $('#button-create').prop('disabled', false);
+                },
+                success: function (json) {
+                    if (json['error']) {
+                        alert(json['error']);
+                    }
+
+                    if (json['success']) {
+                        alert(json['success']);
+
+                        $('#button-refresh').trigger('click');
+                    }
+                },
+                error: function (xhr, ajaxOptions, thrownError) {
+                    alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                }
+            });
+        });
+    });
+
+    $('#modal-image #button-delete').on('click', function (e) {
+        if (confirm('{{ text_confirm }}')) {
+            $.ajax({
+                url: '{{ link('common/filemanager/delete') }}',
+                type: 'post',
+                dataType: 'json',
+                data: $('input[name^=\'path\']:checked'),
+                beforeSend: function () {
+                    $('#button-delete').prop('disabled', true);
+                },
+                complete: function () {
+                    $('#button-delete').prop('disabled', false);
+                },
+                success: function (json) {
+                    if (json['error']) {
+                        alert(json['error']);
+                    }
+
+                    if (json['success']) {
+                        alert(json['success']);
+
+                        $('#button-refresh').trigger('click');
+                    }
+                },
+                error: function (xhr, ajaxOptions, thrownError) {
+                    alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                }
+            });
+        }
+    });
+    //--></script>

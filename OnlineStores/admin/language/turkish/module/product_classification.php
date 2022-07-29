@@ -1,0 +1,71 @@
+<?php
+
+$_ = [ 
+    'product_classification_heading_title'  => 'Ürün Sınıflandırması', 
+    'error_warning'    => 'Uyarı: Lütfen yanlış veya gerekli alanları gözden geçirdiğinizden emin olun!', 
+    'text_settings'  => 'ayarlar', 
+    'text_enabled'  => 'Etkin', 
+    'text_disabled'  => 'Devre Dışı', 
+    'please_wait' => 'lütfen bekleyin ...', 
+
+    'entry_form_title'  => 'Başlık Ara', 
+    'entry_status'  => 'Durum', 
+    'entry_brand'  => 'Marka', 
+    'entry_brands'  => 'Markalar', 
+    'entry_years'  => 'Yıllar', 
+    'entry_model'  => 'Model', 
+    'entry_models'  => 'Modeller', 
+    'entry_year'  => 'Yıl', 
+    'entry_year_from'  => 'İlk Yıl', 
+    'entry_year_to'  => 'Yıl', 
+    'entry_year_note'  => 'Önceki Yıllar Tekrarlanmayacaktır', 
+    'entry_select_brand'  => 'Markayı Seçin', 
+    'entry_select_model'  => 'Model Seçin', 
+    'entry_year_from_note'  => 'Örnek: 2000', 
+    'entry_year_to_note'  => 'Örnek: 2020', 
+    'general_settings'  => 'Ürün Kodlarını Özelleştir', 
+    'text_settings_success'  => 'Ayarlar Başarıyla Güncellendi', 
+    'text_success'  => 'Ayarlar Başarıyla Güncellendi', 
+    'text_bulkdelete_success'  => 'Kod Başarıyla Silindi', 
+    // error
+    'error_name'      => 'Marka Adı 2 ile 32 karakter arasında olmalıdır!', 
+    'error_permission'      => 'Uyarı: Kodları değiştirme izniniz yok!', 
+    'text_bulkdelete_error'      => 'Beklenmedik Bir Hata Oluştu', 
+    'unexpected_error'      => 'Beklenmedik Bir Hata Oluştu', 
+    'error_brand_required'      => 'Marka Gereklidir', 
+    'error_year_required'      => 'Yıl Adı Gereklidir ve Sadece Numaralara İzin Verilir', 
+    'error_years_required'      => 'Yıl Gereklidir', 
+    'error_year_from_required'      => 'Yıl Zorunludur Ve Sadece Sayılara İzin Verilir ve Minimum Sayı Uzunluğu 4', 
+    'error_year_to_required'      => 'Yıl Zorunludur Ve Sadece Sayılara İzin Verilir ve Minimum Sayı Uzunluğu 4', 
+    'error_year_exists'      => 'Yıl Öncesi Var', 
+    'error_model_required'      => 'Model Adı Gereklidir', 
+
+    'column_brand_name'  => 'Marka', 
+    'column_model_name'  => 'Model', 
+    'btn_new_brand'  => 'Yeni Marka Ekle', 
+    'btn_new_model'  => 'Yeni Model Ekle', 
+    'column_year_name'  => 'Yıl', 
+    'btn_new_year'  => 'Yeni Yıl Ekle', 
+
+
+    'pc_menu_brand'  => 'Markalar', 
+    'pc_menu_model'  => 'Modeller', 
+    'pc_menu_year'  => 'Yıllar', 
+    'pc_menu_settings'  => 'Ayarlar', 
+    'brand_heading_title'  => 'Markalar', 
+    'brand_heading_brand_add'  => 'Yeni Marka Ekle', 
+    'brand_heading_brand_update'  => 'Markayı Güncelle', 
+
+    'year_heading_title'  => 'Yıllar', 
+    'year_heading_year_add'  => 'Yeni Yıl Ekle', 
+    'year_heading_year_update'  => 'Yılı Güncelle', 
+    'year_heading_year_add_models'  => 'Yıl Modelleri Ekle', 
+    'btn_year_models'  => 'Yıl Modellerini Görüntüle', 
+    'button_add_product_classification'  => 'Yeni Sınıflandırma Ekle', 
+
+    'model_heading_title'  => 'Modeller', 
+    'model_heading_model_add'  => 'Model Ekle', 
+    'model_heading_model_update'  => 'Modeli Güncelle', 
+
+];
+

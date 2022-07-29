@@ -1,0 +1,47 @@
+<div class="payment-method__info">
+    <p id="error_bookeey" style="color:red;">{{ error_bookeey }}</p>
+    
+    <button type="button" class="btn-rect text-uppercase bg-color btn btn-inline" 
+    id="confirm-payment" style="display: none" data-toggle="modal" data-target="#myModal">Confirm Payment</button>
+
+    <ul>
+    {% for mode in bookeey_payment_modes %}
+        {% if mode['status'] == 1 %}
+        <li>
+          <label><input type="radio" name="bookeey_payment_mode" value="{{mode['code']}}" {{ mode['code'] == bookeey_payment_mode ? 'checked': (loop.first ? 'checked' : '') }}> {{mode['name']}}</label>
+        </li>
+        {% endif %}
+    {% endfor %}
+    </ul>
+</div>
+    <script type="text/javascript">
+
+        $("#confirm-payment").click(function(event){
+
+            $.ajax({
+                type: 'post',
+                url: 'index.php?route=payment/bookeey/pay',
+                data: {'bookeey_payment_mode':$("input[name='bookeey_payment_mode']:checked").val()},
+                cache: false,
+                success: function (data) {
+                    let response = JSON.parse(data);
+                    console.log("SUCCESS", response);
+                    if (response['url'] !== null && response['success'] == true) {
+                      window.location = response['url'];
+                      return;
+                    } else {
+                        $("#error_bookeey").html(response['error_bookeey']);
+                    }
+                },
+                error: function (err) {
+                    $("#error_bookeey").html(err);
+                    console.log(err);
+                }
+            });
+
+    		});
+    	</script>
+
+
+
+

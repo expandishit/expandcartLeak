@@ -1,0 +1,178 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% set bodyClasses = "has-detached-right sidebar-detached-hidden" %}
+
+{% block title %}
+    {{ lang('heading_title') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+<span class="headLinksEffect">                
+    <a href="{{ link('catalog/product/insert') }}" data-step="1" data-intro=" {{ lang('tour_addproduct') }}" class="btn btn-success btn-labeled btn-xs {% if base.TOTAL_PRODUCTS_COUNT >= base.PRODUCTSLIMIT %}disabled{% endif %}"><b><i class="icon-plus3"></i></b> {{ lang('btn_new_product') }}</a>
+</span>
+
+{% endblock headelements %}
+
+{% block babyHeaderContent %}
+    {% set babyHeader = true %}
+
+    <ul class="breadcrumb-elements not-collapsible">
+        <li><a href="#" id="open_tutorial_modal"><i class="icon-play position-left"></i> {{ lang('open_tutorial_button') }}</a></li>
+
+        {% if base.lang == 'ar' %}
+        <li><a href="javascript:void(0);" onclick="javascript:introJs().setOption('showProgress', true).setOptions({ 'nextLabel': 'التالي', 'prevLabel': 'السابق', 'skipLabel': 'خروج', 'doneLabel': 'اتمام' }).start();"><i class="fab fa-telegram-plane position-left"></i> {{ lang('open_tour_button') }}</a></li>
+        {% else %}
+        <li><a href="javascript:void(0);" onclick="javascript:introJs().setOption('showProgress', true).setOption('tooltipPosition', 'auto').setOption('positionPrecedence', ['left', 'right', 'top', 'bottom']).start();"><i class="fab fa-telegram-plane position-left"></i> {{ lang('open_tour_button') }}</a></li>
+        {% endif %}
+
+    </ul>
+    <ul class="nav navbar-nav">
+        <li onclick="toggleFilter(this)"><a class="sidebar-detached-hide" data-step="2" data-intro=" {{ lang('tour_filerproducts') }}"><i class='icon-filter3 position-left'></i> <span>{{ lang('lbl_filter_products') }}</span></a></li>
+        <li id="btnreset" class="hidden"><a type="reset" href="#"><i class="icon-reset position-left"></i> {{ lang('lbl_reset_filter') }}</a></li>
+        <li><a href="{{ link('tool/product_export') }}" data-step="3" data-intro=" {{ lang('tour_internalexport') }}"><i class="icon-upload position-left"></i> {{ lang('button_export', 'tool/product_export') }}</a></li>
+        <li><a href="{{ link('tool/product_import') }}" data-step="4" data-intro=" {{ lang('tour_internalimport') }}"><i class="icon-download position-left"></i> {{ lang('button_import', 'tool/product_import') }}</a></li>
+        <li><a href="{{ link('tool/new_product_export') }}" data-step="5" data-intro=" {{ lang('tour_externalexport') }}" ><i class="icon-upload position-left"></i> {{ lang('button_new_export', 'tool/product_export') }}</a></li>
+        <li><a href="{{ link('tool/product_import/import') }}" data-step="6" data-intro=" {{ lang('tour_externalimport') }}"><i class="icon-download position-left"></i> {{ lang('button_new_import', 'tool/product_import') }}</a></li>
+    
+    </ul>
+{% endblock %}
+
+{% block content %}
+
+    <!-- Tutorial Modal -->
+
+    <div class="modal fade" id="course_preview" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h6 class="modal-title text-center">{{ lang('tutorial_header') }}</h6>
+                </div>
+
+                <div class="modal-body">
+                    <div class="embed-responsive embed-responsive-16by9">
+                        <iframe class="embed-responsive-item" src="{{ lang('tutorial_link') }}" frameborder="0" allowfullscreen></iframe>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{{ lang('button_cancel') }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- /Tutorial Modal -->
+    <script>
+        $('#open_tutorial_modal').click(function(e) {
+            e.preventDefault();
+            $('#course_preview').modal('show');
+        });
+
+        $("#course_preview").on('hidden.bs.modal', function (e) {
+            $("#course_preview iframe").attr("src", $("#course_preview iframe").attr("src"));
+        });
+    
+        function toggleFilter(el) {
+            //debugger;
+            var isFilterHidden = $('body').hasClass('sidebar-detached-hidden');
+
+            if(isFilterHidden) $(el).children('a').children('span').text('{{ lang('lbl_hide_filter') }}');
+            else $(el).children('a').children('span').text('{{ lang('lbl_filter_products') }}');
+        }
+        function insertLogic()
+        {
+            if ( insertWizard == true )
+            {
+                $('#insertWizard').modal('show');
+            }
+            else
+            {
+                window.location.href = "{{ link('catalog/product/insert') }}";
+            }
+        }
+    </script>
+
+    <!-- Detached content -->
+    <div id="product-grid" data-step="7" data-intro=" {{ lang('tour_productgrid') }}">
+
+        {% include "catalog/product/" ~ template ~ ".expand" %}
+    </div>
+    <!-- /detached content -->
+
+
+    <!-- Detached sidebar -->
+    {% include "catalog/product/filter.expand" %}
+    <!-- /detached sidebar -->
+
+    <script>
+
+        var listLink = '{{ link('catalog/product/getXHRList') }}';
+
+        $('#resetList').click(function () {
+
+            $(':input', '#filter')
+                .not(':button, :submit, :reset, :hidden')
+                .val('')
+                .prop('checked', false)
+                .prop('selected', false);
+
+            $('#filter').find('select').each(function () {
+                this.value = '';
+            }).trigger('change');
+
+            $('#filter').find('.noui-slider-primary').each(function () {
+                $(this).data('ionRangeSlider').reset();
+            });
+
+            table.on('preXhr.dt', function (e, settings, data) {
+                return $.extend(data, {filter: null});
+            });
+
+            table.ajax.reload();
+            /*$.ajax({
+                url: listLink,
+                method: 'get',
+                success: function (response) {
+                    $('#product-grid').html(response);
+                }
+            });*/
+        });
+
+        /*$.ajax({
+            url: listLink,
+            method: 'get',
+            success: function (response) {
+                $('#product-grid').html(response);
+            }
+        });*/
+
+        $(document).ready(function () {
+            $('#datatableGrid_wrapper select').select2({
+                minimumResultsForSearch: Infinity,
+                width: 'auto'
+            });
+        });
+
+    </script>
+
+{% endblock %}
+
+{% block scripts %}
+
+    {{ parent() }}
+
+    <script type="text/javascript" src="view/assets/js/plugins/media/fancybox.min.js"></script>
+
+    <script>
+        $('[data-popup="lightbox"]').fancybox({
+            padding: 3
+        });
+    </script>
+
+{% endblock scripts %}

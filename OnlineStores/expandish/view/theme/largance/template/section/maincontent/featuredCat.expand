@@ -1,0 +1,65 @@
+{% set allFeaturedCategories = getFeaturedCategories(fields['categories']['field_value'], 500, 500) %}
+{% set products_per_item = fields.rows.field_value %}
+<div class="container">
+  
+<div class="product-tab-ajax" id="section-{{ section_id }}">
+  <div class="tab-pro-ajax-header">
+    {% if fields.displaysectiontitle.field_value == 1 %}
+    <h2>{{ fields.sectiontitle.field_value }}</h2>
+    {% endif %}
+    <ul>
+      {% for category in allFeaturedCategories %}
+      <li {% if loop.index == 1 %}class="active"{% endif %}><a href="#{{ category['category_id'] }}" data-toggle="tab" aria-expanded="true">{{ category['name'] }}</a></li>
+      {% endfor %}
+    </ul>
+  </div>
+  <div class="tab-content">
+    {% for category in allFeaturedCategories %}
+		{% set categoryProducts = getProductsByCategoryId(category['category_id'], 20 , 500, 500) %}
+    <div id="{{ category['category_id'] }}" class="tab-pane {% if loop.index == 1 %}active{% endif %}">
+      <div class="clearfix">
+        <div class="wrap-item" data-itemscustom="[[0,1],[480,2],[768,2],[1024,3],[1200,5]]" data-pagination="false" data-navigation="true">
+        {% for itemProduct in categoryProducts %}
+        <div class="item-product">
+          <div class="product-thumb">
+            <a href="{{itemProduct.href}}" class="product-thumb-link">
+              <img src="{{itemProduct.thumb}}" alt="{{itemProduct.name}}" />
+            </a>
+              <div class="product-extra-link">
+              {% if customer.isCustomerAllowedToAdd_cart and ( config('config_hide_add_to_cart') != 1 or itemProduct.quantity > 0 )  %}
+                <a  href="#" onclick="event.preventDefault(); addToCart({{ itemProduct.product_id }},1, {{ ('-1' in itemProduct.price) or ('-1' in itemProduct.special) ? 'true' : 'false' }}); return false;"  class="addcart-link"><i class="fa fa-shopping-basket" aria-hidden="true"></i></a>
+                 {% endif %}
+                <a href="#" onclick="event.preventDefault(); addToWishList('{{ itemProduct.product_id }}',1); return false;" class="wishlist-link"><i class="fa fa-heart" aria-hidden="true"></i></a>
+                <a href="#"  onclick="event.preventDefault(); addToCompare('{{ itemProduct.product_id }}',1); return false;" class="compare-link"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+              </div>
+          </div>
+          <div class="product-info">
+            <h3 class="product-title"><a href="{{itemProduct.href}}">{{itemProduct.name}}</a></h3>
+            {% if config('show_brands') and itemProduct.manufacturer %}
+            <h5 class="product-title"><a href="{{ itemProduct.manufacturer_href }}" id="brand_sections" alt"{{ itemProduct.manufacturer }}">{{ itemProduct.manufacturer }}</a></h5>
+            {% endif %}
+            <div class="product-price">
+              {% if ('-1' in itemProduct.price) or ('-1' in itemProduct.special) %}
+                <ins><span class="clickable" onclick="contact_us('{{ itemProduct.product_id }}');">{{ lang('button_req_quote') }}</span></ins>
+                <!--<input type="button" value="{{ lang('button_req_quote') }}" onclick="contact_us('{{ itemProduct.product_id }}');" class="button" />-->
+                <div id="enquiry-{{ itemProduct.product_id }}"  style="display:none">{{ itemProduct.name }}:</div>
+              {% elseif itemProduct.special != '' %}
+              <del><span>{{ itemProduct.price }}</span></del>
+              <ins><span>{{ itemProduct.special }}</span></ins>
+              {% else %}
+              <ins><span>{{ itemProduct.price }}</span></ins>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+        </div>
+      </div>
+    </div>
+    <!-- End Tab -->
+    {% endfor %}
+  </div>
+</div>
+<!-- End Product Tab -->
+
+</div>

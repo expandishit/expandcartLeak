@@ -1,0 +1,415 @@
+{% extends "base.expand" %}
+
+{% set isFrameless = true %}
+
+{% block framelessContent %}
+    <link rel="stylesheet" type="text/css" href="view/stylesheet/invoice.css?bn={{ BuildNumber }}" />
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body, td, th {
+            font-family: 'Cairo', sans-serif;
+
+        }
+        .product td, .store td{
+            font-size: 10px;
+        }
+        .product td{
+            vertical-align: top;
+        }
+        .store td td:first-child {
+            width: 40%;
+        }
+        .store td td:first-child b {
+            font-weight: normal;
+        }
+        .config_invoice_width{
+            width: {{config_invoice_width}}px;
+            margin: auto;
+        }
+        .heading td {
+            background: transparent;
+        }
+        #_hj_feedback_container{
+            display:none; !important;
+        }
+    </style>
+    {% for key , order in orders %}
+        <div class="printablePage {{ (config_invoice_width is not empty) ? 'config_invoice_width' : ''  }}" style="background-color: #fff;padding:30px;direction:{{ print_lang == 'ar' ? 'rtl' : 'ltr' }}">
+            <table class="store">
+                <tr>
+                    <td style="vertical-align: middle;">
+                        <img src="{{ logo }}" alt="logo" style="height: {{ logo_height ?: 50 }}px;"/></td>
+                    <td align="right" valign="top" style="vertical-align: middle; {{ (config('config_show_qr')) ?   'auto' : 'width: 70px;' }}">
+
+                    {% if gift_product == 1 %}
+                     <span class="label label-warning heading-text label-icon">  <i class="icon-gift"></i></span>
+                       {% endif %}
+					   {% if config('config_show_qr') == 1 %}
+                          <h1>{{ text_tax_invoice_title }} </h1>
+					   {% else %} 
+                          <h1>{{ text_invoice_title }} </h1>
+						{% endif %}
+
+                        </td>
+                </tr>
+            </table>
+
+            <hr>
+            
+            		
+			{# should be removed after invoice stability #}
+			{#		
+			{% if  isExtenionInstalled('custom_invoice_setting') and cit_config_status%}
+            {% include 'sale/invoice_qrcode.expand' %}
+            {% endif %}
+			#}
+            <table class="store">
+                <tr>
+                    <td class="">
+
+						<table>
+							{% if tax_number is defined and not null %}
+                            <tr>
+                                <td style="padding-left: 10px; padding-right: 10px;"><b>{{ lang('text_tax_number') }}:</b></td>
+                                <td>{{ tax_number }}</td>
+                            </tr>
+                            {% endif %}
+							 {% if order['invoice_no'] %}
+                            <tr>
+                                <td style="padding-left: 10px; padding-right: 10px;"><b>{{ lang('text_invoice_no') }}:</b></td>
+                                <td>{{ order['invoice_no'] }}</td>
+                            </tr>
+                            {% endif %}
+							<tr>
+                                <td style="padding-left: 10px; padding-right: 10px;"><b>{{ lang('text_order_id') }}:</b></td>
+                                <td>{{ order['order_id'] }}</td>
+                            </tr>                
+                        </table>
+						</td>
+                    <td align="right" valign="top">
+                        <table>
+
+                            <tr>
+                                <td style="padding-left: 10px; padding-right: 10px;"><b>{{ lang('text_date_added') }}:</b></td>
+                                <td>{{ order['date_added'] }}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding-left: 10px; padding-right: 10px;"><b>{{ lang('text_time_added') }}:</b></td>
+                                <td>{{ order['time_added'] }}</td>
+                            </tr>
+
+                            {% if custom_fields['confirm'] %}
+                                {% for cfd in custom_fields['confirm'] %}
+                                    <tr>
+                                        <td style="padding-left: 10px; padding-right: 10px;"><b>{{ cfd['field_title'] }}</b>:</td>
+                                        <td>{{ cfd['value'] }}</td>
+                                    </tr>
+                                {% endfor %}
+                            {% endif %}
+                            <tr>
+                                <td style="padding-left: 10px; padding-right: 10px;"><b>{{ lang('text_payment_method') }}:</b></td>
+                                <td>{{ order['payment_method'] }}</td>
+                            </tr>
+
+                            {% if order['shipping_method'] %}
+                            <tr>
+                                <td style="padding-left: 10px; padding-right: 10px;"><b>{{ lang('text_shipping_method') }}:</b></td>
+                                <td>{{ order['shipping_method'] }}</td>
+                            </tr>
+                            {% endif %}
+
+
+
+
+                            {% if(delivery_slot) %}
+                                <tr>
+                                    <td style="padding-left: 10px; padding-right: 10px;"><b>{{ lang('text_delivery_day') }}:</b></td>
+                                    <td>{{ order_delivery_slot['day_name'] }}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding-left: 10px; padding-right: 10px;"><b>{{ lang('text_delivery_date') }}:</b></td>
+                                    <td>{{ order_delivery_slot['delivery_date'] }}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding-left: 10px; padding-right: 10px;"><b>{{ lang('text_delivery_slot') }}:</b></td>
+                                    <td class="slot-dir-left">{{ order_delivery_slot['slot_description'] }}</td>
+                                </tr>
+
+                            {% endif %}
+
+                            {% if order['invoice_no_barcode'] is not empty %}
+                            <tr>
+                                <td style="padding-left: 10px; padding-right: 10px;"><b>{{ lang('text_invoice_no_barcode') }}:</b></td>
+                                <td><img src="data:image/png;base64, {{ order['invoice_no_barcode'] }}" style="width:185px;height:35px"/></td>
+                            </tr>
+                            {% endif %}
+                        </table></td>
+                </tr>
+            </table>
+            <table class="address">
+                <tr class="heading">
+                    <td width="50%"><b>{{ lang('text_from') }}</b></td>
+                   <td width="50%"><b>{{ lang('text_to') }}</b></td>
+                </tr>
+                <tr>
+				 <td>
+					
+                        {{ order['store_name'] }}<br />
+                        {{ order['store_address'] }}<br />
+                        {{ lang('text_telephone') }}: <bdo dir='ltr'> {{ order['store_telephone'] }}</bdo><br />
+                        {% if order['store_fax'] %}
+                            {{ lang('text_fax') }}: {{ order['store_fax'] }}<br />
+                        {% endif %}
+                        {{ order['store_email'] }}<br />
+                        {{ order['store_url'] }}
+                    </td>
+                    <td>
+                        {{ lang('text_customer', 'sale/order') }}: {{ order['firstname'] }} {{ order['lastname'] }}<br/>
+                        {{ lang('text_email') }}: {{ order['email'] }}<br/>
+                        {{ lang('text_telephone') }}:<bdo dir='ltr'> {{ order['telephone'] }}</bdo>
+                                {% if order['fax'] %}
+                                <br />
+                                    {{ text_fax }}: <bdo dir='ltr'>{{ order['fax'] }}</bdo>
+                                {% endif %}
+
+                                {% if order['payment_company_id'] %}
+                                <br />
+                                    {{ lang('text_company_id') }}: <bdo dir='ltr'>{{ order['payment_company_id'] }}</bdo>
+                                {% endif %}
+
+                                {% if order['payment_tax_id'] %}
+                                <br />
+                                    {{ lang('text_tax_id') }}: <bdo dir='ltr'>{{ order['payment_tax_id'] }}</bdo>
+                                {% endif %}
+
+                        {% if custom_fields[order.order_id]['payment_address'] %}
+                            {% for pfd in custom_fields[order.order_id]['payment_address'] %}
+                                <br/>
+                                {{ pfd['field_title'] }}: {{ pfd['value'] }}
+                            {% endfor %}
+                        {% endif %}
+						{{ order['shipping_address'] }}
+                        {% if custom_fields[order.order_id]['shipping_address'] %}
+                            <br/>
+                            {% for sfd in custom_fields[order.order_id]['shipping_address'] %}
+                            {{ sfd['field_title'] }}: {{ sfd['value'] }}
+                            {% endfor %}
+                        {% endif %}
+                </td>
+                   
+                </tr>
+            </table>
+            {% if(order['delivery_info']) %}
+                <table class="deliveryInfo">
+                    <tr class="heading">
+                        <td width="50%"><b>{{ lang('delivery_info') }}</b></td>
+                    </tr>
+                    <tr>
+                        <td style="word-break: break-word;">{{ order['delivery_info'] }}</td>
+                    </tr>
+                </table>
+                <br/>
+            {% endif %}
+            <table class="product">
+                <tr class="heading">
+                    <td><b>#</b></td>
+                    <td><b>{{ lang('column_product') }}</b></td>
+                    {% if config('config_invoice_hide_model') != 1 %}
+                    <td><b>{{ column_model }}</b></td>
+                    {% endif %}
+                    {% if warehouses %}
+                        <td><b>{{ column_warehouse }}</b></td>
+                    {% endif %}
+                    {% if config('config_invoice_display_sku') != 0 %}
+                    <td><b>{{ column_sku }}</b></td>
+                    {% endif %}
+                    {% if config('config_invoice_display_barcode') != 0 %}
+                    <td><b>{{ lang('column_barcode') }}</b></td>
+                    {% endif %}
+                    <td align="right"><b>{{ lang('column_quantity') }}</b></td>
+                    {% if there_is_a_seller == true %}
+                        <td><b>{{ lang('ms_catalog_sellerinfo_nickname', 'multiseller/seller') }}</b></td>
+                        <td><b>{{ lang('ms_catalog_sellerinfo_country', 'multiseller/seller') }}</b></td>
+                    {% endif %}
+                    <td align="right"><b>{{ lang('column_price') }}</b></td>
+                    <td align="right"><b>{{ lang('column_total') }}</b></td>
+                </tr>
+                {% set counter = 1 %}
+                {% for product in order['product'] %}
+                <tr {% if(product['is_soft_deleted']) %} style="text-decoration: line-through;"{% endif %}>
+                    <td>{{counter}}
+                        {% if(product['is_soft_deleted'] == 0) %}
+                            {% set counter = counter + 1 %}
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div style="display: flex;">
+                            <div>
+                        {% if config('invoice_image_product') != 0 %}
+                            <img src="{{ product['thumb'] }}" style="padding: 3px;float: left;" >
+                        {% endif %}
+                    </div>
+                        <div style="">
+                        {{ product['name'] }}
+                        
+                        {% if product['bundlesData'] %}
+                            - <small>{{lang('product_bundles')}}</small> <br />
+                            {% for bundle in product['bundlesData'] %}
+                                <img src="{{bundle['thumb']}}" height="30">
+                                <strong class="item-name">{{ bundle['product_name'] }} </strong>
+                                <br />
+                                <span class="price">{{ (bundle['price'] * (1 - bundle['discount']))|number_format(2) }}</span>
+                                {{lang('instead_of')}}
+                                <s>{{ bundle['price']|number_format(2)}}</s>
+                                {{ lang('with_discount') }}
+                                {{ (bundle['discount']*100)}} %
+                                <br />
+                            {% endfor %}
+                        {% endif %}
+
+                        {% for option in product['option'] %}
+                        &nbsp;<br />
+                            &nbsp;<small> - {{ option['name'] }}: {{ option['value'] }}</small>
+                        {% endfor %}
+
+                        {% if product['rentData'] %}
+                            <br/><small> - {{ lang('product_for_rent_from') }}: {{ product['rentData']['range']['from'] }}</small>
+                            <br/><small> - {{ lang('product_for_rent_to') }}: {{ product['rentData']['range']['to'] }}</small>
+                            <br/><small> - {{ lang('product_for_rent_for') }}: {{ product['rentData']['diff'] }} {{ lang('text_day') }}</small>
+                        {% endif %}
+                        {% if product['main_price'] %}
+                            <br/><small> - {{ lang('main_price') }}: {{ product['main_price'] }}</small>
+                        {% endif %}
+                        {% if product['remaining_amount'] %}
+                            <br/><small> - {{ lang('remaining_amount') }}: {{ product['remaining_amount'] }}</small>
+                        {% endif %}
+
+                        {% if product['pricePerMeterData'] %}
+                            {% if product['pricePerMeterData']['skirtings_status'] == 1 %}
+                                <br/><small> - {{ lang('text_skirtings') }}: {{ product['pricePerMeterData']['skirtings'] }} {{ lang('text_meter') }}</small>
+                            {% endif %}
+
+                            {% if product['pricePerMeterData']['metalprofile_status'] == 1 %}
+                                <br/><small> - {{ lang('text_metalprofiles') }}: {{ product['pricePerMeterData']['metalProfiles'] }} {{ lang('text_metalProfiles_unit') }}</small>
+                            {% endif %}
+
+                            <br/><small> - {{ lang('text_amount') }}: {{ product['pricePerMeterData']['underlaymen'] }} {{ lang('text_meter') }}
+
+                            {% if product['pricePerMeterData']['main_unit'] == 2 %}
+                            <span style="font-size: 10px;vertical-align: top;">2</span>
+                            {% endif %}
+
+                            </small>
+                        {% endif %}
+
+                        {% if product['printingDocument'] %}
+                        <div>
+                            - <small>{{ lang('text_pages_num') }}: {{ product['printingDocument']['print_pages'] }}</small><br/>
+
+                            {% if product['printingDocument']['print_cover_name'] %}
+                            - <small>{{ lang('text_cover') }}: {{ product['printingDocument']['print_cover_name'] }}</small><br/>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                    </td>
+                    {% if config('config_invoice_hide_model') != 1 %}
+                    <td>{{ product['model'] }}</td>
+                    {% endif %}
+                    {% if warehouses %}
+                        <td>{{ product['warehouse'] ?? '-' }}</td>
+                    {% endif %}
+                    {% if config('config_invoice_display_sku') %}
+                    <td>{{ product['sku'] }}</td>
+                    {% endif %}
+                    {% if config('config_invoice_display_barcode') != 0 %}
+                    <td>
+                        <div style="text-align:center">
+                            <img id="barcode_image" src="data:image/png;base64,{{ product['barcode_image'] }}"
+                                        {{ product['barcode_image'] is not defined ? 'style="display: none;"' : 'style="width:150px;height:50px"' }}>
+                            <br>
+                            {{ product['barcode'] }}
+                        </div>
+                    </td>
+                    {% endif %}
+                    <td align="right">{{ product['quantity'] }}</td>
+                    {% if there_is_a_seller == true  %}
+                        <td>{{ product['seller'] ? product['seller'].nickname : '' }}</td>
+                        <td>{{ product['seller']? product['seller'].address : '' }}</td>
+                    {% endif %}
+                    <td align="right" style="width: 50px;">{{ product['price'] }}</td>
+                    <td align="right" style="width: 50px;">{{ product['total'] }}</td>
+                </tr>
+                {% endfor %}
+                {% for voucher in order['voucher'] %}
+                <tr>
+                    <td align="left">{{ voucher['description'] }}</td>
+                    <td align="left"></td>
+                    {% if product['seller'] %}
+                        <td></td>
+                        <td></td>
+                    {% endif %}
+                    <td align="right">1</td>
+                    <td align="right">{{ voucher['amount'] }}</td>
+                    <td align="right">{{ voucher['amount'] }}</td>
+                </tr>
+                {% endfor %}
+                {% for total in order['total'] %}
+                <tr>
+                    {% set colspan = 4  %}
+                    {% if there_is_a_seller %}
+                        {% set colspan = colspan + 2 %}
+                    {% endif %}
+                    {% if config('config_invoice_display_barcode') != 0 %}
+                        {% set colspan = colspan + 1 %}
+                    {% endif %}
+                    {% if (config('config_invoice_hide_model') != 1) %}
+                        {% set colspan = colspan + 1 %}
+                    {% endif %}
+                    {% if warehouses %}
+                        {% set colspan = colspan + 1 %}
+                    {% endif %}
+                    {% if (config('config_invoice_display_sku') != 0) %}
+                        {% set colspan = colspan + 1 %}
+                    {% endif %}
+                    <td colspan="{{ colspan }}"><b>{{ total['title']|striptags }}:</b></td>
+                    <td >{{total['text'] ? total['text']: total['value'] }}</td>
+                </tr>
+                {% endfor %}
+                {% if remaining_total %}
+                <tr>
+                <td  colspan="4"><b>{{ lang('remaining_total') }}:</b></td>
+                <td >{{ remaining_total }}</td>
+                </tr>
+                {% endif %}
+            </table>
+            {% if order['comment'] and config('config_hide_comments') == 0 %}
+            <table class="comment">
+                <tr class="heading">
+                    <td><b>{{ lang('column_comment') }}</b></td>
+                </tr>
+                <tr>
+                    <td>{{ order['comment'] | replace({"\\n":"<br>"}) }}</td>
+                </tr>
+            </table>
+            {% endif %}
+			
+			{% if config('config_show_qr') == 1 %}
+				{% if config('config_qr_compatible_with') == 'ksa' %}
+				<table style="width:100%;">
+					<tr>
+						<td style="text-align:center;">
+							<img src="{{ link('setting/invoice/generateZatcaQR', 'language_id=' ~ language_id ~ '&order_id=' ~ order['order_id'] ~ '&language_code=' ~ language_code ~ '&language_directory=' ~ language_directory ) }}">
+							<br> 
+							{{ lang('text_scan_by_zatca_app') }}
+						</td>
+					</tr>
+				</table>
+				<hr />	
+				{% endif %}
+			{% endif %}
+        </div>
+    {% endfor %}
+	
+{% endblock framelessContent %}

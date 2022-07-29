@@ -1,0 +1,393 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% set dualMenuEnabled = true %}
+
+{% block title %}
+    {{ lang('heading_title_seller_group') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block secondarymenu %}
+    {% include 'multiseller/menu.expand' with {'active': '#seller-group'} %}
+{% endblock secondarymenu %}
+
+{% block headelements %}
+    <a href="{{ link('multiseller/seller-group') }}" class="btn btn-default"> {{ lang('button_cancel') }}</a>
+    <a class="btn btn-primary" onclick="$('#form').submit();"><i
+                class="far fa-save fa-lg position-left"></i> {{ lang('button_save') }}</a>
+{% endblock headelements %}
+
+{% block scripts %}
+
+    <script>
+        $(document).ready(function () {
+            
+            $('select').select2({
+                minimumResultsForSearch: 10
+            });
+
+            $('#form').submit(function (e) {
+                e.preventDefault();
+
+                var $data = $('#form').serialize();
+
+                $.ajax({
+                    type: "POST",
+                    dataType: "json",
+                    url: '{{ link('multiseller/seller-group/jxSave') }}',
+                    data: $data,
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        $('.warning').text(textStatus).show();
+                    },
+                    success: function (jsonData) {
+                        if (!jQuery.isEmptyObject(jsonData.errors)) {
+                            $('#error_' + id).text('');
+                            for (error in jsonData.errors) {
+                                $('[name="' + error + '"]').after('<p class="error">' + jsonData.errors[error] + '</p>');
+                            }
+                            window.scrollTo(0, 0);
+                        } else {
+                            window.location = '{{ link('multiseller/seller-group') }}';
+                        }
+                    }
+                });
+            });
+
+
+            $('#sale_commission_type').on('change', ()=>{
+                commission_type();
+            });
+
+            commission_type();
+        });
+
+        const commission_type = () => {
+            let type = $('#sale_commission_type').find(':selected').val();
+
+            if(type == 'general'){
+                $('#commission_rates_general').removeClass('hidden');
+                $('#commission_rates_category').addClass('hidden');
+                $('#price_list tbody tr').remove();
+            }
+            else if(type == 'price_list'){
+                $('#commission_rates_general').addClass('hidden');
+                $('#commission_rates_category').removeClass('hidden');
+                
+                if( $('#price_list tr').length <= 1 ) price_list();
+                
+                scroll_to_categories();
+            }
+            else{
+                $('#commission_rates_general').addClass('hidden');
+                $('#commission_rates_category').addClass('hidden');
+                $('#price_list tbody tr').remove();                
+            }
+        };
+        
+        const scroll_to_categories = ()=>{
+            $('html, body').animate({
+                scrollTop: $("#commission_rates_category").offset().top
+            }, 1000);
+        };
+
+        const price_list = () => {
+            let rateSale = '{{ rateSale }}';
+
+            $.ajax({
+                url: '{{ link("multiseller/seller-group/jxGetCategories") }}'
+            }).done( (response)=>{
+                let categories = JSON.parse(response);
+                var i = 0;
+                for (var category_id in categories) {
+                    if (categories.hasOwnProperty(category_id)) {
+                        // console.log(category_id + " -> " + categories[category_id]);
+                        $('#price_list > tbody:last-child').append(`<tr>
+                            <input type="hidden" name="seller_group[commission_rates][${rateSale}][commission_price_list_items][${i}][category_id]" value="${category_id}"/>
+                            <td><span>${categories[category_id]}</span></td>
+                            <td>
+                                <select class="form-control" name="seller_group[commission_rates][${rateSale}][commission_price_list_items][${i}][value_type]">
+                                    <option value="1">fixed</option>
+                                    <option value="2">percentage</option>
+                                </select>
+                            </td>
+                            <td><input type="text" name="seller_group[commission_rates][${rateSale}][commission_price_list_items][${i}][value]" class="form-control"/></td>
+                            </tr>`);
+                    }
+                    i++;
+                }
+                
+                $('select').select2();
+
+            });
+        };
+
+    </script>
+
+{% endblock scripts %}
+
+{% block content %}
+
+    <form id="form" action="{{ links['submit'] }}" method="POST">
+        <div class="col-md-9">
+            <div class="panel panel-flat">
+                <div class="panel-body">
+                    <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                        <div class="tab-content">
+                            {% for lng in languages %}
+
+                                {% set group = seller_group['description'][lng['language_id']] %}
+
+                                <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}"
+                                     id="langTab{{ lng['language_id'] }}">
+                                    <div class="form-group"
+                                         id="name-group_{{ lng['language_id'] }}">
+                                        <label class="control-label">
+                                            {{ lang('ms_plan_title') }} <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text" class="form-control"
+                                               id="name_{{ lng['language_id'] }}"
+                                               name="seller_group[description][{{ lng['language_id'] }}][name]"
+                                               value="{{ group['name'] }}"
+                                        >
+                                        <span class="help-block"></span>
+                                        <span class="text-muted"></span>
+                                    </div>
+
+                                    <div class="form-group"
+                                         id="description-group_{{ lng['language_id'] }}">
+                                        <label class="control-label">
+                                            {{ lang('ms_plan_description') }}
+                                        </label>
+                                        <textarea
+                                                name="seller_group[description][{{ lng['language_id'] }}][description]"
+                                                id="description_{{ lng['language_id'] }}"
+                                                class="form-control"
+                                        >{{ group['description'] }}</textarea>
+                                        <span class="help-block"></span>
+                                        <span class="text-muted"></span>
+                                    </div>
+
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                            {% for language in languages %}
+                                <li class="{{ loop.first ? 'active' : '' }}">
+                                    <a href="#langTab{{ language['language_id'] }}" data-toggle="tab"
+                                       aria-expanded="false">
+                                        <img src="view/image/flags/{{ language['image'] }}"
+                                             title="{{ language['name'] }}" class="pull-right">
+                                        <div> {{ language['name'] }}</div>
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-body">
+                    <div class="form-group" id="product_period-group">
+                        <label for="product_period" class="control-label">
+                            {{ lang('ms_product_period') }}
+                        </label>
+                        <input type="text" class="form-control"
+                               id="product_period" name="seller_group[product_period]"
+                               value="{{ seller_group['product_period'] }}">
+                        <span class="help-block"></span>
+                        <span class="text-muted"></span>
+                    </div>
+
+                    <div class="form-group" id="product_quantity-group">
+                        <label for="product_quantity" class="control-label">
+                            {{ lang('ms_product_quantity') }}
+                        </label>
+                        <input type="text" class="form-control"
+                               id="product_quantity" name="seller_group[product_quantity]"
+                               value="{{ seller_group['product_quantity'] }}">
+                        <span class="help-block"></span>
+                        <span class="text-muted"></span>
+                    </div>
+                </div>
+            </div>
+            
+            {% include 'multiseller/seller/_partials/commission_price_list.expand' %}
+
+        </div>
+        <div class="col-md-3">
+
+            <div class="panel">
+
+                <div class="panel-body">
+                    {# Sale #}
+                    <div class="form-group" id="rate_sale-group">
+                        <label for="seller_commision" class="control-label text-semibold">
+                            {{ lang('ms_commission_' ~ rateSale) }}
+                        </label>
+
+                        <input type="hidden" name="seller_group[commission_rates][{{ rateSale }}][rate_id]"
+                               value="{{ seller_group['commission_rates'][rateSale]['rate_id'] is defined ? seller_group['commission_rates'][rateSale]['rate_id'] : '' }}"
+                        />
+                        <input type="hidden" name="seller_group[commission_rates][{{ rateSale }}][rate_type]"
+                               value="{{ rateSale }}"
+                        />
+                        <input type="hidden" name="seller_group[commission_rates][{{ rateSale }}][price_list_id]"
+                               value="{{ seller_group['commission_rates'][rateSale]['price_list_id'] is defined ? seller_group['commission_rates'][rateSale]['price_list_id'] : '' }}"
+                        />
+                        {# Commission #}
+                        <div class="col-md-12" style="margin-bottom: 15px;">
+                            <label for="sale_commission_type">{{lang('text_commission_type')}}</label>
+                            <select class="form-control" id="sale_commission_type" name="seller_group[commission_rates][{{ rateSale }}][commission_type]">
+                                <option value="general" {{ seller_group['commission_rates'][rateSale]['commission_type'] == 'general' ? 'selected' : '' }}>{{ lang('text_general') }}</option>
+                                <option value="price_list" {{ seller_group['commission_rates'][rateSale]['commission_type'] == 'price_list' ? 'selected' : '' }}>{{ lang('text_price_list') }}</option>
+                            </select>
+                        </div>
+
+                        <div id="commission_rates_general" class="hidden">
+                            <div class="col-md-12 mb-5">
+                                <div class="input-group">
+                                    <span class="input-group-addon">{{ leftCurrencySymbol }}</span>
+                                    <input type="text" name="seller_group[commission_rates][{{ rateSale }}][flat]"
+                                           value="{{ seller_group['commission_rates'][rateSale]['flat'] }}"
+                                           class="form-control"/>
+                                    <span class="input-group-addon">{{ rightCurrencySymbol }}</span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-12">
+                                <div class="input-group">
+                                    <span class="input-group-addon">+</span>
+                                    <input type="text" name="seller_group[commission_rates][{{ rateSale }}][percent]"
+                                           value="{{ seller_group['commission_rates'][rateSale]['percent'] }}"
+                                           class="form-control"/>
+                                    <span class="input-group-addon">%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {# /Commission #}
+
+                        <span class="help-block"></span>
+                        <span class="text-muted"></span>
+                    </div>
+
+                    <div class="clearfix"></div>
+
+                    {# Listing #}
+                    <div class="form-group mt-5" id="rate_listing-group">
+                        <label for="seller_commision" class="control-label text-semibold">
+                            {{ lang('ms_commission_' ~ rateListing) }}
+                        </label>
+
+                        <input type="hidden" name="seller_group[commission_rates][{{ rateListing }}][rate_id]"
+                               value="{{ seller_group['commission_rates'][rateListing]['rate_id'] is defined ? seller_group['commission_rates'][rateListing]['rate_id'] : '' }}"
+                        />
+                        <input type="hidden" name="seller_group[commission_rates][{{ rateListing }}][rate_type]"
+                               value="{{ rateListing }}"
+                        />
+
+                        <div>
+                            <div class="col-md-12 mb-5">
+                                <div class="input-group">
+                                    <span class="input-group-addon">{{ leftCurrencySymbol }}</span>
+                                    <input type="text" name="seller_group[commission_rates][{{ rateListing }}][flat]"
+                                           value="{{ seller_group['commission_rates'][rateListing]['flat'] }}"
+                                           class="form-control"/>
+                                    <span class="input-group-addon">{{ rightCurrencySymbol }}</span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-12 mb-5">
+                                <div class="input-group">
+                                    <span class="input-group-addon">+</span>
+                                    <input type="text" name="seller_group[commission_rates][{{ rateListing }}][percent]"
+                                           value="{{ seller_group['commission_rates'][rateListing]['percent'] }}"
+                                           class="form-control"/>
+                                    <span class="input-group-addon">%</span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-12 mb-5">
+                                <select name="seller_group[commission_rates][{{ rateListing }}][payment_method]"
+                                        class="form-control">
+                                    <optgroup label="{{ lang('ms_payment_method') }}">
+                                        <option {{ seller_group['commission_rates'][rateListing]['payment_method'] == method_balance ? 'selected' : '' }}
+                                                value="{{ method_balance }}">{{ lang('ms_payment_method_balance') }}</option>
+                                        <option {{ seller_group['commission_rates'][rateListing]['payment_method'] == method_paypal ? 'selected' : '' }}
+                                                value="{{ method_paypal }}">{{ lang('ms_payment_method_paypal') }}</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                        </div>
+
+
+                        <span class="help-block"></span>
+                        <span class="text-muted"></span>
+                    </div>
+
+                    <div class="clearfix"></div>
+
+                    {# Sign Up #}
+                    <div class="form-group mt-5" id="rate_signup-group">
+                        <label for="seller_commision" class="control-label text-semibold">
+                            {{ lang('ms_commission_' ~ rateSignup) }}
+                        </label>
+
+                        <input type="hidden" name="seller_group[commission_rates][{{ rateSignup }}][rate_id]"
+                               value="{{ seller_group['commission_rates'][rateSignup]['rate_id'] is defined ? seller_group['commission_rates'][rateSignup]['rate_id'] : '' }}"
+                        />
+                        <input type="hidden" name="seller_group[commission_rates][{{ rateSignup }}][rate_type]"
+                               value="{{ rateSignup }}"
+                        />
+
+                        <div>
+                            <div class="col-md-12 mb-5">
+                                <div class="input-group">
+                                    <span class="input-group-addon">{{ leftCurrencySymbol }}</span>
+                                    <input type="text" name="seller_group[commission_rates][{{ rateSignup }}][flat]"
+                                           value="{{ seller_group['commission_rates'][rateSignup]['flat'] }}"
+                                           class="form-control"/>
+                                    <span class="input-group-addon">{{ rightCurrencySymbol }}</span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-12 mb-5">
+                                <select name="seller_group[commission_rates][{{ rateSignup }}][payment_method]"
+                                        class="form-control">
+                                    <optgroup label="{{ lang('ms_payment_method') }}">
+                                        <option {{ seller_group['commission_rates'][rateSignup]['payment_method'] == method_balance ? 'selected' : '' }}
+                                                value="{{ method_balance }}">{{ lang('ms_payment_method_balance') }}</option>
+                                        <option {{ seller_group['commission_rates'][rateSignup]['payment_method'] == method_paypal ? 'selected' : '' }}
+                                                value="{{ method_paypal }}">{{ lang('ms_payment_method_paypal') }}</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                        </div>
+
+
+                        <span class="help-block"></span>
+                        <span class="text-muted"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <input type="hidden" id="seller_group_id" name="seller_group[seller_group_id]" value="{{ seller_group['seller_group_id'] }}"/>
+        <input type="hidden" id="commission_id"   name="seller_group[commission_id]"   value="{{ seller_group['commission_id'] }}"/>
+    </form>
+
+    <div class="row">
+        <div class="col-md-12 text-right">
+            <hr/>
+            <a href="{{ link('multiseller/seller-group') }}" class="btn btn-default"> {{ lang('button_cancel') }}</a>
+            <a class="btn btn-primary" onclick="$('.form').submit();"><i
+                        class="far fa-save fa-lg position-left"></i> {{ lang('button_save') }}</a>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,1386 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{# in case create product #}
+{% if not coupon_id %}
+    {# hide default second header #}
+    {% set hideHeader = true %}
+    {# show page head in main layout header #}
+    {% set navbarForm = true %}
+    {# page title in main layout head #}
+    {% block headTitle %}
+        {% if automatic_apply == 0 %}
+        {{ lang('heading_title') }}
+        {% else %}
+        {{ lang('heading_title_automatic') }}
+        {% endif %} 
+    {% endblock headTitle %}
+    {# form controle buttons in main layout head #}
+    {% block headForm %}
+        <div class="head-form-btns">
+            <a href="{{ cancel }}" class="btn btn-default top-cancel-button"> {{ lang('button_cancel') }}</a>
+            <button type="button" class="btn btn-primary btn-ladda btn-ladda-spinner top-save-button" data-style="zoom-in" onclick="$('.form').submit();">
+                {{ lang('button_save') }}
+            </button>
+        </div>
+        <style>
+            @media(max-width: 768px) {
+                .navbar-header {
+
+                    display: none !important;
+                }
+            }
+        </style>
+    {% endblock headForm %}
+    {% set inner_small_head = true %}
+{% endif %} 
+{# in case create product #}
+
+{% block title %}
+    {% if automatic_apply == 0 %}
+    {{ lang('heading_title_update') }}
+    {% else %}
+    {{ lang('heading_title_update_automatic') }}
+    {% endif %} 
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+    <div class="hide-sm">
+        {% include "includes/buttons_top.expand" %}
+    </div>
+{% endblock headelements %}
+
+
+{% block content %}
+    <section class="list-wrapper discount-coupon-form">
+        <div class="content-inner-small">
+            {# <p class="sections-title mb-10">
+                {{lang('page_title')}}
+            </p>
+            <p class="sections-subtitle mb-30">
+                {{lang('page_subtitle')}}
+            </p> #}
+            <form class="form" action="{{ links['submit'] }}">
+                <div class="row flex-row">
+                    <div class="col-12 col-md-8">
+                        {# coupon info #}
+                        <div class="panel panel-white p-20">
+                            {# name #}
+                            <div class="form-group" id="name-group">
+                                <label for="name" class="control-label">
+                                    {{ lang('entry_name') }} <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control summary-input" id="name" name="name" value="{{ name }}" placeholder="{{lang('name_placeholder')}}" data-summary="summary-name">
+                                <span class="help-block"></span>
+                            </div>
+
+
+                            {# code #}
+                            {% if automatic_apply == 0 %}
+                            <div class="form-group no-margin" id="code-group">
+                                <label for="code" class="control-label label-row">
+                                    <span>
+                                        {{ lang('entry_code') }} <span class="text-danger">*</span>
+                                    </span>
+                                    <span class="side generate-code-btn" data-toggle="modal" data-target="#create_category_modal">
+                                        {{lang('generate_code')}}
+                                    </span>
+                                </label>
+                                <input type="text" class="form-control summary-input" id="code" name="code" value="{{ code }}" placeholder="{{lang('code_placeholder')}}" data-summary="summary-code">
+                                <span class="help-block"></span>
+                                <span class="text-muted">{{ langempty('entry_code_help') }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        {# coupon type #}
+                        <div class="panel panel-white p-20">
+                            <p class="font-color-dark m-bold mb-25 font-15">
+                                {{lang('discount_type')}}
+                            </p>
+
+                            <div id="type-group">
+                                <label class="custom-radio">
+                                    <input type="radio" name="type" class="hide radio-toggler showonHomeClass" data-target="amount-type" checked data-isparent="amount"
+                                        data-otherclear="normal-apply-group" value="F" {{ type == 'F' ? 'checked' : '' }}
+                                    >
+                                    <i></i>
+                                    {{lang('fixed_count')}}
+                                </label>
+                                <label class="custom-radio">
+                                    <input type="radio" name="type" class="hide radio-toggler showonHomeClass" data-target="percent-type" data-isparent="percent"
+                                           data-otherclear="normal-apply-group" value="P" {{ type == 'P' ? 'checked' : '' }}
+                                    >
+                                    <i></i>
+                                    {{lang('percent')}}
+                                </label>
+                                <label class="custom-radio">
+                                    <input type="radio" name="type" class="hide radio-toggler summary-input showonHomeClass" data-target="xy-group-type"
+                                           data-othertarget="normal-apply-group" data-summary="summary-type" data-val="{{lang('buy_x_get_y')}}"
+                                           value="B" {{ type == 'B' ? 'checked' : '' }}
+                                    >
+                                    <i></i>
+                                    {{lang('buy_x_get_y')}}
+                                </label>
+                                <label class="custom-radio">
+                                    <input type="radio" name="type" class="hide radio-toggler summary-input showonHomeClass" data-target="all" data-group="discount-type"
+                                           data-otherclear="normal-apply-group" data-summary="summary-type" data-val="{{lang('free_shipping')}}"
+                                           value="S" {{ type == 'S' ? 'checked' : '' }}
+                                    >
+                                    <i></i>
+                                    {{lang('free_shipping')}}
+                                </label>
+                            </div>
+                            
+                            {# discount amount #}
+                            <div class="hide" data-receive="amount-type" data-group="discount-type">
+                                <div class="form-group" id="discount-group">
+                                    <label for="discount" class="control-label">
+                                        {{ lang('discount_value') }}
+                                    </label>
+                                    <input type="number" placeholder="{{lang('enter_value')}}" class="form-control summary-input" data-parent="amount" id="discount" name="discount"  data-summary="summary-discount_f"
+                                            value="{{ discount }}">
+                                    <span class="help-block"></span>
+                                </div>
+                            </div>
+                            
+                            {# discount Percentage #}
+                            <div class="hide" data-receive="percent-type" data-group="discount-type">
+                                <div class="form-group" id="percent-group">
+                                    <label for="discount" class="control-label">
+                                        {{lang('discount_value')}}
+                                    </label>
+                                    <input type="number" placeholder="{{lang('enter_value')}}" class="form-control summary-input" data-parent="percent" id="percent" name="percent" data-summary="summary-discount_p"
+                                            value="{{ discount }}">
+                                    <span class="help-block"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {# buy x get y #}
+                        <div class="hide" data-receive="xy-group-type" data-group="discount-type">
+                            <div class="panel panel-white p-20">
+                                <p class="font-color-dark m-bold mb-25 font-15">
+                                    {{lang('customer_buy')}}
+                                </p>
+                                <label class="custom-radio">
+                                    <input type="radio" name="details[buy_option]" class="hide radio-toggler" checked data-target="qty-xy"
+                                    value="quantity" {{details['buy_option'] == 'quantity' ? 'checked' : ''}}
+                                    >
+                                    <i></i>
+                                    {{lang('min_qty')}}
+                                </label>
+                                <label class="custom-radio">
+                                    <input type="radio" name="details[buy_option]" class="hide radio-toggler" data-target="amount-xy"
+                                    value="purchase" {{details['buy_option'] == 'purchase' ? 'checked' : ''}}
+                                    >
+                                    <i></i>
+                                    {{lang('min_amount')}}
+                                </label>
+
+                                <div class="row">
+                                    <div class="col-12 col-md-6">
+                                        <div class="hide" data-receive="qty-xy" data-group="xy-type-group">
+                                            <div class="form-group touchspin-quantity-group" id="buy_quantity-group">
+                                                <label class="control-label">{{lang('qty')}}</label>
+                                                <input class="form-control touchspin-quantity" type="number" name="details[buy_quantity]" id="" value="{{details['buy_quantity']}}" min="1" placeholder="1">
+                                                <span class="help-block"></span>
+                                                <span class="text-muted"></span>
+                                            </div>
+                                        </div>
+                                        <div class="hide" data-receive="amount-xy" data-group="xy-type-group">
+                                            <div class="form-group" id="buy_amount-group">
+                                                <label for="discount" class="control-label">
+                                                    {{ lang('amount') }}
+                                                </label>
+                                                <input type="text" class="form-control" id="discount" name="details[buy_amount]" value="{{details['buy_amount']}}">
+                                                <span class="help-block"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <div class="form-group" id="">
+                                            <label class="control-label">{{lang('item_from')}}</label>
+                                            <select name="details[buy_item_from]" id="" class="select-toggler">
+                                                <option value="all" data-target="all" data-group="buy-group" {{details["buy_item_from"] == 'all' ? 'selected' : ''}}>{{lang('all_prod')}}</option>
+                                                <option value="category" data-target="buy-cat" {{details["buy_item_from"] == 'category' ? 'selected' : ''}}>{{lang('specefic_cat')}}</option>
+                                                <option value="manufacturer" data-target="buy-brand" {{details["buy_item_from"] == 'manufacturer' ? 'selected' : ''}}>{{lang('specefic_brand')}}</option>
+                                                <option value="product" data-target="buy-prod" {{details["buy_item_from"] == 'product' ? 'selected' : ''}}>{{lang('specefic_prod')}}</option>
+                                            </select>
+                                            <span class="help-block"></span>
+                                            <span class="text-muted"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="hide" data-receive="buy-cat" data-group="buy-group">
+                                    {# apply category #}
+                                    <div class="form-group" id="coupon_category_buy-group">
+                                        <label for="" class="control-label">
+                                            {{ lang('entry_category') }}
+                                        </label>
+                                        <select name="coupon_category_buy[]" id="category" class="form-control category coupon_category_buy" multiple>
+
+                                        </select>
+                                        <span class="help-block"></span>
+                                        <span class="text-muted">{{ langempty('entry_category_help') }}</span>
+                                    </div>
+                                </div>
+                                <div class="hide" data-receive="buy-brand" data-group="buy-group">
+                                    {# apply brand #}
+                                    <div class="form-group" id="coupon_manufacturer_buy-group">
+                                        <label for="" class="control-label">
+                                            {{ lang('entry_manufacturer') }}
+                                        </label>
+                                        <select name="coupon_manufacturer_buy[]" id="" class="form-control manufacturer coupon_manufacturer_buy" multiple>
+                                        </select>
+                                        <span class="help-block"></span>
+                                        <span class="text-muted">{{ langempty('entry_manufacturer_help') }}</span>
+                                    </div>
+                                </div>
+                                <div class="hide" data-receive="buy-prod" data-group="buy-group">
+                                    {# apply product #}
+                                    <div class="form-group" id="coupon_product_buy-group">
+                                        <label for="" class="control-label">
+                                            {{ lang('entry_product') }}
+                                        </label>
+                                        <select name="coupon_product_buy[]"  id="" class="form-control coupon_product_buy product" multiple>
+                                        </select>
+                                        <span class="text-muted">{{ langempty('entry_product_help') }}</span>
+                                    </div>
+                                </div>
+
+                                <p class="font-color-dark m-bold mb-25 font-15">
+                                    {{lang('customer_get')}}
+                                </p>
+                                <div class="row">
+                                    <div class="col-12 col-md-6">
+                                        <div class="form-group" id="get_quantity-group">
+                                            <label class="control-label">{{lang('qty')}}</label>
+                                            <input class="form-control touchspin-quantity" type="number" name="details[get_quantity]" id="" value="{{details['get_quantity']}}" min="1" placeholder="1">
+                                            <span class="help-block"></span>
+                                            <span class="text-muted"></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <div class="form-group" id="">
+                                            <label class="control-label">{{lang('item_from')}}</label>
+                                            <select name="details[get_item_from]" id="" class="select-toggler">
+                                                <option value="all" {{details['get_item_from'] == 'all' ? 'selected' : ''}} data-target="all" data-group="get-group">{{lang('all_prod')}}</option>
+                                                <option value="category" {{details['get_item_from'] == 'category' ? 'selected' : ''}} data-target="get-cat">{{lang('specefic_cat')}}</option>
+                                                <option value="manufacturer" {{details['get_item_from'] == 'manufacturer' ? 'selected' : ''}} data-target="get-brand">{{lang('specefic_brand')}}</option>
+                                                <option value="product" {{details['get_item_from'] == 'product' ? 'selected' : ''}} data-target="get-prod">{{lang('specefic_prod')}}</option>
+                                            </select>
+                                            <span class="help-block"></span>
+                                            <span class="text-muted"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="hide" data-receive="get-cat" data-group="get-group">
+                                    {# apply category #}
+                                    <div class="form-group">
+                                        <label for="" class="control-label">
+                                            {{ lang('entry_category') }}
+                                        </label>
+                                        <select name="coupon_category_get[]" id="" class="form-control category coupon_category_get" multiple>
+
+                                        </select>
+                                        <span class="help-block"></span>
+                                        <span class="text-muted">{{ langempty('entry_category_help') }}</span>
+                                    </div>
+                                </div>
+                                <div class="hide" data-receive="get-brand" data-group="get-group">
+                                    {# apply brand #}
+                                    <div class="form-group">
+                                        <label for="" class="control-label">
+                                            {{ lang('entry_manufacturer') }}
+                                        </label>
+                                        <select name="coupon_manufacturer_get[]" id="" class="form-control manufacturer coupon_manufacturer_get" multiple>
+                                        </select>
+                                        <span class="help-block"></span>
+                                        <span class="text-muted">{{ langempty('entry_manufacturer_help') }}</span>
+                                    </div>
+                                </div>
+                                <div class="hide" data-receive="get-prod" data-group="get-group">
+                                    {# apply product #}
+                                    <div class="form-group">
+                                        <label for="" class="control-label">
+                                            {{ lang('entry_product') }}
+                                        </label>
+                                        <select name="coupon_product_get[]"  id="" class="form-control coupon_product_get product" multiple>
+                                        </select>
+                                        <span class="text-muted">{{ langempty('entry_product_help') }}</span>
+                                    </div>
+                                </div>
+
+                                <p class="font-color-dark m-bold mb-25 font-15">
+                                    {{lang('as_discount_value')}}
+                                </p>
+                                <div class="radio-row">
+                                    <label class="custom-radio">
+                                        <input type="radio" name="details[get_discount_value_option]"
+                                               class="hide radio-toggler" data-target="all" data-group="xy-val" {{details['get_discount_value_option'] == 'percentage' ? '' : 'checked'}}
+                                               value="free"
+                                        >
+                                        <i></i>
+                                        {{lang('free')}}
+                                    </label>
+                                    <label class="custom-radio">
+                                        <input type="radio" name="details[get_discount_value_option]" class="hide radio-toggler" data-target="xy-percent-val"
+                                               value="percentage" {{details['get_discount_value_option'] == 'percentage' ? 'checked' : ''}}
+                                        >
+                                        <i></i>
+                                        {{lang('percent')}} 
+                                    </label>
+                                </div>
+                                <div class="hide" data-receive="xy-percent-val" data-group="xy-val">
+                                    <div class="form-group" id="">
+                                        <label for="discount" class="control-label">
+                                            {{lang('percent')}}
+                                        </label>
+                                        <input type="text" class="form-control touchspin-percent" id="" name="details[get_percentage]" value="{{details['get_percentage']}}">
+                                        <span class="help-block"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {# coupon customer #}
+                        <div class="panel panel-white p-20">
+                            <p class="font-color-dark m-bold mb-25 font-15">
+                                {{lang('customer')}}
+                            </p>
+                            <div>
+                                <label class="custom-radio">
+                                    <input type="radio" name="details[customer_option]" class="hide radio-toggler summary-input"
+                                           checked data-target="everyone-group" data-summary="summary-customer" data-val="{{lang('all')}}"
+                                           value="all" {{details['customer_option'] == 'all' ? 'checked' : ''}}
+                                    >
+                                    <i></i>
+                                    {{lang('everyone')}}
+                                </label>
+                                <label class="custom-radio">
+                                    <input type="radio" name="details[customer_option]" class="hide radio-toggler summary-input"
+                                           data-target="all" data-group="customer-group" data-summary="summary-customer" data-val="{{lang('logged')}}"
+                                           value="logged" {{details['customer_option'] == 'logged' ? 'checked' : ''}}
+                                    >
+                                    <i></i>
+                                    {{lang('logged')}}
+                                </label>
+                                <label class="custom-radio">
+                                    <input type="radio" name="details[customer_option]" class="hide radio-toggler summary-input" data-target="customer-group"
+                                           data-summary="summary-customer" data-val="{{lang('specefic_customer_group')}}"
+                                           value="group" {{details['customer_option'] == 'group' ? 'checked' : ''}}
+                                    >
+                                    <i></i>
+                                    {{lang('specefic_customer_group')}}
+                                </label>
+                                <label class="custom-radio">
+                                    <input type="radio" name="details[customer_option]" class="hide radio-toggler summary-input" data-target="customer"
+                                           data-summary="summary-customer" data-val="{{lang('specefic_customer')}}"
+                                           value="customer" {{details['customer_option'] == 'customer' ? 'checked' : ''}}
+                                    >
+                                    <i></i>
+                                    {{lang('specefic_customer')}}
+                                </label>
+                            </div>
+                            <div class="hide" data-receive="customer-group" data-group="customer-group">
+                                <div class="form-group" id="coupon_group-group">
+                                    <label for="category" class="control-label">
+                                        {{lang('select_group')}}
+                                    </label>
+                                    <select name="coupon_group[]" id="coupon_group" class="form-control" multiple>
+
+                                    </select>
+                                    <span class="help-block"></span>
+                                    <span class="text-muted">{{ langempty('entry_category_excluded_help') }}</span>
+                                </div>
+                            </div>
+                            <div class="hide" data-receive="customer" data-group="customer-group">
+                                {# customer select #}
+                                <div class="form-group" id="coupon_customer-group">
+                                    <label for="category" class="control-label">
+                                        {{lang('select_customer')}}
+                                    </label>
+                                    <select name="coupon_customer[]" id="coupon_customer" class="form-control coupon_customer" multiple></select>
+                                    <span class="help-block"></span>
+                                    <span class="text-muted">{{ langempty('entry_customer_help') }}</span>
+                                </div>
+                            </div>
+                            <div class="hide" data-receive="everyone-group" data-group="customer-group">
+                                {# <p class="first-ship-alert ai-center no-margin">
+                                    <img src="view/image/icons/light-bulb.svg" alt=""> &nbsp;&nbsp;
+                                    <span class="w-100 gray-color font-13 m-bold">
+                                        {{lang('everyone_alert')}}
+                                    </span>
+                                </p> #}
+                            </div>
+                        </div>
+
+                        {# coupon limit #}
+                        <div class="panel panel-white p-20">
+                            <p class="font-color-dark m-bold mb-25 font-15">
+                                {{lang('use_limit')}}
+                            </p>
+
+                            {# min #}
+                            <label class="custom-check mb-20">
+                                <input type="checkbox" class="hide check-toggler" data-isparent="minmax"
+                                       data-target="min-group" {{minimum_to_apply_enabled ? 'checked' : ''}}
+                                       name="minimum_to_apply_enabled"
+                                >
+                                <i class="fas fa-check"></i>
+                                {{lang('minmax_apply')}}
+                            </label>
+                            <div class="hide" data-receive="min-group">
+                                <div class="row">
+                                    <div class="form-group col-md-6" id="minimum_to_apply-group">
+                                        <label for="minimum_to_apply" class="control-label">
+                                            {{ lang('minimum_to_apply') }} <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="number" placeholder="100.00" class="form-control summary-input" data-parent="minmax" id="minimum_to_apply" name="minimum_to_apply" data-summary="summary-min"
+                                                value="{{ minimum_to_apply }}">
+                                        <span class="help-block"></span>
+                                        <span class="text-muted"></span>
+                                    </div>
+
+                                    <div class="form-group col-md-6" id="maximum_limit-group">
+                                        <label for="maximum_limit" class="control-label">
+                                            {{ lang('maximum_limit') }}
+                                        </label>
+                                        <input type="number" placeholder="100.00" class="form-control summary-input" data-parent="minmax" id="maximum_limit" name="maximum_limit" data-summary="summary-max"
+                                                value="{{ maximum_limit }}">
+                                        <span class="help-block"></span>
+                                        <span class="text-muted"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {# max #}
+                            <label class="custom-check mb-20">
+                                <input
+                                        type="checkbox" class="hide check-toggler" data-isparent="use-limit" data-target="max-group"
+                                        {{uses_total_enabled ? 'checked' : ''}}
+                                        name="uses_total_enabled"
+                                >
+                                <i class="fas fa-check"></i>
+                                {{lang('min_use_limit')}} 
+                            </label>
+                            <div class="hide" data-receive="max-group">
+                                <div class="row">
+                                    <div class="form-group col-md-6 touchspin-quantity-group" id="uses_total-group">
+                                        <label for="uses_total" class="control-label">
+                                            {{ lang('entry_uses_total') }} <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="number" placeholder="1" class="form-control touchspin-quantity summary-input" data-parent="use-limit" id="uses_total" name="uses_total" data-summary="summary-uses-coupon"
+                                                value="{{ uses_total }}">
+                                        <span class="help-block"></span>
+                                        <span class="text-muted"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {# user limit #}
+                            <label class="custom-check mb-20">
+                                <input type="checkbox" class="hide check-toggler" data-isparent="customer-limit" data-target="limit-user-group"
+                                        {{uses_customer_enabled ? 'checked' : ''}}
+                                        name="uses_customer_enabled"
+                                >
+                                <i class="fas fa-check"></i>
+                                {{lang('limit_customer')}}
+                            </label>
+                            <div class="hide" data-receive="limit-user-group">
+                                <div class="row">
+                                    <div class="form-group col-md-6 touchspin-quantity-group" id="uses_customer-group">
+                                        <label for="uses_customer" class="control-label">
+                                            {{ lang('entry_uses_customer') }} <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="number" placeholder="1" class="form-control touchspin-quantity summary-input" data-parent="customer-limit" id="uses_customer" name="uses_customer" data-summary="summary-uses-customer"
+                                                value="{{ uses_customer }}">
+                                        <span class="help-block"></span>
+                                        <span class="text-muted"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {# coupon apply #}
+                        <div class="" data-receive="normal-apply-group">
+                            <div class="panel panel-white p-20">
+                                <p class="font-color-dark m-bold mb-25 font-15">
+                                    {{lang('apply_to')}}
+                                </p>
+                                <div id="coupon_apply-group">
+                                    <label class="custom-radio">
+                                        <input type="radio" name="details[apply_item_from]"
+                                               class="hide radio-toggler" checked data-target="all"
+                                               data-group="apply-group" data-linked="all" data-linkedgroup="exclude-group-radio"
+                                               value="all" {{details['apply_item_from'] == 'all' ? 'checked' : ''}}
+                                        >
+                                        <i></i>
+                                        {{lang('all_prod')}}
+                                    </label>
+                                    <label class="custom-radio" data-receive="apply-cat-radio" data-group="apply-group-radio">
+                                        <input type="radio" name="details[apply_item_from]" class="hide radio-toggler" data-target="apply-cat" data-linked="exclude-cat-radio"
+                                               value="category" {{details['apply_item_from'] == 'category' ? 'checked' : ''}}
+                                        >
+                                        <i></i>
+                                        {{lang('specefic_cat')}}
+                                    </label>
+                                    <label class="custom-radio" data-receive="apply-brand-radio" data-group="apply-group-radio">
+                                        <input type="radio" name="details[apply_item_from]" class="hide radio-toggler" data-target="apply-brand"
+                                               data-linked="exclude-brand-radio"
+                                               value="manufacturer" {{details['apply_item_from'] == 'manufacturer' ? 'checked' : ''}}
+                                        >
+                                        <i></i>
+                                        {{lang('specefic_brand')}}
+                                    </label>
+                                    <label class="custom-radio" data-receive="apply-product-radio" data-group="apply-group-radio">
+                                        <input type="radio" name="details[apply_item_from]" class="hide radio-toggler" data-target="apply-product"
+                                               data-linked="exclude-product-radio"
+                                               value="product" {{details['apply_item_from'] == 'product' ? 'checked' : ''}}
+                                        >
+                                        <i></i>
+                                        {{lang('specefic_prod')}}
+                                    </label>
+                                </div>
+                                {# apply category #}
+                                <div class="hide" data-receive="apply-cat" data-group="apply-group">
+                                    <div class="form-group" id="coupon_category-group">
+                                        <label for="category" class="control-label">
+                                            {{ lang('entry_category') }}
+                                        </label>
+                                        <select name="coupon_category[]" id="category" class="form-control coupon_category category" multiple>
+
+                                        </select>
+                                        <span class="help-block"></span>
+                                        <span class="text-muted">{{ langempty('entry_category_help') }}</span>
+                                    </div>
+                                </div>
+                                {# apply brand #}
+                                <div class="hide" data-receive="apply-brand" data-group="apply-group">
+                                    <div class="form-group" id="coupon_manufacturer-group">
+                                        <label for="manufacturer" class="control-label">
+                                            {{ lang('entry_manufacturer') }}
+                                        </label>
+                                        <select name="coupon_manufacturer[]" id="manufacturer" class="form-control coupon_manufacturer manufacturer" multiple>
+                                        </select>
+                                        <span class="help-block"></span>
+                                        <span class="text-muted">{{ langempty('entry_manufacturer_help') }}</span>
+                                    </div>
+                                </div>
+                                {# apply product #}
+                                <div class="hide" data-receive="apply-product" data-group="apply-group">
+                                    <div class="form-group" id="coupon_product-group">
+                                        <label for="product" class="control-label">
+                                            {{ lang('entry_product') }}
+                                        </label>
+                                        <select name="coupon_product[]"  id="product" class="form-control coupon_product product" multiple>
+                                        </select>
+                                        <span class="help-block"></span>
+                                        <span class="text-muted">{{ langempty('entry_product_help') }}</span>
+                                    </div>
+                                </div>
+
+                                <hr>
+                                <p class="font-color-dark m-bold mb-25 font-15">
+                                    {{lang('exclude')}}
+                                </p>
+                                <div id="coupon_exclude-group">
+                                    <label class="custom-radio" data-receive="none">
+                                        <input type="radio" name="details[exclude_item]" class="hide radio-toggler" checked data-target="all"
+                                               data-group="exclude-group"
+                                               value="none" {{details['exclude_item'] == 'none' ? 'checked' : ''}}
+                                        >
+                                        <i></i>
+                                        {{lang('none')}}
+                                    </label>
+                                    <label class="custom-radio" data-receive="exclude-cat-radio" data-group="exclude-group-radio">
+                                        <input type="radio" name="details[exclude_item]" class="hide radio-toggler" data-target="exclude-cat"
+                                               value="category" {{details['exclude_item'] == 'category' ? 'checked' : ''}}
+                                        >
+                                        <i></i>
+                                        {{lang('specefic_cat')}}
+                                    </label>
+                                    <label class="custom-radio" data-receive="exclude-brand-radio" data-group="exclude-group-radio">
+                                        <input type="radio" name="details[exclude_item]" class="hide radio-toggler" data-target="exclude-brand"
+                                               value="manufacturer" {{details['exclude_item'] == 'manufacturer' ? 'checked' : ''}}
+                                        >
+                                        <i></i>
+                                        {{lang('specefic_brand')}}
+                                    </label>
+                                    <label class="custom-radio" data-receive="exclude-product-radio" data-group="exclude-group-radio">
+                                        <input type="radio" name="details[exclude_item]" class="hide radio-toggler" data-target="exclude-product"
+                                               value="product" {{details['exclude_item'] == 'product' ? 'checked' : ''}}
+                                        >
+                                        <i></i>
+                                        {{lang('specefic_prod')}}
+                                    </label>
+                                </div>
+                                {# exclude category #}
+                                <div class="hide" data-receive="exclude-cat" data-group="exclude-group">
+                                    <div class="form-group" id="coupon_category_excluded-group">
+                                        <label for="category" class="control-label">
+                                            {{ lang('entry_category_excluded') }}
+                                        </label>
+                                        <select name="coupon_category_excluded[]" id="category_excluded" class="form-control coupon_category_excluded category" multiple>
+
+                                        </select>
+                                        <span class="help-block"></span>
+                                        <span class="text-muted">{{ langempty('entry_category_excluded_help') }}</span>
+                                    </div>
+                                </div>
+                                {# exclude brand #}
+                                <div class="hide" data-receive="exclude-brand" data-group="exclude-group">
+                                    <div class="form-group" id="coupon_manufacturer_excluded-group">
+                                        <label for="manufacturer" class="control-label">
+                                            {{ lang('entry_manufacturer_excluded') }}
+                                        </label>
+                                        <select name="coupon_manufacturer_excluded[]" id="manufacturer_excluded" class="form-control coupon_manufacturer_excluded manufacturer" multiple>
+                                        </select>
+                                        <span class="help-block"></span>
+                                        <span class="text-muted">{{ langempty('entry_manufacturer_excluded_help') }}</span>
+                                    </div>
+                                </div>
+                                {# exclude product #}
+                                <div class="hide" data-receive="exclude-product" data-group="exclude-group">
+                                    <div class="form-group" id="coupon_product_excluded-group">
+                                        <label for="product" class="control-label">
+                                            {{ lang('entry_product_excluded') }}
+                                        </label>
+                                        <select name="coupon_product_excluded[]"  id="product_excluded" class="form-control coupon_product_excluded product" multiple>
+                                        </select>
+                                        <span class="help-block"></span>
+                                        <span class="text-muted">{{ langempty('entry_product_excluded_help') }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {# coupon Activate dates #}
+                        <div class="panel panel-white p-20">
+                            <p class="font-color-dark m-bold mb-25 font-15">
+                                {{lang('activation_date')}}
+                            </p>
+                            <div class="row">
+                                {# start date #}
+                                <div class="form-group col-md-6" id="date_start-group">
+                                    <label for="date_start" class="control-label">
+                                        {{ lang('entry_date_start') }} <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control summary-input" id="date_start" name="date_start" value="{{ date_start }}" data-summary="summary-start-date" style="background: transparent;">
+                                </div>
+
+                                {# end date #}
+                                <div class="form-group col-md-6" id="date_end-group">
+                                    <label for="date_end" class="control-label">
+                                        {{ lang('entry_date_end') }} <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control summary-input" id="date_end" name="date_end" value="{{ date_end }}" data-summary="summary-end-date" style="background: transparent;">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {# coupon affilate #}
+                        {% if affiliate_promo %}
+                        <div class="panel panel-white p-20">
+                            <div class="form-group no-margin" id="from_affiliate-group">
+                                <label for="from_affiliate" class="control-label">
+                                    {{ lang('entry_affiliate') }}
+                                </label>
+                                <select name="from_affiliate" id="from_affiliate" class="form-control">
+                                    <option value="0">{{ lang('text_none') }}</option>
+                                    {% for affiliate in affiliates %}
+                                        {% set selected = '' %}
+                                        {% if (coupon_creator) and (affiliate['affiliate_id'] == coupon_creator ) %}
+                                            {% set selected = 'selected' %}
+                                        {% endif %}
+                                        <option value="{{ affiliate['affiliate_id'] }}" {{ from_affiliate == affiliate['affiliate_id'] ? 'selected="selected"' : '' }} {{ selected }}>{{ affiliate['name'] }} ({{ affiliate['email'] }})</option>
+                                    {% endfor %}
+                                </select>
+                                <span class="help-block"></span>
+                                <span class="text-muted">{{ langempty('entry_affiliate_help') }}</span>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="panel panel-white p-20" id="showonHome">
+                            <label class="custom-check">
+                                <input type="checkbox" class="hide check-toggler" name="notification_status" value="1" {{ notification_status == '1' ? 'checked' : ''}} >
+                                <i class="fas fa-check"></i>
+                                {{lang('show_gift')}}
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4 order-md-1">
+                        <div class="panel panel-white p-20">
+                            <div class="switch-component">
+                                <div class="switch-inner">
+                                    <span class="title">{{lang("entry_status")}}</span>
+                                    <label class="switch-cover">
+                                        <input type="checkbox" class="hide {{limit_reached ? 'limit-reached-status' : ''}}" name="status" value="1"  {{ status in ['1', 1, 'on'] ? 'checked' }}>
+                                        <span class="switch-title switch-enabled">
+                                            {{lang('btn_inactive')}}
+                                        </span>
+                                        <span class="switch-title switch-disabled">
+                                            {{lang('btn_active')}}
+                                        </span>
+                                        <span class="switch-btn"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if coupon_id not in [false, 0, 0, null] %}
+                        <a href="{{ links['history'] }}" class="panel panel-white p-20 d-block">
+                            <p class="font-color-dark font-13 bold d-flex j-content-between">
+                                <span>{{lang('usage')}} : {{number_of_usage}} </span>
+                                <span class="font-color-dark rotate-rtl">
+                                    <i class="fas fa-chevron-right"></i>
+                                </span>
+                            </p>
+                        </a>
+                        {% endif %}
+                        
+                        <div class="panel panel-white p-20 coupon-summary-container">
+                            <div class="coupon-summary">
+                                <p class="font-color-dark m-bold mb-25 font-15">
+                                    {{lang('summary')}}
+                                </p>
+                                <p class="font-color-dark m-bold mb-15 hide" data-receive="summary-name">
+                                    <span class="replace"></span>
+                                </p>
+                                <ul class="coupon-summary-list">
+                                    <li data-receive="summary-code" class="hide">
+                                        {{lang('summary_code')}}
+                                    </li>
+                                    <li data-receive="summary-type" class="hide">
+                                        {{lang('summary_type')}}
+                                    </li>
+                                    <li data-receive="summary-discount_f" class="hide">
+                                        {{lang_printf('summary_discount_f', config('config_currency'))}}
+                                    </li>
+                                    <li data-receive="summary-discount_p" class="hide">
+                                        {{lang_printf('summary_discount_p', '%')}}
+                                    </li>
+                                    <li data-receive="summary-min" class="hide">
+                                        {{lang_printf('summary_min_limit', config('config_currency'))}}
+                                    </li>
+                                    <li data-receive="summary-max" class="hide">
+                                        {{lang_printf('summary_max_limit', config('config_currency'))}}
+                                    </li>
+                                    <li data-receive="summary-uses-coupon" class="hide">
+                                        {{lang('summary_uses_coupon')}}
+                                    </li>
+                                    <li data-receive="summary-uses-customer" class="hide">
+                                        {{lang('summary_uses_customer')}}
+                                    </li>
+                                    <li data-receive="summary-applied" class="hide">
+                                        {{lang('summary_applied')}}
+                                    </li>
+                                    <li data-receive="summary-customer" class="hide">
+                                        {{lang('summary_customer')}}
+                                    </li>
+                                    <li data-receive="summary-start-date" class="hide">
+                                        {{lang('summary_start_date')}}
+                                    </li>
+                                    <li data-receive="summary-end-date" class="hide">
+                                        {{lang('summary_end_date')}}
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="panel panel-white p-20">
+                            <div class="switch-component">
+                                <div class="switch-inner mb-10">
+                                    <span class="title">{{lang("entry_notify_mobile")}}</span>
+                                    <label class="switch-cover">
+                                        <input type="checkbox" class="hide" name="notify_mobile" {{ notify_mobile in ['1', 1, 'on'] ? 'checked' }}>
+                                        <span class="switch-title switch-enabled">
+                                            {{lang('btn_inactive')}}
+                                        </span>
+                                        <span class="switch-title switch-disabled">
+                                            {{lang('btn_active')}}
+                                        </span>
+                                        <span class="switch-btn"></span>
+                                    </label>
+                                </div>
+                                <span class="text-muted">{{ lang('entry_notify_mobile_help') }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <input type="hidden" name="automatic_apply" value="{{automatic_apply}}">
+            </form>
+            {% set cancel = link('sale/coupon') %}
+
+            <!-- Lower Buttons -->
+            {% include "includes/buttons_bottom.expand" %}
+            <!-- End Lower Buttons -->
+        </div>
+    </section>
+
+    <script type="text/javascript" src="view/assets/js/core/libraries/jquery_ui/widgets.min.js"></script>
+
+
+
+    <script>
+        
+        function changeStatus(checkbox)
+        {
+            var self = $(checkbox);
+            var switch_status = self.siblings('.switchery-status');
+
+            if ( self.is(':checked') )
+            {
+                switch_status.html("{{ lang('text_enabled') }}");
+            }
+            else
+            {
+                switch_status.html("{{ lang('text_disabled') }}");
+            }
+        }
+
+        {# $('input[name=\'product\']').autocomplete({
+            delay: 500,
+            source: function (request, response) {
+                $.ajax({
+                    url: 'catalog/product/autocomplete?filter_name=' + encodeURIComponent(request.term),
+                    dataType: 'json',
+                    success: function (json) {
+                        response($.map(json, function (item) {
+                            return {
+                                label: item.name,
+                                value: item.product_id
+                            }
+                        }));
+                    }
+                });
+            },
+            select: function (event, ui) {
+                $('#coupon-product' + ui.item.value).remove();
+
+                $('#coupon-product').append('<div id="coupon-product' + ui.item.value + '">' + ui.item.label + '<i class="fa fa-times"></i><input type="hidden" name="coupon_product[]" value="' + ui.item.value + '" /></div>');
+
+                $('#coupon-product div:odd').attr('class', 'odd');
+                $('#coupon-product div:even').attr('class', 'even');
+
+                $('input[name=\'product\']').val('');
+
+                return false;
+            },
+            focus: function (event, ui) {
+                return false;
+            }
+        }); #}
+
+        $(document).on('click', '#coupon-product div i', function () {
+            $(this).parent().remove();
+
+            $('#coupon-product div:odd').attr('class', 'odd');
+            $('#coupon-product div:even').attr('class', 'even');
+        });
+
+
+        {# $('input[name=\'category\']').autocomplete({
+            delay: 500,
+            source: function (request, response) {
+                $.ajax({
+                    url: 'catalog/category/autocomplete?filter_name=' + encodeURIComponent(request.term),
+                    dataType: 'json',
+                    success: function (json) {
+                        response($.map(json, function (item) {
+                            return {
+                                label: item.name,
+                                value: item.category_id
+                            }
+                        }));
+                    }
+                });
+
+            },
+            select: function (event, ui) {
+                $('#coupon-category' + ui.item.value).remove();
+
+                $('#coupon-category').append('<div id="product-category' + ui.item.value + '">' + ui.item.label + '<i class="fa fa-times"></i><input type="hidden" name="coupon_category[]" value="' + ui.item.value + '" /></div>');
+
+                $('#coupon-category div:odd').attr('class', 'odd');
+                $('#coupon-category div:even').attr('class', 'even');
+
+                return false;
+            },
+            focus: function (event, ui) {
+                return false;
+            }
+        }); #}
+
+        $(document).on('click', '#coupon-category div i', function () {
+            $(this).parent().remove();
+
+            $('#coupon-category div:odd').attr('class', 'odd');
+            $('#coupon-category div:even').attr('class', 'even');
+        });
+
+        $('#date_start').pickadate({format: 'yyyy-mm-dd'});
+        $('#date_end').pickadate({format: 'yyyy-mm-dd'});
+
+        $('select').select2({
+            minimumResultsForSearch: 3
+        });
+
+        $(document).ready(function(){
+            let coupon_products =  {{ coupon_product|json_encode }};
+
+            for(obj of coupon_products){
+
+               if(obj['excluded'] == 1){
+                   {% if type != "B" %}
+                   $(".coupon_product_excluded").append('<option value="' +obj['product_id']+'" selected>'+obj['name']+' </option>');
+                   {% endif %}
+               }else{
+                   {% if type == "B" %}
+                   $(".coupon_product_buy").append('<option value="' +obj['product_id']+'" selected>'+obj['name']+' </option>');
+                   {% else %}
+                   $(".coupon_product").append('<option value="' +obj['product_id']+'" selected>'+obj['name']+' </option>');
+                   {% endif %}
+               }
+            }
+
+            {% if coupon_product_get %}
+            let coupon_products_get =  {{ coupon_product_get|json_encode }};
+            for(obj of coupon_products_get){
+                $(".coupon_product_get").append('<option value="' +obj['product_id']+'" selected>'+obj['name']+' </option>');
+            }
+            {% endif %}
+
+            let coupon_categorys =  {{ coupon_category|json_encode }};
+
+            for(obj of coupon_categorys){
+
+                if(obj['excluded'] == 1){
+                    {% if type != "B" %}
+                    $(".coupon_category_excluded").append('<option value="' +obj['category_id']+'" selected>'+obj['name']+' </option>');
+                    {% endif %}
+                }else{
+                    {% if type == "B" %}
+                    $(".coupon_category_buy").append('<option value="' +obj['category_id']+'" selected>'+obj['name']+' </option>');
+                    {% else %}
+                    $(".coupon_category").append('<option value="' +obj['category_id']+'" selected>'+obj['name']+' </option>');
+                    {% endif %}
+                }
+            }
+
+            {% if coupon_category_get %}
+
+            let coupon_categories_get =  {{ coupon_category_get|json_encode }};
+            for(obj of coupon_categories_get){
+                $(".coupon_category_get").append('<option value="' +obj['category_id']+'" selected>'+obj['name']+' </option>');
+            }
+            {% endif %}
+
+            let coupon_manufacturer =  {{ coupon_manufacturer|json_encode }};
+
+            for(obj of coupon_manufacturer){
+                if(obj['excluded'] == 1){
+                    {% if type != "B" %}
+                    $(".coupon_manufacturer_excluded").append('<option value="' +obj['manufacturer_id']+'" selected>'+obj['name']+' </option>');
+                    {% endif %}
+                }else{
+
+                    {% if type == "B" %}
+                    $(".coupon_manufacturer_buy").append('<option value="' +obj['manufacturer_id']+'" selected>'+obj['name']+' </option>');
+                    {% else %}
+                    $(".coupon_manufacturer").append('<option value="' +obj['manufacturer_id']+'" selected>'+obj['name']+' </option>');
+                    {% endif %}
+                }
+            }
+
+            {% if  coupon_manufacturer_get %}
+            let coupon_manufacturer_get =  {{ coupon_manufacturer_get|json_encode }};
+            for(obj of coupon_manufacturer_get){
+                $(".coupon_manufacturer_get").append('<option value="' +obj['manufacturer_id']+'" selected>'+obj['name']+' </option>');
+            }
+            {% endif %}
+            let coupon_group =  {{ coupon_group|json_encode }};
+
+            for(obj of coupon_group){
+                if(obj['selected'] == true){
+                    $("#coupon_group").append('<option value="' +obj['group_id']+'" selected>'+obj['name']+' </option>');
+                }else{
+                    $("#coupon_group").append('<option value="' +obj['group_id']+'">'+obj['name']+' </option>');
+                }
+            }
+
+            let coupon_customer =  {{ coupon_customer|json_encode }};
+
+            for(obj of coupon_customer){
+                if(obj['selected'] == true){
+                    $("#coupon_customer").append('<option value="' +obj['customer_id']+'" selected>'+obj['name']+' </option>');
+                }else{
+                    $("#coupon_customer").append('<option value="' +obj['customer_id']+'">'+obj['name']+' </option>');
+                }
+            }
+
+            $(".product").select2({
+                tokenSeparators: [','],
+                closeOnSelect: false,
+                ajax: {
+                    url: '{{ link("catalog/product/autocomplete") }}',
+                    dataType: 'json',
+                    type: 'GET',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            filter_name: params.term,filter_status:"1"
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: $.map(data, function (item, index) {
+
+                                return {
+                                    id: item.product_id,
+                                    text: item.name
+                                }
+                            })
+                        };
+                    },
+                    cache: true
+                }
+            });
+
+
+            $(".category").select2({
+                tokenSeparators: [','],
+                closeOnSelect: false,
+                ajax: {
+                    url: '{{ link("catalog/category/autocomplete") }}',
+                    dataType: 'json',
+                    type: 'GET',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            filter_name: params.term
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: $.map(data, function (item, index) {
+
+                                return {
+                                    id: item.category_id,
+                                    text: item.name
+                                }
+                            })
+                        };
+                    },
+                    cache: true
+                }
+            });
+
+            $(".manufacturer").select2({
+                tokenSeparators: [','],
+                closeOnSelect: false,
+                ajax: {
+                    url: '{{ link("catalog/manufacturer/autocomplete") }}',
+                    dataType: 'json',
+                    type: 'GET',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            filter_name: params.term
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: $.map(data, function (item, index) {
+
+                                return {
+                                    id: item.manufacturer_id,
+                                    text: item.name
+                                }
+                            })
+                        };
+                    },
+                    cache: true
+                }
+            });
+
+            $(".coupon_customer").select2({
+                tokenSeparators: [','],
+                closeOnSelect: false,
+                ajax: {
+                    url: '{{ link("sale/customer/autocomplete") }}',
+                    dataType: 'json',
+                    type: 'GET',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            filter_name: params.term
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: $.map(data, function (item, index) {
+
+                                return {
+                                    id: item.customer_id,
+                                    text: item.name
+                                }
+                            })
+                        };
+                    },
+                    cache: true
+                }
+            });
+
+
+            // hide max limit if fixed price is selected
+            {# $('#type-group select').on('change', function () {
+                if ($(this).val() === 'F') {
+                    $('#maximum_limit-group').hide();
+                } else {
+                    $('#maximum_limit-group').show();
+                }
+            }); #}
+
+        });
+
+    </script>
+{% endblock %}
+
+{% block endScripts %}
+    <script>
+        $(document).on('ready', function() {
+
+            var defaultCurrency = "{{config('config_currency')}}";
+            $('.touchspin-money').TouchSpin({
+                'postfix': defaultCurrency,
+                step: 1,
+                forcestepdivisibility: 'none',
+                min: -Infinity,
+                max: Infinity,
+                // forcestepdivisibility: 'round',
+                {# decimals:  currency_decimal_places , #}
+                buttondown_class: "hide",
+                buttonup_class: "hide",
+            });
+
+            $('.touchspin-percent').TouchSpin({
+                'postfix': '%',
+                step: 1,
+                forcestepdivisibility: 'none',
+                min: -Infinity,
+                max: Infinity,
+                // forcestepdivisibility: 'round',
+                {# decimals:  currency_decimal_places , #}
+                buttondown_class: "hide",
+                buttonup_class: "hide",
+            });
+
+            $('.touchspin-quantity').TouchSpin({
+                min: 1,
+                max: Infinity
+            });
+
+            // generate code
+            $('.generate-code-btn').on('click', function() {
+                $(this).addClass('load-spin-inline');
+                $.ajax({
+                    url: "{{link('sale/coupon/generate_code')}}",
+                    dataType: 'json',
+                    success: (r) => {
+                        {# $(this).fadeOut(); #}
+                        $(this).removeClass('load-spin-inline');
+                        if(r.success == 1) {
+                            $('#code').val(r.code).trigger('change');
+                        }
+                    }
+                });
+            });
+
+            // generate summary function
+            let summaryListener = function(el) {
+                if(el.data('val')) {
+                    $(`[data-receive="${el.data('summary')}"]`).find('.replace').html(el.data('val')).parent().removeClass('hide')
+                } else {
+                    $(`[data-receive="${el.data('summary')}"]`).find('.replace').html(el.val()).parent().removeClass('hide')
+                    if(el.val().length == 0) {
+                        $(`[data-receive="${el.data('summary')}"]`).addClass('hide')
+                    }
+                }
+                if(el.attr('type') == 'radio') {
+                    if(el.is(":checked") == false) {
+                        $(`[data-receive="${el.data('summary')}"]`).addClass('hide');
+                    }
+                }
+                if(el.data('parent')) {
+                    if($(`[data-isparent="${el.data('parent')}"]`).is(':checked') == false)
+                    $(`[data-receive="${el.data('summary')}"]`).addClass('hide');
+                } 
+            }
+            // customize new event to detect radio buttons deselect
+            $('input[type="radio"]').bind('click', function(){
+                // Processing only those that match the name attribute of the currently clicked button...
+                $('input[name="' + $(this).attr('name') + '"]').not($(this)).trigger('deselect'); // Every member of the current radio group except the clicked one...
+            });
+            $('input[type="radio"]').bind('deselect', function(){
+                summaryListener($(this));
+            })
+            $('.summary-input').on('input change', function() {
+                summaryListener($(this));
+            });
+            $('.summary-input').each(function() {
+                summaryListener($(this));
+            });
+
+            // show and hide inputs when related radio button change
+            let radioTogglerFunc = function(el) {
+                let data = el.data();
+                let group = data.target == "all" ? data.group : $(`div[data-receive="${data.target}"]`).data('group');
+                if(el.is(":checked")) {
+                    if(data.target == "all") {
+                        $(`label[data-group="${el.data('clearlinked')}"]`).removeClass('hide-linked');
+                        $(`div[data-group="${data.group}"]`).addClass('hide');
+                    } else {
+                        $(`div[data-group="${group}"]`).addClass('hide');
+                        $(`div[data-receive="${data.target}"]`).removeClass('hide');
+                    }
+                    if(data.otherclear) {
+                        $(`div[data-receive="${data.otherclear}"]`).removeClass('hide');
+                    }
+                    if(data.othertarget) {
+                        $(`div[data-receive="${data.othertarget}"]`).addClass('hide');
+                        console.log($(`div[data-receive="${data.othertarget}"]`))
+                    }
+                }
+                $(`div[data-receive="${data.target}"]`).find('input').trigger('change')
+            };
+            // show and hide linked radio in apply and exclude when related radio button change
+            let linkedRadioToggler = function(el) {
+                let data = el.data();
+                let targetVal = data.linked;
+                let group = $(`label[data-receive="${el.data('linked')}"]`).data('group');
+                let targetGroup = $(`label[data-group="${group}"]`);
+                let target = $(`label[data-receive="${el.data('linked')}"]`)
+                let targetChecked = target.find('input').is(':checked')
+                if(el.is(":checked")) {
+                    if(targetVal == 'all') {
+                        $(`label[data-group="${data.linkedgroup}"]`).removeClass("hide-linked");
+                        {# $(`[data-group="exclude-group"]`).addClass("hide"); #}
+                    }
+                    if(targetVal == 'exclude-cat-radio') {
+                        if(targetChecked) {
+                            target.find('input').prop('checked', false);
+                            $(`label[data-receive="none"] input`).prop('checked', true);
+                        }
+                        targetGroup.removeClass("hide-linked");
+                        target.addClass("hide-linked");
+                        $(`[data-receive="exclude-cat"]`).addClass("hide");
+                    }
+                    if(targetVal == 'exclude-brand-radio') {
+                        if(targetChecked) {
+                            target.find('input').prop('checked', false);
+                            $(`label[data-receive="none"] input`).prop('checked', true);
+                        }
+                        targetGroup.removeClass("hide-linked");
+                        target.addClass("hide-linked");
+                        $(`[data-receive="exclude-brand"]`).addClass("hide");
+                    }
+                    if(targetVal == 'exclude-product-radio') {
+                        targetGroup.find('input').prop('checked', false);
+                        $(`label[data-receive="none"] input`).prop('checked', true);
+                        targetGroup.addClass("hide-linked");
+                        $(`[data-group="exclude-group"]`).addClass("hide");
+                    }
+                }
+            };
+            $('.radio-toggler').each(function() {
+                radioTogglerFunc($(this));
+                if($(this).data('linked')) {
+                    linkedRadioToggler($(this));
+                }
+            });
+            $('.radio-toggler').on("change", function() {
+                radioTogglerFunc($(this));
+                if($(this).data('linked')) {
+                    linkedRadioToggler($(this));
+                }
+            });
+            $('.radio-toggler').bind('deselect', function(){
+                let data = $(this).data();
+                if($(this).data('isparent')) {
+                    summaryListener($(`[data-parent="${$(this).data('isparent')}"]`));
+                }
+            })
+
+            // show and hide inputs when related checkbox button change
+            let checkTogglerFunc = function(el) {
+                let target = el.data('target');
+                if(el.is(':checked')) {
+                    $(`div[data-receive="${target}"]`).removeClass('hide');
+                } else {
+                    $(`div[data-receive="${target}"]`).addClass('hide');
+                }
+                if(el.data('isparent')) {
+                    $(`[data-parent="${el.data('isparent')}"]`).each(function() {
+                        summaryListener($(this));
+                    })
+                }
+            };
+            $('.check-toggler').on('change', function() {
+                checkTogglerFunc($(this))
+            });
+            $('.check-toggler').each(function() {
+                checkTogglerFunc($(this))
+            });
+
+            // show and hide inputs on related select change
+            let selectTogglerFunc = function(el) {
+                let data = el.find(':selected').data();
+                let group = data.target == "all" ? data.group : $(`div[data-receive="${data.target}"]`).data('group');
+                if(data.target == "all") {
+                    $(`div[data-group="${data.group}"]`).addClass('hide');
+                } else {
+                    $(`div[data-group="${group}"]`).addClass('hide');
+                    $(`div[data-receive="${data.target}"]`).removeClass('hide');
+                }
+            };
+            $('.select-toggler').on('select2:select', function() {
+                selectTogglerFunc($(this))
+            });
+            $('.select-toggler').each(function() {
+                selectTogglerFunc($(this))
+            });
+
+
+            if($('[data-target="amount-xy"]').is(":checked")) {
+                $('#minimum_to_apply-group').addClass('hide')
+            }
+            $('[data-target="amount-xy"], [data-target="xy-group-type"]').on('change', function() {
+                if($('[data-target="amount-xy"]').is(":checked")) {
+                    $('#minimum_to_apply-group').addClass('hide')
+                }
+            });
+            $('[data-target="amount-xy"], [data-target="xy-group-type"]').bind('deselect', function() {
+                $('#minimum_to_apply-group').removeClass('hide')
+            });
+
+            $('input').on('input change', function(e) {
+                $(this).parents('.has-error').removeClass('has-error').find('.help-block').html('');
+            });
+
+            // limit reached status
+            $(document).on('change', '.limit-reached-status', function() {
+                $('#upgrade_plan_modal').modal('show')
+                console.log($('#upgrade_plan_modal'))
+                $(this).prop('checked', false);
+            })
+        })
+    </script>
+{% endblock %}

@@ -1,0 +1,98 @@
+<div class="modal fade" id="apply-tax-class-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">{{ lang('button_apply_tax_class') }}</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" id="apply-tax-class-form">
+          <div class="form-group col-md-12" id="errors" style="color:red;"></div>
+
+          <div class="form-group col-md-6">
+              <label for="tax_class_id" class="control-label">{{ lang('entry_tax_class') }}</label>
+              <select id="tax_class_id" class="form-control">
+                  <option value="0">{{ lang('none')}}</option>
+                  {% for tax_class in tax_classes %}
+                  <option value="{{tax_class.tax_class_id}}" {{ tax_class.tax_class_id == default_tax_class ? 'selected' : ''}}>{{ tax_class.title }}</option>
+                  {% endfor %}
+              </select>
+              <span class="help-block"></span>
+              <span class="text-muted"></span>
+          </div>
+
+
+          <div class="form-group col-md-6" id="apply-tax-class-switch-div">
+              <label class="control-label">{{ lang('entry_apply_to_all_products') }}</label>
+              <div class="checkbox checkbox-switchery">
+                  <label>
+                      <input type="checkbox" name="all_products" class="switchery" id="apply-tax-class-switch">
+                      <span class="switchery-status">{{ lang('text_no') }}</span>
+                  </label>
+              </div>
+          </div>
+
+        <div class="form-group col-md-12">
+          <span id="apply-tax-class-entity-type">{{ lang('products') }}: </span><span id="apply-tax-class-total-selected"></span> {{ lang('selected') }}
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ lang('cancel') }}</button>
+        <button type="button" class="btn btn-primary" id="buttonApply">{{ lang('apply') }}</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+    $(document).on('change', "#apply-tax-class-switch", function(e) {
+        var self = $(this);
+        var switch_status = self.siblings('.switchery-status');
+
+        if (self.is(':checked')) {
+            switch_status.html("{{ lang('lbl_switch_yes') }}");
+            $('tr .selected').removeClass('selected');
+            $('#apply-tax-class-total-selected').html('0');
+            $('input[name="selected_products_ids[]"]').remove();
+        }
+        else {
+            switch_status.html("{{ lang('lbl_switch_no') }}");
+        }
+    });
+
+
+    $('#apply-tax-class-modal').on('hidden.bs.modal', function() {
+      $('#apply-tax-class-modal #errors').html('');
+      $('input[name="selected_products_ids[]"]').remove();
+      // $('#apply-tax-class-switch').prop('checked', false).trigger('change');
+    });
+    
+
+    $('#buttonApply').on('click', function(){
+      // $('#apply-tax-class-form').submit();
+      var selected_count = $('#apply-tax-class-total-selected').html();
+      var is_all_products_checked = $('#apply-tax-class-switch:checked').length > 0;
+
+      if(selected_count <= 0 && !is_all_products_checked){
+        $('#errors').html('No products/categoties are selected!');
+        return false;
+      }
+
+      $.post("{{ link('admin/localisation/tax_class/applyTaxClassTo') }}", 
+        { 
+          products_ids: $('input[name="selected_products_ids[]"]').serializeArray(), 
+          is_all_products_checked: $('#apply-tax-class-switch:checked').length > 0 ? 1 : 0,
+          tax_class_id: $('#tax_class_id').val() ,
+          entity_type:  $('#apply-tax-class-switch-div').hasClass('hidden') ? 'categoty':'product',
+         })
+      .done(function(data){
+        $('#apply-tax-class-modal').modal('toggle');
+      });
+
+    });
+
+                           
+
+</script>

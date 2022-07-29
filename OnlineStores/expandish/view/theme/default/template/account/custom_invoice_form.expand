@@ -1,0 +1,178 @@
+{% if error_warning %}
+<br>
+<div class="alert alert-warning alert-dismissible" role="alert">
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+  {{ error_warning }}
+</div>
+{% endif %}
+
+<form id="custom_invoice_form" action="{{ link('account/custom_invoice', '', 'SSL') }}" method="post" enctype="multipart/form-data">
+      <div class="row">
+          <div class="col-md-6">
+              <div class="form-group {{ error_from_name ? 'text-danger' : '' }}">
+                  <label for="from_name">{{ lang('entry_from_name') }} <span class="required">*</span></label>
+                  <input type="text" name="from_name" class="form-control" id="from_name" value="{{ from_name }}"/>
+                  <div class="text-danger" id="error_from_name" style="display: none;">{{ lang('error_from_name') }}</div>
+              </div>
+
+              <div class="form-group {{ error_to_email ? 'text-danger' : '' }}">
+                  <label for="to_email">{{ lang('entry_customer') }} <span class="required">*</span></label>
+                  <select class="form-control" name="customer" id="customer">
+                    <option value="">--- {{ lang('text_select_customer') }} ---</option>
+                    {% for customer in customers %}
+                      <option value="{{ customer['customer_id'] }}">{{ customer['name'] }} - {{ customer['email'] }}</option>
+                    {% endfor %}
+                  </select>
+                  <div class="text-danger" id="error_customer" style="display: none;">{{ lang('error_customer') }}</div>
+              </div>
+          </div>
+          <div class="col-md-6">
+              <div class="form-group {{ error_from_email ? 'text-danger' : '' }}">
+                  <label for="from_email">{{ lang('entry_from_email') }} <span class="required">*</span></label>
+                  <input type="text" name="from_email" class="form-control" id="from_email" value="{{ from_email }}"/>
+                  <div class="text-danger" id="error_from_email" style="display: none;">{{ lang('error_email') }}</div>
+              </div>
+          </div>
+          <!-- <div class="col-md-12">
+              <fieldset class="form-group">
+                  <label>{{ lang('entry_theme') }} <span class="required">*</span></label>
+
+                  {% for voucher_theme in voucher_themes %}
+                  {% if voucher_theme['voucher_theme_id'] == voucher_theme_id %}
+                  <div class="form-check">
+                      <label class="form-check-label">
+                          <input type="radio" class="form-check-input" name="voucher_theme_id" id="voucher-{{ voucher_theme['voucher_theme_id'] }}" value="{{ voucher_theme['voucher_theme_id'] }}" checked="checked">
+                          {{ voucher_theme['name'] }}
+                      </label>
+                  </div>
+                  {% else %}
+                  <div class="form-check">
+                      <label class="form-check-label">
+                          <input type="radio" class="form-check-input" name="voucher_theme_id" id="voucher-{{ voucher_theme['voucher_theme_id'] }}" value="{{ voucher_theme['voucher_theme_id'] }}">
+                          {{ voucher_theme['name'] }}
+                      </label>
+                  </div>
+                  {% endif %}
+                  {% endfor %}
+
+                  {% if error_theme %}
+                  <div class="text-danger">{{ error_theme }}</div>
+                  {% endif %}
+              </fieldset>
+          </div> -->
+
+          <div class="col-md-12" id="items">
+              <fieldset class="form-group">
+                <div class="form-group col-md-6" style="padding-left: 0; padding-right: 0">
+                    <label for="item_1">{{ lang('entry_item') }} #1 <span class="required">*</span></label>
+                    <textarea name="items[1][name]" rows="2" class="form-control" id="item_1" value=""></textarea>
+                    <div class="text-danger" id="error_item_1" style="display: none;">{{ lang('error_item') }}</div>
+                </div>
+
+                <div class="form-group col-md-3">
+                    <label for="amount_1">{{ lang('entry_invoice_amount') }} </label>
+                    <input type="text" name="items[1][amount]" class="form-control" id="amount_1" value=""/>
+                    {% if error_amount %}
+                    <div class="text-danger">{{ error_amount }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group col-md-3" style="padding-left: 0; padding-right: 0">
+                    <label for="quantity_1">{{ lang('entry_quantity') }} </label>
+                    <input type="text" name="items[1][quantity]" class="form-control" id="quantity_1" value=""/>
+                    {% if error_amount %}
+                    <div class="text-danger">{{ error_amount }}</div>
+                    {% endif %}
+                </div>
+              </fieldset>
+              <hr/>
+          </div>
+
+          <div class="col-md-12" style="text-align: center;">
+            <a href="javascript://" onclick="add_item()"><i class="fa fa-plus fa-lg"></i> {{ lang('text_add_item') }}</a>
+            <hr/>
+          </div>
+
+
+      </div>
+
+      <div class="row">
+          <div class="col-md-12">
+              <div class="pull-right">
+                  <input type="button" onclick="create_custom_invoice()" value="{{ lang('button_create') }}" class="btn btn-inline btn-primary"/>
+                  <br/><br/>
+              </div>
+          </div>
+      </div>
+  </form>
+
+  <script type="text/javascript">
+  var entry_item = '{{ lang("entry_item") }}';
+  var entry_invoice_amount = '{{ lang("entry_invoice_amount") }}';
+  var entry_quantity = '{{ lang("entry_quantity") }}';
+  var error_item = '{{ lang("error_item") }}';
+
+  var items = 2;
+
+  function add_item() {
+    var html = '<fieldset class="form-group">';
+
+    html += '<div class="form-group col-md-6" style="padding-left: 0; padding-right: 0"><label for="item_'+items+'">'+entry_item+' #'+items+' <span class="required">*</span></label><textarea name="items['+items+'][name]" rows="2" class="form-control" id="item_'+items+'" value=""></textarea><div class="text-danger" id="error_item_'+items+'" style="display: none;">'+error_item+'</div></div>';
+
+    html += '<div class="form-group col-md-3"><label for="amount_'+items+'">'+entry_invoice_amount+'</label><input type="text" name="items['+items+'][amount]" class="form-control" id="amount_'+items+'" value=""/></div>';
+
+    html += '<div class="form-group col-md-3" style="padding-left: 0; padding-right: 0"><label for="quantity_1">'+entry_quantity+'</label><input type="text" name="items['+items+'][quantity]" class="form-control" id="quantity_'+items+'" value=""/></div>';
+
+    html += '</fieldset><hr/>';
+
+    $("#items").append(html);
+    items++;
+  }
+
+  function create_custom_invoice(){
+    var from_name = $('#from_name').val();
+    var from_email = $('#from_email').val();
+    var customer = $('#customer').val();
+    var errors = false;
+
+    //validate from name
+    if(!from_name || from_name.length < 1 || from_name.length > 64){
+      $('#error_from_name').fadeIn();
+      errors = true;
+    }
+    else{
+      $('#error_from_name').fadeOut();
+    }
+
+    //validate from email
+    if(!from_email || from_email.length > 96){
+      $('#error_from_email').fadeIn();
+      errors = true;
+    }
+    else{
+      $('#error_from_email').fadeOut();
+    }
+
+    //validate customer
+    if(!customer){
+      $('#error_customer').fadeIn();
+      errors = true;
+    }
+    else{
+      $('#error_customer').fadeOut();
+    }
+
+    //validate items
+    for (var i = 1; i <= items - 1; i++) {
+      if(!$('#item_'+i).val()){
+        $('#error_item_'+i).fadeIn();
+        errors = true;
+      }else{
+        $('#error_item_'+i).fadeOut();
+      }
+    }
+
+    if(!errors)
+      $('#custom_invoice_form').submit();
+  }
+</script>

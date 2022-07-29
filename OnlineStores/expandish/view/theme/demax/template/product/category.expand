@@ -1,0 +1,363 @@
+{{ script('js/jquery/jquery.total-storage.min.js') }}
+{% set mfSettings = config('mega_filter_module') %}
+{% if mfSettings[1]['status'] == 1 %}
+    {% if mfilter_json %}
+        <div id="mfilter-json" style="display:none">{{ mfilter_json|base64_encode }}</div>
+    {% endif %}
+{% endif %}
+
+<!-- Breadcrumbs -->
+<div class="breadcrumbs">
+    <div class="container">
+        <div class="row">
+            <div class="col-xs-12">
+                <ul>
+                    {% for breadcrumb in breadcrumbs %} {% if loop.last %}
+                    <li>
+                        <strong>{{ breadcrumb['text'] }}</strong>
+                    </li>
+                    {% else %}
+                    <li class="home">
+                        <a title="Go to Home Page" href="{{ breadcrumb['href'] }}">{{ breadcrumb['text'] }}</a>
+                        <span>&raquo;</span>
+                    </li>
+                    {% endif %} {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Breadcrumbs End -->
+
+<div id="notification"></div>
+
+  <!-- Main Container -->
+<div class="main-container col2-left-layout">
+    <div class="container">
+        <div class="row">
+            <div class="col-main col-sm-9 col-xs-12 col-sm-push-3">
+            {% if image %}
+                <img src="{{ image(image, 1200, 400) }}" alt="{{ category_name }}">
+            {% endif %}
+                <div class="shop-inner">
+                    <div class="page-title">
+                        <h2>{{ category_name }}</h2>
+                    </div>
+                    <div class="desc std">
+                        {% if description %}
+                            {{ description }}
+                        {% endif %}
+                        <div class="tag">
+                        <ul style=" margin-left: 0px; margin-top: 20px; margin-bottom: 30px;">
+                            {% if categories %}
+                            {% for category in categories %}
+                            <li><a href="{{ category['href'] }}" style="background-color: #E5E5E5 !important;">{{ category['name'] }}</a></li>
+                            {% endfor %}
+                            {% endif %}
+                          </ul>
+                        </div>
+
+                    </div>
+                    <div class="toolbar">
+                        <div class="view-mode">
+                            <ul>
+                                <li class="mode-grid active">
+                                    <a href="#" onclick="$('.products-grid').show(); $('.products-list').hide(); $('.mode-list').removeClass('active'); $('.mode-grid').addClass('active'); return false;">
+                                        <i class="fa fa-th-large"></i>
+                                    </a>
+                                </li>
+                                <li class="mode-list">
+                                    <a href="#" onclick="$('.products-list').show(); $('.products-grid').hide(); $('.mode-grid').removeClass('active'); $('.mode-list').addClass('active'); return false;">
+                                        <i class="fa fa-th-list"></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="sorter">
+                            <div class="short-by">
+                                <label>{{ lang('text_sort') }}</label>
+                                <select onchange="location = this.value;" class="sorter-options form-control">
+                                    {% for sortst in sorts %}
+                                        {% if sortst.value == sort ~ '-' ~ order %}
+                                            <option value="{{ sortst.href }}" selected="selected">{{ sortst.text }}</option>
+                                        {% else %}
+                                            <option value="{{ sortst.href }}">{{ sortst.text }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="short-by page">
+                                <label>{{ lang('text_limit') }}</label>
+                                <select class="limiter-options form-control" onchange="location = this.value;">
+                                    {% for limitst in limits %}
+                                        {% if limitst.value == limit %}
+                                            <option value="{{ limitst.href }}" selected="selected">{{ limitst.text }}</option>
+                                        {% else %}
+                                            <option value="{{ limitst.href }}">{{ limitst.text }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="pagination-area" style="margin-top: 10px;">
+                                {{ pagination }}
+                            </div>
+                            <br><br>
+                        </div>
+
+                    </div>
+
+                    <div class="product-grid-area">
+
+
+                        <ul class="products-grid">
+                            {% for product in products %}
+                            <li class="item col-lg-4 col-md-4 col-sm-6 col-xs-6">
+                                <div class="product-item">
+                                    <div class="item-inner">
+                                        <div class="product-thumbnail">
+                                                {% if product.special %}
+                                                <div class="icon-sale-label sale-left">{{ lang('text_Sale')}}</div>
+                                                {% endif %}
+                                            <div class="pr-img-area">
+                                                <a title="{{ product.name }}" href="{{ product.href }}">
+                                                    <figure>
+                                                        <img class="first-img" src="{{ image(product.image, 350, 350) }}" alt="{{ product.name }}">
+                                                        <!--- remove image thumb -->
+                                                        <!-- <img class="hover-img" src="{{ product.thumb_swap ? product.thumb_swap : product.thumb }}" alt="{{ product.name }}"> -->
+                                                        <img class="hover-img" src="{{ product.thumb_swap ? image(product.image_swap, 350, 350) : image(product.image, 350, 350) }}" alt="{{ product.name }}">
+                                                    </figure>
+                                                </a>
+                                            </div>
+                                            <div class="pr-info-area">
+                                                <div class="pr-button">
+                                                    <div class="mt-button add_to_wishlist">
+                                                        <a href="#" onclick="addToWishList({{ product.product_id }}); return false;">
+                                                            <i class="fa fa-heart"></i>
+                                                        </a>
+                                                    </div>
+                                                    <div class="mt-button add_to_compare">
+                                                        <a href="#" onclick="addToCompare({{ product.product_id }}, 1); return false;">
+                                                            <i class="fa fa-signal"></i>
+                                                        </a>
+                                                    </div>
+                                                    <div class="mt-button quick-view">
+                                                        <a href="{{ product.href }}">
+                                                            <i class="fa fa-search"></i>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="item-info">
+                                            <div class="info-inner">
+                                                <div class="item-title">
+                                                    {% if config('show_brands') %}
+                                                    <a href="{{ product.manufacturer_href }}">{{ product.manufacturer }}</a>
+                                                    {% endif %}
+                                                    <a title="{{ product.name }}" href="{{ product.href }}">{{ product.name }}</a>
+                                                </div>
+                                                <div class="item-content">
+                                                    <div class="rating">
+                                                            {% if product.rating == 0 %}
+                                                            <i class="fa fa-star-o"></i>
+                                                            <i class="fa fa-star-o"></i>
+                                                            <i class="fa fa-star-o"></i>
+                                                            <i class="fa fa-star-o"></i>
+                                                            <i class="fa fa-star-o"></i>
+                                                            {% elseif product.rating == 1 %}
+                                                            <i class="fa fa-star"></i>
+                                                            <i class="fa fa-star-o"></i>
+                                                            <i class="fa fa-star-o"></i>
+                                                            <i class="fa fa-star-o"></i>
+                                                            <i class="fa fa-star-o"></i>
+                                                            {% elseif product.rating == 2 %}
+                                                            <i class="fa fa-star"></i>
+                                                            <i class="fa fa-star"></i>
+                                                            <i class="fa fa-star-o"></i>
+                                                            <i class="fa fa-star-o"></i>
+                                                            <i class="fa fa-star-o"></i>
+                                                            {% elseif product.rating == 3 %}
+                                                            <i class="fa fa-star"></i>
+                                                            <i class="fa fa-star"></i>
+                                                            <i class="fa fa-star"></i>
+                                                            <i class="fa fa-star-o"></i>
+                                                            <i class="fa fa-star-o"></i>
+                                                            {% elseif product.rating == 4 %}
+                                                            <i class="fa fa-star"></i>
+                                                            <i class="fa fa-star"></i>
+                                                            <i class="fa fa-star"></i>
+                                                            <i class="fa fa-star"></i>
+                                                            <i class="fa fa-star-o"></i>
+                                                            {% else %}
+                                                            <i class="fa fa-star"></i>
+                                                            <i class="fa fa-star"></i>
+                                                            <i class="fa fa-star"></i>
+                                                            <i class="fa fa-star"></i>
+                                                            <i class="fa fa-star"></i>
+                                                            {% endif %}
+                                                    </div>
+                                                    <div class="item-price">
+                                                        <div class="price-box">
+                                                            {% if ('-1' in product.price) or ('-1' in product.special) %}
+                                                                <p class="clickable special-price" onclick="contact_us('{{ product.product_id }}');"> <span class="price-label">{{ lang('button_req_quote') }}</span>{{ lang('button_req_quote') }}</p>
+                                                                <div id="enquiry-{{ product.product_id }}"  style="display:none">{{ product.name }}:</div>
+                                                            {% elseif product.special %}
+                                                                <p class="special-price"> <span class="price-label">Special Price</span> <span class="price">{{ product.special }}</span> </p>
+                                                                <p class="old-price"> <span class="price-label">Regular Price:</span> <span class="price">{{ product.price }}</span> </p>
+                                                            {% else %}
+                                                                <p class="special-price"> <span class="price-label">Regular Price:</span> <span class="price">{{ product.price }}</span> </p>
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                    <div class="pro-action">
+                                                        {% if ('-1' in product.price) or ('-1' in product.special) %}
+                                                        {% else %}
+                                                        {% if customer.isCustomerAllowedToAdd_cart and ( config('config_hide_add_to_cart') != 1 or product.quantity >0 )  %}
+                                                            <button type="button" class="add-to-cart" onclick="addToCart({{ product.product_id }}, 1); return false;">
+                                                                <span> {{ lang('button_cart') }}</span>
+                                                            </button>
+                                                        {% endif %}
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                            {% endfor %}
+
+
+                        </ul>
+
+                        <ul class="products-list" id="products-list" style="display: none;">
+                            {% for product in products %}
+                            <li class="item ">
+                                <div class="product-img">
+                                        {% if product.special %}
+                                        <div class="icon-sale-label sale-left">{{ lang('text_Sale')}}</div>
+                                        {% endif %}
+                                    <a href="{{ product.href }}" title="{{ product.name }}">
+                                        <figure>
+                                            <img class="small-image" src="{{ product.thumb }}" alt="{{ product.name }}">
+                                        </figure>
+                                    </a>
+                                </div>
+                                <div class="product-shop">
+                                    <h2 class="product-name">
+                                            {% if config('show_brands') %}
+                                            <a href="{{ product.manufacturer_href }}">{{ product.manufacturer }}</a><br>
+                                            {% endif %}
+                                        <a href="{{ product.href }}" title="Ipsums Dolors Untra">{{ product.name }}</a>
+                                    </h2>
+                                    <div class="ratings">
+                                        <div class="rating">
+                                            {% if product.rating == 0 %}
+                                            <i class="fa fa-star-o"></i>
+                                            <i class="fa fa-star-o"></i>
+                                            <i class="fa fa-star-o"></i>
+                                            <i class="fa fa-star-o"></i>
+                                            <i class="fa fa-star-o"></i>
+                                            {% elseif product.rating == 1 %}
+                                            <i class="fa fa-star"></i>
+                                            <i class="fa fa-star-o"></i>
+                                            <i class="fa fa-star-o"></i>
+                                            <i class="fa fa-star-o"></i>
+                                            <i class="fa fa-star-o"></i>
+                                            {% elseif product.rating == 2 %}
+                                            <i class="fa fa-star"></i>
+                                            <i class="fa fa-star"></i>
+                                            <i class="fa fa-star-o"></i>
+                                            <i class="fa fa-star-o"></i>
+                                            <i class="fa fa-star-o"></i>
+                                            {% elseif product.rating == 3 %}
+                                            <i class="fa fa-star"></i>
+                                            <i class="fa fa-star"></i>
+                                            <i class="fa fa-star"></i>
+                                            <i class="fa fa-star-o"></i>
+                                            <i class="fa fa-star-o"></i>
+                                            {% elseif product.rating == 4 %}
+                                            <i class="fa fa-star"></i>
+                                            <i class="fa fa-star"></i>
+                                            <i class="fa fa-star"></i>
+                                            <i class="fa fa-star"></i>
+                                            <i class="fa fa-star-o"></i>
+                                            {% else %}
+                                            <i class="fa fa-star"></i>
+                                            <i class="fa fa-star"></i>
+                                            <i class="fa fa-star"></i>
+                                            <i class="fa fa-star"></i>
+                                            <i class="fa fa-star"></i>
+                                            {% endif %}
+                                        </div>
+                                        <p class="rating-links">
+                                            <a href="{{ product.href }}">{{ product.reviews_count }}(s)</a>
+                                            <span class="separator">|</span>
+                                            <a href="{{ product.href }}">{{ lang('text_Add_Review') }}</a>
+                                        </p>
+                                    </div>
+                                    <div class="price-box">
+                                        {% if ('-1' in product.price) or ('-1' in product.special) %}
+                                            <p class="clickable special-price" onclick="contact_us('{{ product.product_id }}');"> <span class="price-label">{{ lang('button_req_quote') }}</span>{{ lang('button_req_quote') }}</p>
+                                            <div id="enquiry-{{ product.product_id }}"  style="display:none">{{ product.name }}:</div>
+                                        {% elseif product.special %}
+                                            <p class="special-price"> <span class="price-label">Special Price</span> <span class="price">{{ product.special }}</span> </p>
+                                            <p class="old-price"> <span class="price-label">Regular Price:</span> <span class="price">{{ product.price }}</span> </p>
+                                        {% else %}
+                                            <p class="special-price"> <span class="price-label">Regular Price:</span> <span class="price">{{ product.price }}</span> </p>
+                                        {% endif %}
+                                    </div>
+                                    <div class="desc std">
+                                        <p>{{ product.description|slice(0, 399) ~ '...' }}<a class="link-learn" title="Learn More" href="{{ product.href }}">{{ lang('text_Learn_More') }}</a>
+                                        </p>
+                                    </div>
+                                    <div class="actions">
+                                        {% if ('-1' in product.price) or ('-1' in product.special) %}
+                                        <button class="button cart-button" title="Add to Cart" type="button" onclick="contact_us('{{ product.product_id }}');">
+                                            <i class="fa fa-shopping-basket"></i>
+                                            <span>{{ lang('button_req_quote') }}</span>
+                                        </button>
+                                        {% else %}
+                                         {% if customer.isCustomerAllowedToAdd_cart and ( config('config_hide_add_to_cart') != 1 or product.quantity >0 )  %}
+                                        <button class="button cart-button" title="Add to Cart" type="button" onclick="addToCart({{ product.product_id }}, 1); return false;">
+                                            <i class="fa fa-shopping-basket"></i>
+                                            <span>{{ lang('button_cart') }}</span>
+                                        </button>
+                                        {% endif %}
+                                        {% endif %}
+
+                                        <ul>
+                                            <li>
+                                                <a href="#" onclick="addToWishList({{ product.product_id }}); return false;">
+                                                    <i class="fa fa-heart-o"></i>
+                                                    <span> {{ lang('button_wishlist') }}</span>
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="#" onclick="addToCompare({{ product.product_id }}, 1); return false;">
+                                                    <i class="fa fa-link"></i>
+                                                    <span> {{ lang('button_compare') }}</span>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </li>
+                            {% endfor %}
+                        </ul>
+
+                    </div>
+                    <div class="pagination-area">
+                        {{ pagination }}
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+<!-- Main Container End -->
+
+{% if integration_settings['mn_criteo_status'] %}
+    {{ include('manymore/template/module/criteo/criteo_category.expand') }}
+{% endif %}

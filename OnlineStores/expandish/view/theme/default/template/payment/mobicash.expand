@@ -1,0 +1,39 @@
+<button type="button" class="btn-rect text-uppercase bg-color btn btn-inline" id="confirm-payment" style="display: none">Confirm Payment</button>
+
+{% include 'default/template/payment/mobicash/payment_modal.expand' %}
+
+<script type="text/javascript">
+    $("#confirm-payment").on('click',function(event){
+        //Open payment Modal
+        $('#paymentModal').modal('show');                // initializes and invokes show immediately
+	});
+
+    $('#btn-mobicash-pay').on('click',function(e, wasTriggeredByCode){
+        e.stopImmediatePropagation();
+        if (wasTriggeredByCode) return;
+
+        $("#error_mobicash").html('');
+        $.ajax({
+            type: 'post',
+            url: '{{ action }}',
+            data: { identity_card: $('#identity_card').val() },
+            // cache: false,
+            success: function (data) {
+                let response = JSON.parse(data);
+
+                if (response['url'] != null && response['success'] == '1') {
+                    //POST request to this URL
+                    window.location = response['url'];
+                } else {
+                    $("#error_mobicash").html(response['error_mobicash']);
+                }
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+               $("#error_mobicash").html(xhr.responseText);
+               console.log(xhr.status);
+               console.log(xhr.responseText);
+               console.log(thrownError);
+            }
+        });
+    });
+</script>

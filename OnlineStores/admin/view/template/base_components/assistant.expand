@@ -1,0 +1,245 @@
+<div class="dropdown assistant-container">
+    <button id="assistant_drop" class="button" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <div class="img">
+            <img src="view/image/icons/assistant.svg" alt="">
+        </div>
+        <span>
+            {{lang('btn_assistant')}}
+        </span>
+    </button>
+    <div class="dropdown-menu" aria-labelledby="assistant_drop">
+        <i class="fas fa-times close-assistant"></i>
+        {% if base.assistance_data|length == 0 %}
+            <div class="empty-assistant">
+                <img src="view/image/icons/assistant.svg" alt="">
+                <p class="title">
+                    {{lang('assistant_empty_title')}}
+                </p>
+                <p class="desc">
+                    {{lang('assistant_empty_desc')}}
+                </p>
+                <p class="share-title">
+                    {{lang('assistant_empty_shares')}}
+                </p>
+                <div class="shares">
+                    <a href="" class="share-links facebook" target="_blank">
+                        <i class="fab fa-facebook-f"></i>
+                    </a>
+                    <a href="" class="share-links twitter">
+                        <i class="fab fa-twitter"></i>
+                    </a>
+                    <a href="" class="share-links linkedin" target="_blank">
+                        <i class="fab fa-linkedin-in"></i>
+                    </a>
+                </div>
+            </div>
+        {% else %}
+            <div class="head">
+                <div class="up">
+                    <a href="{{ getFrontLinkWithDomain('common/home') }}" target="_blank">
+                        {{lang('assistant_preview_store')}}
+                        <i class="far fa-share-square"></i>
+                    </a>
+                </div>
+                <div class="info">
+                    <img src="view/image/icons/assistant.svg" alt="">
+                    <p class="title">
+                        {{lang_printf('assistant_head_title', base.first_name ? base.first_name : user.getFirstName())}}
+                    </p>
+                </div>
+            </div>
+            <div class="inner">
+                {% for item in base.assistance_data %}
+                    <div class="assistant-box {{loop.index == 1 ? 'active inprogress' : item.status == 1 ? 'done' : item.status == 2 ? 'dismissed' : 'inprogress' }} {{loop.index > 3 ? 'hide' : ''}}">
+                        {% if item.status == 0 %}
+                        <i class="fas fa-times" data-name="{{item.name}}"></i>
+                        {% endif %}
+                        
+                        <span class="count"></span>
+                        <div class="info">
+                            <a href="{{item.route}}?card_name={{ item.name }}" data-name="{{item.name}}" class="title">
+                                {{lang('assistant_title_' ~ item.name)}}
+                            </a>
+                            <a href="{{item.route}}" class="desc">
+                                {{lang_printf('assistant_desc_' ~ item.name, link(''))}}
+                            </a>
+                        </div>
+                    </div>
+                {% endfor %}
+                <button class="show-more first">
+                    {{lang('btn_assistant_more')}}
+                    <span>
+                        <i class="fas fa-chevron-down"></i>
+                    </span>
+                </button>
+            </div>
+        {% endif %}
+        
+    </div>
+</div>
+
+{% block endScripts %}
+    <script>
+        $('.assistant-container').click(function(e) {
+            if ($(".assistant-container").hasClass("open")) {
+
+                /***************** Start ExpandCartTracking #347752  ****************/
+
+                trackUrl('Assistant - Hide')
+
+                /***************** end ExpandCartTracking #347752  ****************/
+            }else {
+
+                /***************** Start ExpandCartTracking #347753  ****************/
+
+                trackUrl('Assistant - Trigger')
+
+                /***************** end ExpandCartTracking #347753  ****************/
+            }
+        });
+
+        $('.assistant-box a').click(function(event) {
+
+            event.preventDefault();
+
+            let name = $(this).data('name');
+
+            /***************** Start ExpandCartTracking #347754  ****************/
+
+            trackUrl('Assistant - Card Clicked',{'card_name':name})
+
+            /***************** end ExpandCartTracking #347754  ****************/
+
+            let href = $(this).attr('href');
+            window.location.href = href;
+        })
+
+        //show-more first
+
+        $('.show-more').click(function(event) {
+
+            /***************** Start ExpandCartTracking #347755  ****************/
+
+            trackUrl('Assistant - Show More Clicked')
+
+            /***************** end ExpandCartTracking #347755  ****************/
+
+        })
+
+        {# assistant show more #}
+        let startShow = 3;
+        $('.assistant-container .dropdown-menu').click(function(e) {
+            e.stopPropagation()
+        })
+        $('.assistant-container .show-more').click(function() {
+            $(this).removeClass('first')
+            $(`.assistant-container .assistant-box:nth-child(${startShow})`).nextAll(':lt(3)').removeClass('hide');
+            $(`.assistant-container .assistant-box.hide`).length > 0 ? startShow += 3 : $(this).remove()
+        });
+
+        // dismiss
+        $('.assistant-container .assistant-box i').click(function() {
+            let name = $(this).data('name');
+            let el = $(this).parent();
+
+            $(this).addClass('load')
+
+            $.ajax({
+                url: "{{link('common/home/skipAssistanceGuideStep')}}",
+                method: 'POST',
+                dataType: 'JSON',
+                data: 'name=' + name,
+                success: (r) => {
+                    /*
+                        > el => remove class active, inprogress
+                        > el => add class dismiss
+                        > add class active to first inprogress
+                    
+                    */
+                    el.find('i').remove()
+                    el.removeClass('active inprogress').addClass('dismissed');
+                    let firstInprogress = $('.assistant-container .assistant-box.inprogress').eq(0)
+                    firstInprogress.addClass('active')
+                }
+            })
+
+
+            /***************** Start ExpandCartTracking #347756  ****************/
+
+            trackUrl('Assistant - Card Dismissed',{'Card Name':name})
+
+            /***************** end ExpandCartTracking #347756  ****************/
+
+        })
+
+        // window.fbAsyncInit = function () {
+        //     //2. FB JavaScript SDK configuration and setup
+        //     FB.init({
+        //         appId: '329928231042768', // FB App ID
+        //         cookie: true,  // enable cookies to allow the server to access the session
+        //         xfbml: true,  // parse social plugins on this page
+        //         version: 'v10.0' // uses graph api version v10.0
+        //     });
+        // };
+        //
+        // //1. Load the JavaScript SDK asynchronously
+        // (function (d, s, id) {
+        //     var js, fjs = d.getElementsByTagName(s)[0];
+        //     if (d.getElementById(id)) return;
+        //     js = d.createElement(s);
+        //     js.id = id;
+        //     js.src = "https://connect.facebook.net/en_US/sdk.js";
+        //     fjs.parentNode.insertBefore(js, fjs);
+        // }(document, 'script', 'facebook-jssdk'));
+
+        $('.share-links.facebook').on('click', function(e){
+
+            e.preventDefault();
+            let quote = '{{lang_printf("assistant_share_content",base.config_name,null,getFrontLinkWithDomain("common/home"))}}';
+            let content_url = '{{ getFrontLinkWithDomain("common/home") }}';
+            content_url = content_url.replace("index.php?route=common/home", "");
+            let url = 'https://www.facebook.com/sharer/sharer.php?u='+content_url+'&quote='+quote;
+            window.open(url, 'sharer', 'toolbar=0,status=0,width=648,height=395');
+
+            /** Start ExpandCartTracking #347742 **/
+
+            trackUrl('Assistant - Share to FB')
+
+            /** end ExpandCartTracking #347742 **/
+
+        })
+
+        $('.share-links.linkedin').on('click', function(e){
+            e.preventDefault();
+            let content_url = '{{ getFrontLinkWithDomain("common/home") }}';
+            content_url = content_url.replace("index.php?route=common/home", "");
+            let url = 'http://www.linkedin.com/shareArticle?mini=true&url='+content_url ;
+            window.open(url, 'sharer', 'toolbar=0,status=0,width=648,height=395');
+
+            /***************** Start ExpandCartTracking #347743  ****************/
+
+            trackUrl('Assistant - Share to LinkedIn')
+
+            /***************** end ExpandCartTracking #347743  ****************/
+        })
+
+        $('.share-links.twitter').on('click', function(e){
+            e.preventDefault();
+            let msgbody = encodeURIComponent('{{lang_printf("assistant_share_content",base.config_name,null,getFrontLinkWithDomain("common/home"))}}');
+            let url = 'https://twitter.com/intent/tweet?text='+msgbody;
+            window.open(url, 'sharer', 'toolbar=0,status=0,width=648,height=395');
+
+            /***************** Start ExpandCartTracking #347744  ****************/
+
+            trackUrl('Assistant - Share to Twitter')
+
+            /***************** end ExpandCartTracking #347744  ****************/
+        });
+
+        {# close assistant dropdown #}
+        $('.assistant-container .dropdown-menu .close-assistant').click(function() {
+            $('.assistant-container .button').trigger("click")
+        })
+
+    </script>
+{% endblock %}

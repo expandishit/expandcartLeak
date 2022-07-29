@@ -1,0 +1,749 @@
+{{ script('js/jquery/colorbox/jquery.colorbox-min.js') }}
+{{ style('js/jquery/colorbox/colorbox.css') }}
+{{ include("default/template/checkout/product_options_edit_modal.expand") }}
+<script type="text/javascript" src="expandish/view/javascript/product/options_update_price.js?v={{BuildNumber }}"></script>
+
+<div class="container">
+    {% if attention %}
+    <br>
+    <div class="alert alert-warning alert-dismissible" role="alert">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button> {{ attention }}
+    </div>
+    {% endif %} {% if success %}
+    <br>
+    <div class="alert alert-success alert-dismissible" role="alert">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button> {{ success }}
+    </div>
+    {% endif %} {% if error_warning or error_stock_forecasting %}
+    <br>
+    <div class="alert alert-warning alert-dismissible" role="alert">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>  {{ error_warning }} <br> {{ error_stock_forecasting }}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Breadcrumbs -->
+<div class="breadcrumbs">
+    <div class="container">
+        <div class="row">
+            <div class="col-xs-12">
+                <ul>
+                    {% for breadcrumb in breadcrumbs %} {% if loop.last %}
+                    <li>
+                        <strong>{{ breadcrumb['text'] }}</strong>
+                    </li>
+                    {% else %}
+                    <li class="home">
+                        <a title="Go to Home Page" href="{{ breadcrumb['href'] }}">{{ breadcrumb['text'] }}</a>
+                        <span>&raquo;</span>
+                    </li>
+                    {% endif %} {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Breadcrumbs End -->
+
+<!-- Main Container -->
+<form class="form-cart" id="cart-form" action="{{ link('checkout/cart') }}" method="post" enctype="multipart/form-data">
+
+<section class="main-container col1-layout">
+    <div class="main container">
+        <div class="col-main">
+            <div class="cart">
+
+                <div class="page-content page-order">
+                    <div class="page-title">
+                        <h2>{{ lang('heading_title') }}
+                            {% if weight %}
+                            &nbsp;({{ weight }})
+                            {% endif %}
+                        </h2>
+                    </div>
+
+
+                    <div class="order-detail-content">
+                        <div class="table-responsive">
+                            <table class="table table-bordered cart_summary">
+                                <thead>
+                                    <tr>
+                                        <th class="hidden-xs cart_product" style="text-align: center;">{{ lang('column_image') }}</th>
+                                        <th class="  rtl-text-right">{{ lang('column_name') }}</th>
+                                        <th class =' ' style="text-align: center;">{{ lang('column_price') }}</th>
+                                        <th class =' ' style="text-align: center;">{{ lang('column_quantity') }}</th>
+                                        <th class ='' style="text-align: center;">{{ lang('column_total') }}</th>
+                                        <th class="action hidden-sm ">
+                                            <i class="fa fa-trash-o"></i>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+
+                                    {% set products_list = groupProducts(products, 'warehouse', warehouses) %}
+                                    {% for idx, productArr in products_list %}
+                                      {% if warehouses %}
+                                      <tr>
+                                        <td colspan="6" style="text-align: center;background-color: #f9f9f9;"><strong>{{ lang('warehouse') }} {{ idx == -1 ? lang('other_warehouse') : wrs_names[idx] }}</strong></td>
+                                      </tr>
+                                      {% endif %}
+                                      {% for product in productArr %}
+                                    <tr>
+                                        <td class="cart_product hidden-xs">
+                                            <a href="#">
+                                                <img src="{{ product['thumb'] }}" alt="Product">
+                                            </a>
+                                        </td>
+                                        <td class="cart_description hidden-sm ">
+                                            <p class="product-name">
+                                                <a href="{{ product['href'] }}">{{ product['name'] }}{% if not product['stock'] %} <strong><span class="stock text-danger text-capitalize ">{{ lang('error_quantity') }}</span></strong>{% endif %}</a><br>
+                                                <small>{{ product['reward'] }}</small>
+                                            </p>
+                                            {% set unique_option_names = [] %}
+                                            {% for option in product['option'] %}
+                                                {% if option['name'] not in unique_option_names %}
+                                                    {% set unique_option_names = unique_option_names|merge([option['name']]) %}
+                                                    <small style="color: #353535;" title="{{ option['title'] }}"><strong>{{ option['name'] }}:</strong> {{ option['value'] }}</small>
+                                                    <small>{{ lang('column_quantity') }} : {{ option['quantity'] }}</small>
+                                                {% else %}
+                                                    <small style="color: #353535;" title="{{ option['title'] }}">{{ option['value'] }}</small>
+                                                {% endif %}
+                                            {% endfor %}
+
+                                            {% if product['rentData'] %}
+                                                <div>
+                                                    {{ lang('product_for_rent_from') }}<br>
+                                                    {{ product['rentData']['range']['from'] }}
+                                                    {{ lang('product_for_rent_to') }}
+                                                    {{ product['rentData']['range']['to'] }}
+                                                    {{ lang('product_for_rent_for') }}
+                                                    {{ product['rentData']['diff'] }}
+                                                    {{ lang('text_day') }}
+                                                </div>
+                                            {% endif %}
+                                            {{ include('default/template/checkout/product_bundles.expand') }}
+                                                
+                                        </td>
+                                        <td class="price ">
+                                            <span>{{ product['price'] }}</span>
+                                        </td>
+
+                                        <td class="qty ">
+                                            <input type="text" name="quantity[{{ product['key'] }}]" title="{{ lang('column_quantity') }}" class="form-control input-sm input-qty"
+                                                value="{{ product['quantity'] }}" size="1">
+                                            <i onclick="$('#cart-form').submit();" title="{{ lang('button_update') }}" style="cursor: pointer;" class="fa fa-refresh"></i>
+                                        </td>
+
+                                        <td class="price ">
+                                            <span>{{ product['total'] }}</span>
+                                            {% if product['main_price'] %}
+                                             <br><span class="amount">{{ lang('main_price') }} : {{ product['main_price'] }}</span>
+                                          {% endif %}
+                                          {% if product['remaining_amount'] %}
+                                             <br><span class="amount">{{ lang('remaining_amount') }} : {{ product['remaining_amount'] }}</span>
+                                          {% endif %}
+                                        </td>
+                                        {% if stock_forecasting_app_installed == true %}
+                                        <td class="item-delivery-date">
+                                            <span class="delivery-date">({{ product['delivey_date'] }})</span>
+                                        </td>
+                                        {% endif %}
+
+                                        <td class="action ">
+                                            <a href="{{ product['remove'] }}" title="{{ lang('button_remove') }}">
+                                                <i class="icon-close"></i>
+                                            </a>
+                                            {% if product['has_options'] %}
+                                                <a href="#" class="edit-button" data-product_key="{{ product['keyReplaced'] }}" data-product_id="{{ product['original_id'] }}" title="{{ lang('button_edit') }}" data-toggle="modal" data-target="#modal_update_product" ><i class="fa fa-pencil"></i></a>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                    {% if warehouses %}
+                                      <tr>
+                                        <td colspan="6" style="text-align: center;"><strong>{{ lang('shipping_cost') }} {{ combined_wrs_costs[idx] }}</strong></td>
+                                      </tr>
+                                      {% if wrs_duration[idx] %}
+                                      <tr>
+                                        <td colspan="6" style="text-align: center;"><strong>{{ lang('shipping_duration') }} {{ wrs_duration[idx] }} {{ lang('shipping_days') }}</strong></td>
+                                      </tr>
+                                   {% endif %}
+                                      {% endif %}
+                                    {% endfor %}
+                                </tbody>
+                                <!-- Display Mobile Table -->
+                                <!-- <thead class='hidden-lg  hidden-md hidden-sm '>
+                                        <tr>
+                                            <th class="rtl-text-right">{{ lang('column_name') }}</th>
+                                        </tr>
+                                </thead> -->
+                                <!-- Body -->
+                                <!-- <tbody class="hidden-lg  hidden-md hidden-sm">
+
+                                        {% for product in products %}
+                                        <tr>
+                                            <td class="cart_description">
+                                                <p class="product-name">
+                                                    <a href="{{ product['href'] }}">{{ product['name'] }}{% if not product['stock'] %} <span class="stock">***</span>{% endif %}</a><br>
+                                                    <small>{{ product['reward'] }}</small>
+                                                </p>
+                                                {% for option in product['option'] %}
+                                                <small>{{ option['name'] }}: {{ option['value'] }}</small><br />
+                                                {% endfor %}
+
+                                                {% if product['rentData'] %}
+                                                <div>
+                                                    {{ lang('product_for_rent_from') }}<br>
+                                                    {{ product['rentData']['range']['from'] }}
+                                                    {{ lang('product_for_rent_to') }}
+                                                    {{ product['rentData']['range']['to'] }}
+                                                    {{ lang('product_for_rent_for') }}
+                                                    {{ product['rentData']['diff'] }}
+                                                    {{ lang('text_day') }}
+                                                </div>
+                                                {% endif %}                                                        
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+    
+                                    </tbody> -->
+                                    <!-- End Body -->
+                                <!-- <thead class='hidden-lg  hidden-md hidden-sm'>
+                                        <tr>
+                                            <th style="text-align: center;">{{ lang('column_price') }}</th>
+                                            <th style="text-align: center;">{{ lang('column_quantity') }}</th>
+                                            <th style="text-align: center;">{{ lang('column_total') }}</th>
+                                            <th class="action">
+                                                <i class="fa fa-trash-o"></i>
+                                            </th>
+                                        </tr>
+                                </thead> -->
+                                <!-- Body -->
+                                <!-- <tbody class="hidden-lg  hidden-md hidden-sm">
+
+                                        {% for product in products %}
+                                        <tr>
+                                            <td class="price ">
+                                                <span>{{ product['price'] }}</span>
+                                            </td>
+    
+                                            <td class="qty">
+                                                <input type="text" name="quantity[{{ product['key'] }}]" title="{{ lang('column_quantity') }}" class="form-control input-sm input-qty"
+                                                    value="{{ product['quantity'] }}" size="1">
+                                                <i onclick="$('#cart-form').submit();" title="{{ lang('button_update') }}" style="cursor: pointer;" class="fa fa-refresh"></i>
+                                            </td>
+    
+                                            <td class="price">
+                                                <span>{{ product['total'] }}</span>
+                                            </td>
+                                            <td class="action">
+                                                <a href="{{ product['remove'] }}" title="{{ lang('button_remove') }}">
+                                                    <i class="icon-close"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+    
+                                    </tbody> -->
+                                    <!-- End Body -->
+                                <!-- End Display Mobile Table -->
+                                <tfoot>
+                                        {% for total in totals %}
+                                        <tr class="cart-subtotal">
+                                            {% if loop.last %}
+                                            <tr>
+                                                    <td colspan="3" rowspan="2"></td>
+                                                    <td colspan="2">
+                                                        <strong>{{ total['title'] }}</strong>
+                                                    </td>
+                                                    <td colspan="2">
+                                                        <strong>{{ total['text'] }} </strong>
+                                                    </td>
+                                            </tr>
+                                            
+                                            {% if tabby_setting is defined and total['code'] == 'total' %}
+                                            <tr>
+                                                <td colspan="7" rowspan="2">
+                                                    {% include 'default/template/checkout/tabby-promo.expand' with {custom_style: "", custom_class: ""} %}
+                                                </td>
+                                            </tr>
+                                            {% endif %}
+                                            
+                                            {% else %}
+                                            <tr>
+                                                    <td colspan="3" rowspan="2"></td>
+                                                    <td colspan="2">{{ total['title'] }}</td>
+                                                    <td colspan="2">{{ total['text'] }} </td>
+                                                </tr>
+                                            {% endif %}
+
+                                            
+                                        {% endfor %}
+
+                                    
+                                    
+                                </tfoot>
+                            </table>
+                        </div>
+
+
+
+
+
+                        <div class="cart-collaterals">
+                            <div class="cart_totals ">
+                                <div class="table-responsive">
+                                        {% if coupon_status or voucher_status or reward_status or shipping_status %}
+                                        <tr class="shipping">
+                                            <th><strong>{{ lang('text_next') }}</strong></th>
+                                            <td>
+                                                <div class="content container">
+                                                    <p>{{ lang('text_next_choice') }}</p>
+
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <fieldset class="form-group">
+                                                                {% if coupon_status %} {% if next == 'coupon' %}
+                                                                <div class="form-check">
+                                                                    <label class="form-check-label">
+                                                                        <input type="radio" class="form-check-input" name="next" id="use_coupon" value="coupon" checked="checked">&nbsp;&nbsp; {{ lang('text_use_coupon') }}
+                                                                    </label>
+                                                                </div>
+                                                                {% else %}
+                                                                <div class="form-check">
+                                                                    <label class="form-check-label">
+                                                                        <input type="radio" class="form-check-input" name="next" id="use_coupon" value="coupon">&nbsp;&nbsp; {{ lang('text_use_coupon') }}
+                                                                    </label>
+                                                                </div>
+                                                                {% endif %} {% endif %} {% if voucher_status %} {% if next == 'voucher' %}
+                                                                <div class="form-check">
+                                                                    <label class="form-check-label">
+                                                                        <input type="radio" class="form-check-input" name="next" id="use_voucher" value="voucher" checked="checked">&nbsp;&nbsp; {{ lang('text_use_voucher') }}
+                                                                    </label>
+                                                                </div>
+                                                                {% else %}
+                                                                <div class="form-check">
+                                                                    <label class="form-check-label">
+                                                                        <input type="radio" class="form-check-input" name="next" id="use_voucher" value="voucher">&nbsp;&nbsp; {{ lang('text_use_voucher') }}
+                                                                    </label>
+                                                                </div>
+                                                                {% endif %} {% endif %} {% if reward_status %} {% if next == 'reward' %}
+                                                                <div class="form-check">
+                                                                    <label class="form-check-label">
+                                                                        <input type="radio" class="form-check-input" name="next" id="use_reward" value="reward" checked="checked">&nbsp;&nbsp; {{ lang('text_use_reward')|format(points) }}
+                                                                    </label>
+                                                                </div>
+                                                                {% else %}
+                                                                <div class="form-check">
+                                                                    <label class="form-check-label">
+                                                                        <input type="radio" class="form-check-input" name="next" id="use_reward" value="reward">&nbsp;&nbsp; {{ lang('text_use_reward')|format(points) }}
+                                                                    </label>
+                                                                </div>
+                                                                {% endif %} {% endif %} {% if shipping_status %} {% if next == 'shipping' %}
+                                                                <div class="form-check">
+                                                                    <label class="form-check-label">
+                                                                        <input type="radio" class="form-check-input" name="next" id="shipping_estimate" value="shipping" checked="checked">&nbsp;&nbsp; {{ lang('text_shipping_estimate') }}
+                                                                    </label>
+                                                                </div>
+                                                                {% else %}
+                                                                <div class="form-check">
+                                                                    <label class="form-check-label">
+                                                                        <input type="radio" class="form-check-input" name="next" id="shipping_estimate" value="shipping">&nbsp;&nbsp; {{ lang('text_shipping_estimate') }}
+                                                                    </label>
+                                                                </div>
+                                                                {% endif %}
+                                                                {% endif %}
+                                                            </fieldset>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="cart-module container">
+                                                    <div id="coupon" class="content" style="display: {{ next == 'coupon' ? 'block' : 'none' }};">
+                                                        <form action="{{ link('checkout/cart') }}" method="post" enctype="multipart/form-data">
+                                                            <div class="row">
+                                                                <div class="col-md-6">
+                                                                    <div class="form-group">
+                                                                        <label for="coupon">{{ lang('entry_coupon') }}</label>
+                                                                        <input type="text" name="coupon" class="form-control" id="coupon_input" value="{{ coupon }}" />
+                                                                        <input type="hidden" name="next" value="coupon" />
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="row">
+                                                                <div class="col-md-6">
+                                                                    <div>
+                                                                        <input  onclick="submitCoupon();" type="button" name="apply_coupon" value="{{ lang('button_coupon') }}" class="btn btn-inline" />
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </form>
+                                                    </div>
+
+                                                    <div id="voucher" class="content" style="display: {{ next == 'voucher' ? 'block' : 'none' }};">
+                                                        <form action="{{ link('checkout/cart') }}" method="post" enctype="multipart/form-data">
+                                                            <div class="row">
+                                                                <div class="col-md-6">
+                                                                    <div class="form-group">
+                                                                        <label for="voucher">{{ lang('entry_voucher') }}</label>
+                                                                        <input type="text" name="voucher" class="form-control" id="voucher" value="{{ voucher }}" />
+                                                                        <input type="hidden" name="next" value="voucher" />
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="row">
+                                                                <div class="col-md-6">
+                                                                    <div>
+                                                                        <input type="submit" value="{{ lang('button_voucher') }}" class="btn btn-inline" />
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </form>
+                                                    </div>
+
+                                                    <div id="reward" class="content" style="display: {{ next == 'reward' ? 'block' : 'none' }};">
+                                                        <form action="{{ link('checkout/cart') }}" method="post" enctype="multipart/form-data">
+                                                            <div class="row">
+                                                                <div class="col-md-6">
+                                                                    <div class="form-group">
+                                                                        <label for="reward">{{ lang('entry_reward')|format(points_total)
+                                                                            }}</label>
+                                                                        <input type="text" name="reward" class="form-control" id="reward" value="{{ reward }}" />
+                                                                        <input type="hidden" name="next" value="reward" />
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="row">
+                                                                <div class="col-md-6">
+                                                                    <div>
+                                                                        <input type="submit" value="{{ lang('button_reward') }}" class="btn btn-inline" />
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </form>
+                                                    </div>
+
+                                                    <div id="shipping" class="content" style="display: {{ next == 'shipping' ? 'block' : 'none' }};">
+                                                        <div class="row">
+                                                            <div class="col-md-6">
+                                                                <div class="">
+                                                                    <h4 class="title-base">{{ lang('text_shipping_detail') }}</h4>
+                                                                </div>
+
+                                                                <div class="form-group">
+                                                                    <label for="country_id">{{ lang('entry_country') }}
+                                                                        <span class="required">*</span>
+                                                                    </label>
+                                                                    <select name="country_id" class="form-control" id="country_id">
+                                                                        <option value="">{{ lang('text_select') }}</option>
+                                                                        {% for country in countries %} {% if country['country_id'] == country_id %}
+                                                                        <option value="{{ country['country_id'] }}" selected="selected">{{ country['name'] }}</option>
+                                                                        {% else %}
+                                                                        <option value="{{ country['country_id'] }}">{{ country['name'] }}</option>
+                                                                        {% endif %} {% endfor %}
+                                                                    </select>
+                                                                </div>
+
+                                                                <div class="form-group">
+                                                                    <label for="zone_id">{{ lang('entry_zone') }}
+                                                                        <span class="required">*</span>
+                                                                    </label>
+                                                                    <select name="zone_id" class="form-control" id="zone_id"></select>
+                                                                </div>
+
+                                                                <div class="form-group">
+                                                                    <label for="postcode">{{ lang('entry_postcode') }}
+                                                                        <span id="postcode-required" class="required">*</span>
+                                                                    </label>
+                                                                    <input type="text" name="postcode" class="form-control" id="postcode" value="{{ postcode }}" />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="row">
+                                                            <div class="col-md-12">
+                                                                <div>
+                                                                    <input type="button" value="{{ lang('button_quote') }}" id="button-quote" class="btn btn-inline" />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                            </td>
+                                        </tr>
+                                        {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        
+                        <div class="cart_navigation">
+                            <!-- PayPal Express -->
+                            <!-- {% if paypal_enabled %}
+                                {#<div id="pp-checkout-button" style="float: right;padding: 8px 0 0 15px;">
+                                    <span id="pp_express_load" style="font-weight: bold;">{{ lang('pp_express_load') }}</span>
+                                </div>#}
+                            {% endif %} -->
+                            <!--/ PayPal Express -->
+                            <a class="link pull-left" href="{{ link('common/home') }}"><i class="fa fa-arrow-left"> </i>&nbsp; {{ lang('button_shopping') }}</a>
+
+                            <a class="link pull-right" href="{{ link('checkout/checkout', '', 'SSL') }}"><i class="fa fa-check"></i> {{ lang('button_checkout') }}</a>
+
+                            <a href="{{ link('checkout/cart&clear=1') }}" title="{{ lang('button_clear') }}" class="btn btn-danger">
+                                <span>{{ lang('button_clear') }}</span>
+                            </a>
+                            <!-- PayPal -->
+                                {% if paypal_enabled %}
+                                    {{ include("default/template/checkout/paypal-cart-html.expand") }}
+                                {% endif %}
+                            <!--/ PayPal -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+</form>
+
+<script type="text/javascript">
+    $('input[name=\'next\']').bind('change', function() {
+        $('.cart-module > div').hide();
+
+        $('#' + this.value).show();
+    });
+</script>
+
+<!-- PayPal Express -->
+{% if paypal_enabled %}
+<script src='{{ paypal_endpoint_js }}' 
+        data-partner-attribution-id = "ExpandCart_Cart_MEA"
+        intent = "capture"
+        commit = "true"
+        data-namespace = 'PayPalSdk'></script>
+
+    <script type="text/javascript">
+    $( document ).ready(function() {
+        window.onload =  function () {
+                $('#pp_express_load').fadeOut();
+                setTimeout(function () {
+                     PayPalSdk.Buttons({
+                        createOrder: function () {
+                            return fetch('index.php?route=payment/paypal/createOrder', {
+                                method: 'post',
+                                headers: {
+                                    'content-type': 'application/json'
+                                }
+                            }).then(function (res) {
+                                return res.json();
+                            }).then(function (data) {
+                                return data.id; // Use the same key name for order ID on the client and server
+                            });
+                        },
+                        onApprove: function (data) {
+                            return fetch('index.php?route=payment/paypal/approveOrder', {
+                                method: 'POST',
+                                headers: {
+                                    'content-type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    orderID: data.orderID
+                                })
+                            }).then(function (res) {
+                                return res.json();
+                            }).then(function (details) {
+                                location.href = details.redirectTo;
+                            });
+                        },
+                        style: {
+                            label: 'buynow',
+                            size: 'responsive',
+                            shape: 'rect',
+                            layout: 'horizontal',
+                            color: 'gold'
+                        }
+                    }).render('#pp-checkout-button');
+               }, 3000);
+            };
+    });
+</script>
+{% endif %}
+<!--/ PayPal Express -->
+
+{% if shipping_status %}
+<script type="text/javascript">
+    $(document).on('click', '#button-quote', function() {
+        $.ajax({
+            url: 'index.php?route=checkout/cart/quote',
+            type: 'post',
+            data: 'country_id=' + $('select[name=\'country_id\']').val() + '&zone_id=' + $('select[name=\'zone_id\']').val() + '&postcode=' + encodeURIComponent($('input[name=\'postcode\']').val()),
+            dataType: 'json',
+            beforeSend: function() {
+                $('#button-quote').attr('disabled', true);
+                $('#button-quote').after('<span class="wait">&nbsp;<img src="expandish/view/theme/clearion/image/loading.gif" alt="" /></span>');
+            },
+            complete: function() {
+                $('#button-quote').attr('disabled', false);
+                $('.wait').remove();
+            },
+            success: function(json) {
+                $('.success, .warning, .attention, .error').remove();
+
+                if (json['error']) {
+                    if (json['error']['warning']) {
+                        $('#notification').html('<div class="warning" style="display: none;">' + json['error']['warning'] + '<img src="expandish/view/theme/clearion/image/close.png" alt="" class="close" /></div>');
+
+                        $('.warning').fadeIn('slow');
+
+                        $('html, body').animate({ scrollTop: 0 }, 'slow');
+                    }
+
+                    if (json['error']['country']) {
+                        $('select[name=\'country_id\']').after('<span class="error">' + json['error']['country'] + '</span>');
+                    }
+
+                    if (json['error']['zone']) {
+                        $('select[name=\'zone_id\']').after('<span class="error">' + json['error']['zone'] + '</span>');
+                    }
+
+                    if (json['error']['postcode']) {
+                        $('input[name=\'postcode\']').after('<span class="error">' + json['error']['postcode'] + '</span>');
+                    }
+                }
+
+                if (json['shipping_method']) {
+                    html  = '<h2>{{ lang('text_shipping_method') }}</h2>';
+                    html += '<form action="{{ link('checkout/cart') }}" method="post" enctype="multipart/form-data">';
+                    html += '  <table class="radio">';
+
+                    for (i in json['shipping_method']) {
+                        html += '<tr>';
+                        html += '  <td colspan="3"><b>' + json['shipping_method'][i]['title'] + '</b></td>';
+                        html += '</tr>';
+
+                        if (!json['shipping_method'][i]['error']) {
+                            for (j in json['shipping_method'][i]['quote']) {
+                                html += '<tr class="highlight">';
+
+                                if (json['shipping_method'][i]['quote'][j]['code'] == '{{ shipping_method }}') {
+                                    html += '<td><input type="radio" name="shipping_method" value="' + json['shipping_method'][i]['quote'][j]['code'] + '" id="' + json['shipping_method'][i]['quote'][j]['code'] + '" checked="checked" /></td>';
+                                } else {
+                                    html += '<td><input type="radio" name="shipping_method" value="' + json['shipping_method'][i]['quote'][j]['code'] + '" id="' + json['shipping_method'][i]['quote'][j]['code'] + '" /></td>';
+                                }
+
+                                html += '  <td><label for="' + json['shipping_method'][i]['quote'][j]['code'] + '">' + json['shipping_method'][i]['quote'][j]['title'] + '</label></td>';
+                                html += '  <td style="text-align: right;"><label for="' + json['shipping_method'][i]['quote'][j]['code'] + '">' + json['shipping_method'][i]['quote'][j]['text'] + '</label></td>';
+                                html += '</tr>';
+                            }
+                        } else {
+                            html += '<tr>';
+                            html += '  <td colspan="3"><div class="error">' + json['shipping_method'][i]['error'] + '</div></td>';
+                            html += '</tr>';
+                        }
+                    }
+
+                    html += '  </table>';
+                    html += '  <br />';
+                    html += '  <input type="hidden" name="next" value="shipping" />';
+
+                    {% if shipping_method %}
+                    html += '  <input type="submit" value="{{ lang('button_shipping') }}" id="button-shipping" class="button" />';
+                    {% else %}
+                    html += '  <input type="submit" value="{{ lang('button_shipping') }}" id="button-shipping" class="button" disabled="disabled" />';
+                    {% endif %}
+
+                    html += '</form>';
+
+                    $.colorbox({
+                        overlayClose: true,
+                        opacity: 0.5,
+                        width: '600px',
+                        height: '400px',
+                        href: false,
+                        html: html
+                    });
+
+                    $('input[name=\'shipping_method\']').bind('change', function() {
+                        $('#button-shipping').attr('disabled', false);
+                    });
+                }
+            }
+        });
+    });
+</script>
+
+<script type="text/javascript">
+    $('select[name=\'country_id\']').bind('change', function() {
+        $.ajax({
+            url: 'index.php?route=checkout/cart/country&country_id=' + this.value,
+            dataType: 'json',
+            beforeSend: function() {
+                $('select[name=\'country_id\']').after('<span class="wait">&nbsp;<img src="expandish/view/theme/clearion/image/loading.gif" alt="" /></span>');
+            },
+            complete: function() {
+                $('.wait').remove();
+            },
+            success: function(json) {
+                if (json['postcode_required'] == '1') {
+                    $('#postcode-required').show();
+                } else {
+                    $('#postcode-required').hide();
+                }
+
+                html = '<option value="">{{ lang('text_select') }}</option>';
+
+                if (json['zone'] != '') {
+                    for (i = 0; i < json['zone'].length; i++) {
+                        html += '<option value="' + json['zone'][i]['zone_id'] + '"';
+
+                        if (json['zone'][i]['zone_id'] == '{{ zone_id }}') {
+                              html += ' selected="selected"';
+                        }
+
+                        html += '>' + json['zone'][i]['name'] + '</option>';
+                    }
+                } else {
+                    html += '<option value="0" selected="selected">{{ lang('text_none') }}</option>';
+                }
+
+                $('select[name=\'zone_id\']').html(html);
+            },
+            error: function(xhr, ajaxOptions, thrownError) {
+                alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+            }
+        });
+    });
+
+    $('select[name=\'country_id\']').trigger('change');
+</script>
+{% endif %}
+
+<script>
+        $(document).ready(function () {
+            $('.product-quantity').each(function(){
+                $(this).find(".qty-up").click(function() {
+                    var x = $(this).siblings('.input-qty').val();
+                    x++;
+                    $(this).siblings('.input-qty').val(x);
+                });
+
+                $(this).find(".qty-down").click(function() {
+                    var x = $(this).siblings('.input-qty').val();
+                    x--;
+                    $(this).siblings('.input-qty').val(x);
+                });
+
+            });
+        });
+ </script>
+
+ {% if integration_settings['mn_criteo_status'] %}
+    {{ include('manymore/template/module/criteo/criteo_cart.expand') }}
+{% endif %}

@@ -1,0 +1,973 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block secondarymenu %}
+    {% include 'setting/settingmenu.expand' with {'expand': '#advanced', 'active': '#orders'} %}
+{% endblock secondarymenu %}
+
+{% block title %}
+    {{ lang('mn_setting_menu_orders_s') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block styles %}
+	{% if base.direction == "ltr" %}
+    <link href="view/assets/css/LTR/icons/icomoon2/style.css" rel="stylesheet" type="text/css">
+	{% else %}
+    <link href="view/assets/css/RTL/icons/icomoon2/style.css" rel="stylesheet" type="text/css">
+	{% endif %}	
+{% endblock styles %}
+
+{% block headelements %}
+    {% include "includes/buttons_top.expand" %}
+{% endblock headelements %}
+
+{% block content %}
+    <style>
+        .page-header-default {
+            background-color: transparent;
+        }
+        .page-header-content + .breadcrumb-line {
+            border: 0;
+        }
+    </style>
+    <form id="setting-payment" class="form" action="{{ action }}">
+        <div class="list-wrapper splited-settings">
+            <div class="content-inner">
+                <div class="row">
+                    <div class="col-12 col-lg-4">
+                        <p class="split-title">
+                            {{lang('split_side_title_orders_setting')}}
+                        </p>
+                        <p class="split-content">
+                            {# {{lang('split_side_content_orders_setting')}} #}
+                        </p>
+                    </div>
+                    <div class="col-12 col-lg-8">
+                        <div class="panel split-group p-20">
+                            <!-- Display Cart Weight -->
+                            <div class="switch-line-group" id="store_account-group">
+                                <div class="switch-line">
+                                    <label for="config_cart_weight" class="control-label">{{ lang('entry_cart_weight') }}</label>
+                                    <div class="checkbox checkbox-switchery">
+                                        <label>
+                                            <input type="checkbox" onchange="changeStatus(this);" name="config_cart_weight" class="switchery" {{ config_cart_weight in ['1', 1, 'on'] ? 'checked' }}>
+                                            <span class="switchery-status">{{ config_cart_weight in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <!-- <span class="text-muted">{{ lang('entry_customer_price_help') }}</span> -->
+                            </div>{# wwww #}
+                            <!-- /Display Cart Weight -->
+
+                            <!-- Display Order Added PopUp -->
+                            <div class="switch-line-group" id="store_account-group">
+                                <div class="switch-line">
+                                    <label for="config_order_popup" class="control-label">{{ lang('entry_order_popup') }}</label>
+                                    <div class="checkbox checkbox-switchery">
+                                        <label>
+                                            <input type="checkbox" onchange="changeStatus(this);" name="config_order_popup" class="switchery" {{ config_order_popup in ['1', 1, 'on'] ? 'checked' }}>
+                                            <span class="switchery-status">{{ config_order_popup in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <!-- <span class="text-muted">{{ lang('entry_customer_price_help') }}</span> -->
+                            </div>{# wwww #}
+                            <!-- /Display Order Added PopUp -->
+
+                            <!-- Hide shipping from cart -->
+                            <div class="switch-line-group" id="store_account-group">
+                                <div class="switch-line">
+                                    <label for="hide_shipping_cart" class="control-label">{{ lang('hide_shipping_cart') }}</label>
+                                    <div class="checkbox checkbox-switchery">
+                                        <label>
+                                            <input type="checkbox" onchange="changeStatus(this);" name="hide_shipping_cart" class="switchery" {{ hide_shipping_cart in ['1', 1, 'on'] ? 'checked' }}>
+                                            <span class="switchery-status">{{ hide_shipping_cart in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <!-- <span class="text-muted">{{ lang('hide_shipping_cart_help') }}</span> -->
+                            </div>{# wwww #}
+                            <!-- /Hide shipping from cart -->
+
+                            <!-- Guest Checkout -->
+                            <div class="switch-line-group" id="store_account-group">
+                                <div class="switch-line">
+                                    <label for="config_guest_checkout" class="control-label">{{ lang('entry_guest_checkout') }}</label>
+                                    <div class="checkbox checkbox-switchery">
+                                        <label>
+                                            <input type="checkbox" onchange="changeStatus(this);" name="config_guest_checkout" class="switchery" {{ config_guest_checkout in ['1', 1, 'on'] ? 'checked' }}>
+                                            <span class="switchery-status">{{ config_guest_checkout in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <span class="text-muted">{{ lang('entry_guest_checkout_help') }}</span>
+                            </div>{# wwww #}
+                            <!-- /Guest Checkout -->
+
+                            <div class="row">
+                                <div class="form-group col-md-6" id="store_account-group">
+                                    <label for="config_checkout_id" class="control-label">{{ lang('entry_checkout') }}</label>
+                                    <select name="config_checkout_id" id="config_checkout_id" class="form-control">
+                                        {% for information in informations %}
+                                            <option value="{{ information['information_id'] }}" {{ config_checkout_id == information['information_id'] ? 'selected' }}>{{ information['title'] }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <span class="help-block"></span>
+                                    <span class="text-muted">{{ lang('entry_checkout_help') }}</span>
+                                </div>{# wwww #}
+                                <!-- /Checkout Terms -->
+                            </div>
+
+                            <hr>
+
+                            <div class="page-link-group">
+                                <div class="info">
+                                    <p class="control-label">
+                                        {{lang('mn_setting_menu_order_totals_label')}}
+                                    </p>
+                                    <p class="text-muted">
+                                        {# {{lang('mn_setting_menu_order_totals_content')}} #}
+                                    </p>
+                                </div>
+                                <a href="{{ link("extension/total") }}" class="button blue-white-empty">
+                                    {{lang('mn_setting_menu_order_totals')}}
+                                </a>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="list-wrapper splited-settings">
+            <div class="content-inner">
+                <div class="row">
+                    <div class="col-12 col-lg-4">
+                        <p class="split-title">
+                            {{lang('split_side_title_orders_manage')}}
+                        </p>
+                        <p class="split-content">
+                            {# {{lang('split_side_content_orders_manage')}} #}
+                        </p>
+                    </div>
+                    <div class="col-12 col-lg-8">
+                        <div class="panel split-group p-20">
+
+                            <div class="row">
+                                <!-- Order Editing -->
+                                <div class="form-group col-md-6" id="store_account-group">
+                                    <label for="config_order_edit" class="control-label">{{ lang('entry_order_edit') }}</label>
+                                    <input type="text" class="form-control touchy" name="config_order_edit" id="config_order_edit" value="{{ config_order_edit }}">
+                                    <span class="help-block"></span>
+                                    <span class="text-muted">{{ lang('entry_order_edit_help') }}</span>
+                                </div>{# order #}
+                                <!-- /Order Editing -->
+
+                                <!-- Order Webhook URL -->
+                                <div class="form-group col-md-6" id="store_account-group">
+                                    <label for="config_webhook_url" class="control-label">{{ lang('entry_webhook_url') }}</label>
+                                    <input type="text" class="form-control" name="config_webhook_url" id="config_webhook_url" value="{{ config_webhook_url }}">
+                                    <span class="help-block"></span>
+                                    <span class="text-muted">{{ lang('entry_webhook_url_help') }}</span>
+                                </div>{# order #}
+                                <!-- /Order Webhook URL -->
+                            </div>
+                            
+                            <!-- Specify Revenue -->
+                            <div class="switch-line-group" id="store_account-group">
+                                <div class="switch-line">
+                                    <label for="config_status_based_revenue" class="control-label">{{ lang('entry_status_based_revenue') }}</label>
+                                    <div class="checkbox checkbox-switchery">
+                                        <label>
+                                            <input type="checkbox" onchange="changeStatus(this);" name="config_status_based_revenue" class="switchery" {{ config_status_based_revenue in ['1', 1, 'on'] ? 'checked' }}>
+                                            <span class="switchery-status">{{ config_status_based_revenue in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <span class="text-muted">{{ lang('entry_status_based_revenue_help') }}</span>
+                            </div>{# order #}
+                            <!-- Specify Revenue -->
+
+                            <!-- hide country code in order page -->
+                            <div class="switch-line-group">
+                                <div class="switch-line">
+                                    <label for="config_order_hide_country_code" class="control-label">
+                                        {{ lang('entry_order_hide_country_code') }}
+                                    </label>
+                                    <div class="checkbox checkbox-switchery">
+                                        <label>
+                                            <input type="checkbox" onchange="changeStatusYesNo(this);" name="config_order_hide_country_code" class="switchery" {{ config_order_hide_country_code in ['1', 1, 'on'] ? 'checked' }}>
+                                            <span class="switchery-status">{{ config_order_hide_country_code in [1, '1', 'on'] ? lang('text_yes') : lang('text_no') }}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>{# order #}
+                            <!-- hide country code in order page -->
+
+                            <!-- Show archived orders in customer order history -->
+                            <div class="switch-line-group">
+                                <div class="switch-line">
+                                    <label for="config_show_archived_orders_history" class="control-label">
+                                        {{ lang('entry_show_archived_orders_history') }}
+                                    </label>
+                                    <div class="checkbox checkbox-switchery">
+                                        <label>
+                                            <input type="checkbox" onchange="changeStatusYesNo(this);" name="config_show_archived_orders_history" class="switchery" {{ config_show_archived_orders_history in ['1', 1, 'on'] ? 'checked' }}>
+                                            <span class="switchery-status">{{ config_show_archived_orders_history in [1, '1', 'on'] ? lang('text_yes') : lang('text_no') }}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>{# order #}
+                            <!-- Show archived orders in customer order history -->
+
+                            <!-- product props in order page -->
+                            <div class="switch-line-group">
+                                <div class="switch-line">
+                                    <label for="config_custom_product_order_fields_display" class="control-label">
+                                        {{ lang('entry_custom_product_order_fields_display') }}
+                                    </label>
+                                    <div class="checkbox checkbox-switchery">
+                                        <label>
+                                            <input type="checkbox" onchange="changeStatusDefaultCustom(this);" name="config_custom_product_order_fields_display" class="switchery" {{ config_custom_product_order_fields_display in ['1', 1, 'on'] ? 'checked' }}>
+                                            <span class="switchery-status">{{ config_custom_product_order_fields_display in [1, '1', 'on'] ? lang('entry_customize') : lang('entry_default') }}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <span class="text-muted">
+                                    {{ lang('entry_default_case_text') }}
+                                </span>
+
+                                <div class="form-group">
+                                    <label class="control-label">{{ lang('entry_select_fields') }}</label>
+                                    <select class="autocomplete form-control" multiple="multiple"
+                                            name="config_product_order_fields[]"
+                                            id="categories-autocomplete">
+                                        <option value="product_order_field_img"
+                                            {{ "product_order_field_img" in config_product_order_fields ? 'selected' : '' }}>
+                                            {{ lang('entry_product_image') }}
+                                        </option>
+                                        <option value="product_order_field_name"
+                                            {{ "product_order_field_name" in config_product_order_fields ? 'selected' : '' }}>
+                                            {{ lang('entry_product_name') }}
+                                        </option>
+                                        <option value="product_order_field_options"
+                                                {{ "product_order_field_options" in config_product_order_fields ? 'selected' : '' }}>
+                                            {{ lang('entry_product_options') }}
+                                        </option>
+                                        <option value="product_order_field_model"
+                                            {{ "product_order_field_model" in config_product_order_fields ? 'selected' : '' }}>
+                                            {{ lang('entry_product_model') }}
+                                        </option>
+                                        <option value="product_order_field_price"
+                                            {{ "product_order_field_price" in config_product_order_fields ? 'selected' : '' }}>
+                                            {{ lang('entry_product_price') }}
+                                        </option>
+                                        <option value="product_order_field_qty"
+                                            {{ "product_order_field_qty" in config_product_order_fields ? 'selected' : '' }}>
+                                            {{ lang('entry_product_qty') }}
+                                        </option>
+                                        <option value="product_order_field_total"
+                                            {{ "product_order_field_total" in config_product_order_fields ? 'selected' : '' }}>
+                                            {{ lang('entry_product_total') }}
+                                        </option>
+                                        <option value="product_order_field_sku"
+                                            {{ "product_order_field_sku" in config_product_order_fields ? 'selected' : '' }}>
+                                            sku
+                                        </option>
+                                        <option value="product_order_field_barcode"
+                                            {{ "product_order_field_barcode" in config_product_order_fields ? 'selected' : '' }}>
+                                            {{ lang('entry_product_barcode') }}
+                                        </option>
+                                        <option value="product_order_field_dropna_status"
+                                            {{ "product_order_field_dropna_status" in config_product_order_fields ? 'selected' : '' }}>
+                                            {{ lang('entry_product_dropna_status') }}
+                                        </option>
+                                    </select>
+                                    <span class="help-block"></span>
+                                    <span class="text-muted">{{ langempty('entry_category_help') }}</span>
+                                </div>
+                            </div>{# order #}
+                            <!-- product props in order page -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="list-wrapper splited-settings">
+            <div class="content-inner">
+                <div class="row">
+                    <div class="col-12 col-lg-4">
+                        <p class="split-title">
+                            {{lang('split_side_title_orders_invoice')}}
+                        </p>
+                        <p class="split-content">
+                            {# {{lang('split_side_content_orders_invoice')}} #}
+                        </p>
+                    </div>
+                    <div class="col-12 col-lg-8">
+                        <div class="panel split-group p-20">
+                            <!-- Invoice Image Product -->
+                            <div class="switch-line-group" id="store_account-group">
+                                <div class="switch-line">
+                                    <label for="invoice_image_product" class="control-label">{{ lang('entry_invoice_image_product') }}</label>
+                                    <div class="checkbox checkbox-switchery">
+                                        <label>
+                                            <input type="checkbox" onchange="changeStatus(this);" name="invoice_image_product" class="switchery" {{ invoice_image_product in ['1', 1, 'on'] ? 'checked' }}>
+                                            <span class="switchery-status">{{ invoice_image_product in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <span class="text-muted">{{ lang('entry_invoice_image_product_help') }}</span>
+                            </div>{# inv #}
+                            <!-- /Invoice Image Product -->
+
+                            <!-- soft delete -->
+                            <div class="switch-line-group" id="store_account-group">
+                                <div class="switch-line">
+                                    <label for="config_soft_delete_status" class="control-label">{{ lang('entry_config_soft_delete_status') }}</label>
+                                    <div class="checkbox checkbox-switchery">
+                                        <label>
+                                            <input type="checkbox" onchange="changeStatus(this);" name="config_soft_delete_status" class="switchery" {{ config_soft_delete_status in ['1', 1, 'on'] ? 'checked' }}>
+                                            <span class="switchery-status">{{ config_soft_delete_status in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <span class="text-muted">{{ lang('entry_soft_delete_status_help') }}</span>
+                            </div>{# inv #}
+                            <!-- soft delete -->
+
+                            <!-- print option values without price -->
+                            <div class="switch-line-group" id="store_account-group">
+                                <div class="switch-line">
+                                    <label for="config_invoice_option_price" class="control-label">{{ lang('entry_invoice_option_price') }}</label>
+                                    <div class="checkbox checkbox-switchery">
+                                        <label>
+                                            <input type="checkbox" onchange="changeStatus(this);" name="config_invoice_option_price" class="switchery" {{ config_invoice_option_price in ['1', 1, 'on'] ? 'checked' }}>
+                                            <span class="switchery-status">{{ config_invoice_option_price in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <span class="text-muted">{{ lang('entry_invoice_option_price_help') }}</span>
+                            </div>{# inv #}
+                            <!-- print option values without price -->
+
+                            <div class="row">
+                                <!-- Order Invoice Logo Height -->
+                                <div class="form-group col-md-6" id="store_account-group">
+                                    <label for="config_order_invoice_logo_height" class="control-label">{{ lang('entry_order_invoice_logo_height') }}</label>
+                                    <input type="text" class="form-control touchy" name="config_order_invoice_logo_height" id="config_order_invoice_logo_height" value="{{ config_order_invoice_logo_height ?: 50 }}">
+                                    <span class="help-block"></span>
+                                    <span class="text-muted">{{ langempty('entry_order_invoice_logo_height_help') }}</span>
+                                </div>{# inv #}
+                                <!-- /Order Invoice Logo Height -->
+
+                                <!-- Order Invoice product  image -->
+                                <div class="form-group col-md-6" id="store_account-group">
+                                    <label for="config_invoice_product_image" class="control-label">{{ lang('entry_invoice_product_image') }}</label>
+                                    <input type="text" class="form-control touchy" name="config_invoice_product_image" id="config_invoice_product_image" value="{{ config_invoice_product_image ?: 0 }}">
+                                    <span class="help-block"></span>
+                                    <span class="text-muted">{{ lang('entry_invoice_product_image_note') }}</span>
+                                </div>{# inv #}
+                                <!-- Order Invoice product  image -->
+
+                                <!-- Invoice Prefix -->
+                                <div class="form-group col-md-6" id="store_account-group">
+                                    <label for="config_invoice_prefix" class="control-label">{{ lang('entry_invoice_prefix') }}</label>
+                                    <input type="text" class="form-control" name="config_invoice_prefix" id="config_invoice_prefix" value="{{ config_invoice_prefix }}">
+                                    <span class="help-block"></span>
+                                    <span class="text-muted">{{ lang('entry_invoice_prefix_help') }}</span>
+                                </div>{# inv #}
+
+                                <div class="form-group col-md-6" id="store_account-group">
+                                    <label for="config_invoice_width" class="control-label">{{ lang('entry_invoice_width') }}</label>
+                                    <input type="text" class="form-control" name="config_invoice_width" id="config_invoice_width" value="{{ config_invoice_width }}">
+                                    <span class="help-block"></span>
+                                    <span class="text-muted">{{ lang('entry_invoice_width_help') }}</span>
+                                </div>{# inv #}
+                            </div>
+
+                            <div class="switch-line-group" id="store_account-group">
+                                <div class="switch-line">
+                                    <label for="config_hide_comments" class="control-label">
+                                        {{ lang('entry_hide_comments_in_invoice') }}
+                                    </label>
+                                    <div class="checkbox checkbox-switchery">
+                                        <label>
+                                            <input type="checkbox" onchange="changeStatusYesNo(this);" name="config_hide_comments" class="switchery" {{ config_hide_comments in ['1', 1, 'on'] ? 'checked' }}>
+                                            <span class="switchery-status">{{ config_hide_comments in [1, '1', 'on'] ? lang('text_yes') : lang('text_no') }}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>{# inv #}
+                            <!-- /Invoice Prefix -->
+
+                            <!-- Display barcode in invoice -->
+                            <div class="switch-line-group" id="invoice_display_barcode-group">
+                                <div class="switch-line">
+                                    <label for="config_invoice_display_barcode" class="control-label">
+                                        {{ lang('entry_invoice_display_barcode') }}
+                                    </label>
+                                    <div class="checkbox checkbox-switchery">
+                                        <label>
+                                            <input type="checkbox" onchange="changeStatusYesNo(this);" name="config_invoice_display_barcode" class="switchery" {{ config_invoice_display_barcode in ['1', 1, 'on'] ? 'checked' }}>
+                                            <span class="switchery-status">{{ config_invoice_display_barcode in [1, '1', 'on'] ? lang('text_yes') : lang('text_no') }}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>{# inv #}
+                            <!-- /Display barcode in invoice -->
+
+                            <!-- Display invoice no. barcode in invoice -->
+                            <div class="switch-line-group" id="invoice_display_barcode-group">
+                                <div class="switch-line">
+                                    <label for="config_invoice_no_barcode" class="control-label">
+                                        {{ lang('entry_invoice_display_invoice_no_barcode') }}
+                                    </label>
+                                    <div class="checkbox checkbox-switchery">
+                                        <label>
+                                            <input type="checkbox" onchange="changeStatusYesNo(this);" name="config_invoice_no_barcode" class="switchery" {{ config_invoice_no_barcode in ['1', 1, 'on'] ? 'checked' }}>
+                                            <span class="switchery-status">{{ config_invoice_no_barcode in [1, '1', 'on'] ? lang('text_yes') : lang('text_no') }}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>{# inv #}
+                            <!-- Display invoice no. barcode in invoice -->
+
+                            <!-- Show model in invoice -->
+                            <div class="switch-line-group">
+                                <div class="switch-line">
+                                    <label for="config_invoice_hide_model" class="control-label">
+                                        {{ lang('entry_invoice_hide_model') }}
+                                    </label>
+                                    <div class="checkbox checkbox-switchery">
+                                        <label>
+                                            <input type="checkbox" onchange="changeStatusYesNo(this);" name="config_invoice_hide_model" class="switchery" {{ config_invoice_hide_model in ['1', 1, 'on'] ? 'checked' }}>
+                                            <span class="switchery-status">{{ config_invoice_hide_model in [1, '1', 'on'] ? lang('text_yes') : lang('text_no') }}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>{# inv #}
+                            <!-- Show model in invoice -->
+
+                            <!-- Show sku in invoice -->
+                            <div class="switch-line-group">
+                                <div class="switch-line">
+                                    <label for="config_invoice_display_sku" class="control-label">
+                                        {{ lang('entry_invoice_display_sku') }}
+                                    </label>
+                                    <div class="checkbox checkbox-switchery">
+                                        <label>
+                                            <input type="checkbox" onchange="changeStatusYesNo(this);" name="config_invoice_display_sku" class="switchery" {{ config_invoice_display_sku in ['1', 1, 'on'] ? 'checked' }}>
+                                            <span class="switchery-status">{{ config_invoice_display_sku in [1, '1', 'on'] ? lang('text_yes') : lang('text_no') }}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>{# inv #}
+                            <!-- Show sku in invoice -->
+
+                            <div class="row">
+                                <!-- default products sort order -->
+                                <div class="form-group col-md-6">
+                                    <label for="config_invoice_products_sort_order" class="control-label">
+                                        {{ lang('entry_invoice_products_sort_order') }}
+                                    </label>
+                                    <select class="form-control" name="config_invoice_products_sort_order" id="config_invoice_products_sort_order">
+                                        <option value="default" {{ config_invoice_products_sort_order == 'default' ? 'selected':'' }} >{{ lang('entry_invoice_sort_default') }}</option>
+                                        <option value="model" {{ config_invoice_products_sort_order == 'model' ? 'selected':'' }} >{{ lang('entry_invoice_sort_model') }}</option>
+                                        <option value="sku" {{ config_invoice_products_sort_order == 'sku' ? 'selected':'' }} >{{ lang('entry_invoice_sort_sku') }}</option>
+                                        <option value="category" {{ config_invoice_products_sort_order == 'category' ? 'selected':'' }} >{{ lang('entry_invoice_sort_category') }}</option>
+                                    </select>
+                                    <span class="help-block"></span>
+                                </div>{# inv #}
+                                <!-- default products sort order  -->
+
+                                <!-- default products sort type -->
+                                <div class="form-group col-md-6">
+                                    <label for="config_invoice_products_sort_type" class="control-label">
+                                        {{ lang('entry_invoice_products_sort_type') }}
+                                    </label>
+                                    <select class="form-control" name="config_invoice_products_sort_type" id="config_invoice_products_sort_type">
+                                        <option value="ASC" {{ config_invoice_products_sort_type == 'ASC' ? 'selected':'' }} >{{ lang('text_invoice_sort_asc') }}</option>
+                                        <option value="DESC" {{ config_invoice_products_sort_type == 'DESC' ? 'selected':'' }} >{{ lang('text_invoice_sort_desc') }}</option>
+                                    </select>
+                                    <span class="help-block"></span>
+                                </div>{# inv #}
+                                <!-- default products sort order  -->
+
+                                <!-- default products sort type -->
+                                <div class="form-group col-md-12">
+                                    <label for="config_invoice_products_sort_ctlevel" class="control-label">
+                                        {{ lang('entry_invoice_products_sort_ctlevel') }}
+                                    </label>
+                                    <select class="form-control" name="config_invoice_products_sort_ctlevel" id="config_invoice_products_sort_ctlevel">
+                                        {% for i in 0..max_child_level %}
+                                            <option value="{{ i }}" {{ config_invoice_products_sort_ctlevel == i ? 'selected':'' }} >{{ i == 0 ? lang('text_parent') : i }}</option>
+                                        {% endfor %}
+
+                                    </select>
+                                    <span class="help-block"></span>
+                                </div>{# inv #}
+                                <!-- default products sort order  -->
+                            </div>
+
+                            
+                            <!-- hide country code in invoice page -->
+                            <div class="switch-line-group">
+                                <div class="switch-line">
+                                    <label for="config_invoice_hide_country_code" class="control-label">
+                                        {{ lang('entry_invoice_hide_country_code') }}
+                                    </label>
+                                    <div class="checkbox checkbox-switchery">
+                                        <label>
+                                            <input type="checkbox" onchange="changeStatusYesNo(this);" name="config_invoice_hide_country_code" class="switchery" {{ config_invoice_hide_country_code in ['1', 1, 'on'] ? 'checked' }}>
+                                            <span class="switchery-status">{{ config_invoice_hide_country_code in [1, '1', 'on'] ? lang('text_yes') : lang('text_no') }}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>{# inv #}
+                            <!-- hide country code in invoice page -->
+
+                            <!-- display total quantity invoice page -->
+                            <div class="switch-line-group">
+                                <div class="switch-line">
+                                    <label for="config_invoice_display_total_quantity" class="control-label">
+                                        {{ lang('entry_invoice_display_total_quantity') }}
+                                    </label>
+                                    <div class="checkbox checkbox-switchery">
+                                        <label>
+                                            <input type="checkbox" onchange="changeStatusYesNo(this);" name="config_invoice_display_total_quantity" class="switchery" {{ config_invoice_display_total_quantity in ['1', 1, 'on'] ? 'checked' }}>
+                                            <span class="switchery-status">{{ config_invoice_display_total_quantity in [1, '1', 'on'] ? lang('text_yes') : lang('text_no') }}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>{# inv #}
+                            <!-- display total quantity invoice page -->
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="list-wrapper splited-settings">
+            <div class="content-inner">
+                <div class="row">
+                    <div class="col-12 col-lg-4">
+                        <p class="split-title">
+                            {{lang('split_side_title_orders_status')}}
+                        </p>
+                        <p class="split-content">
+                            {# {{lang('split_side_content_orders_status')}} #}
+                        </p>
+                    </div>
+                    <div class="col-12 col-lg-8">
+                        <div class="panel split-group p-20">
+                            <div class="row">
+                                <!-- Order Status -->
+                                <div class="form-group col-md-6" id="store_account-group">
+                                    <label for="config_order_status_id" class="control-label">{{ lang('entry_order_status') }}</label>
+                                    <select name="config_order_status_id" id="config_order_status_id" class="form-control">
+                                        {% for order_status in order_statuses %}
+                                            <option value="{{ order_status['order_status_id'] }}" {{ config_order_status_id == order_status['order_status_id'] ? 'selected' }}>{{ order_status['name'] }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <span class="help-block"></span>
+                                    <span class="text-muted">{{ lang('entry_order_status_help') }}</span>
+                                </div>
+                                <!-- /Order Status -->
+
+                                <!-- Order Status After Shipping -->
+                                <div class="form-group col-md-6" id="store_account-group">
+                                    <label for="config_order_shipped_status_id" class="control-label">{{ lang('entry_order_shipped_status') }}</label>
+                                    <select name="config_order_shipped_status_id" id="config_order_shipped_status_id" class="form-control">
+                                        {% for order_status in order_statuses %}
+                                            <option value="{{ order_status['order_status_id'] }}" {{ config_order_shipped_status_id == order_status['order_status_id'] ? 'selected' }}>{{ order_status['name'] }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <span class="help-block"></span>
+                                    <span class="text-muted">{{ lang('entry_order_shipped_status_help') }}</span>
+                                </div>
+                                <!-- /Order Status After Shipping -->
+
+                                <!-- Order Status Ready For Shipping -->
+                                <div class="form-group col-md-6" id="store_account-group">
+                                    <label for="config_order_cod_status_id" class="control-label">{{ lang('entry_order_cod_status') }}</label>
+                                    <select name="config_order_cod_status_id" id="config_order_cod_status_id" class="form-control">
+                                        {% for order_status in order_statuses %}
+                                            <option value="{{ order_status['order_status_id'] }}" {{ config_order_cod_status_id == order_status['order_status_id'] ? 'selected' }}>{{ order_status['name'] }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <span class="help-block"></span>
+                                    <span class="text-muted">{{ lang('entry_order_cod_status_help') }}</span>
+                                </div>
+                                <!-- /Order Status Ready For Shipping -->
+
+                                <!-- Complete Order Status -->
+                                <div class="form-group col-md-6" id="store_account-group">
+                                    <label for="config_complete_status_id" class="control-label">{{ lang('entry_complete_status') }}</label>
+                                    <select name="config_complete_status_id" id="config_complete_status_id" class="form-control">
+                                        {% for order_status in order_statuses %}
+                                            <option value="{{ order_status['order_status_id'] }}" {{ config_complete_status_id == order_status['order_status_id'] ? 'selected' }}>{{ order_status['name'] }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <span class="help-block"></span>
+                                    <span class="text-muted">{{ lang('entry_complete_status_help') }}</span>
+                                </div>
+                                <!-- /Complete Order Status -->
+
+                                <!-- Cancelled Order Status -->
+                                <div class="form-group col-md-6" id="store_account-group">
+                                    <label for="config_cancelled_status_id" class="control-label">{{ lang('entry_cancelled_status') }}</label>
+                                    <select name="config_cancelled_order_status_id" id="config_cancelled_order_status_id" class="form-control">
+                                        {% for order_status in order_statuses %}
+                                            <option value="{{ order_status['order_status_id'] }}" {{ config_cancelled_order_status_id == order_status['order_status_id'] ? 'selected' }}>{{ order_status['name'] }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <span class="help-block"></span>
+                                    <span class="text-muted">{{ lang('entry_cancelled_status_help') }}</span>
+                                </div>
+                                <!-- /Cancelled Order Status -->
+
+                                <!-- Cancelled Reversal Order Status -->
+                                <div class="form-group col-md-6" id="store_account-group">
+                                    <label for="config_cancelled_reversal_status_id" class="control-label">{{ lang('entry_cancelled_reversal_status') }}</label>
+                                    <select name="config_cancelled_reversal_status_id" id="config_cancelled_reversal_status_id" class="form-control">
+                                        {% for order_status in order_statuses %}
+                                            <option value="{{ order_status['order_status_id'] }}" {{ config_cancelled_reversal_status_id == order_status['order_status_id'] ? 'selected' }}>{{ order_status['name'] }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <span class="help-block"></span>
+                                    <span class="text-muted">{{ lang('entry_cancelled_reversal_status_help') }}</span>
+                                </div>
+                                <!-- /Cancelled Order Status -->
+
+                                <div class="col-md-12">
+                                    <div class="form-group" id="order_tracking_status">
+                                        <label class="control-label">{{ lang('entry_order_tracking_statuses') }}</label>
+                                        <select class="form-control" multiple="multiple" name="config_order_tracking_status">
+                                            {% for order_status in order_statuses %}
+                                                <option value="{{ order_status['order_status_id'] }}" {{ order_status['order_status_id'] in exist_status_ids ? 'selected' :''}}> 
+                                                    {{ order_status['name'] }} 
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                        <span class="help-block"></span>
+                                        <span class="text-muted">{{ langempty('entry_tracking_status_help') }}</span>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-12">
+                                    <div class="form-group" id="order_tracking_status">
+                                        <ul id="sortable">
+                                            {% for order_status in order_tracking_status %}
+                                                <li value="{{ order_status['id'] }}">{{ order_status['name'] }} </li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <hr>
+
+                            <div class="page-link-group">
+                                <div class="info">
+                                    <p class="control-label">
+                                        {{lang('mn_setting_menu_statuses_label')}}
+                                    </p>
+                                    <p class="text-muted">
+                                        {# {{lang('mn_setting_menu_statuses_content')}} #}
+                                    </p>
+                                </div>
+                                <a href="{{ link("localisation/statuses") }}" class="button blue-white-empty">
+                                    {{lang('mn_setting_menu_statuses')}}
+                                </a>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="list-wrapper splited-settings">
+            <div class="content-inner">
+                <div class="row">
+                    <div class="col-12 col-lg-4">
+                        <p class="split-title">
+                            {{lang('split_side_title_orders_returned')}}
+                        </p>
+                        <p class="split-content">
+                            {# {{lang('split_side_content_orders_returned')}} #}
+                        </p>
+                    </div>
+                    <div class="col-12 col-lg-8">
+                        <div class="panel split-group p-20">
+                            <div class="row">
+                                <!-- Return Terms -->
+                                <div class="form-group col-md-6" id="store_returns-group">
+                                    <label for="config_return_id" class="control-label">{{ lang('entry_return') }}</label>
+                                    <select name="config_return_id" id="config_return_id" class="form-control">
+                                        <option value="0">{{ lang('text_none') }}</option>
+                                        {% for information in informations %}
+                                            <option value="{{ information['information_id'] }}" {{ information['information_id'] == config_return_id ? 'selected' }}>{{ information['title'] }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <span class="help-block"></span>
+                                    <span class="text-muted">{{ lang('entry_return_help') }}</span>
+                                </div>
+                                <!-- /Return Terms -->
+                                
+                                <!-- Order Status -->
+                                <div class="form-group col-md-6" id="store_returns-group">
+                                    <label for="config_return_status_id" class="control-label">{{ lang('entry_return_status') }}</label>
+                                    <select name="config_return_status_id" id="config_return_status_id" class="form-control">
+                                        {% for return_status in return_statuses %}
+                                            <option value="{{ return_status['return_status_id'] }}" {{ config_return_status_id == return_status['return_status_id'] ? 'selected' }}>{{ return_status['name'] }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <span class="help-block"></span>
+                                    <span class="text-muted">{{ lang('entry_return_status_help') }}</span>
+                                </div>
+                                <!-- /Order Status -->
+
+                                <!-- Return Type -->
+                                <div class="form-group col-md-6" id="store_return_type-group">
+                                    <label for="config_return_type" class="control-label">{{ lang('entry_return_type') }}</label>
+                                    <select name="config_return_type" id="config_return_type" class="form-control">
+                                        <option value="return" {{ config_return_type == 'return' ? 'selected' }}>{{ lang('text_type_return') }}</option>
+                                        <option value="cancel" {{ config_return_type == 'cancel' ? 'selected' }}>{{ lang('text_type_cancel') }}</option>
+                                    </select>
+                                    <span class="help-block"></span>
+                                    <span class="text-muted">{{ lang('entry_return_type_help') }}</span>
+                                </div>
+                                <!-- /Return Type  -->
+
+                                <div class="clearfix"></div>
+
+                                <!-- Return  limit -->
+                                <div class="form-group col-md-6" id="store_return_limit-group">
+                                    <label for="config_return_limit" class="control-label">{{ lang('entry_return_limit') }}</label>
+                                    <input type="text" class="form-control touchy" name="config_return_limit" id="config_return_limit" value="{{ config_return_limit }}">
+                                    <span class="help-block"></span>
+                                    <span class="text-muted">{{ lang('entry_return_limit_help') }}</span>
+                                </div>
+                                <!-- /Return  limit -->
+                                <!-- Return limit unit -->
+                                <div class="form-group col-md-6" id="store_return_limit_unit-group">
+                                    <label for="config_return_limit_unit" class="control-label">{{ lang('entry_return_limit_unit') }}</label>
+                                    <select name="config_return_limit_unit" id="config_return_limit_unit" class="form-control">
+                                        <option value="day" {{ config_return_limit_unit == 'day' ? 'selected' }}>{{ lang('text_days') }}</option>
+                                        <option value="hours" {{ config_return_limit_unit == 'hours' ? 'selected' }}>{{ lang('text_hours') }}</option>
+                                    </select>
+                                    <span class="help-block"></span>
+                                    <span class="text-muted">{{ lang('entry_return_limit_unit_help') }}</span>
+                                </div>
+                                <!-- /Return limit unit -->
+
+                                <div class="clearfix"></div>
+
+                                <div class="form-group col-md-6" id="store_return_type-group">
+                                    <label for="config_return_freeze_statuses" class="control-label">
+                                        {{ lang('entry_return_freeze_statuses') }}
+                                    </label>
+                                    <select name="config_return_freeze_statuses[]" id="config_return_freeze_statuses"
+                                        multiple class="form-control">
+                                        {% for os in order_statuses %}
+                                        <option value="{{ os['order_status_id'] }}" {{ os['order_status_id'] in config_return_freeze_statuses ? 'selected' : '' }}>
+                                        {{ os['name'] }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                    <span class="help-block"></span>
+                                    <span class="text-muted">{{ lang('entry_return_freeze_statuses_help') }}</span>
+                                </div>
+                            
+                                <div class="form-group col-md-6" id="product_quantity_update_status">
+                                    <label for="product_quantity_update_status_selector" class="control-label">
+                                        {{ lang('product_quantity_update_status_selector') }}
+                                    </label>
+                                    <select name="product_quantity_update_status_selector" id="product_quantity_update_status_selector"
+                                        class="form-control"   {{ config_product_quantity_update_checker in [1, '1', 'on'] ? '' : disabled }} >
+                                        <option value = "">{{ lang('please_select_status') }}</option> 
+                                        {% for return_status in return_statuses %}
+                                            <option value="{{ return_status['return_status_id'] }}" {{ product_quantity_update_status_selector == return_status['return_status_id'] ? 'selected' }}>{{ return_status['name'] }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <span class="help-block"></span>
+                                    <span class="text-muted">{{ lang('product_quantity_statuses_help') }}</span>
+                                </div>
+                                <!-- /Return limit unit -->
+
+                            </div>
+
+                            <!--update quantity -->
+                            <div class="switch-line-group" id="product_quantity_update_check">
+                                <div class="switch-line">
+                                    <label for="product_quantity_update_checker" class="control-label">
+                                        {{ lang('product_quantity_update_checker') }}
+                                    </label>
+                                    <div class="checkbox checkbox-switchery">
+                                        <label>
+                                            <input type="checkbox" onchange="changeStatus(this);" name="config_product_quantity_update_checker" class="switchery" {{ config_product_quantity_update_checker in ['1', 1, 'on'] ? 'checked' }}>
+                                            <span class="switchery-status">{{ config_product_quantity_update_checker in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+<!-- Lower Buttons -->
+{% include "includes/buttons_bottom.expand" %}
+<!-- End Lower Buttons -->
+
+<script>
+    function changeStatus(checkbox)
+        {
+            var self = $(checkbox);
+            var switch_status = self.siblings('.switchery-status');
+
+            if ( self.is(':checked') )
+            {
+                switch_status.html("{{ lang('text_enabled') }}");
+                $('#product_quantity_update_status_selector').removeAttr('disabled');
+            }
+            else
+            {
+                switch_status.html("{{ lang('text_disabled') }}");
+                $('#product_quantity_update_status_selector').attr('disabled', 'disabled');
+            }
+        }
+</script>
+
+<script>
+    $(document).ready(function() {
+        createArray();
+
+        $('select').select2({
+            maximumSelectionLength: 6
+        });
+
+
+        $('select').on('select2:select', function (e) {
+            var data = e.params.data;
+            $( "#sortable" ).append('<li value="'+ data.id +'">'+ data.text +'</li>');
+            createArray();
+        });
+
+        $('select').on('select2:unselect', function (e) {
+            var data = e.params.data;
+            $( "#sortable > li[value='" +  data.id + "']" ).remove();
+            createArray();
+        });
+
+        $( "#sortable" ).sortable({
+          update: function( event, ui ) {
+            createArray();
+          }
+        });
+
+        function createArray(){
+            $('input[type="hidden"]').remove();
+
+             $('#sortable li').each(function (index, item) {
+
+                $('<input>').attr({
+                    type: 'hidden',
+                    value: $(this).attr('value'),
+                    name: 'config_order_tracking_status['+index+'][id]',
+                }).appendTo('.form');
+
+
+                $('<input>').attr({
+                    type: 'hidden',
+                    value: $(this).html().trim(),
+                    name: 'config_order_tracking_status['+index+'][name]',
+                }).appendTo('.form');
+
+
+
+            });
+        }
+        // $('.form').submit(function(event){
+        //     $('#sortable li').each(function () {
+        //         $('<input>').attr({
+        //             type: 'hidden',
+        //             value: $(this).html(),
+        //             name: 'x[]',
+        //         }).appendTo('.form');
+        //     });
+        // });
+
+
+    });
+</script>
+
+<script>
+
+    function changeStatus(checkbox)
+    {
+        var self = $(checkbox);
+        var switch_status = self.siblings('.switchery-status');
+
+        if ( self.is(':checked') )
+        {
+            switch_status.html("{{ lang('text_enabled') }}");
+        }
+        else
+        {
+            switch_status.html("{{ lang('text_disabled') }}");
+        }
+    }
+
+    function changeStatusYesNo(checkbox)
+    {
+        var self = $(checkbox);
+        var switch_status = self.siblings('.switchery-status');
+
+        if ( self.is(':checked') )
+        {
+            switch_status.html("{{ lang('text_yes') }}");
+        }
+        else
+        {
+            switch_status.html("{{ lang('text_no') }}");
+        }
+    }
+
+    function changeStatusDefaultCustom(checkbox)
+    {
+        var self = $(checkbox);
+        var switch_status = self.siblings('.switchery-status');
+
+        if ( self.is(':checked') )
+        {
+            switch_status.html("{{ lang('entry_customize') }}");
+        }
+        else
+        {
+            switch_status.html("{{ lang('entry_default') }}");
+        }
+    }
+
+    $(document).ready(function() {
+        $('select').select2();
+        $('.touchy').TouchSpin({
+            max: 99999,
+        });
+    });
+</script>
+{% endblock %}

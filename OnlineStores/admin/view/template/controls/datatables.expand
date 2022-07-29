@@ -1,0 +1,93 @@
+{% macro datatables(object) %}
+
+    <!-- Nested object data -->
+    <div class="panel panel-flat">
+        <div class="panel-heading">
+            <h5 class="panel-title">{{ object['title'] }}</h5>
+            <div class="heading-elements">
+                <ul class="icons-list">
+                    {% if object['hideCollapse'] is not defined or object['hideCollapse'] == false %}
+                    <li><a data-action="collapse"></a></li>
+                    {% endif %}
+                    {% if object['hideReload'] is not defined or object['hideReload'] == false %}
+                    <li><a data-action="reload"></a></li>
+                    {% endif %}
+                    {% if object['hideClose'] is defined and object['hideClose'] == false %}
+                        <li><a data-action="close"></a></li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+
+        {% if object['body'] is defined and object['body'] != '' %}
+        <div class="panel-body">
+        {{ object['body'] }}
+        </div>
+        {% endif %}
+
+        {% set destination = 'dataTable' %}
+        {% set destinationPrefix = '.' %}
+
+        {% if object['destination'] is defined %}
+
+            {% if object['destination'] is iterable %}
+
+                {% set destination = object['destination'][0] %}
+
+                {% if object['destination'][0] == 'id' %}
+                    {% set destinationPrefix = '#' %}
+                    {% set destination = object['destination'][1] %}
+                {% endif %}
+
+                {% if object['destination'][1] %}
+
+                    {% set destination = object['destination'][1] %}
+
+                {% endif %}
+
+            {% else %}
+
+                {% set destination = object['destination'] %}
+
+            {% endif %}
+
+        {% endif %}
+
+        <table class="table {{ destination }}" {{ destinationPrefix == '#' ? 'id="'~destination~'"' : '' }}>
+            <thead>
+            <tr>
+                {% for header in object['headers'] %}
+
+                    <th>{{ header }}</th>
+
+                {% endfor %}
+            </tr>
+            </thead>
+        </table>
+    </div>
+    <!-- /nested object data -->
+
+    {% if object['columns'] is defined %}
+        {% set rowJson = [] %}
+
+        {% for data in object['columns'] %}
+            {% set rowJson = rowJson | merge([{'data': data}]) %}
+        {% endfor %}
+
+        {% if object['dataSource'] is defined %}
+            <script>
+                $('{{ destinationPrefix ~ destination }}').dataTable({
+                    ajax: '{{ object['dataSource'] }}',
+                    columns: {{ rowJson|json_encode() }},
+                });
+
+                // Enable Select2 select for the length option
+                $('.dataTables_length select').select2({
+                    minimumResultsForSearch: Infinity,
+                    width: 'auto'
+                });
+            </script>
+        {% endif %}
+    {% endif %}
+
+{% endmacro datatables %}

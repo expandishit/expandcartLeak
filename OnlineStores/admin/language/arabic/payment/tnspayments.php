@@ -1,0 +1,30 @@
+<?php
+
+$_ = [
+    'heading_title' => 'بوابة ماستر كارت 2.0',
+    'message_settings_updated' => 'تم التحديث',
+    'entry_environment' => 'وضع الاختبار',
+    'billing_address' => 'عنوان الدفع',
+    'order_summary' => 'مراجعة الطلب',
+    'text_hide' => 'مخفي',
+    'text_show' => 'معروض',
+    'integeration_settings' => 'إعدادات التكامل',
+    'entry_type' => 'نوع التكامل',
+    'entry_merchant' => 'معرف التاجر',
+    'entry_secret' => 'الرمز السري',
+    'entry_currency' => 'العملة',
+    'entry_geo_zone' => 'المنقطة الجغرافية',
+    'order_statuses' => 'حالات الطلب',
+    'entry_complete_order_status' => 'حالة الطلب المكتمل',
+    'entry_denied_order_status' => 'حالة الطلب المرفوض',
+    'providers_tnspayment' => 'TNS Payments',
+    'providers_bankofbeirut' => 'بنك بيروت',
+    'providers_alawalbank' => 'البنك الأول',
+    'providers_credimax' => 'Credimax',
+    'providers_mastercard' => 'ماستر كارد',
+    'providers_banquemisr' => 'بنك مصر',
+    // Errors.
+    'invalid_merchant_id' => 'خطأ في معرف التاجر',
+    'invalid_secret_hash' => 'خطأ في الرمز السري',
+    'invalid_inputs' => 'خطأ',
+];

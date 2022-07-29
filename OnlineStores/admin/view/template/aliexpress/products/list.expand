@@ -1,0 +1,291 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+
+{% block title %}
+    {{ lang('heading_title') }}
+{% endblock title %}
+
+{% set dualMenuEnabled = true %}
+{% block secondarymenu %}
+    {% include 'aliexpress/menu.expand' with {'active': '#tab-warehouse-products'} %}
+{% endblock secondarymenu %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+<div class="btn-group">
+    <button type="button" class="btn btn-primary actionButton" disabled data-product-action=""
+        style="text-transform:capitalize;" data-toggle="tooltip" title="{{ lang('text_app_dis_product') }}">
+        <i class="fa fa-question" aria-hidden="true"></i> {{ lang('text_app_dis_product') }}
+    </button>
+    <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown"
+        aria-haspopup="true" aria-expanded="false">
+        <span class="caret"></span>
+    </button>
+    <ul class="dropdown-menu statusAction">
+        <li><a data-action="approve" data-value="1">{{ lang('text_approve') }} </a></li>
+        <li><a data-action="disapprove" data-value="2">{{ lang('text_disapprove') }} </a></li>
+    </ul>
+</div>
+<div class="btn-group">
+    <button type="button" class="btn btn-primary productButton"
+        data-product-action="" style="text-transform:capitalize;" data-toggle="tooltip" title="{{ lang('text_add_prod') }}">
+        <i class="fa fa-plus" aria-hidden="true"></i> {{ lang('text_add_prod') }}
+    </button>
+    <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown"
+        aria-haspopup="true" aria-expanded="false">
+        <span class="caret"></span>
+    </button>
+    <ul class="dropdown-menu productAction">
+        <li><a href="{{ link('catalog/product/insert') }} ">{{ lang('text_add_product') }} </a></li>
+    </ul>
+</div>
+
+<div class="btn-group">
+    <button type="button" id="submit-form" class="btn btn-danger" data-toggle="tooltip" title="{{ lang('button_remove') }}">
+        <i class="fa fa-trash"></i> {{ lang('button_remove') }}
+    </button>
+</div>
+{% endblock headelements %}
+
+{% block content %}
+
+{% if error_warning %}
+<div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i>
+    {{ error_warning }}
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+</div>
+{% endif %}
+{% if success %}
+<div class="alert alert-success"><i class="fa fa-check-circle"></i>
+    {{ success }}
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+</div>
+{% endif %}
+
+<form id="products-form" action="{{ link('aliexpress/warehouse_products/delete') }}" method="POST">
+<input type="hidden" name="producAction" value='0' />
+<div class="row">
+    <div class="col-md-12">
+        <div class="panel panel-white">
+            <div class="panel-heading">
+                <h6 class="panel-title">
+                    <span class="text-bold">
+                        <i class="fa fa-cog"></i>
+                        <span>{{ lang('heading_title') }}</span>
+                    </span>
+                </h6>
+                <div class="heading-elements not-collapsible">
+                    <ul class="icons-list">
+                        <li>
+                            <a data-action="collapse" class=""></a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="panel-body">
+                <div class="row">
+                    <table class="table table-bordered table-hover">
+                        <thead>
+                            <tr>
+                                <td style="width: 1px;" class="text-center">
+                                    <input type="checkbox"
+                                        onclick="$('input[name*=\'selected\']').prop('checked', this.checked);" />
+                                </td>
+                                <td class="text-left">{{ lang('column_name') }}</td>
+                                <td class="text-left">{{ lang('column_model') }}</td>
+                                <td class="text-left">{{ lang('column_warehouse_manager') }}</td>
+                                <td class="text-left">{{ lang('column_warehouse_code') }}</td>
+                                <td class="text-left">{{ lang('column_warehouse_title') }}</td>
+                                <td class="text-center">{{ lang('column_warehousequantity') }}</td>
+                                <td class="text-left">{{ lang('column_price') }}</td>
+                                <td class="text-left">{{ lang('column_status') }}</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if products %}
+                            {% for product in products %}
+                            <tr>
+                                <td class="text-center">
+                                    <input type="checkbox" name="selected[]" value="{{ product.warehouse_product_id }} " />
+                                </td>
+                                <td class="text-left">
+                                    {{ product.name }}
+                                </td>
+                                <td class="text-left">
+                                    {{ product.model }}
+                                </td>
+                                <td class="text-left">
+                                    {{ product.warehouseManager }}
+                                </td>
+                                <td class="text-left">
+                                    {{ product.warehouse_code }}
+                                </td>
+                                <td class="text-left">
+                                    {{ product.warehouse_title }}
+                                </td>
+                                <td class="text-center">
+                                    <button type="button" class="btn btn-warning editable-quantity" data-toggle="popover" data-content='<div class="input-group"><input type="text" onkeyup="if($.isNumeric(this.value) != true) this.value = null" class="form-control quantity-input" value="{{ product.warehouse_quantity }} " placeholder="Update quantity"><span class="input-group-btn"><button class="btn btn-primary update-quantity" type="button" data-product-id="{{ product.product_id }} " data-warehouse-product-id="{{ product.warehouse_product_id }} " >Update</button></span></div>'>
+                                        {{ product.warehouse_quantity }}
+                                    </button>
+                                </td>
+                                <td class="text-center">
+                                    {{ product.price }}
+                                </td>
+                                {% if product.status %}
+                                <td class="text-left text-success">
+                                    <b>{{ text_enabled }} </b>
+                                </td>
+                                {% else %}
+                                <td class="text-left text-danger">
+                                    <b>{{ text_disabled }} </b>
+                                </td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                            {% else %}
+                            <tr>
+                                <td class="text-center" colspan="10">
+                                    {{ lang('text_no_results') }}
+                                </td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6">{{ pagination }} </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</form>
+
+<script type="text/javascript">
+    $(function() {
+        var approve = '{{ link("aliexpress/warehouse_products/approve") }} ';
+        var disapprove = '{{ link("aliexpress/warehouse_products/disapprove") }} ';
+
+        $('.statusAction a').on('click', function(e) {
+            e.preventdefault;
+            var text = $(this).data('action');
+            $('.actionButton').attr('data-product-action', text).text(text);
+            $('input[name="producAction"]').val($(this).data('value'));
+            $('.actionButton').removeAttr('disabled');
+        })
+
+        $('.actionButton').on('click', function() {
+            confirmation = confirm('{{ lang("action_confirm") }} ');
+            if (confirmation) {
+                $('#products-form').submit();
+            } else {
+                return;
+            }
+        })
+
+        $('#submit-form').on('click', function() {
+            confirmation = confirm('{{ lang("delete_confirm") }} ');
+            if (confirmation) {
+                $('input[name="producAction"]').val('0');
+                $('#products-form').attr('action', 'aliexpress/warehouse_products/delete');
+                $('#products-form').submit();
+            } else {
+                return;
+            }
+        })
+
+        $('.editable-quantity').popover({
+            html: true,
+            placement: 'top',
+            title: '{{ lang("text_enter_quantity") }} <a class="close close-popover" >&times;</a>',
+            // trigger: 'manual',
+        })
+
+        $('body').on('click', '.close-popover', function(e) {
+            e.preventDefault();
+            $(this).parents('.popover').removeClass('in').prev('button').trigger('click');
+        });
+        // .on('click', function(e){
+        //     if(isVisible) {
+        //         hideAllPopovers();
+        //     }
+        //     $(this).popover('show');
+        //     $('.popover').off('click').on('click', function(e) {
+        //         e.stopPropagation();
+        //     });
+
+        //     isVisible = true;
+        //     e.stopPropagation();
+        // })
+
+        // $(document).on('click', function(e) {
+        //     hideAllPopovers();
+        //     isVisible = false;
+        // });
+
+        $('body').on('focusin', '.quantity-input', function() {
+            $(this).next('.input-group-btn').children('button').removeAttr('disabled').removeClass('btn-success').addClass('btn-primary').text('Update');
+            $('.popover-content').find('.text-success, .text-danger').remove();
+        })
+
+        $('body').on('click', '.update-quantity', function() {
+            $this = $(this);
+            var warehosueQuantity = $(this).parent().prev('input[type="text"]').val();
+            if (warehosueQuantity == '') {
+                html = '<div class="text-danger">{{ lang("error_blank") }} </div>';
+                $this.parents('.popover-content').remove('.text-success, .text-danger').append(html);
+                return;
+            } else {
+                warehosueQuantity = parseInt(warehosueQuantity);
+                if (warehosueQuantity == 0) {
+                    html = '<div class="text-danger">{{ lang("error_zero") }} </div>';
+                    $this.parents('.popover-content').remove('.text-success, .text-danger').append(html);
+                    return;
+                }
+            }
+            var warehouseProductId = $(this).data('warehouse-product-id');
+            var productId = $(this).data('product-id');
+            if (warehosueQuantity <= 0) {
+                html = '<div class="text-danger">{{ lang("error_warehouse_quantity") }} </div>';
+                $this.parents('.popover-content').find('.text-success, .text-danger').remove();
+                $this.parents('.popover-content').remove('.text-success, .text-danger').append(html);
+                return;
+            }
+            confirmation = confirm("{{ lang("action_confirm") }}");
+            if (confirmation) {
+                $.ajax({
+                    url: 'aliexpress/warehouse_products/updateQuantity',
+                    method: 'post',
+                    data: {
+                        warehosueQuantity: warehosueQuantity,
+                        warehouseProductId: warehouseProductId,
+                        productId: productId
+                    },
+                    dataType: 'json',
+                    beforeSend: function() {
+                        $this.attr('disabled', true).html('<i class="fa fa-spin fa-spinner"></i>');
+                    },
+                    success: function(response) {
+                        if (response.error) {
+                            html = '<div class="text-danger">' + response.error + '</div>';
+                            $this.text('Update');
+                        } else {
+                            $this.parents('.popover').prev('.editable-quantity').text(warehosueQuantity);
+                            $this.removeClass('btn-primary').addClass('btn-success').html('<i class="fa fa-check"> Updated');
+                            html = '<div class="text-success">' + response.success + '</div>';
+                        }
+                        $this.parents('.popover-content').find('.text-success, .text-danger').remove();
+                        $this.parents('.popover-content').remove('.text-success, .text-danger').append(html);
+                    }
+                })
+            }
+        });
+
+    });
+
+</script>
+{% endblock %}

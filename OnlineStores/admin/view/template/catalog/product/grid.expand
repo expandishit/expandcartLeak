@@ -1,0 +1,191 @@
+{% extends "base.expand" %}
+{% import "controls/forms.expand" as forms %}
+
+{% set bodyClasses = "has-detached-right sidebar-detached-hidden" %}
+{% set hideHeader = true %}
+
+{% block content %}
+
+<!-- Tutorial Modal -->
+	<div class="list-wrapper product-list">
+        <div class="">
+
+            <div class="inner-settings-title mb-10 product-list-title">
+                <h4 class="fb-app-title">
+                    {{lang("heading_title")}}
+                </h4>
+                <div class="btns">
+                </div>
+            </div>
+
+            {% if limit_warning or limit_reached %}
+				<div class="domain-alert-box mb-20">
+					<p class="first-ship-alert ai-center no-margin w-100">
+						<i class="fas fa-exclamation-triangle"></i> &nbsp;&nbsp;
+						{% if base.plan_trial_id == 3 %}
+							{% if limit_reached %}
+							<span class="w-100 gray-color font-13 m-bold">{{lang_printf('text_limit_reached', link('account/charge'))}}</span>
+							{% elseif limit_warning %}
+							<span class="w-100 gray-color font-13 m-bold">{{lang_printf('text_limit_warning', link('account/charge'))}}</span>
+							{% endif %}
+						{% else %}
+							{% if limit_reached %}
+							<span class="w-100 gray-color font-13 m-bold">{{lang_printf('text_limit_reached_prof', link('account/charge'))}}</span>
+							{% elseif limit_warning %}
+							<span class="w-100 gray-color font-13 m-bold">{{lang_printf('text_limit_warning_prof', link('account/charge'))}}</span>
+							{% endif %}
+						{% endif %}
+						
+					</p>
+				</div>
+			{% endif %}
+
+			<div class="modal fade" id="course_preview" tabindex="-1">
+				<div class="modal-dialog modal-lg">
+					<div class="modal-content">
+						<div class="modal-header">
+							<button type="button" class="close" data-dismiss="modal">&times;</button>
+							<h6 class="modal-title text-center">{{ lang('tutorial_header') }}</h6>
+						</div>
+
+						<div class="modal-body">
+							<div class="embed-responsive embed-responsive-16by9">
+								<iframe class="embed-responsive-item" src="{{ lang('tutorial_link') }}" frameborder="0" allowfullscreen></iframe>
+							</div>
+						</div>
+
+						<div class="modal-footer">
+							<button type="button" class="btn btn-default" data-dismiss="modal">{{ lang('button_cancel') }}</button>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- /Tutorial Modal -->
+			<script>
+				locales['dtb_mass_edit'] 		= "{{ lang('dtb_mass_edit') }}";
+				locales['dtb_delete'] 			= "{{ lang('dtb_delete') }}";
+				locales['dtb_export_table'] 	= "{{ lang('dtb_export_table') }}";
+				locales['dtb_custom_col'] 		= "{{ lang('dtb_custom_col') }}";
+				locales['dtb_copy'] 			= "{{ lang('dtb_copy') }}";
+				locales['dtb_edit_cat'] 		= "{{ lang('dtb_edit_cat') }}";
+				locales['dtb_tax'] 				= "{{ lang('dtb_tax') }}";
+				locales['dtb_dropna_export'] 	= "{{ lang('dtb_dropna_export') }}";
+
+				$('#open_tutorial_modal').click(function (e) {
+					e.preventDefault();
+					$('#course_preview').modal('show');
+				});
+
+				$("#course_preview").on('hidden.bs.modal', function (e) {
+					$("#course_preview iframe").attr("src", $("#course_preview iframe").attr("src"));
+				});
+
+				function toggleFilter(el) { // debugger;
+					var isFilterHidden = $('body').hasClass('sidebar-detached-hidden');
+
+					if (isFilterHidden) {
+						$(el).children('a').children('span').text('{{ lang('lbl_hide_filter') }}');
+					} else {
+						$(el).children('a').children('span').text('{{ lang('lbl_filter_products') }}');
+					}
+				}
+
+				function insertLogic() {
+					if (insertWizard == true) {
+						$('#insertWizard').modal('show');
+					} else {
+						window.location.href = "{{ link('catalog/product/insert') }}";
+					}
+				}
+			</script>
+
+			<!-- Detached content -->
+			<div class="panel">
+                <div class="panel-body pt-0 pb-0">
+                    <div class="card-body">
+						<div id="product-grid" data-step="7" data-intro=" {{ lang('tour_productgrid') }}">
+							{% include "catalog/product/" ~ template ~ ".expand" %}
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- /detached content -->
+
+		</div>
+	</div>
+
+	<div class="table-guide">
+		<i class="fas fa-info-circle"></i> {{lang('text_learn_more_about')}}&nbsp;
+		<a href="{{ lang('learn_more_url') }}" target="_blank">
+			{{lang('text_products')}}
+			<i class="fas fa-external-link-alt"></i>
+		</a>
+	</div>
+
+<!-- Detached sidebar -->
+{% include "catalog/product/filter.expand" %}
+<!-- /detached sidebar -->
+
+{% endblock %}
+                        
+{% block endScripts %}
+<script>
+	$(document).ready(function() {
+		let actionBtns = [
+			`<a href="{{ link('catalog/product/insert') }}" data-step="1" data-intro=" {{ lang('tour_addproduct') }}">
+			<span class="theme-btn rounded-primary-btn {{ limit_reached ? 'plan-lock-btn' : '' }}" id="add_product">{{ limit_reached ? '<i class="fas fa-lock"></i>' }}&nbsp&nbsp{{ lang('btn_new_product') }} </span> </a>`,
+			`<a href="{{ link('tool/product_import/import') }}" class="text-dt-btn {{ plan_id == '3' or limit_reached ? 'plan-lock-btn' : '' }}" data-intro=" {{ lang('tour_externalimport') }}">{% if plan_id == "3" or limit_reached %}<i class="fas fa-lock gray-lock"></i>{% endif %} {{ lang('button_import') }}</a>`,
+			`<a href="{{ link('tool/new_product_export') }}" class="text-dt-btn {{ plan_id == '3' ? 'plan-lock-btn' : '' }}" data-intro=" {{ lang('tour_externalexport') }}">{% if plan_id == "3" %}<i class="fas fa-lock gray-lock"></i>{% endif %} {{ lang('button_export') }}</a>`,
+			]
+			$.each(actionBtns, function(_,el) {
+				$('.product-list .product-list-title .btns').prepend(el)
+			})
+		$('.dataTables_filter').append(`<a onclick="toggleFilter(this)" class="btn btn-default sidebar-detached-hide more-filters"><i class="fas fa-filter"></i></a>`)
+		
+		
+	})
+</script>
+
+<script>
+	let freePlan = false;
+	{% if base.currentplan == 3 %}
+		freePlan = true;
+	{% endif %}
+	var listLink = '{{ link('catalog/product/getXHRList') }}';
+
+	$('#resetList').click(function () {
+
+		$(':input', '#filter').not(':button, :submit, :reset, :hidden').val('').prop('checked', false).prop('selected', false);
+
+		$('#filter').find('select').each(function () {
+			this.value = '';
+		}).trigger('change');
+
+		$('#filter').find('.noui-slider-primary').each(function () {
+			$(this).data('ionRangeSlider').reset();
+		});
+
+		table.on('preXhr.dt', function (e, settings, data) {
+			return $.extend(data, {filter: null , resetFilters:1});
+		});
+
+		table.ajax.reload();
+	});
+
+	$(document).ready(function () {
+		$('#datatableGrid_wrapper select').select2({minimumResultsForSearch: Infinity, width: 'auto'});
+	});
+</script>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+	<script type="text/javascript" src="view/assets/js/plugins/media/fancybox.min.js"></script>
+
+	<script>
+		$('[data-popup="lightbox"]').fancybox({padding: 3});
+	</script>
+
+{% endblock scripts %}

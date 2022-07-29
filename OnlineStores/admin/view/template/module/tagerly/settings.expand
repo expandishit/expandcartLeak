@@ -1,0 +1,390 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% set dualMenuEnabled = false %}
+
+{% block title %}
+    {{ lang('tagerly_heading_title') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+    <a href="{{ cancel }}" class="btn btn-default">{{ lang('button_cancel') }}</a>
+    <a class="btn btn-primary" onclick="$('.form').submit();">
+        <i class="far fa-save fa-lg position-left"></i>{{ lang('button_save') }}
+    </a>
+{% endblock headelements %}
+
+
+{% block content %}
+
+    <div id="modal_import_products" class="modal">
+        <div class="modal-dialog  modal-dialog-centered">
+            <div class="modal-content">
+                <form class="import_products_form">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">{{ lang('text_import_products') }}</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+
+                        <div class="addResult"></div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <input type="radio" id="custom_pages" checked name="tagerly[import_from]" value="custom" class="styled import_from">
+                                    <label for="custom_pages" class="control-label">{{lang('entry_custom_categories')}}  </label>
+                                    <span class="help-block"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <input type="radio" id="list"  name="tagerly[import_from]" value="list" class="styled import_from">
+                                    <label for="list" class="control-label">{{lang('entry_list')}}  </label>
+                                    <span class="help-block"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <input type="radio" id="all_pages" name="tagerly[import_from]" value="all" class="styled import_from">
+                                    <label for="all_pages" class="control-label">{{lang('entry_all_categories')}}  </label>
+                                    <span class="help-block"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="pages_inputs">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label for="ds_time_start" class="control-label">{{lang('entry_categories')}} <span class="required ">*</span>  </label>
+                                        <select class="form-control select" name="tagerly[categories_ids][]" multiple >
+                                            {% for category  in categories %}
+                                                <option value="{{ category['category_id'] }}">{{ category['name'] }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <span class="help-block">{{ lang('entry_categories_help') }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="import-product-process text-center" style="display:none" >
+                                <img src="{{ajax_loader}}" style="width:30px;" />
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary import-products"><i class="far fa-save fa-lg position-left"></i>{{ lang('button_save') }}</button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Fieldset legend -->
+    <div class="row">
+
+        <form action="{{ action }}" method="post" class="form">
+            <div class="row">
+                {% if egpCurrencyExist == false %}
+                <div class="col-md-12">
+                    <div class="panel panel-white">
+                        <div class="panel-heading">
+                            <h6 class="panel-title"><span
+                                        class="text-bold">{{ lang('text_tagerly_notes') }}</span></h6>
+                            <div class="heading-elements not-collapsible">
+                                <ul class="icons-list">
+                                    <li><a data-action="collapse" class=""></a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="panel-body">
+                            <div class="collapse in" id="fields-panel">
+                                <div class="col-md-12" id="api_key-group" style="text-align: center;">
+                                    <h4>- {{ lang('text_tagerly_notes_price') }}<br> - {{ lang('text_tagerly_notes_currency') }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            <div class="col-md-6">
+                <div class="panel panel-white">
+                    <div class="panel-heading">
+                        <h6 class="panel-title"><span class="text-bold">{{ lang('general_settings')|trim(':') }}</span></h6>
+                        <div class="heading-elements not-collapsible">
+                            <ul class="icons-list">
+                                <li><a data-action="collapse" class=""></a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="collapse in" id="panel1">
+                            <div class="form-group col-md-12">
+                                <label>{{ lang('entry_status') }}</label>
+                                <div class="checkbox checkbox-switchery">
+                                    <label>
+                                        <input type="checkbox" onchange="changeStatus(this);"
+                                               name="tagerly[status]" class="switchery"
+                                                {{ settingsData['status'] == 1 ? 'checked' : '' }}>
+                                        <span class="switchery-status">
+                                                {{ settingsData['status'] == 1 ? lang('text_enabled') : lang('text_disabled') }}
+                                            </span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="form-group col-md-12">
+                                <label class="control-label">
+                                    {{ lang('entry_apikey') }} <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" name="tagerly[apikey]" class="form-control"
+                                       value="{{ settingsData['apikey'] }}"/>
+                            </div>
+
+                            <div class="form-group col-md-12">
+                                <label class="control-label">
+                                    {{ lang('entry_secretkey') }} <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" name="tagerly[secretkey]" class="form-control"
+                                       value="{{ settingsData['secretkey'] }}"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="panel panel-white">
+                    <div class="panel-heading">
+                        <h6 class="panel-title"><span class="text-bold">{{ lang('text_import')|trim(':') }}</span></h6>
+                        <div class="heading-elements not-collapsible">
+                            <ul class="icons-list">
+                                <li><a data-action="collapse" class=""></a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="collapse in" id="panel1">
+                            <div class="form-group col-md-4">
+                                <label>{{ lang('btn_import_categories') }}</label>
+                                <div>
+                                    <a id="import_categories" class="btn btn-success"><i class="icon-plus3"></i> {{ lang('btn_import_categories') }}</a>
+                                </div>
+                                <div class="import-category-process" style="display:none">
+                                    <img src="{{ajax_loader}}" style="width:30px;" />
+                                </div>
+                                <table class="table table-bordered import-categories-stats" style="display:none; margin-top:10px">
+                                    <tr>
+                                        <td>{{ lang('text_categories_imported') }}</td>
+                                        <td class="categories-imported-count">0</td>
+                                    </tr>
+                                </table>
+                            </div>
+
+
+                            <div class="form-group col-md-4">
+                                <label>{{ lang('btn_import_products') }}</label>
+                                <div>
+                                    <a href="" class="btn btn-primary" data-toggle="modal" data-target="#modal_import_products"><i class="icon-plus3"></i> {{ lang('btn_import_products') }}</a>
+                                </div>
+                            </div>
+
+
+
+                            <div class="form-group col-md-4">
+                                <label>{{ lang('text_sync_products') }}</label>
+                                <div>
+                                    <a id="sync_products" class="btn btn-danger"><i class="icon-database-refresh"></i> {{ lang('btn_sync_products') }}</a>
+                                </div>
+                                <div class="sync-products-process" style="display:none">
+                                    <img src="{{ajax_loader}}" style="width:30px;" />
+                                </div>
+                                <table class="table table-bordered sync-products-stats" style="display:none; margin-top:10px">
+                                    <tr>
+                                        <td>{{ lang('text_products_synced') }}</td>
+                                        <td class="products-synced-count">0</td>
+                                    </tr>
+                                </table>
+                            </div>
+
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="panel panel-white">
+                    <div class="panel-heading">
+                        <h6 class="panel-title"><span class="text-bold">{{ lang('profit_margin')|trim(':') }}</span></h6>
+                        <div class="heading-elements not-collapsible">
+                            <ul class="icons-list">
+                                <li><a data-action="collapse" class=""></a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="collapse in" id="panel1">
+                            <div class="col-md-6">
+                    <label class="control-label">{{ lang('add_profit_margin')|trim(':') }}</label>
+                    <div class="input-group bootstrap-touchspin">
+                        <span class="input-group-btn"><button class="btn btn-default bootstrap-touchspin-down" type="button">-</button></span><span class="input-group-addon bootstrap-touchspin-prefix" style="display: none;"></span><input type="number" class="form-control" id="discount-amount" min="0" max="100" name="tagerly[margin]" value="{{ settingsData['margin'] }}" style="display: block;"><span class="input-group-addon bootstrap-touchspin-postfix">%</span><span class="input-group-btn"><button class="btn btn-default bootstrap-touchspin-up" type="button">+</button></span>
+                    </div>
+                </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <div class="row">
+            <div class="col-md-12 text-right">
+                <hr/>
+                <a href="{{ links['cancel'] }}" class="btn btn-default">{{ lang('button_cancel') }}</a>
+                <a class="btn btn-primary" onclick="$('.form').submit();">
+                    <i class="far fa-save fa-lg position-left"></i>{{ lang('button_save') }}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var tagerly_import_categories_ajax_url = '{{ tagerly_import_categories_ajax_url }}';
+        var tagerly_sync_products_ajax_url = '{{ tagerly_sync_products_ajax_url }}';
+        // Default initialization
+        $('.select').select2({
+            minimumResultsForSearch: Infinity
+        });
+
+        function changeStatus(checkbox) {
+            var self = $(checkbox);
+            var switch_status = self.siblings('.switchery-status');
+
+            if ( self.is(':checked') ) {
+                switch_status.html("{{ lang('text_enabled') }}");
+            } else {
+                switch_status.html("{{ lang('text_disabled') }}");
+            }
+        }
+        function confirmExit() {
+            return "You have attempted to leave this page. Are you sure?";
+        }
+
+        $('.touchy').TouchSpin({
+            max: Infinity
+        });
+
+        $(document).ready(function(){
+
+            $("body").on("submit",".import_products_form",function(e){
+                e.preventDefault();
+                $(".addResult").html("");
+                jQuery('.import-products').hide();
+                jQuery('.import-product-process').show();
+
+                $.ajax({
+                    url: "{{ tagerly_import_products_ajax_url }}",
+                    type: "POST",
+                    data: $(this).serialize(),
+                    success: function (resp)
+                    {
+                        var resp = JSON.parse(resp);
+                        if (resp.success == '1') {
+
+                            var html = '<div class="alert alert-success">';
+                            html += resp.success_msg;
+                            html +="</div>";
+                            $(".addResult").html(html);
+                        } else{
+                            var html = '<div class="alert alert-danger">';
+                            var lengthData = resp.errors.length;
+                            if(lengthData > 0){
+                                for (var i = 0; i < lengthData; i++)
+                                {
+                                    html += '<p>'+resp.errors[i]+'</p>';
+                                }
+                            }
+                            html +="</div>";
+                            $(".addResult").html(html);
+                        }
+
+                    },
+                    complete: function() {
+                        jQuery('.import-products').show();
+                        jQuery('.import-product-process').hide();
+                    }
+                });
+                return false;
+            });
+
+            $('#import_categories').on('click', function (e) {
+                window.onbeforeunload = confirmExit;
+                e.preventDefault();
+                jQuery('#import_categories').hide();
+                jQuery('.import-category-process , .import-categories-stats').show();
+                $('.categories-imported-count').html(0);
+                $.ajax({
+                    type: "POST",
+                    url: tagerly_import_categories_ajax_url.replace(/&amp;/g, '&'),
+                    success: function (res) {
+                        $('.categories-imported-count').html(res);
+                    },
+                    complete: function() {
+                        jQuery('#import_categories').show();
+                        jQuery('.import-category-process').hide();
+                    }
+                });
+                return false;
+            });
+
+            $('#sync_products').on('click', function (e) {
+                window.onbeforeunload = confirmExit;
+                e.preventDefault();
+                jQuery('#sync_products').hide();
+                jQuery('.sync-products-process , .sync-products-stats').show();
+                $('.products-synced-count').html(0);
+                $.ajax({
+                    type: "POST",
+                    url: tagerly_sync_products_ajax_url,
+                    success: function (res) {
+                        $('.products-synced-count').html(res);
+                    },
+                    complete: function() {
+                        jQuery('#sync_products').show();
+                        jQuery('.sync-products-process').hide();
+                    }
+                });
+                return false;
+            });
+
+
+            $(".import_from").on('change',function(e){
+                e.preventDefault();
+                var input_val = $(this).val();
+                if(input_val == "custom"){
+                    $(".pages_inputs").show();
+                }else{
+
+                    $(".pages_inputs").hide();
+                }
+            });
+        });
+
+        $('.select').select2({
+            minimumResultsForSearch: Infinity
+        });
+    </script>
+
+{% endblock content %}

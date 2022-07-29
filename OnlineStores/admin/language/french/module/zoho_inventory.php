@@ -1,0 +1,23 @@
+<?php
+$_['heading_title']   = 'Inventaire Zoho'; 
+$_['text_settings']   = 'Réglages'; 
+$_['text_status']   = 'Statut'; 
+$_['entry_status_help']   = "État de l\'inventaire Zoho."; 
+$_['text_multiseller_not_active']   = 'Application d\'inventaire Zoho non installée!'; 
+$_['text_success']   = 'Succès: vous avez des paramètres modifiés!'; 
+$_['text_enabled']   = 'Activé'; 
+$_['text_disabled']   = 'Désactivé';
+$_['entry_organization_id']  = "ID d\'organisation"; 
+$_['entry_authtoken']  = "Authoke"; 
+$_['error_invalid_authtoken']  = "Le champ Authoken est requis!"; 
+$_['error_warning']  = 'AVERTISSEMENT: Assurez-vous de revoir des champs incorrects ou obligatoires'; 
+$_['button_sync_products']  = 'Sync Products'; 
+$_['text_success_sync_products']  = "Succès: vous avez synchronisé des produits!"; 
+$_['entry_client_id']  = "Identité du client"; 
+$_['entry_client_id_help']  = "Vous pouvez le faire en cliquant sur cette ";
+$_['entry_client_secret']  = "Secret client"; 
+$_['entry_client_secret_help']  = "Vous pouvez le faire en cliquant sur cette <une cible ";
+$_['entry_home_url']  = "Page d\'accueil URL"; 
+$_['entry_redirect_url']  = "Uri de redirection autorisé"; 
+$_['text_settings_waiting']  = "Vous serez dirigé vers la page de vérification"; 
+$_['text_settings_error']  = 'AVERTISSEMENT: Assurez-vous de revoir des champs incorrects ou obligatoires'; 

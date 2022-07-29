@@ -1,0 +1,386 @@
+<div role="tabpanel" class="tab-pane {{ (active_page == 'notifications') ? 'active' : ''}}" id="notifications_tab">
+	
+	<!-- customer notifications -->
+    <div class="panel">
+        <div class="panel-body">
+            <div class="row-twoside">
+                <div class="start-side">
+                    <p class="m-bold">{{ lang('text_customer_notification') }}</p>
+                </div>
+                <div class="end-side">
+                    <div class="switch-component switch-component--blue">
+                        <div class="switch-inner">
+                            <label class="switch-cover">
+                                <input type="checkbox" class="customer-check update-config-status hide" {{ (config('whatsapp_cloud_config_notify_customer') == '1')? 'checked' : ''}} config-name = "whatsapp_cloud_config_notify_customer" />
+                                <span class="switch-btn"></span>
+								
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="customer-check-holder">
+				<!-- add custom customer template -->
+				{% include 'module/whatsapp_cloud/notifications/common/add_template.expand' 
+					with {
+						'template_for'	: 'customer',
+						'observer_name' : 'customer_order_observers',
+						'header_help'	: lang('template_help_customer_order_observers'),
+						'body_help'	 	: lang('template_help_customer_order_observers'),
+						'footer_help'	: ''
+					} 
+				%}
+				<!-- #add custom customer template -->
+                 
+				 
+				<div class="whatsapp-bot-list" role="tablist" aria-multiselectable="true">
+					
+					
+					<!-- Notify customer on registration : for test new template structure -->
+					 {% include 'module/whatsapp_cloud/notifications/common/message_template.expand' 
+						with {
+						'template_title' : lang('text_registration_notifications') ,
+						'template_key'   : 'customer_account_registration',
+						'template'		 : config('whatsapp_cloud_customer_account_registration'),
+						'notify_key'  	 : 'whatsapp_cloud_config_notify_customer_on_registration',
+						'notify_status'  : config('whatsapp_cloud_config_notify_customer_on_registration'),
+						'header_help'	 : lang('template_help_customer_account_registration'),
+						'body_help'	 	 : lang('template_help_customer_account_registration'),
+						'footer_help'	 : ''
+						}
+					%}
+					<!-- #Notify customer on registration -->
+	
+					<!-- Notify customer on new order -->
+					{% include 'module/whatsapp_cloud/notifications/common/message_template.expand' 
+						with {
+						'template_title' : lang('text_new_order_notification') ,
+						'template_key'   : 'customer_checkout',
+						'template'		 : config('whatsapp_cloud_customer_checkout'),
+						'notify_key'  	 : 'whatsapp_cloud_config_notify_customer_on_checkout',
+						'notify_status'  : config('whatsapp_cloud_config_notify_customer_on_checkout'),
+						'header_help'	 : lang('template_help_customer_checkout'),
+						'body_help'	 	 : lang('template_help_customer_checkout'),
+						'footer_help'	 : ''
+						}
+					%}
+					<!-- #Notify customer on new order -->
+					
+					<!-- Notify customer phone confirmation  -->
+					{# according to business-team we need to hide this option for now #}
+					{#
+					{% include 'module/whatsapp_cloud/notifications/common/message_template.expand' 
+						with {
+						'template_title' : lang('text_phone_confirmation_notification') ,
+						'template_key'   : 'customer_phone_confirm',
+						'template'		 : config('whatsapp_cloud_customer_phone_confirm'),
+						'notify_key'  	 : 'whatsapp_cloud_config_notify_customer_phone_confirm',
+						'notify_status'  : config('whatsapp_cloud_config_notify_customer_phone_confirm'),
+						'header_help'	 : lang('template_help_customer_phone_confirm'),
+						'body_help'	 	 : lang('template_help_customer_phone_confirm'),
+						'footer_help'	 : ''
+						}
+					%}
+					#}
+					<!-- #Notify customer phone confirmation -->	
+
+					<!--  customer custom order notifications  -->
+					<div data-observers-wrapper>
+						<!-- #new custom template -->
+						{% for template_index, observer in config('whatsapp_cloud_customer_order_observers') %}
+							
+							{% set status_name = '' %}
+							{% for order_status in order_statuses %}
+								{% if order_status['order_status_id'] == observer["key"] %}
+									{% set status_name = order_status['name'] %}
+								{% endif %}
+							{% endfor %}
+							
+							{% include 'module/whatsapp_cloud/notifications/common/custom_message_template.expand' 
+								with {
+								'template_title' 		: lang_printf('text_order_notification_with_status_x', status_name) ,
+								'observer_config_name'	: 'whatsapp_cloud_customer_order_observers',
+								'template_key'   		: 'customer_order_observers_' ~ template_index,
+								'observer_name' 		: 'customer_order_observers',
+								'template_index'		: template_index,
+								'observer'		 		: observer,
+								'header_help'	 		: lang('template_help_customer_order_observers'),
+								'body_help'	 	 		: lang('template_help_customer_order_observers'),
+								'footer_help'	 		: ''
+								}
+							%}
+						{% endfor %}
+						<!-- #new custom template -->
+				
+					</div>
+					<!-- # customer custom order notifications  -->
+                </div>
+            </div>
+        </div>
+    </div>
+	<!-- #customer notifications -->
+	
+	<!--store owner notifications -->
+    <div class="panel">
+        <div class="panel-body">
+            <div class="row-twoside">
+                <div class="start-side">
+                    <p class="m-bold">{{ lang('text_store_owner_notifications') }}</p>
+                </div>
+                <div class="end-side">
+                    <div class="switch-component switch-component--blue">
+                        <div class="switch-inner">
+                            <label class="switch-cover">
+                                <input type="checkbox" class="owner-check  update-config-status hide" 
+									{% if config('whatsapp_cloud_config_notify_admin') == '1' %} checked {% endif %}	
+									config-name = "whatsapp_cloud_config_notify_admin" >
+                                <span class="switch-btn"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="owner-check-holder">
+				<!-- #add custom Owner template -->
+				{% include 'module/whatsapp_cloud/notifications/common/add_template.expand' 
+					with {
+						'template_for'	: 'admin',
+						'observer_name' : 'admin_order_observers',
+						'header_help'	: lang('template_help_admin_order_observers'),
+						'body_help'	 	: lang('template_help_admin_order_observers'),
+						'footer_help'	: ''
+						}
+				%}
+				<!-- #add custom Owner template -->
+				
+				<div class="whatsapp-bot-list" role="tablist" aria-multiselectable="true">
+					<!-- Notify admin on registration -->
+					{% include 'module/whatsapp_cloud/notifications/common/message_template.expand' 
+						with {
+						'template_title' : lang('text_registration_notifications') ,
+						'template_key'   : 'admin_account_registration',
+						'template'		 : config('whatsapp_cloud_admin_account_registration'),
+						'notify_key'  	 : 'whatsapp_cloud_config_notify_admin_on_registration',
+						'notify_status'  : config('whatsapp_cloud_config_notify_admin_on_registration'),
+						'header_help'	 : lang('template_help_admin_account_registration'),
+						'body_help'	 	 : lang('template_help_admin_account_registration'),
+						'footer_help'	 : ''
+						}
+					%}
+					<!-- #Notify admin on registration -->
+					
+					<!-- Notify admin on new order -->
+					{% include 'module/whatsapp_cloud/notifications/common/message_template.expand' 
+						with {
+						'template_title' : lang('text_new_order_notification') ,
+						'template_key'   : 'admin_checkout',
+						'template'		 : config('whatsapp_cloud_admin_checkout'),
+						'notify_key'  	 : 'whatsapp_cloud_config_notify_admin_on_checkout',
+						'notify_status'  : config('whatsapp_cloud_config_notify_admin_on_checkout'),
+						'header_help'	 : lang('template_help_admin_checkout'),
+						'body_help'	 	 : lang('template_help_admin_checkout'),
+						'footer_help'	 : ''
+						}
+					%}
+					
+					<!-- #Notify admin on new order -->
+					
+					<!--  admin custom order notifications  -->
+					{% for template_index, observer in config('whatsapp_cloud_admin_order_observers') %}
+						{% set status_name = '' %}
+							{% for order_status in order_statuses %}
+								{% if order_status['order_status_id'] == observer["key"] %}
+									{% set status_name = order_status['name'] %}
+								{% endif %}
+							{% endfor %}
+							{% include 'module/whatsapp_cloud/notifications/common/custom_message_template.expand' 
+								with {
+								'template_title' 		: lang_printf('text_order_notification_with_status_x', status_name) ,
+								'observer_config_name'	: 'whatsapp_cloud_admin_order_observers',
+								'template_key'   		: 'admin_order_observers_' ~ template_index,
+								'observer_name' 		: 'admin_order_observers',
+								'template_index'		: template_index,
+								'observer'		 		: observer,
+								'header_help'	 		: lang('template_help_admin_order_observers'),
+								'body_help'	 	 		: lang('template_help_admin_order_observers'),
+								'footer_help'	 		: ''
+								}
+							%}
+					{% endfor %}
+					
+					
+					<!--  #admin custom order notifications  -->
+			   </div>
+            </div>
+        </div>
+    </div>
+	<!-- #store owner notifications -->
+	
+	{% if multiseller_installed %}
+	<!-- Seller notifications -->
+    <div class="panel">
+        <div class="panel-body">
+            <div class="row-twoside">
+                <div class="start-side">
+                    <p class="m-bold">{{ lang('text_seller_notifications') }}</p>
+                </div>
+                <div class="end-side">
+                    <div class="switch-component switch-component--blue">
+                        <div class="switch-inner">
+                            <label class="switch-cover">
+                                <input type="checkbox" class="seller-check  update-config-status hide" 
+									{% if config('whatsapp_cloud_config_notify_seller') == '1' %} checked {% endif %}	
+									config-name = "whatsapp_cloud_config_notify_seller" >
+                                <span class="switch-btn"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="seller-check-holder">
+				<!-- #add custom Seller template -->
+				{% include 'module/whatsapp_cloud/notifications/common/add_template.expand' 
+					with {
+						'template_for'	: 'seller',
+						'observer_name' : 'seller_order_observers',
+						'header_help'	: lang('template_help_seller_order_observers'),
+						'body_help'	 	: lang('template_help_seller_order_observers'),
+						'footer_help'	: ''
+						}
+				%}
+				<!-- #add custom Seller template -->
+				
+				<div class="whatsapp-bot-list" role="tablist" aria-multiselectable="true">
+					
+					
+					<!--  Seller custom  notifications  -->
+					
+					{% for template_index, observer in config('whatsapp_cloud_seller_order_observers') %}
+						{% set status_name = '' %}
+							{% for seller_status in seller_statuses %}
+								{% if seller_status == observer["key"] %}
+									{% set status_name = lang('ms_seller_status_' ~ seller_status) %}
+								{% endif %}
+							{% endfor %}
+							{% include 'module/whatsapp_cloud/notifications/common/custom_message_template.expand' 
+								with {
+								'template_title' 		: lang_printf('text_seller_notification_with_status_x', status_name) ,
+								'observer_config_name'	: 'whatsapp_cloud_seller_order_observers',
+								'template_key'   		: 'seller_order_observers_' ~ template_index,
+								'observer_name' 		: 'seller_order_observers',
+								'template_index'		: template_index,
+								'observer'		 		: observer,
+								'header_help'	 		: lang('template_help_seller_order_observers'),
+								'body_help'	 	 		: lang('template_help_seller_order_observers'),
+								'footer_help'	 		: ''
+								}
+							%}
+					{% endfor %}
+					
+					
+					<!--  #Seller custom  notifications  -->
+			   </div>
+            </div>
+        </div>
+    </div>
+	<!-- #Seller notifications -->
+	{% endif %}
+</div>
+
+<script> 
+	
+$(document).ready(function() {
+    $("form").submit(function(e) {
+		e.preventDefault();	
+    });
+});
+
+	
+//--------- URLs --------------//
+
+links['update_default_template'] = '{{update_default_template_url}}';
+links['update_custom_template']  = '{{update_custom_template_url}}';
+links['delete_custom_template']  = '{{delete_custom_template_url}}';
+
+//handle update default templates 
+$('.update-default-template').on('click', function (e) {
+	var $form		 = $(this).parents("form");
+	var formData	 = new FormData($form[0]);
+	var template_key = this.getAttribute("template-key");
+
+	//handle add new 
+	if (template_key != null) {
+		formData.append("template_key", template_key);
+	}
+	updateDeafultTemplate(formData);
+
+	this.removeAttribute("disabled");
+	this.removeAttribute("data-loading");
+
+});
+
+//handle create and update cases 
+$('.update-custom-template').on('click', function (e) {
+
+	var $form 			= $(this).parents("form");
+	var formData 		= new FormData($form[0]);
+	var observer_name	= this.getAttribute("observer-name");
+	var template_index	= this.getAttribute("template-index");
+
+	formData.append("observer_name", observer_name);
+
+	if (template_index != null) {
+		formData.append("template_index", template_index);
+	}
+
+	updateCustomTemplate(formData);
+});
+
+//handle delete cases 
+$('.delete-custom-template').on('click', function (e) {
+
+	var $form 			= $(this).parents("form");
+	var formData		= new FormData($form[0]);
+	var observer_name	= this.getAttribute("observer-name");
+	var template_index	= this.getAttribute("template-index");
+
+	formData.append("observer_name", observer_name);
+
+	if (template_index != null) {
+		formData.append("template_index", template_index);
+	}
+
+	deleteCustomTemplate(formData);
+});
+
+//handle change status 
+$('.update-template-status').on('click', function (e) {
+	
+	
+	var config_name  = this.getAttribute("status-name");
+	var config_value = this.getAttribute("status-value");
+
+	var formData 	 = new FormData();
+	formData.append("config_name", config_name);
+	formData.append("config_value", config_value);
+	updateConfigStatus(formData);
+	
+	this.setAttribute("status-value", 1- parseInt(config_value));
+
+	var $this 		 = $(this);	
+	if ($this.hasClass('btn-primary')) {
+		$this.text("{{lang('btn_disable')}}");
+	} else {
+		$this.text("{{lang('btn_active')}}");
+	}
+	
+	$this.toggleClass("btn-light-danger  btn-primary");
+
+});
+	
+</script>
+
+<script src="view/javascript/pages/module/whatsapp_cloud/notifications.js?bn={{ BuildNumber }}"></script>

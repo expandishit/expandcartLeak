@@ -1,0 +1,104 @@
+{% set allFeaturedCategories = getFeaturedCategories(fields['categories']['field_value'], 500, 500) %}
+{% set sideCategories = getFeaturedCategories(fields['sideSategories']['field_value'], 500, 500) %}
+{% set products_per_item = fields.noOfRows.field_value %}
+
+{% set items_count = allFeaturedCategories|length %}
+{% if items_count > 0 %}
+<div class="container"  id="section-{{ section_id }}">
+  <div class="product-box1 {{fields.boxcolor.field_value}}">
+    <div class="title-box1">
+      {% if fields.displaysectiontitle.field_value == '1' %}
+        <h2 class="title30"><span>{{ fields.letter.field_value }}</span>{{ fields.sectiontitle.field_value }}</h2>
+      {% endif %}
+      
+      <ul class="list-none {% if fields.displaysectiontitle.field_value == '0' %}fixTabs{%endif%}">
+        {% for category in allFeaturedCategories %}
+          <li class=""><a href="#{{ category['category_id'] }}{{section_id}}" data-toggle="tab">{{category.name}}</a></li>
+        {% endfor %}
+      </ul>
+    </div>
+    <!-- End Header Box -->
+    <div class="content-box1 clearfix {% if fields.displaySideAds.field_value == '0' %}noSideAdv{%endif%}">
+      <div class="banner-box1">
+        {% if fields.displaySideAds.field_value == '1' %}
+        <div class="banner-box">
+          <a href="{{fields.sideAdsLink.field_value}}" class="link-banner-box"><img src="{{ fields.sideAdsImage.field_value }}" alt="" /></a>
+          <div class="info-banner-box1 top white">
+            <h2>{{fields.sideAdsTitleText.field_value}} </h2>
+            <a href="{{fields.sideAdsLink.field_value}}" class="shopnow border radius white">{{fields.sideAdsLinkText.field_value}}</a>
+          </div>
+        </div>
+        {% endif %}
+        {% if fields.displaySideSategories.field_value == '1' %}
+        <div class="category-box1">
+          <ul class="list-none">
+            {% for category in sideCategories %}
+            <li><a href="{{category.href}}">{{category.name}}</a></li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+      </div>
+      <!-- End Banner -->
+      <div class="content-pro-box1 tab-content left-justify">
+        {% for category in allFeaturedCategories %}
+        {% set categoryProducts = getProductsByCategoryId(category['category_id'], items , 500, 500) %}
+        {% set items_products = categoryProducts|chunk(products_per_item) %}
+        <div id="{{category['category_id']}}{{section_id}}" class="clearfix tab-pane">
+          <div class="wrap-item" data-itemscustom="[[0,1],[560,2],[768,3],[1024,3],[1200,4],[1366,4]]" data-pagination="false" data-autoplay="true" data-navigation="true">
+          {% for items_product in items_products %}
+          <div class="justify-box1">
+            {% for item_product in items_product %}
+            <div class="item-product1">
+              <h3 class="product-title"><a href="{{ item_product.href }}">{{ item_product.name }}</a></h3>
+              {% if config('show_brands') and item_product.manufacturer %}
+                <h5 class="product-title"><a href="{{ item_product.manufacturer_href }}" id="brand_sections" alt"{{ item_product.manufacturer }}">{{ item_product.manufacturer }}</a></h5>
+              {% endif %}
+              {% if ('-1' in item_product.price) or ('-1' in item_product.special) %}
+              <div class="product-price">
+                <ins><span class="clickable" onclick="contact_us('{{ item_product.product_id }}');">{{ lang('button_req_quote') }}</span></ins>
+                <div id="enquiry-{{ item_product.product_id }}"  style="display:none">{{ item_product.name }}</div>
+              </div>
+              {% else %}
+                <div class="product-price">
+                  {% if item_product.special != '' %}
+                  <del><span>{{ item_product.price }}</span></del>
+                  <ins><span>{{ item_product.special }}</span></ins>
+                  {% else %}
+                  <ins><span>{{ item_product.price }}</span></ins>
+                  {% endif %}
+                </div>
+              {% endif %}
+              <div class="product-thumb">
+                <a href="{{item_product.href}}" class="product-thumb-link">
+                  <img src="{{item_product.thumb}}" alt="">
+                </a>
+              </div>
+              <div class="product-info">
+                {% if config('config_review_status') == '1' %}
+                <div class="product-rate" style="background:none;">
+                      <img src="{{ asset('image/stars-' ~ item_product.rating ~ '.png') }}" alt="{{ lang('text_reviews')|format(reviews_count) }}"/>
+                </div>
+                {% endif %}
+                <div class="product-extra-link2">
+                  <a href="#"  class="addcart-link" onclick="event.preventDefault(); addToCart({{ item_product.product_id }},1, {{ ('-1' in item_product.price) or ('-1' in item_product.special) ? 'true' : 'false' }}); return false;">{{ ('-1' in item_product.price) or ('-1' in item_product.special) ? lang('button_req_quote') : lang('button_cart') }}</a>
+                  <a href="#"  class="wishlist-link" onclick="event.preventDefault(); addToWishList('{{ item_product.product_id }}',1); return false;"><i class="fa fa-heart" aria-hidden="true"></i></a>
+                  <a href="#"  class="compare-link" onclick="event.preventDefault(); addToCompare('{{ item_product.product_id }}',1); return false;"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          <!-- End Justify Box -->
+          {% endfor %}
+          </div>
+        </div>
+        <!-- End Tab -->
+        {% endfor %}
+      </div>
+    </div>
+    <!-- ENd Content Box -->
+  </div>
+  <!-- End Product Box -->
+</div>
+{% endif %}

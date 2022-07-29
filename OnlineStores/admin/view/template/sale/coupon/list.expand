@@ -1,0 +1,243 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block title %}
+    {{ lang('heading_title') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+<span class="headLinksEffect">
+    <span id="add_coupon" class="pointer {{ limit_reached ? 'plan-lock-btn' : '' }}" data-toggle="modal" data-target="#discount_type_modal"><span class="theme-btn rounded-primary-btn"> {{ lang('btn_new_coupon') }} </span> </span>
+</span>
+{% endblock headelements %}
+
+
+
+{% block content %}
+    <div id="bulk-coupon-update" class="modal fade">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h5 class="modal-title" style="font-weight: 600;">{{ lang('change_coupon_status') }}</h5>
+                </div>
+
+                <form id='bulk-coupon-status-form' method='post'
+                      action="{{ link('sale/coupon/massEditCouponsStatus') }}">
+                    <div class="modal-body">
+                        <div class="modal-errors"></div>
+                        <div class="form-group col-md-12" id="xd-group">
+                            <label class="control-label">{{ lang('entry_status') }}</label>
+                            <div class="checkbox checkbox-switchery no-margin">
+                                <label>
+                                    <input type="checkbox" onchange="statusSwitch(this);" name="status" class="switchery" >
+                                    <span class="switchery-status">
+                                     {{ text_disabled }}
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                        <h5 style="font-weight: 600;">{{ lang('discount_amount') }}</h5>
+                        <div class="form-group col-md-6" id="xd-group">
+                            <label class="control-label">{{ lang('entry_type') }}</label>
+                            <div>
+                                <select name="type" class="form-control" id="type">
+                                    <option value="P">{{ lang('text_percent') }}</option>
+                                    <option value="F">{{ lang('text_amount') }}</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group col-md-6">
+                            <label class="control-label">{{ lang('entry_discount') }}</label>
+                            <div>
+                                <input type="number" name="discount" id="discount" min="1"  class="form-control"/>
+                            </div>
+                        </div>
+                        <div class="form-group col-md-12">
+                            <label for="affiliate_commission" class="control-label">{{ lang('entry_commission') }}</label>
+                            <input type="text" class="form-control touchspinney" data-postfix="%" id="affiliate_commission" name="affiliate_commission" value="5">
+                        </div>
+
+                    </div>
+                    <div style="clear: both"></div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-link" data-dismiss="modal">{{ lang('text_close') }}</button>
+                        <button type="button" id="bulk-coupon-status-form-trigger"
+                                class="btn btn-primary">{{ lang('button_save') }}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="page-tabs-container">
+        <div class="tabs-content-wrapper">
+            <div class="tab-pane fade in active" id="gridView">
+                <div class="features-table-container rounded">
+                    <div class="collapse in">
+                        <table id="datatableGrid" class="table table-hover datatable-highlight">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>{{ lang('column_name', 'sale/coupon') }}</th>
+                                    {% if affiliate_promo %}
+                                        <th>{{ lang('column_affiliate') }}</th>
+                                    {% endif %}
+                                    <th>{{ lang('column_code') }}</th>
+                                    <th>{{ lang('column_discount') }}</th>
+                                    <th>{{ lang('column_date_start') }}</th>
+                                    <th>{{ lang('column_date_end') }}</th>
+                                    <th>{{ lang('type') }}</th>
+                                    <th>{{ lang('text_automatic_discount') }}</th>
+                                    <th>{{ lang('column_status') }}</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {# discount type modal #}
+    <!-- Button trigger modal -->
+    <!-- Modal -->
+    {% if not limit_reached %}
+    <div class="modal fade discount-type-modal center-modal" id="discount_type_modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="head">
+                    <p class="title">
+                        {{lang('text_create_discount')}}
+                    </p>
+                    <i class="fas fa-times close-modal" data-dismiss="modal" aria-label="Close"></i>
+                </div>
+                <div class="discount-row">
+                    <a href="{{ link('sale/coupon/insert') }}">
+                        <img src="view/assets/images/empty-pages/discount-code.svg" alt="">
+                        <p class="title">
+                            {{lang('text_discount_code')}}
+                        </p>
+                        <p class="desc">
+                            {{lang('text_discount_code_desc')}}
+                        </p>
+                    </a>
+                    <a href="{{ link('sale/coupon/insert', {automatic_apply: 1}) }}">
+                        <img src="view/assets/images/empty-pages/dynamic-discount.svg" alt="">
+                        <p class="title">
+                            {{lang('text_automatic_discount')}}
+                        </p>
+                        <p class="desc">
+                            {{lang('text_automatic_discount_desc')}}
+                        </p>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        let freePlan = false;
+        {% if base.currentplan == 3 %}
+             freePlan = true;
+        {% endif %}
+    </script>
+
+    {{ parent() }}
+
+    <script>
+        
+        var links = {};
+        {% if affiliate_promo %}
+            var statustarget = 9;
+            var actiontarget = 10;
+            var grid_columns = [
+                {
+                    title: `<input type="checkbox" class="styled" id="toggleSelectAll">`,
+                    orderable: false,
+                    data: "coupon_id",
+                    width: "50px"
+                },
+                {
+                    data: 'name',
+                    render: function (data, type, row) {
+                        return `<a href='`+ links['update'] +`?coupon_id=${row['coupon_id']}'>${row['name']}</a>`;
+                    }
+                },
+                {
+                    data: 'affiliate',
+                    render: function (data, type, row) {
+                        if(row['affiliate_id'])
+                            return `<a href='sale/affiliate/update?affiliate_id=${row['affiliate_id']}' target="_blank">${row['affiliate']}</a>`;
+                        else
+                            return '-';
+                    }
+                },
+                {data: 'code'},
+                {data: 'discount'},
+                {data: 'date_start'},
+                {data: 'date_end'},
+                {data: 'status'},
+                {data: 'coupon_id'},
+            ];
+
+        {% else %}
+            var statustarget = 8;
+            var actiontarget = 9;
+            var grid_columns = [
+                {
+                    title: `<input type="checkbox" class="styled" id="toggleSelectAll">`,
+                    orderable: false,
+                    data: "coupon_id",
+                    width: "50px"
+                },
+                {
+                    data: 'name',
+                    render: function (data, type, row) {
+                        return `<a href='`+ links['update'] +`?coupon_id=${row['coupon_id']}'>${row['name']}</a>`;
+                    }
+                },
+                {data: 'code'},
+                {data: 'discount'},
+                {data: 'date_start'},
+                {data: 'date_end'},
+                {data: 'status'},
+                {data: 'coupon_id'},
+            ];
+        {% endif %}
+        links['dtHandler'] = '{{ link('sale/coupon/dtHandler') }}';
+        links['dtUpdateStatus'] = '{{ link("sale/coupon/dtUpdateStatus") }}';
+        links['dtDelete'] = '{{ link('sale/coupon/dtDelete') }}';
+        links['insert'] = '{{ link('sale/coupon/insert') }}';
+        links['update'] = '{{ link('sale/coupon/update') }}';
+        links['affiliate_link'] = '{{ link('sale/affiliate/update') }}';
+        links['copy'] = '{{ link('sale/coupon/copy') }}';
+        locales['button_insert'] = "{{ lang('button_insert') }}";
+        locales['button_delete'] = "{{ lang('button_delete') }}";
+        locales['switch_text_enabled'] = "{{ lang('switch_text_enabled') }}";
+        locales['switch_text_disabled'] = "{{ lang('switch_text_disabled') }}";
+        locales['dtb_delete'] = "{{ lang('dtb_delete') }}";
+        locales['dtb_export_table'] = "{{ lang('dtb_export_table') }}";
+        locales['dtb_custom_col'] = "{{ lang('dtb_custom_col') }}";
+        locales['dtb_copy'] = "{{ lang('dtb_copy') }}";
+        locales['dtb_edit'] = "{{ lang('dtb_edit') }}";
+        locales['text_amount']  = "{{lang('text_amount')}}";
+        locales['text_percent']  = "{{lang('text_percent')}}";
+        locales['buy_x_get_y']  = "{{lang('buy_x_get_y')}}";
+        locales['free_shipping']  = "{{lang('free_shipping')}}";
+        var affiliate_promo = "{{ affiliate_promo }}";
+    </script>
+
+    <script src="view/javascript/pages/sale/coupon.js?bn={{ BuildNumber }}"></script>
+
+{% endblock scripts %}

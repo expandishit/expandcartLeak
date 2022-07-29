@@ -1,0 +1,1053 @@
+{% set ALT_IMAGE = product_name %}
+{% if attribute_groups|length > 0 %}
+    {% for attribute_group in attribute_groups %}
+        {% if attribute_group['name'] == 'NOSHOW' %}
+            {% for attribute in attribute_group['attribute'] %}
+                {% if attribute['name'] =='ALT_IMAGE' %}
+                    {% set ALT_IMAGE = attribute['text'] %}
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
+{# Product Design PopUp Window #}
+    {% if product_designer is defined and product_designer == 1 %}
+        <style>
+        .modal-title {
+        {% if pd_options['back_color'] is defined and pd_options['back_color'] != '' %}
+            color: {{ pd_options['back_color'] }};
+        {% endif %}
+        {% if pd_options['cust_fw'] is defined and pd_options['cust_fw'] != '' %}
+            font-style: italic;
+        {% endif %}
+        }
+        </style>
+        <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+            <div class="modal-dialog modal-lg" role="document" style="width:735px;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+                        <h4 class="modal-title" id="myModalLabel">{{ lang('cust_header_text') }}</h4>
+                    </div>
+                    <div class="modal-body" style="padding:0px !important;">
+                        <iframe id="design_pop_frame" src="" scrolling="no" width="730" height="520" frameborder="0"></iframe>
+                        <div style="clear:both;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <br><br>
+    {% endif %}
+{# End :: Product Design Module #}
+ 
+{# Notification Div #}
+<div id="notification" class="container"></div>
+
+<div id="content">
+    <div class="bread-crumb">
+        <div class="container">
+            {% for breadcrumb in breadcrumbs %}
+                    {% if loop.last %}
+                    <span>{{ breadcrumb['text'] }}</span>
+                    {% else %}
+                        <a href="{{ breadcrumb['href'] }}">{{ breadcrumb['text'] }}</a>
+                    {% endif %}
+                {%endfor%}
+        </div>
+    </div>
+    <div class="content-pages">
+        <div class="container">
+            <div class="detail-product">
+                <div class="row">
+                    {% if image != '' or images|length > 0 %}
+                    <div class="col-md-6 col-sm-6 col-xs-12">
+                        <div class="detail-gallery">
+                            <div class="tab-content">
+                                <div id="gal1" class="tab-pane active">
+                                    <div class="wrap-detail-gallery {% if images|length == '' %}oneImgOnly{% endif %}">
+                                        {% if image != '' %}
+                                        <div class="mid">
+                                            <img src='{{ image(image, 800, 800) }}' alt="{{ product_name }}"/>
+                                        </div>
+                                        {% endif %}
+                                        {% if images|length != '' %}
+                                        <div class="gallery-control">
+                                            <div class="carousel">
+                                                <ul class="list-none">
+                                                    {% if image != '' %}
+                                                    <li><a href="#" class="active"><img src="{{ image(image, 800, 800) }}" alt="" /></a></li>
+                                                    {% endif %}
+                                                    {% for image in images %}
+                                                    <li><a href="#" ><img src="{{ image(image.image, 800, 800) }}" alt="" /></a></li>
+                                                    {% endfor %}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="detail-social">
+                                <!-- Go to www.addthis.com/dashboard to customize your tools -->
+                                <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid={{ product_addthis_id }}"></script>
+
+                                <!-- Go to www.addthis.com/dashboard to customize your tools -->
+                                <div class="addthis_sharing_toolbox"></div>
+                            </div>
+                        </div>
+                        <!-- End Gallery -->
+                    </div>
+                    {% endif %}
+                    <div class="col-md-6 col-sm-6 col-xs-12">
+                        <div class="detail-info">
+
+                            <h2 class="title-product-detail">{{ product_name }}</h2>
+                            {% if review_status != '' and config('config_review_status') == '1' %}
+                            <ul class="list-inline-block review-rating">
+                                <li>
+                                    <div class="product-rate" style="background:none;">
+                                            <a href="#reviews"  class="reviewTrigger " role="tab" data-toggle="tab"><img src="{{ asset('images/stars-' ~ rating ~ '.png') }}" alt="{{ lang('text_reviews')|format(reviews_count) }}"/>
+                                        <span>{{ lang('text_reviews')|format(reviews_count) }}</span></a>
+                                    </div>
+                                </li>
+                                <li>
+                                    <a href="#reviews"  class="reviewTrigger add-review" role="tab" data-toggle="tab">{{ lang('text_write') }}</a>
+                                </li>
+                            </ul>
+                            {%endif%}
+
+                            {% if ('-1' not in price) and ('-1' not in special) and not seller.messaging %}    
+                            <div class="product-price">
+                                <input type="hidden" id="currency_symbols_left" value='{{currency_symbols["left"]}}'>
+                                <input type="hidden" id="currency_symbols_right" value='{{currency_symbols["right"]}}'>
+                                {% if special != '' %}
+                                    <input type="hidden" id="price_value" value="{{ special_value }}">
+
+                                    {# This input added to reflect on original price when change a select option #}
+                                    <input type="hidden" id="original_value" value="{{ price }}">
+
+                                    <del><span class="original_display">{{ price }}</span></del>
+                                    <ins><span class="price_display">{{ special }}</span></ins>
+                                    <!-- <span class="sale-label">- {{ saving }} <sup>%</sup></span> -->
+                                    {% else %}
+                                    <input type="hidden" id="price_value" value="{{ price_value }}">
+                                    <ins><span class="price_display">{{ price }}</span></ins>
+                                {% endif %}
+                                {% if tax != "0" %}
+                                <span class="price-tax">
+                                      {% if tax_included_val is defined and tax_included_val %}
+                                          {{ lang('text_included_tax') }}
+                                      {% else %}
+                                          {% if not price_without_tax  %}
+                                               {{ lang('text_tax') }} <span id="tax_value_display">{{ tax }}</span>
+                                                <input type="hidden" id="tax_value" value="{{ tax_value }}"/>
+                                          {% endif %}
+                                      {% endif %}
+                                    </span><br/>
+                                {% else %}
+                                    <br/>
+                                {% endif %}
+
+
+                                {% if points > 0 %}
+                                    <span class="reward"><small>{{ lang('text_points') }} {{ points }}</small></span><br/>
+                                {% endif %}
+
+                                {% if discounts|length > 0 %}
+                                    <br/>
+                                    <div class="discount">
+                                        {% for discount in discounts %}
+                                            {{ lang('text_discount')|format(discount.quantity, discount.price) }}<br/>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                
+                            </div>
+                            {% endif %}
+                            {% if minimum_limit > 1 %}
+                            <div class="product-more-info">
+                                <h2 class="title14">{{ lang('text_minimum')|format(minimum_limit) }}</h2>
+                                <!-- <p class="desc">{{short_description}}</p>  -->
+                            </div> 
+                            {% endif %}
+
+                            {% if short_description or reward %}
+                            <div class="product-more-info">
+                                    {% if short_description and show_meta_desc %}
+                                    <p class="desc">{{short_description}}</p> 
+                                    {% endif %}
+                                    <p class="desc">{{ lang('text_reward') }} - {{ reward }}</p>  
+                            </div> 
+                            {% endif %}
+
+                            {% if config('show_brands') %}
+                            <div class="product-more-info">
+                                <a href="{{manufacturer_href}}">   <img src="{{image(manufacturerimg,104,90) }}"  alt="{{ manufacturer }}" /> </a>
+                            </div>
+                            {% endif %}
+
+                            {% if seller.nickname != '' %}
+                                <p><a class="shop-button sellerTrigger"><i class="fa fa-user-circle"></i> {{ lang('Seller_Info') }} - {{seller.nickname}} </a></p>
+
+                                <div class="sellerBox product-more-info">
+                                {% if seller.nickname != '' %}
+                                <h5 class="title-detail"><a href="{{seller.href}}">{{seller.nickname}}</a></h5>
+                                {% endif %}
+                                {% if seller.country != '' %}
+                                <p>{{seller.country}} - {{seller.zone}}</p>
+                                {% endif %}
+                                {% if seller.website != '' %}
+                                <p><b>{{ lang('Seller_Website') }} :</b> {{seller.website}}</p>
+                                {% endif %}
+                                {% if seller.company != '' %}
+                                <p><b> {{ lang('Seller_Company') }} :</b> {{seller.company}}</p>
+                                {% endif %}
+                                {% if seller.total_sales != 0 %}
+                                <p><b>{{ lang('Seller_Sales') }}</b> {{seller.total_sales}}</p>
+                                {% endif %}
+                                {% if seller.total_products != 0 %}
+                                <p><b>{{ lang('Seller_Products') }}:</b> {{seller.total_products}}</p>
+                                {% endif %}
+                                </div>
+                            {% endif %}
+
+                            {% if rentalProducts == 1 %}
+                            {% if transaction_type == 2 %}
+                            <div class="product-add-form">
+                                <div class="option form-group">
+                                    <label>{{ lang('label_rental_range') }}</label>
+                                    <div class="control">
+                                        {{ lang('text_range_from') }} <input class="dateRangeFrom form-control" type="text"
+                                               readonly="true" name="dateRange[from]" />
+                                        {{ lang('text_range_to') }} <input class="dateRangeTo form-control" type="text"
+                                               readonly="true" name="dateRange[to]" />
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% endif %}
+
+                            <div class="wrapper product-add-form product-more-info">
+                            <form> 
+<!-- =====================================================================================-->
+<!-- =================================== Options Area  ===================================-->
+<!-- =====================================================================================-->      
+                                {% if options %}
+                                <div class="options">
+                                    {% for option in options %}
+                                        {# Option Type :: Select #}
+                                        {% if option.type == 'select' %}
+                                            <div id="option-{{ option.product_option_id }}" class="option form-group">
+                                                <label for="option[{{ option.product_option_id }}]">{{ option.name }} {{ option.required ? ' <sup>*</sup>' : '' }} <span id="relational_option_loading-{{ option.option_id }}" style="display: none">&nbsp;&nbsp;<img src="/expandish/view/theme/default/image/spinners/spinner_1.gif"></span></label>
+                                                <div class="control">
+                                                    <select name="option[{{ option.product_option_id }}]" id="option[{{ option.product_option_id }}]" class="opt-select-variation form-control selectpicker relational_option_{{ option.option_id }}" onchange="{% if not is_knawat_product %} getSelectPrice(this.value,'{{ option.product_option_id }}', {{ option.option_id }}, {{ opt_relational_status }}) {% else %} getVariationPrice('{{product_id}}') {% endif %}"
+                                                            {% if ( (opt_relational_status and option.option_id in opt_relational_parents)
+                                                                or
+                                                                (opt_relational_status and opt_elements_parents[option.option_id])
+                                                                )
+                                                            %}
+                                                                {{ 'data-relations="' ~ option.option_id ~ '"' }}
+                                                                {{ 'data-relationalparents="' ~ opt_elements_parents[option.option_id] ~ '"' }}
+                                                                {{ 'data-relationalchild="' ~ opt_relational_relations[option.option_id] ~ '"' }}
+                                                                {{ 'data-option_id="' ~ option.option_id ~ '"' }}
+                                                            {% endif %}
+                                                    >
+                                                        <option value="">{{ lang('text_select') }}</option>
+                                                    {% if (not opt_relational_status) or (opt_relational_status and option.option_id not in opt_relational_childs) %}
+                                                        {% for option_value in option.option_value %}
+                                                        <option value="{{ option_value.product_option_value_id }}"
+                                                        {% if option_value.quantity <= 0 and not is_knawat_product %}disabled="disabled"{% endif %} 
+                                                                            data-option-value-id="{{option_value.option_value_id}}"
+                                                        >{{ option_value.name }} 
+                                                        <!-- Option Quantity Check -->
+                                                        {% if option_value.quantity <= 0 and not is_knawat_product %}
+                                                            ({{ lang('text_notavailable') }})
+                                                        {% endif %}
+                                                        <!-- End Option Quantity Check   --> 
+                                                            {% if option_value.price and config('config_show_option_prices') == '1' and not is_knawat_product %} ({{ option_value.price_prefix }}{{ option_value.price }}) {% endif %}</option>
+                                                        {% endfor %}
+                                                    {% endif %}
+                                                    </select>
+                                                    <div id="relational_option_hidden_{{ option.option_id }}">
+                                                        {% if (not opt_relational_status) or (opt_relational_status and option.option_id not in opt_relational_childs) %}
+                                                            {% for option_value in option.option_value %}
+                                                                <input type="hidden" id="select-price-{{ option_value.product_option_value_id }}" value="{{ option_value.price_value }}">
+                                                                <input type="hidden" id="select-prifex-{{ option_value.product_option_value_id }}" value="{{ option_value.price_prefix }}">
+                                                            {% endfor %}
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                                <input type="hidden" 
+                                                       id="old_select_price-{{ option.product_option_id }}" 
+                                                       value="">
+                                                <input type="hidden" 
+                                                   id="old_select_prefix-{{ option.product_option_id }}" 
+                                                   value="">
+                                            </div>
+                                        {% endif %}
+                                        
+                                        {# Option Type :: Radio #}
+                                        {% if option.type == 'radio' %}
+                                            <fieldset id="option-{{ option.product_option_id }}" class="option form-group">
+                                                <label for="option[{{ option.product_option_id }}]">{{ option.name }} {{ option.required ? '<sup>*</sup>' : '' }} </label>
+                                                {% for option_value in option.option_value%}
+                                                    <div class=" clearfix fill-bg ">
+                                                        <label class="">
+                                                            <input type="radio" class="form-check-input" name="option[{{ option['product_option_id'] }}]" id="option-value-{{ option_value['product_option_value_id'] }}" value="{{ option_value['product_option_value_id'] }}" onclick="getRadioPrice('{{ option_value['price_value'] }}', '{{ option_value['price_prefix'] }}','{{ option.product_option_id }}', 'radio')"
+                                                            {% if option_value.quantity <= 0 %}disabled="disabled"{% endif %}
+                                                            >
+                                                            <span class="outer">
+                                                                    <span class="inner"></span>
+                                                                </span>
+                                                            <span {% if option_value.quantity <= 0 %}class="over_line"{% endif %}>
+                                                                {{ option_value['name'] }}
+                                                            </span> {% if option_value.price %} ({{ option_value.price_prefix }}{{ option_value.price }})&#x200E; {% endif %}
+                                                        </label>
+                                                    </div>
+                                                {% endfor %}
+                                                <input type="hidden" 
+                                                       id="old_radio_price-{{ option.product_option_id }}" 
+                                                       value="">
+                                                <input type="hidden" 
+                                                       id="old_radio_prefix-{{ option.product_option_id }}" 
+                                                       value="">
+                                            </fieldset>
+                                        {% endif %}
+                                        
+                                        {# Option Type :: CheckBox #}
+                                        {% if option.type == 'checkbox' %}
+                                            <fieldset id="option-{{ option['product_option_id'] }}" class="option form-group">
+                                                <label for="option[{{ option['product_option_id'] }}]">{{ option['name'] }} {{ option.required ? '<sup>*</sup>' : '' }} </label>
+                                                {% for option_value in option.option_value %}
+                                                    <div class="form-check">
+                                                        <label class="form-check-label">
+                                                            <input type="checkbox" class="form-check-input" name="option[{{ option['product_option_id'] }}][]" id="option-value-{{ option_value['product_option_value_id'] }}" value="{{ option_value['product_option_value_id'] }}" onclick="getCheckboxPrice('{{ option_value['price_value'] }}', '{{ option_value['price_prefix'] }}',this.checked)"
+                                                            {% if option_value.quantity <= 0 %}disabled="disabled"{% endif %}
+                                                            > <span {% if option_value.quantity <= 0 %}class="over_line"{% endif %}>
+                                                                {{ option_value['name'] }}
+                                                            </span> {% if option_value.price %} ({{ option_value.price_prefix }}{{ option_value.price }})&#x200E; {% endif %}
+                                                        </label>
+                                                    </div>
+                                                {% endfor %}
+                                            </fieldset>
+                                        {% endif %}
+                                                                                    
+                                        {# Option Type :: Image #}
+                                        {% if option.type == 'image' %}
+                                            <fieldset id="option-{{ option['product_option_id'] }}" class="option form-group">
+                                                <label for="option[{{ option['product_option_id'] }}]">{{ option['name'] }} {{ option.required ? '<sup>*</sup>' : '' }} </label>
+                                                {% for option_value in option.option_value %}
+                                                    <div class="form-check">
+                                                        <label class="form-check-label">
+                                                            <input type="radio" class="form-check-input" name="option[{{ option['product_option_id'] }}]" value="{{ option_value['product_option_value_id'] }}" id="option-value-{{ option_value['product_option_value_id'] }}" onclick="getRadioPrice('{{ option_value['price_value'] }}', '{{ option_value['price_prefix'] }}','{{ option.product_option_id }}', 'radio')"
+                                                            {% if option_value.quantity <= 0 %}disabled="disabled"{% endif %}
+                                                            />
+                                                            <img src="{{ option_value['image'] }}" alt="{{ option_value['name'] }}{{ option_value['price'] ? ' ' ~ option_value['price_prefix'] ~ option_value['price'] : ''}}" /> <span {% if option_value.quantity <= 0 %}class="over_line"{% endif %}>
+                                                                {{ option_value['name'] }}
+                                                            </span> {% if option_value.price %} ({{ option_value.price_prefix }}{{ option_value.price }})&#x200E; {% endif %}
+                                                        </label>
+                                                    </div>
+                                                {% endfor %}
+                                                <input type="hidden" 
+                                                       id="old_radio_price-{{ option.product_option_id }}" 
+                                                       value="">
+                                                <input type="hidden" 
+                                                       id="old_radio_prefix-{{ option.product_option_id }}" 
+                                                       value="">
+                                            </fieldset>
+                                        {% endif %}
+                                                                                    
+                                        {# Option Type :: Text #}
+                                        {% if option.type == 'text' %}
+                                            <div id="option-{{ option['product_option_id'] }}" class="option form-group">
+                                                <label for="option[{{ option['product_option_id'] }}]">{{ option['name'] }} {{ option.required ? '<sup>*</sup>' : '' }} </label>
+                                                <div class="control">
+                                                    <input type="text" class="form-control" name="option[{{ option['product_option_id'] }}]" value="{{ option['option_value'] }}"
+                                                    />
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                                                                    
+                                        {# Option Type :: Textarea #}
+                                        {% if option.type == 'textarea' %}
+                                            <div id="option-{{ option['product_option_id'] }}" class="option form-group">
+                                                <label for="option[{{ option['product_option_id'] }}]">{{ option['name'] }} {{ option.required ? '<sup>*</sup>' : '' }} </label>
+                                                <div class="control">
+                                                    <textarea class="form-control" name="option[{{ option['product_option_id'] }}]" cols="40" rows="5">{{ option['option_value'] }}</textarea>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                                                                    
+                                        {# Option Type :: File #}
+                                        {% if option.type == 'file' %}
+                                            <div id="option-{{ option['product_option_id'] }}" class="option form-group">
+                                                <label for="option[{{ option['product_option_id'] }}]">{{ option['name'] }} {{ option.required ? '<sup>*</sup>' : '' }} </label>
+                                                <div class="control">
+                                                    <input class="form-control" type="button" value="{{ lang('button_upload') }}" id="button-option-{{ option['product_option_id'] }}"
+                                                        class="button">
+                                                    <input type="hidden" name="option[{{ option['product_option_id'] }}]" value="" />
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                                                                    
+                                        {# Option Type :: Date #}
+                                        {% if option.type == 'date' %}
+                                            <div id="option-{{ option['product_option_id'] }}" class="option form-group">
+                                                <label for="option[{{ option['product_option_id'] }}]">{{ option['name'] }} {{ option.required ? '<sup>*</sup>' : '' }} </label>
+                                                <div class="control">
+                                                    <input class="form-control" type="text" name="option[{{ option['product_option_id'] }}]" value="{{ option['option_value'] }}"
+                                                        class="date" />
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                                                                    
+                                        {# Option Type :: Date #}
+                                        {% if option.type == 'datetime' %}
+                                            <div id="option-{{ option['product_option_id'] }}" class="option form-group">
+                                                <label for="option[{{ option['product_option_id'] }}]">{{ option['name'] }} {{ option.required ? '<sup>*</sup>' : '' }} </label>
+                                                <div class="control">
+                                                    <input class="form-control" type="text" name="option[{{ option['product_option_id'] }}]" value="{{ option['option_value'] }}"
+                                                        class="datetime" />
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                                                                    
+                                        {# Option Type :: Time #}
+                                        {% if option.type == 'time' %}
+                                            <div id="option-{{ option['product_option_id'] }}" class="option form-group">
+                                                <label for="option[{{ option['product_option_id'] }}]">{{ option['name'] }} {{ option.required ? '<sup>*</sup>' : '' }} </label>
+                                                <div class="control">
+                                                    <input class="form-control" type="text" name="option[{{ option['product_option_id'] }}]" value="{{ option['option_value'] }}"
+                                                        class="time" />
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                            
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+<!-- =====================================================================================-->
+<!-- ===================================/ Options Area  ===================================-->
+<!-- =====================================================================================-->
+                                {% if ('-1' in price) or ('-1' in special) or seller.messaging %}
+                                    <input type="hidden" id="product_id" name="product_id" size="2" value="{{ product_id }}"/>
+                                    <div class="pull-left">
+
+                                        <!--####### Messaging Seller -->
+                                        {% if seller.messaging %}
+                                            <button type="submit" class="addcart-link add-cart-detail"  title="{{ lang('button_req_quote') }}"
+                                            onclick="window.location.href='index.php?route=account/messagingseller&seller_id={{ seller['seller_id'] }}&product_id={{product_id}}'"
+                                            id="button_req_quote"> {{ lang_printf('ms_seller_messaging_x', config('msconf_seller_title')[language_id]['single'] ?: lang('ms_seller_solo')) }}</button>
+                                        {% else %}
+                                        {% if viewAddToCart %}
+                                            <button type="submit" class="addcart-link add-cart-detail"  title="{{ lang('button_req_quote') }}"
+                                        onclick="contact_us('{{ product_id }}');"
+                                        id="button_req_quote"> {{ lang('button_req_quote') }}</button>
+                                        {% endif %}
+                                        {% endif %}
+                                        <!--#######END Messaging Seller -->
+
+                                        
+                                    </div>
+                                    <div id="enquiry-{{ product_id }}"  style="display:none">{{ product_name }}</div>
+                                {% else %}
+
+                                    <div class="detail-qty info-qty border radius">
+                                        <a href="#" class="qty-down"><i class="fa fa-angle-down" aria-hidden="true"></i></a>
+                                        <span class="qty-val">1</span>
+                                        <input type="text" name="quantity" class="form-control input-qty hide"
+                                        value='{{ minimum_limit }}' id="qty1" name="qty1" maxlength="12"
+                                        minlength="1" >
+                                        <a href="#" class="qty-up"><i class="fa fa-angle-up" aria-hidden="true"></i></a>
+
+                                        <input type="hidden" id="product_id" name="product_id" size="2" value="{{ product_id }}"/>
+                                    </div>
+
+                                    <!-- sales booster -->
+                                    {% if salesBooster %}
+                                        {{ include('manymore/template/product/sales_booster.expand') }}
+                                    {% endif %}
+                                    <!-- end sales booster -->
+                                    {% if viewAddToCart %}
+                                    <a class="addcart-link add-cart-detail" href="#" onclick="return false;" id="button-cart">{{ lang('button_cart') }}</a>
+                                    {% if paypal_enabled %}
+                                        {{ include('default/template/product/paypal-html.expand') }}
+                                    {% endif %}
+                                {% endif %}
+                                    <ul class="product-extra-link fixButton">
+                                        <a href="#"  class="wishlist-link" onclick="event.preventDefault(); addToWishList('{{ product_id }}',1); return false;"><i class="fa fa-heart" aria-hidden="true"></i><span>{{lang('button_wishlist')}}</span></a>
+                                        <a href="#"  class="compare-link" onclick="event.preventDefault(); addToCompare('{{ product_id }}',1); return false;"><i class="fa fa-stumbleupon" aria-hidden="true"></i><span>{{lang('button_compare')}}</span></a>
+                                        {# Product notify me when available App#}
+                                        {% if product_notify_me is defined and product_notify_me %}
+                                            <a onclick="addToNotifyMe('{{ product_id }}', 'direct'); return false;"
+                                               class="action wishlist-link" href="javascript://"
+                                               title="{{ lang('button_notifyme') }}">
+                                                <i aria-hidden="true"class="fa fa-bell"></i>span>{{ lang('button_notifyme') }}</span>
+                                            </a>
+                                        {% endif  %}
+                                        {# End Product notify me when available App#}
+                                    </ul>
+                                    {% if product_designer is defined and product_designer == 1 %}
+                                        <button type="button" title="{{ lang('pd_btn_text') }}"
+                                                onclick="showpopup({{ product_id }},'FFFFFF');"
+                                                class="btn btn--ys btn--xl">
+                                            <span>{{ lang('pd_btn_text') }}</span>
+                                        </button>
+
+                                        <script>
+                                            function showpopup(pid,ccode) {
+                                                var frameSrc = 'index.php?route=module/product_designer&product_id='+pid+'&procolor='+ccode;
+                                                $('#design_pop_frame').attr("src",frameSrc);
+                                                $('#myModal').modal({show:true});
+                                            }
+                                            function closeModel(){
+                                                $('#myModal').modal('hide');
+                                            }
+                                            function addcart(proId,qty,cust_id){
+                                                addToCartCustom(proId,qty,cust_id);
+                                            }
+                                        </script>
+
+                                        <style>
+                                            .modal {
+                                                text-align: center;
+                                                padding: 0!important;
+                                            }
+
+                                            .modal:before {
+                                                content: '';
+                                                display: inline-block;
+                                                height: 100%;
+                                                vertical-align: middle;
+                                                margin-right: -4px;
+                                            }
+
+                                            .modal-dialog {
+                                                display: inline-block;
+                                                text-align: left;
+                                                vertical-align: middle;
+                                            }
+                                        </style>
+                                    {% endif %}
+                                {% endif %}
+                                {% if fit_and_shop_status %}
+                                    <div id="fit_and_shop_button"></div>
+                                {% endif %}
+                            </form>
+                            </div>
+
+                            <div class="detail-extra">
+                                <p class="desc product-code">{{ lang('text_model') }} <span>{{ model }}</span></p>
+                                <p class="desc product-available">{{ lang('text_stock') }}  <span class="avail-instock">{{ stock ? stock : lang('text_instock')}}</span></p>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- End Detail Product -->
+            <div class="tabs-detail">
+                <div class="title-tab-detail">
+                    <ul class="list-inline-block text-center">
+                        <li class="active">
+                            <a href="#description" role="tab" data-toggle="tab" >{{ lang('tab_description') }}</a>
+                        </li>
+                        {% if attribute_groups %}
+                        <li role="presentation"><a href="#attributes" role="tab" data-toggle="tab" >{{ lang('tab_attribute') }}</a></li>
+                        {% endif %}
+
+                        {% if review_status != '' and config('config_review_status') == '1'  %}
+                        <li id="reviewTab" role="presentation"><a href="#reviews" role="tab" data-toggle="tab" >{{ lang('tab_review')|format(reviews_count) }}</a>
+                        </li>
+                        {% endif %}
+
+                        {% if show_meta_tags %}
+                        <li role="presentation"><a href="#tags" role="tab" data-toggle="tab" >{{ lang('text_tags') }}</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+                <div class="tab-content">
+                    <div role="tabpanel" class="tab-pane active" id="description">
+                        <!-- sales booster header -->
+                        {% if salesBooster and sales_booster['hLayout']['description'] %}
+                            {{ sales_booster['hLayout']['description'] }}
+                        {% endif %}
+                        <!-- end sales booster header -->
+
+                        <p>{{ description }}</p>
+
+                        <!-- sales booster footer -->
+                        {% if salesBooster and sales_booster['fLayout']['description'] %}
+                            {{ sales_booster['fLayout']['description'] }}
+                        {% endif %}
+                        <!-- end sales booster footer -->
+
+                        {{ include('default/template/product/seller_notes.expand') }}                        
+                        
+                    </div>
+                    {% if attribute_groups %}
+                    <div role="tabpanel" class="tab-pane" id="attributes">
+                        <table class="attribute table table-params">
+                            {% for attribute_group in attribute_groups %}
+                                {% if attribute_group['name'] != 'NOSHOW' %}
+                                    <thead>
+                                        <tr>
+                                            <th colspan="2">{{ attribute_group['name'] }}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for attribute in attribute_group['attribute'] %}
+                                        <tr>
+                                            <td>{{ attribute['name'] }}</td>
+                                            <td>{{ attribute['text'] }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                {% endif %}
+                            {% endfor %}
+                        </table>
+                    </div>
+                    {% endif %}
+                    {% if review_status != '' and config('config_review_status') == '1'  %}
+                    <div role="tabpanel" class="tab-pane" id="reviews">
+                        <div id="review"></div>
+                        
+                        <h5><strong class="color"  id="review-title">{{ text_your_payment }}</strong></h5>
+
+                        <div class="review-form">
+                            <div class="form-group">
+                                <label>{{ lang('entry_rating') }}</label>&nbsp;&nbsp;&nbsp;&nbsp;<span>{{ lang('entry_bad') }}</span>&nbsp;
+                                <input type="radio" name="rating" value="1"/>
+                                &nbsp;
+                                <input type="radio" name="rating" value="2"/>
+                                &nbsp;
+                                <input type="radio" name="rating" value="3"/>
+                                &nbsp;
+                                <input type="radio" name="rating" value="4"/>
+                                &nbsp;
+                                <input type="radio" name="rating" value="5"/>
+                                &nbsp;<span>{{ lang('entry_good') }}</span>
+                            </div>
+                            <div class="form-group">
+                                <label for="name">{{ lang('entry_name') }}</label>
+                                <input type="text" name="name" class="form-control" id="name" value=""/>
+                            </div>
+                            <div class="form-group">
+                                <label for="text">{{ lang('entry_review') }}</label>
+                                <textarea name="text" rows="8" class="form-control" id="text"></textarea>
+                                <div class="text-muted">{{ lang('text_note') }}</div>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="form-group">
+                                    <label for="captcha">{{ lang('entry_captcha') }}</label>
+                                    <input type="text" name="captcha" style="width: 150px" class="form-control" id="captcha" value=""/>
+                                    <br/>
+                                    <img src="index.php?route=common/captcha" alt="" id="captcha"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="buttons">
+                            <div class="">
+                                <a id="button-review" value="{{ lang('button_continue') }}"
+                                class="shop-button style2 pull-right">{{ lang('button_continue') }}</a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if tags %}
+                    <div role="tabpanel" class="tab-pane" id="tags">
+                        <p>
+                            {% for tag in tags %}
+                            <a href="{{ tag.href }}">{{ tag.tag }}{{ loop.last == false ? ', ' : '' }}</a>
+                            {% endfor %}
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            <!-- End Tab Detail -->
+            {% set items_products = related_products %}
+            {% set items_count = items_products|length %}
+            {% if related_products %}
+            <div class="related-product">
+                <h2 class="title14 text-center">{{ lang('tab_related') }} ({{ related_products|length}})</h2>
+                <div class="product-related-slider">
+                    <div class="wrap-item" data-pagination="false" data-navigation="true" data-itemscustom="[[0,1],[480,2],[768,3],[980,4]]">
+                        {% for item_product in items_products %}
+                        <div class="item-product item-product-grid">
+                            <div class="product-thumb box-hover-dir">
+                                <img src="{{image(item_product.image,400,400)}}" alt="" class="img-responsive" >
+                                <div class="info-product-hover-dir">
+                                    <div class="inner-product-hover-dir">
+                                        <div class="content-product-hover-dir">
+                                            <a href="{{ item_product.href }}" class="quickview-link">{{lang('quick_view')}} <i class="fa fa-arrow-circle-right" aria-hidden="true"></i></a>
+                                            <div class="product-rate flipRating" style="background:none;">
+                                                <img src="{{ asset('images/stars-' ~ item_product.rating ~ '.png') }}" alt="{{ lang('text_reviews')|format(reviews_count) }}"/>
+                                            </div>
+                                            <div class="product-extra-link">
+                                                {% if viewAddToCart %}
+                                                <a href="#"  class="addcart-link" onclick="event.preventDefault(); addToCart({{ item_product.product_id }},1, {{ ('-1' in item_product.price) or ('-1' in item_product.special) ? 'true' : 'false' }}); return false;"><i class="fa fa-shopping-basket" aria-hidden="true"></i><span>{{ ('-1' in item_product.price) or ('-1' in item_product.special) ? lang('button_req_quote') : lang('button_cart') }}</span></a>
+
+                                                {% endif  %}
+                                                <a href="#"  class="wishlist-link" onclick="event.preventDefault(); addToWishList('{{ item_product.product_id }}',1); return false;"><i class="fa fa-heart" aria-hidden="true"></i><span>{{lang('button_wishlist')}}</span></a>
+                                                <a href="#"  class="compare-link" onclick="event.preventDefault(); addToCompare('{{ item_product.product_id }}',1); return false;"><i class="fa fa-stumbleupon" aria-hidden="true"></i><span>{{lang('button_compare')}}</span></a>
+                                                {# Product notify me when available App#}
+                                                {% if product_notify_me is defined and product_notify_me %}
+                                                    <a onclick="addToNotifyMe('{{ product_id }}', 'direct'); return false;"
+                                                       class="action wishlist-link" href="javascript://"
+                                                       title="{{ lang('button_notifyme') }}">
+                                                        <i aria-hidden="true"class="fa fa-bell"></i>span>{{ lang('button_notifyme') }}</span>
+                                                    </a>
+                                                {% endif  %}
+                                                {# End Product notify me when available App#}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="product-info">
+                                <h3 class="product-title"><a href="{{ item_product.href }}">{{ item_product.name }}</a></h3>
+                                {% if config('show_brands') and item_product.manufacturer %}
+                                    <h5 class="product-title"><a href="{{ item_product.manufacturer_href }}" id="brand_sections" alt"{{ item_product.manufacturer }}">{{ item_product.manufacturer }}</a></h5>
+                                {% endif %}
+                                <div class="product-rate" style="background:none;">
+                                    <img src="{{ asset('images/stars-' ~ item_product.rating ~ '.png') }}" alt="{{ lang('text_reviews')|format(reviews_count) }}"/>
+                                </div>
+                                {% if ('-1' in item_product.price) or ('-1' in item_product.special) or seller.messaging %}
+                                <div class="product-price">
+                                    <!--####### Messaging Seller -->
+                                    {% if seller.messaging %}
+                                        <ins><span class="clickable" onclick="window.location.href='index.php?route=account/messagingseller&seller_id={{ seller['seller_id'] }}&product_id={{product_id}}'">{{ lang('ms_seller_messaging') }}</span></ins>
+                                    {% else %}
+                                        <ins><span class="clickable" onclick="contact_us('{{ item_product.product_id }}');">{{ lang('button_req_quote') }}</span></ins>
+                                    {% endif %}
+                                    <!--#######END Messaging Seller -->
+
+                                
+                                <div id="enquiry-{{ item_product.product_id }}"  style="display:none">{{ item_product.name }}</div>
+                                </div>
+                                {% else %}
+                                <div class="product-price">
+                                    {% if item_product.special != '' %}
+                                    <del><span>{{ item_product.price }}</span></del>
+                                    <ins><span>{{ item_product.special }}</span></ins>
+                                    {% else %}
+                                    <ins><span>{{ item_product.price }}</span></ins>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <!-- End Related Product -->
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- End Content Pages -->
+</div>
+
+
+ 
+
+{# ========= Start :: Basic Scripts ======================================================================== #}
+{% if paypal_enabled %}
+
+    {{ include('default/template/product/paypal-script.expand') }}
+
+{% endif %}
+{# Product notify me when available App#}
+{% if product_notify_me is defined and product_notify_me %}
+    {{ include('default/template/product/product_notify_me.expand') }}
+{% endif %}
+{# Product notify me when available App#}
+<!-- include fit and shop files  -->
+{% if fit_and_shop_status %}
+    {{ include('default/template/product/fit_and_shop.expand') }}
+{% endif %}
+<!-- // end fit and shop -->
+{# Script :: Upload Files #}
+{% if options %}
+    <script type="text/javascript" src="{{ jslink('js/ajaxupload.js') }}"></script>
+    {% for option in options %}
+        {% if option.type == 'file' %}
+            <script type="text/javascript">
+                new AjaxUpload("#button-option-{{ option['product_option_id'] }}", {
+                    action: 'index.php?route=product/product/upload',
+                    name: 'file',
+                    autoSubmit: true,
+                    responseType: 'json',
+                    onSubmit: function (file, extension) {
+                        $("#button-option-{{ option['product_option_id'] }}").after(
+                            '<img src="catalog/view/theme/default/image/loading.gif" class="loading" style="padding-left: 5px;" />'
+                        );
+                        $("#button-option-{{ option['product_option_id'] }}").attr('disabled', true);
+                    },
+                    onComplete: function (file, json) {
+                        $("#button-option-{{ option['product_option_id'] }}").attr('disabled', false);
+
+                        $('.error').remove();
+
+                        if (json['success']) {
+                            alert(json['success']);
+
+                            $('input[name=\'option[{{ option["product_option_id"] }}]\']').attr('value', json['file']);
+                        }
+
+                        if (json['error']) {
+                            $('#option-{{ option["product_option_id"] }}').after('<span class="error">' + json['error'] +
+                                '</span>');
+                        }
+
+                        $('.loading').remove();
+                    }
+                });
+            </script>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
+<script type="text/javascript">
+    var text_select = "{{ lang('text_select') }}";
+
+    $(document).ready(function() {
+        $('.sellerBox').hide();
+        $('.sellerTrigger').click(function(){
+            $('.sellerBox').slideToggle();
+            event.preventDefault();
+        });
+
+        $('.reviewTrigger').click(function(){
+            $('.tabs-detail  li').removeClass('active');
+            $('#reviewTab').addClass('active');
+            $('html,body').animate({scrollTop: $("#reviewTab").offset().top},'slow');
+        });
+    });
+    </script>
+
+{# Script ::  Review Script #}
+<script type="text/javascript">
+    $(document).on('click', '#review .pagination a', function () {
+        $('#review').fadeOut('slow');
+        $('#review').load(this.href);
+        $('#review').fadeIn('slow');
+        return false;
+    });
+
+    
+
+    $('#review').load('index.php?route=product/product/review&product_id={{ product_id }}');
+
+    $('#button-review').bind('click', function () {
+        $("#review-notification").remove();
+        $.ajax({
+            url: 'index.php?route=product/product/write&product_id={{ product_id }}',
+            type: 'post',
+            dataType: 'json',
+            data: 'name=' + encodeURIComponent($('input[name=\'name\']').val()) + '&text=' + encodeURIComponent($('textarea[name=\'text\']').val()) + '&rating=' + encodeURIComponent($('input[name=\'rating\']:checked').val() ? $( 'input[name=\'rating\']:checked').val() : '') + '&captcha=' + encodeURIComponent($( 'input[name=\'captcha\']').val()),
+            beforeSend: function () {
+                $('.success, .warning').remove();
+                $('#button-review').attr('disabled', true);
+                $('#review').after('<div class="attention"><img src="" alt="" /> {{ lang('text_wait ') }}</div>');
+            },
+            complete: function () {
+                $('#button-review').attr('disabled', false);
+                $('.attention').remove();
+            },
+            success: function (data) {
+                if (data['error']) {
+                    $('#review').after('<div id="review-notification" class="alert-warning alert">' + data['error'] + '</div>');
+                }
+
+                if (data['success']) {
+                    $('#review').after('<div id="review-notification" class="alert-success  alert">' + data['success'] + '</div>');
+
+                    $('input[name=\'name\']').val('');
+                    $('textarea[name=\'text\']').val('');
+                    $('input[name=\'rating\']:checked').attr('checked', '');
+                    $('input[name=\'captcha\']').val('');
+                }
+            }
+        });
+    });
+</script>
+
+
+<!-- current currency decimal places to be used in option update price calculation -->
+<input id="currency_decimal_places" type="hidden" value="{{ currency_decimal_places }}">
+<input id="thousand_point" type="hidden" value="{{ lang('thousand_point') }}">
+<script type="text/javascript" src="expandish/view/javascript/product/options_update_price.js?v=1.4"></script>
+
+{# Script ::  Add to cart script #}
+<script type="text/javascript">
+    $('#button-cart, #button-cart-sb').bind('click', function () {
+        $.ajax({
+            url: 'index.php?route=checkout/cart/add',
+            type: 'post',
+            data: $('.product-add-form input[type=\'hidden\'], .product-add-form input[type=\'text\'], .product-add-form input[type=\'radio\']:checked, .product-add-form input[type=\'checkbox\']:checked, .product-add-form select, .product-add-form textarea'),
+            dataType: 'json',
+            success: function (json) {
+                if (json['fb_data_track']) {
+                    fbq('track', json['fb_data_track']['event'], {
+                        "Product Name": json['fb_data_track']['product_name'],
+                        "content_type":json['fb_data_track']['content_type'],
+                        "content_ids":json['fb_data_track']['content_ids'],
+                        "value":json['fb_data_track']['value'],
+                        "currency":json['fb_data_track']['currency'],
+                        "product_catalog_id":json['fb_data_track']['product_catalog_id'],
+                    });
+                }
+                if (json['redirect']) {
+                    window.location.href = json['redirect'];
+                }
+                if (json['success'] == 'affiliate_link') {
+                    document.location = json['affiliate_link'];
+                    return;
+                }
+
+                $('.alert-success, .alert-warning, .alert-attention, .alert-information, .alert-error').remove();
+
+                if (json['error']) {
+                    if (json['error']['option']) {
+                        for (i in json['error']['option']) {
+                            $('#option-' + i).after('<span class="bg-coquelicot errorOption color-white">' + json['error']['option']
+                                [i] + '</span>');
+                        }
+                    }
+
+                    if (json['error']['profile']) {
+                        $('select[name="profile_id"]').after('<span class="bg-coquelicot errorOption color-white">' + json['error']
+                            ['profile'] + '</span>');
+                    }
+                }
+                if (json['limit_order_from_one_Seller'] == '1') {
+                        limitOrderFromOneSeller(json);
+                    }
+
+                if (json['success']) {
+                    // $('#notification').html('<div class="alert alert-success alert-dismissible" style="display: none;" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>' + json['success'] + '</div>');
+                    $('.errorOption').hide();
+                    // $('.alert-success').fadeIn('slow');
+                    $('.counterLabel').html(json['product_count']);
+
+                    $.get('index.php?route=common/cart', function (html) {
+                        $('.cartDropList').html(html);
+                    });
+
+                    if (json['enable_order_popup'] != '1'){
+                        $('#cartPopUp').fadeIn();
+                        $('#cartPopUp .wishlist-alert').html(json['success'] );
+                        var counter = 10;
+                        var popup;
+                        popup = setInterval(function() {
+                            counter--;
+                            if(counter < 0) {
+                                clearInterval(popup);
+                                $('#cartPopUp').fadeOut();
+                            } else {
+                                $("#cartPopUp .wishlist-countdown").text(counter.toString());
+                            }
+                        }, 1000);
+                    }
+                        // $('html, body').animate({
+                        //     scrollTop: 0
+                        // }, 'slow');
+
+
+                    if (json['enable_order_popup'] == '1') {
+                        $('head').append("<style type='text/css'>.customAddtoCart .ui-dialog-titlebar.ui-widget-header.ui-corner-all.ui-helper-clearfix {display: none;} .customAddtoCart div#add-to-cart-dialog {min-height: 1px !important;} [dir=rtl] .ui-widget {font-family: 'Droid Arabic Kufi', 'droid_serifregular' !important;}</style>"
+                        );
+
+                        $('body').append('<div id="add-to-cart-dialog" style="display:none;"><div style="margin: 13px 0;">' + json['text_cart_dialog'] + '</div></div>');
+
+
+                        $("#add-to-cart-dialog").dialog({
+                            modal: true,
+                            draggable: false,
+                            resizable: false,
+                            position: ['center', 'center'],
+                            show: 'blind',
+                            hide: 'blind',
+                            width: '50%',
+                            left: '25%',
+                            dialogClass: 'ui-dialog-osx customAddtoCart',
+                            buttons: [{
+                                    text: json['text_cart_dialog_continue'],
+                                    click: function () {
+                                        $(this).dialog("close");
+                                    }
+                                },
+                                {
+                                    text: json['text_cart_dialog_cart'],
+                                    click: function () {
+                                        window.location.href = json[
+                                            'cart_link'];
+                                    }
+                                }
+                            ]
+                        });
+                    }
+                }
+
+                if (typeof (json['error']) != "undefined") {
+                    if (typeof (json['error']['option']) != "undefined") {
+                        $.each(json['error']['option'], function (index, error) {
+                            $('#notification').html('<div class="alert alert-warning alert-dismissible" style="display: none;" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>' + error + '</div>');
+                            $('.alert-warning').fadeIn('slow');
+                            $('html, body').animate({
+                                scrollTop: 0
+                            }, 'slow');
+                        });
+                    } else {
+                        $.each(json['error'], function (index, error) {
+                            $('#notification').html('<div class="alert alert-warning alert-dismissible" style="display: none;" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>' + error + '</div>');
+                            $('.alert-warning').fadeIn('slow');
+                            $('html, body').animate({
+                                scrollTop: 0
+                            }, 'slow');
+                        });
+                    }
+                }
+            }
+        });
+    });
+</script>
+
+
+{% if rentalProducts == 1 %}
+    <script type="text/javascript">
+        var specialNumber = '{{ rental_special ? rental_special : rental_price }}';
+        var priceNumber = '{{ rental_price  }}';
+        var maxRentDays = '{{ max_rental_days }}';
+        var disabledDates = '{{ disabled_days }}';
+        var currencySymbols = JSON.parse('{{ currency_symbols|json_encode }}');
+    </script>
+    <script type="text/javascript" src="{{ commonLink('js/products/rentalProducts.js') }}"></script>
+{% endif %}
+
+{% include 'default/template/structured_data/product.expand' %}
+{# ========= End :: Basic Scripts ======================================================================== #}
+
+{% if option_images.enabled %}
+<script type="text/javascript">
+    var console=console||{"log":function(){},"debug":function(){}};
+    var poip_options_settings = {{ option_images.product_settings|json_encode() }};
+    var poip_settings = {{ option_images.settings|json_encode() }};
+    var poip_images = {{ option_images.images|json_encode() }};
+    var poip_images_by_options = {{ option_images.images_by_options|json_encode() }};
+    var poip_product_option_ids = {{ option_images.product_option_ids|json_encode() }};
+</script>  
+
+
+<script type="text/javascript" src="expandish/view/theme/{{ Template_Name }}/js/imagepro.js"></script>
+{% endif %}        
+
+{% if integration_settings['mn_criteo_status'] %}
+    {{ include('manymore/template/module/criteo/criteo_product.expand') }}
+{% endif %}

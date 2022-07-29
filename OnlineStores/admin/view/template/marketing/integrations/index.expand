@@ -1,0 +1,650 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+
+{% block title %}
+    {{ lang('heading_title') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+    {% include "includes/buttons_top.expand" %}
+{% endblock headelements %}
+
+
+{% block content %}
+<!-- Start Form -->
+
+{% include 'includes/tutorial_modal_snippet.expand' %}
+
+<form id="form" class="form" action="{{ action }}" method="post">
+	<!-- pixel setup -->
+    <div class="col-md-12">
+        <!-- Advanced legend -->
+        <div class="panel panel-flat">
+            <div class="panel-body">
+               <fieldset>
+                   <legend class="text-semibold">
+                       <i class="fas fa-check-circle fa-lg position-left"></i>
+                       {{ lang('fbp_heading_title')|trim(':') }} 
+					   
+					   {% if fbe_pixel_installed %}
+					 
+					   <span style="text-transform: none;color:#adadad;"> -  {{ lang('fbp_update_settings_desc') }} 
+							<a href="{{fbe_pixel_url}}"> {{ lang('fbp_update_settings') }}   </a> 
+							</span>
+					   {% endif %}
+                       <a class="control-arrow" data-toggle="collapse" data-target="#panel1">
+                           <i class="icon-circle-down2"></i>
+                       </a>
+                   </legend>
+                   <div class="collapse in" id="panel1" >	    
+                       <div class="row">
+                        <div class="col-md-2 col-sm-2">
+							
+                            <div style="display: flex;justify-content: center;padding-top: 30px;">
+                                <i class="fab fa-facebook fa-7x" style="color: #395794;"></i>
+                            </div>
+                        </div>
+                        <div class="col-md-10 col-sm-10">
+							
+                            <div class="form-group" id="mn_integ_fbp_status-group">
+                                <div class="col-md-2">
+                                    <label class="control-label">{{ lang('entry_status') }}</label>
+                                    <span class="help-block"></span>
+                                </div>
+                                <div class="col-md-10">
+                                    <!-- Switchery -->
+                                    <div class="checkbox checkbox-switchery">
+                                        <label>
+                                            <input type="checkbox" onchange="changeStatus(this);"  {{ fbe_pixel_installed ? 'disabled' : '' }} name="mn_integ_fbp_status" class="switchery" {{ setting['mn_integ_fbp_status'] in ['1', 1, 'on'] ? 'checked' }}>
+                                            <span class="switchery-status">{{ setting['mn_integ_fbp_status'] in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                        </label>
+                                    </div>
+                                    <!-- /Switchery -->
+                                </div>
+
+                            </div>
+                            <br><br>
+                            <!-- form-group -->
+                            <div class="form-group" id="mn_integ_fbp_code-group">
+                                <div class="col-md-2">
+                                    <label> {{ lang('entry_code') }} </label>
+                                    <span class="help-block"></span>
+                                </div>
+                                <div class="col-md-10">
+                                   <div class="form-group">
+                                      <input type="text" class="form-control" name="mn_integ_fbp_code" value="{{ setting['mn_integ_fbp_code'] }}" {{ fbe_pixel_installed ? 'disabled' : '' }} />
+                                   </div>
+                                </div>
+                            </div>
+                            <br><br>
+                            <!-- form-group -->
+                            <div class="form-group" id="mn_integ_fbp_action-group">
+                                <div class="col-md-2">
+                                    <label> {{ lang('entry_action') }} </label>
+                                    <span class="help-block"></span>
+                                </div>
+                                <div class="col-md-10">
+                                   <select class="select" multiple name="mn_integ_fbp_action[]" {{ fbe_pixel_installed ? 'disabled' : '' }}>
+                                       {% for action in fbp_actions %}
+                                            {% if action in setting['mn_integ_fbp_action'] %}
+                                                <option selected>{{ action }}</option>
+                                            {% else %}
+                                                <option>{{ action }}</option>
+                                            {% endif %}
+                                       {% endfor %}
+                                   </select>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- col-md-12 -->
+                        </div>
+                        <!-- row -->
+                    </div> <!-- collapse -->
+                 </fieldset>
+            </div>
+        </div>
+        <!-- /a legend -->
+    </div>
+	<!-- #pixel setup -->
+    <!-- ./col-md-12 -->
+    <div class="col-md-12">
+        <!-- Advanced legend -->
+        <div class="panel panel-flat">
+            <div class="panel-body">
+               <fieldset>
+                   <legend class="text-semibold">
+                       <i class="fas fa-check-circle fa-lg position-left"></i>
+                       {{ lang('go_analytics_heading_title')|trim(':') }}
+                       {% if base.currentplan == "3" %}
+                           <span class="locked-label">
+                                <i class="fas fa-lock"></i>
+                                {{lang('text_upgrade')}}
+                            </span>
+                       {% endif %}
+                       <a class="control-arrow" data-toggle="collapse" data-target="#panel1">
+                           <i class="icon-circle-down2"></i>
+                       </a>
+                   </legend>
+                   <div class="collapse in" id="panel1" >
+                       <div class="row">
+                       <div class="col-md-2 col-sm-2">
+                            <div style="display: flex;justify-content: center;padding-top: 30px;">
+                                <img src="view/image/icons/google-analytics.png" style="max-width: 150px;">
+                            </div>
+                        </div>
+                        <div class="col-md-10 col-sm-10">
+                            <div class="form-group" >
+                                <div class="col-md-3">
+                                    <label class="control-label">{{ lang('entry_status') }}</label>
+                                    <span class="help-block"></span>
+                                </div>
+                                <div class="col-md-9">
+                                    <!-- Switchery -->
+                                    <div class="checkbox checkbox-switchery">
+                                        <label>
+                                            <input type="checkbox" onchange="changeStatus(this);" name="mn_integ_go_analytics_status" class="switchery {{ base.currentplan == '3' ? 'plan-lock-btn' : '' }}" {{ setting['mn_integ_go_analytics_status'] in ['1', 1, 'on'] ? 'checked' }}>
+                                            <span class="switchery-status">{{ setting['mn_integ_go_analytics_status'] in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                        </label>
+                                    </div>
+                                    <!-- /Switchery -->
+                                </div>
+
+                            </div>
+                            <br><br>
+                            <!-- form-group -->
+                            <div class="form-group" >
+                                <div class="col-md-3">
+                                    <label> {{ lang('entry_go_analytics_id') }} </label>
+                                    <span class="help-block"></span>
+                                </div>
+                                <div class="col-md-9">
+                                  <div class="form-group">
+                                     <input type="text" class="form-control" name="mn_integ_go_analytics_id" value="{{ setting['mn_integ_go_analytics_id'] }}" />
+                                   </div>
+                                </div>
+                            </div>
+                            <br><br>
+                            <!-- form-group -->
+                            <div class="form-group" id="mn_integ_go_analytics_action-group">
+                                <div class="col-md-3">
+                                    <label> {{ lang('entry_action') }} </label>
+                                    <span class="help-block"></span>
+                                </div>
+                                <div class="col-md-9">
+                                   <select class="select" multiple name="mn_integ_go_analytics_action[]">
+                                       {% for action in ga_ana_actions %}
+                                            {% if action in setting['mn_integ_go_analytics_action'] %}
+                                                <option selected>{{ action }}</option>
+                                            {% else %}
+                                                <option>{{ action }}</option>
+                                            {% endif %}
+                                       {% endfor %}
+                                   </select>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- col-md-12 -->
+                        </div>
+                        <!-- row -->
+                    </div> <!-- collapse -->
+                 </fieldset>
+            </div>
+        </div>
+        <!-- /a legend -->
+    </div>
+    <!-- ./col-md-12 -->
+    <div class="col-md-12">
+        <!-- Advanced legend -->
+        <div class="panel panel-flat">
+            <div class="panel-body">
+               <fieldset>
+                   <legend class="text-semibold">
+                       <i class="fas fa-check-circle fa-lg position-left"></i>
+                       {{ lang('go_adwords_heading_title')|trim(':') }}
+                        {% if base.currentplan == "3" %}
+                            <span class="locked-label">
+                                <i class="fas fa-lock"></i>
+                                {{lang('text_upgrade')}}
+                            </span>
+                        {% endif %}
+                       <a class="control-arrow" data-toggle="collapse" data-target="#panel1">
+                           <i class="icon-circle-down2"></i>
+                       </a>
+                   </legend>
+                   <div class="collapse in" id="panel1" >
+                       <div class="row">
+                       <div class="col-md-2 col-sm-2">
+                            <div style="display: flex;justify-content: center;padding-top: 30px;">
+                                <img src="view/image/icons/google-adwords.png" style="max-width: 100px;">
+                            </div>
+                        </div>
+                        <div class="col-md-10 col-sm-10">
+                            <div class="form-group" id="mn_integ_go_adwords_status-group">
+                                <div class="col-md-2">
+                                    <label class="control-label">{{ lang('entry_status') }}</label>
+
+                                </div>
+                                <div class="col-md-10">
+                                    <!-- Switchery -->
+                                    <div class="checkbox checkbox-switchery">
+                                        <label>
+                                            <input type="checkbox" onchange="changeStatus(this);"  name="mn_integ_go_adwords_status" class="switchery {{ base.currentplan == '3' ? 'plan-lock-btn' : '' }}" {{ setting['mn_integ_go_adwords_status'] in ['1', 1, 'on'] ? 'checked' }}>
+                                            <span class="switchery-status">
+                                                {{ setting['mn_integ_go_adwords_status'] in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}
+                                            </span>
+                                        </label>
+                                    </div>
+                                    <!-- /Switchery -->
+                                </div>
+                                <span class="help-block"></span>
+
+                            </div>
+                            <br><br>
+                            <!-- form-group -->
+                            <div class="form-group" id="mn_integ_go_adwords_d-group">
+                                <div class="col-md-2">
+                                    <label> {{ lang('entry_go_ad_id') }} </label>
+                                </div>
+                                <div class="col-md-10">
+                                   <div class="form-group">
+                                     <input type="text" {{ base.currentplan == '3' ? 'disabled' : '' }} class="form-control" name="mn_integ_go_adwords_id" value="{{ setting['mn_integ_go_adwords_id'] }}" />
+                                  </div>
+                                  <span class="help-block"></span>
+                                </div>
+
+                            </div>
+                            <br><br>
+                            <!-- form-group -->
+                            <div class="form-group" id="mn_integ_go_adwords_labl-group">
+                                <div class="col-md-2">
+                                    <label> {{ lang('entry_go_ad_label') }} </label>
+                                </div>
+                                <div class="col-md-10">
+                                   <div class="form-group">
+                                     <input type="text" {{ base.currentplan == '3' ? 'disabled' : '' }} class="form-control" name="mn_integ_go_adwords_label" value="{{ setting['mn_integ_go_adwords_label'] }}" />
+                                  </div>
+                                  <span class="help-block"></span>
+                                </div>
+
+                            </div>
+                        </div>
+                        <!-- col-md-12 -->
+                        </div>
+                        <!-- row -->
+                    </div> <!-- collapse -->
+                 </fieldset>
+            </div>
+        </div>
+        <!-- /a legend -->
+    </div>
+    <!-- ./col-md-12 -->
+
+ <!-- ./col-md-12 -->
+
+ {# Criteo #}
+    <div class="col-md-12">
+        <!-- Advanced legend -->
+        <div class="panel panel-flat">
+            <div class="panel-body">
+               <fieldset>
+                   <legend class="text-semibold">
+                       <i class="fas fa-check-circle fa-lg position-left"></i>
+                       Criteo
+                        {% if base.currentplan == "3" %}
+                            <span class="locked-label">
+                                <i class="fas fa-lock"></i>
+                                {{lang('text_upgrade')}}
+                            </span>
+                        {% endif %}
+                       <a class="control-arrow" data-toggle="collapse" data-target="#panel1">
+                           <i class="icon-circle-down2"></i>
+                       </a>
+                   </legend>
+                   <div class="collapse in" id="panel1" >
+                        <div class="row">
+                        <div class="col-md-2 col-sm-2">
+                            <div style="display: flex;justify-content: center;padding-top: 30px;">
+                                <img src="view/image/icons/criteo.png" style="max-width: 100px;">
+                            </div>
+                        </div>
+                        <div class="col-md-10 col-sm-10">
+                            <div class="form-group" id="mn_integ_go_adwords_status-group">
+                                <div class="col-md-2">
+                                    <label class="control-label">{{ lang('entry_status') }}</label>
+
+                                </div>
+                                <div class="col-md-10">
+                                    <!-- Switchery -->
+                                    <div class="checkbox checkbox-switchery">
+                                        <label>
+                                            <input type="checkbox" onchange="changeStatus(this);" name="mn_criteo_status" class="switchery {{ base.currentplan == '3' ? 'plan-lock-btn' : '' }}" {{ setting['mn_criteo_status'] in ['1', 1, 'on'] ? 'checked' }}>
+                                            <span class="switchery-status">{{ setting['mn_criteo_status'] in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                        </label>
+                                    </div>
+                                    <!-- /Switchery -->
+                                </div>
+                                <span class="help-block"></span>
+
+                            </div>
+                            <div class="form-group" id="integrations_criteo-group">
+                                <div class="col-md-2">
+                                    <label> Account ID </label>
+                                </div>
+                                <div class="col-md-10">
+                                    <div class="form-group">
+                                        <input type="text" {{ base.currentplan == '3' ? 'disabled' : '' }} class="form-control" name="mn_criteo_account_id" value="{{ setting['mn_criteo_account_id'] }}" />
+                                    </div>
+                                    <span class="help-block"></span>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <!-- col-md-12 -->
+                        </div>
+                        <!-- row -->
+                    </div> <!-- collapse -->
+                 </fieldset>
+            </div>
+        </div>
+        <!-- /a legend -->
+    </div>
+    <!-- ./col-md-12 -->
+
+    {# /Criteo #}
+
+    <!-- ./SnapChat -->
+    <div class="col-md-12">
+        <!-- Advanced legend -->
+        <div class="panel panel-flat">
+            <div class="panel-body">
+               <fieldset>
+                   <legend class="text-semibold">
+                       <i class="fas fa-check-circle fa-lg position-left"></i>
+                       {{ lang('snp_heading_title')|trim(':') }}
+                        {% if base.currentplan == "3" %}
+                            <span class="locked-label">
+                                <i class="fas fa-lock"></i>
+                                {{lang('text_upgrade')}}
+                            </span>
+                        {% endif %}
+                       <a class="control-arrow" data-toggle="collapse" data-target="#panel1">
+                           <i class="icon-circle-down2"></i>
+                       </a>
+                   </legend>
+                   <div class="collapse in" id="panel1" >
+                       <div class="row">
+                       <div class="col-md-2 col-sm-2">
+                            <div style="display: flex;justify-content: center;padding-top: 30px;">
+                                <img src="view/image/icons/snapchat.png" style="max-width: 100px;">
+                            </div>
+                        </div>
+                        <div class="col-md-10 col-sm-10">
+                            <div class="form-group" id="mn_integ_snp_status-group">
+                                <div class="col-md-2">
+                                    <label class="control-label">{{ lang('entry_status') }}</label>
+                                    <span class="help-block"></span>
+                                </div>
+                                <div class="col-md-10">
+                                    <!-- Switchery -->
+                                    <div class="checkbox checkbox-switchery">
+                                        <label>
+                                            <input type="checkbox" onchange="changeStatus(this);" name="mn_integ_snp_status" class="switchery {{ base.currentplan == '3' ? 'plan-lock-btn' : '' }}" {{ setting['mn_integ_snp_status'] in ['1', 1, 'on'] ? 'checked' }}>
+                                            <span class="switchery-status">{{ setting['mn_integ_snp_status'] in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                        </label>
+                                    </div>
+                                    <!-- /Switchery -->
+                                </div>
+
+                            </div>
+                            <br><br>
+                            <!-- form-group -->
+                            <div class="form-group" id="mn_integ_snp_code-group">
+                                <div class="col-md-2">
+                                    <label> {{ lang('entry_code') }} </label>
+                                    <span class="help-block"></span>
+                                </div>
+                                <div class="col-md-10">
+                                   <div class="form-group">
+                                      <input type="text" {{ base.currentplan == '3' ? 'disabled' : '' }} class="form-control" name="mn_integ_snp_code" value="{{ setting['mn_integ_snp_code'] }}" />
+                                   </div>
+                                </div>
+                            </div>
+                            <br><br>
+                            <!-- form-group -->
+                            <div class="form-group" id="mn_integ_snp_email-group">
+                                <div class="col-md-2">
+                                    <label> {{ lang('entry_email') }} </label>
+                                    <span class="help-block"></span>
+                                </div>
+                                <div class="col-md-10">
+                                   <div class="form-group">
+                                      <input type="text" {{ base.currentplan == '3' ? 'disabled' : '' }} class="form-control" name="mn_integ_snp_email" value="{{ setting['mn_integ_snp_email'] }}" />
+                                   </div>
+                                </div>
+                            </div>
+                            <br><br>
+                            <!-- form-group -->
+                            <div class="form-group" id="mn_integ_snp_action-group">
+                                <div class="col-md-2">
+                                    <label> {{ lang('entry_action') }} </label>
+                                    <span class="help-block"></span>
+                                </div>
+                                <div class="col-md-10">
+                                   <select class="select" multiple name="mn_integ_snp_action[]" {{ base.currentplan == '3' ? 'disabled' : '' }}>
+                                       {% for action in snp_actions %}
+                                            {% if action in setting['mn_integ_snp_action'] %}
+                                                <option selected>{{ action }}</option>
+                                            {% else %}
+                                                <option>{{ action }}</option>
+                                            {% endif %}
+                                       {% endfor %}
+                                   </select>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- col-md-12 -->
+                        </div>
+                        <!-- row -->
+                    </div> <!-- collapse -->
+                 </fieldset>
+            </div>
+        </div>
+        <!-- /a legend -->
+    </div>
+    <!-- ./SnapChat -->
+
+    {# Slack #}
+    <div class="col-md-12">
+        <!-- Advanced legend -->
+        <div class="panel panel-flat">
+            <div class="panel-body">
+                <fieldset>
+                    <legend class="text-semibold">
+                        <i class="fas fa-check-circle fa-lg position-left"></i>
+                        Slack
+                        {% if base.currentplan == "3" %}
+                            <span class="locked-label">
+                                <i class="fas fa-lock"></i>
+                                {{lang('text_upgrade')}}
+                            </span>
+                        {% endif %}
+                        <a class="control-arrow" data-toggle="collapse" data-target="#panel1">
+                            <i class="icon-circle-down2"></i>
+                        </a>
+                    </legend>
+                    <div class="collapse in" id="panel1" >
+                        <div class="row">
+                            <div class="col-md-2 col-sm-2">
+                                <div style="display: flex;justify-content: center;padding-top: 30px;">
+                                    <img src="view/image/icons/slack.png" style="max-width: 100px;padding-bottom: 20px;">
+                                </div>
+                            </div>
+                            <div class="col-md-10 col-sm-10">
+                                <div class="form-group" id="mn_integ_go_adwords_status-group">
+                                    <div class="col-md-2">
+                                        <label class="control-label">{{ lang('entry_status') }}</label>
+
+                                    </div>
+                                    <div class="col-md-10">
+                                        <!-- Switchery -->
+                                        <div class="checkbox checkbox-switchery">
+                                            <label>
+                                                <input type="checkbox" onchange="changeStatus(this);" name="mn_slack_status" class="switchery {{ base.currentplan == '3' ? 'plan-lock-btn' : '' }}" {{ setting['mn_slack_status'] in ['1', 1, 'on'] ? 'checked' }}>
+                                                <span class="switchery-status">{{ setting['mn_slack_status'] in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                            </label>
+                                        </div>
+                                        <!-- /Switchery -->
+                                    </div>
+                                    <span class="help-block"></span>
+
+                                </div>
+                                <div class="form-group" id="integrations_slack-group">
+                                    <div class="col-md-2">
+                                        <label> Webhook URL </label>
+                                    </div>
+                                    <div class="col-md-10">
+                                        <div class="form-group">
+                                            <input type="text" {{ base.currentplan == '3' ? 'disabled' : '' }} class="form-control" name="mn_slack_webhook_url" placeholder="https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX" value="{{ setting['mn_slack_webhook_url'] }}" />
+                                        </div>
+                                        <span class="help-block"></span>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                            <!-- col-md-12 -->
+                        </div>
+                        <!-- row -->
+                    </div> <!-- collapse -->
+                </fieldset>
+            </div>
+        </div>
+        <!-- /a legend -->
+    </div>
+    <!-- ./col-md-12 -->
+
+    {# /Slack #}
+
+
+
+
+    <!--Twitter Pixel-->
+    <div class="col-md-12">
+
+        <div class="panel panel-flat">
+            <div class="panel-body">
+               <fieldset>
+                   <legend class="text-semibold">
+                       <i class="fas fa-check-circle fa-lg position-left"></i>
+                       {{ lang('twitter_pixel_title')|trim(':') }}
+                        {% if base.currentplan == "3" %}
+                            <span class="locked-label">
+                                <i class="fas fa-lock"></i>
+                                {{lang('text_upgrade')}}
+                            </span>
+                        {% endif %}
+                       <a class="control-arrow" data-toggle="collapse" data-target="#panel1">
+                           <i class="icon-circle-down2"></i>
+                       </a>
+                   </legend>
+                   <div class="collapse in" id="panel1" >
+                       <div class="row">
+                        <div class="col-md-2 col-sm-2">
+                            <div style="display: flex;justify-content: center;padding-top: 30px;">
+                                <i class="fab fa-twitter fa-7x" style="color: #1D9BF0;"></i>
+                            </div>
+                        </div>
+                        <div class="col-md-10 col-sm-10">
+                            <div class="form-group" id="mn_integ_fbp_status-group">
+                                <div class="col-md-2">
+                                    <label class="control-label">{{ lang('entry_status') }}</label>
+                                    <span class="help-block"></span>
+                                </div>
+                                <div class="col-md-10">
+                                    <!-- Switchery -->
+                                    <div class="checkbox checkbox-switchery">
+                                        <label>
+                                            <input type="checkbox" onchange="changeStatus(this);" name="twitter_pixel_status" class="switchery {{ base.currentplan == '3' ? 'plan-lock-btn' : '' }}" {{ setting['twitter_pixel_status'] in ['1', 1, 'on'] ? 'checked' }}>
+                                            <span class="switchery-status">{{ setting['twitter_pixel_status'] in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                        </label>
+                                    </div>
+                                    <!-- /Switchery -->
+                                </div>
+
+                            </div>
+                            <br><br>
+                            <!-- form-group -->
+                            <div class="form-group" id="mn_integ_fbp_code-group">
+                                <div class="col-md-2">
+                                    <label> {{ lang('entry_code') }} </label>
+                                    <span class="help-block"></span>
+                                </div>
+                                <div class="col-md-10">
+                                   <div class="form-group">
+                                      <input type="text" {{ base.currentplan == '3' ? 'disabled' : '' }} class="form-control" name="twitter_pixel_id" value="{{ setting['twitter_pixel_id'] }}" />
+                                   </div>
+                                </div>
+                            </div>
+                            <br><br>
+                            <!-- form-group -->
+                            <div class="form-group" id="mn_integ_fbp_action-group">
+                                <div class="col-md-2">
+                                    <label> {{ lang('entry_action') }} </label>
+                                    <span class="help-block"></span>
+                                </div>
+                                <div class="col-md-10">
+                                   <select class="select" multiple name="twitter_pixel_selected_actions[]"  {{ base.currentplan == '3' ? 'disabled' : '' }}>
+                                       {% for action in twitter_pixel_actions %}
+                                            {% if action in setting['twitter_pixel_selected_actions'] %}
+                                                <option selected>{{ action }}</option>
+                                            {% else %}
+                                                <option>{{ action }}</option>
+                                            {% endif %}
+                                       {% endfor %}
+                                   </select>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- col-md-12 -->
+                        </div>
+                        <!-- row -->
+                    </div> <!-- collapse -->
+                 </fieldset>
+            </div>
+        </div>
+        <!-- /a legend -->
+    </div>
+
+</form>
+<!-- End Form -->
+<!-- Lower Buttons -->
+    {% include "includes/buttons_bottom.expand" %}
+    <!-- End Lower Buttons -->
+{% endblock content %}
+
+{% block scripts %}
+    {{ parent() }}
+    {% import _self as dtControls %}
+    <script>
+
+    function changeStatus(checkbox)
+    {
+        var self = $(checkbox);
+        var switch_status = self.siblings('.switchery-status');
+
+        if ( self.is(':checked') )
+        {
+            switch_status.html("{{ lang('text_enabled') }}");
+        }
+        else
+        {
+            switch_status.html("{{ lang('text_disabled') }}");
+        }
+    }
+</script>
+{% endblock scripts %}

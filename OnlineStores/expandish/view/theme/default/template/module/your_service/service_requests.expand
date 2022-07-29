@@ -1,0 +1,88 @@
+<div id="content row">
+    <!-- breadcrumb -->
+    <div class="breadcrumb-page">
+        <ol class="breadcrumb">
+            {% for breadcrumb in breadcrumbs %}
+                {% if loop.last %}
+                    <li class="active">{{ breadcrumb['text'] }}</li>
+                {% else %}
+                    <li><a href="{{ breadcrumb['href'] }}">{{ breadcrumb['text'] }}</a></li>
+                {% endif %}
+            {% endfor %}
+        </ol>
+    </div> <!-- breadcrumb -->
+
+    <div class="col-md-12">
+        <div class="page-title-base">
+            <h1 class="title-base">{{ lang('ys_service_requests') }}</h1>
+        </div>
+
+        <table id="service-requests-list">
+            <thead>
+                <tr>
+                    <th>{{ lang('ys_requester_name') }}</th>
+                    <th>{{ lang('ys_service') }}</th>
+                    <th>{{ lang('ys_action') }}</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+    </div>
+</div>
+
+<link rel="stylesheet" href="//cdn.datatables.net/1.10.20/css/jquery.dataTables.min.css">
+<script src="//cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js"></script>
+
+<script>
+var advanced_ms_enabled = '{{ advanced_ms_enabled }}';
+var locales = {};
+locales["search"] = "{{ lang('ys_dt_search') }}";
+locales["searchPlaceholder"] = "{{ lang('ys_dt_search_placeholder') }}";
+locales["lengthMenu"] = "{{ lang('ys_dt_length_menu') }}";
+locales["processing"] = "{{ lang('ys_dt_processing') }}";
+locales["infoFiltered"] = "{{ lang('ys_dt_info_filtered') }}";
+locales["zeroRecords"] = "{{ lang('ys_dt_zero_records') }}";
+locales["loadingRecords"] = "{{ lang('ys_dt_loading_records') }}";
+locales["emptyTable"] = "{{ lang('ys_dt_empty_table') }}";
+locales["info"] = "{{ lang('ys_dt_info') }}";
+
+$(document).ready(function () {
+    $('#service-requests-list').DataTable({
+        "language": locales,
+        "processing": true,
+        "serverSide": true,
+        "ajax": '{{ ajax_link }}',
+        "rowId": "request_id",
+        "columns": [
+            { data: 'name' },
+            { data: 'service' }
+        ],
+        "columnDefs": [
+            {
+                targets: 2,
+                render: function (data, type, row) {
+                    var chat = '';
+                    if (row['requester_id'] > 0 && advanced_ms_enabled == '1')
+                    {
+                        chat = `
+                        <a href="{{ link('account/messagingseller&customer_id=') }}${row['requester_id']}" target="_blank" class="btn btn-warning">
+                            <i class="fa fa-comments"></i> {{ lang('ys_chat') }}
+                        </a>`;
+                    }
+                    return `
+                        <a href="{{ link('module/your_service/info') }}&request_id=${row['request_id']}" target="_blank" class="btn btn-info">
+                            <i class="fa fa-eye"></i> {{ lang('ys_view') }}
+                        </a>
+                        ${chat}
+                        <a href="mailto: ${row['email']}" class="btn btn-success">
+                            <i class="fa fa-envelope"></i> {{ lang('ys_mail') }}
+                        </a>
+                    `;
+                }
+            }
+        ]
+    });
+
+});
+</script>

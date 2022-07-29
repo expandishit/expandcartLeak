@@ -1,0 +1,116 @@
+<!--<h1>{{objSection?.Name}}</h1>-->
+<div>
+    <!--<span class="btn-save"><button mat-raised-button (click)="onSubmit()"><mat-icon>done</mat-icon> {{(commonService.Res$ | async)._save}}</button></span>-->
+
+    <!--<div *ngIf="LanguageCode" style="padding: 10px 10px 20px 10px;">
+        <mat-select [placeholder]="'Language'" [(ngModel)]="LanguageCode">
+            <mat-option *ngFor="let lang of (sectionService.reqMapData$ | async)?.languages1" [value]="lang.code">
+                {{lang.name}}
+            </mat-option>
+        </mat-select>
+    </div>-->
+    <div *ngIf="objSection?.Fields.length > 0">
+    <div *ngIf="!isStylingRegion">
+        <h2>
+            {{(commonService.Res$ | async)._settings}}
+            <span>
+                <button mat-raised-button [matMenuTriggerFor]="langmenu" style="min-width: 70px; width: 70px;vertical-align: middle;">
+                    <img [src]="currentLanguage.image" alt="{{currentLanguage.name}}" />
+                    <mat-icon>keyboard_arrow_down</mat-icon>
+                </button>
+                <mat-menu #langmenu="matMenu">
+                    <button *ngFor="let lang of Languages;let i=index;" (click)="commonService.LanguageObject$.next(lang)" mat-menu-item>
+                        <img [src]="lang.image" />
+                        {{lang.name}}
+                    </button>
+                </mat-menu>
+            </span>
+        </h2>
+        <div class="settings">
+            <mat-card>
+                <div *ngFor="let field of objSection?.Fields">
+                    <control-renderer *ngIf="field" [field]="field" [controlOptions]="getControlOptions(field)" [languages]="(sectionService.reqMapData$ | async)?.languages "
+                        (update)="onControlChange($event)"></control-renderer>
+                </div>
+
+              <div>
+                <span class="btn-action" *ngIf="instantSave"><button mat-raised-button [matTooltip]="(commonService.Res$ | async)._savetooltip" [matTooltipPosition]="'after'" (click)="onSubmit();"><mat-icon>done</mat-icon> {{(commonService.Res$ | async)._save}}</button></span>
+              </div>
+            </mat-card>
+        </div>
+    </div>
+    <br/>
+    </div>
+    <div *ngIf="objSection?.IsCollection == 1">
+        <h2>
+            {{objSection.CollectionName}}
+            <span *ngIf="objSection?.Fields.length == 0 && !isStylingRegion">
+                <button mat-raised-button [matMenuTriggerFor]="langmenu" style="min-width: 70px; width: 70px;vertical-align: middle;">
+                    <img [src]="currentLanguage.image" alt="{{currentLanguage.name}}" />
+                    <mat-icon>keyboard_arrow_down</mat-icon>
+                </button>
+                <mat-menu #langmenu="matMenu">
+                    <button *ngFor="let lang of Languages;let i=index;" (click)="commonService.LanguageObject$.next(lang)" mat-menu-item>
+                        <img [src]="lang.image" />
+                        {{lang.name}}
+                    </button>
+                </mat-menu>
+            </span>
+        </h2>
+        <div *ngIf="objSection" [dragula]='"collections-bag"' [dragulaModel]='objSection.Collections'>
+            <div class="collection" *ngFor="let collection of objSection?.Collections; let i = index;">
+                <mat-card>
+                    <!--<mat-card-header (click)="toggleCollection(collection.id)">-->
+                    <div class="collection-header">
+                        <span class="iconspan clickable" (click)="toggleCollection(collection.id)">
+                        <mat-icon *ngIf="expandedCollectionId!=collection.id">keyboard_arrow_right</mat-icon>
+                        <mat-icon *ngIf="expandedCollectionId==collection.id">keyboard_arrow_down</mat-icon>
+                    </span>
+                        <span *ngIf="!isStylingRegion"><ec-editablelabel [label]="objSection.CollectionItemName + ' ' + (i+1)" (update)="updateCollectionName(collection.id, $event)"></ec-editablelabel></span>
+                        <span *ngIf="isStylingRegion">{{collection.Name}}</span>
+                        <span *ngIf="!isStylingRegion" class="iconspan pull-right handle-drag"><mat-icon class="handle-drag">reorder</mat-icon></span>
+                    </div>
+                    <!--</mat-card-header>-->
+                    <div [hidden]="!(expandedCollectionId==collection.id)">
+                        <mat-card-content>
+                            <div *ngFor="let field of collection.Fields">
+                                <control-renderer [field]="field" [controlOptions]="getControlOptions(field)" [languages]="(sectionService.reqMapData$ | async)?.languages"
+                                    (update)="onControlChange($event)"></control-renderer>
+                            </div>
+                        </mat-card-content>
+                        <mat-card-actions *ngIf="!isStylingRegion">
+                            <button class="btn btn-link" (click)="removeCollection(collection.id, i)"><mat-icon style="vertical-align: bottom;">delete</mat-icon>{{(commonService.Res$ | async)._deleteCollection}} {{objSection.CollectionItemName + ' ' + (i+1)}}</button>
+                        </mat-card-actions>
+                    </div>
+                </mat-card>
+            </div>
+
+            <div *ngIf="!isStylingRegion" class="btn-new-collection" (click)="addCollection()">
+                <mat-card>
+                    <span>{{objSection.CollectionButtonName}}</span>
+                </mat-card>
+            </div>
+        </div>
+    </div>
+    <!--<div *ngIf="objSection" [dragula]='"collections-bag"' [dragulaModel]='objSection.Collections'>
+        <div style="border:1px solid;" *ngFor="let collection of objSection?.Collections; let i = index;">
+            <div class="form-row" style="border:1px solid;height:30px;background-color:gray">
+                <div class="col-md-10" style="cursor: pointer;cursor: hand;overflow: auto;" (click)="toggleCollection(collection.id)">
+                    <ec-editablelabel [label]="collection.Name" (update)="updateCollectionName(collection.id, $event)"></ec-editablelabel>
+                </div>
+                <div class="col-md-1"></div>
+                <div class="col-md-1" style="cursor: pointer;cursor: hand;" (click)="removeCollection(collection.id, i)">X</div>
+            </div>
+            <div class="form-row" [hidden]="!(expandedCollectionId==collection.id)">
+                <control-renderer *ngFor="let field of collection.Fields" [field]="field" [controlOptions]="getControlOptions(field)" [languages]="sectionService.reqMapDate.languages"
+                    (update)="onControlChange($event)"></control-renderer>
+            </div>
+        </div>
+
+    <div (click)="addCollection()" class="col-md-12" style="border:1px solid;height:30px;background-color:yellow">+</div>-->
+
+    <!--<div class="form-row">
+        <button (click)="onSubmit()">Save</button>
+    </div>-->
+</div>
+<!--<span class="btn-save"><button mat-raised-button color="basic" (click)="onSubmit();"><mat-icon>done</mat-icon> {{(commonService.Res$ | async)._save}}</button></span>-->

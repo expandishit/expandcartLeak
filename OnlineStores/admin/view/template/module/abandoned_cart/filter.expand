@@ -1,0 +1,223 @@
+<div class="sidebar-detached">
+    <div class="sidebar sidebar-default sidebar-normal">
+        <div class="sidebar-content">
+            <form id="filter" method="post">
+
+                <div class="sidebar-category">
+                    <div class="category-title cursor-pointer">
+                        <span>{{ lang('filter_general_tab') }}</span>
+                        <ul class="icons-list">
+                            <li><a href="#" data-action="collapse"></a></li>
+                        </ul>
+                    </div>
+
+                    <div class="category-content">
+                        <div class="form-group" id="customer_id-group">
+                            <label class="control-label">{{ lang('filter_label_order_customer') }}</label>
+                            <select class="multiselect-tags form-control" multiple="multiple"
+                                    name="filter[customer_id][]" id="customer-customer">
+                                <option value="">{{ lang('text_select') }}</option>
+                                {#{% for elem in filterElements['customers'] %}
+                                    <option value="{{ elem['customer_id'] }}">{{ elem['name'] }}</option>
+                                {% endfor %}#}
+                            </select>
+                            <span class="help-block"></span>
+                            <span class="text-muted"></span>
+                        </div>
+
+                        <div class="form-group" id="product_id-group">
+                            <label class="control-label">{{ lang('filter_label_order_product') }}</label>
+                            <select class="multiselect-tags form-control" multiple="multiple"
+                                    name="filter[product_id][]" id="product_id">
+                                {% for elem in filterElements['products'] %}
+                                    <option value="{{ elem['product_id'] }}">{{ elem['product_name'] }}</option>
+                                {% endfor %}
+                            </select>
+                            <span class="help-block"></span>
+                            <span class="text-muted"></span>
+                        </div>
+
+                        <div class="form-group" id="emailed_abandoned_orders-group">
+                            <label class="control-label">{{ lang('filter_label_emailed_abandoned_orders') }}</label>
+                            <select class="multiselect-tags form-control"
+                                    name="filter[emailed_abandoned_orders]" id="emailed_abandoned_orders">
+                                <option value="all">{{ lang('text_all') }}</option>
+                                <option value="emailed">{{ lang('text_emailed') }}</option>
+                            </select>
+                            <span class="help-block"></span>
+                            <span class="text-muted"></span>
+                        </div>
+
+                        <div class="form-group" id="date-added-group">
+                            <label class="control-label">{{ lang('filter_label_date_added') }}</label>
+                            <input class="form-control date-added"
+                                   type="text">
+
+                            <input type="hidden" name="filter[date_added][start]" id="date-added-start"/>
+                            <input type="hidden" name="filter[date_added][end]" id="date-added-end"/>
+                            <span class="help-block"></span>
+                            <span class="text-muted">{{ langempty('date-added_help') }}</span>
+                        </div>
+
+                        <div class="form-group" id="price-range-group">
+                            <label class="control-label">{{ lang('filter_label_order_total') }}</label>
+                            <div class="noui-slider-primary noui-slider-solid noui-slider-sm"
+                                 id="total-range" style="margin-bottom: 30px;"></div>
+
+                            <input type="hidden" name="filter[ranges][total][min]" id="total-range-input-min">
+                            <input type="hidden" name="filter[ranges][total][max]" id="total-range-input-max">
+                            <span class="help-block"></span>
+                            <span class="text-muted">{{ langempty('price-range_help') }}</span>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="category-content">
+                    <button type="reset" id="resetList"
+                            class="btn btn-default btn-block mt-10">{{ lang('lbl_reset_filter') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script type="text/javascript" src="view/assets/js/plugins/sliders/nouislider.min.js"></script>
+<script type="text/javascript" src="view/assets/js/plugins/sliders/ion_rangeslider.min.js"></script>
+<script>
+
+    
+
+    $(document).ready(function () {
+        $('select:not(.dataTables_length select)').select2({
+            width: '100%',
+            minimumResultsForSearch: Infinity,
+        });
+
+        if ($('#emailed_abandoned_orders').val() == 'emailed') {
+            $('#emailed_abandoned_orders').change();
+
+            filterReloadDT();
+        }
+
+        $('.notSearchable').select2({
+            minimumResultsForSearch: 5,
+        });
+
+        $("#brands, #models").select2({
+            tokenSeparators: [','],
+        });
+
+
+        $('.date-added').daterangepicker({
+            autoApply: true,
+            ranges: locales['drp_ranges'],
+            locale: locales['drp_locale']
+        }, function (start, end, label) {
+            $('#date-added-start').val(start.format('YYYY-MM-DD'));
+            $('#date-added-end').val(end.format('YYYY-MM-DD'));
+        });
+
+
+        $('input, select').not('.dtSelectAll').change(function (event) {
+            event.preventDefault();
+            //filterReloadDT();
+            //$('#btnreset').removeClass('hidden');
+        });
+
+        $('#filter').on('reset', function (e) {
+            $('#btnreset').addClass('hidden');
+        });
+
+        $('#btnreset').on('click', function (e) {
+            e.preventDefault();
+            $('#resetList').trigger("click");
+            //$('#filter')[0].reset();
+        });
+
+        $('#customer-customer').select2({
+            minimumResultsForSearch: 10,
+            ajax: {
+                url: '{{ link('sale/customer/autocomplete?filter_name=&limit=30') }}',
+                data:
+
+                    function (params) {
+                        return {
+                            filter_name: params.term
+                        };
+                    }
+
+                ,
+                dataType: 'json',
+                processResults:
+
+                    function (data, params) {
+                        return {
+                            results: $.map(data, function (item, index) {
+                                return {
+                                    id: item.customer_id,
+                                    text: item.name,
+                                    firstname: item.firstname,
+                                    lastname: item.lastname,
+                                    email: item.email,
+                                    customer_group: item.customer_group,
+                                    customer_group_id: item.customer_group_id,
+                                    telephone: item.telephone,
+                                    fax: item.fax,
+                                    addresses: item.address
+                                }
+                            })
+                        };
+                    }
+
+                ,
+                cache: true
+            }
+        });
+    });
+
+    function filterReloadDT() {
+        $('#btnreset').removeClass('hidden');
+        var $formData = $('#filter').serialize();
+
+        orderTable.on('preXhr.dt', function (e, settings, data) {
+            return $.extend(data, {filter: $formData});
+        });
+
+        orderTable.ajax.reload();
+    }
+
+    var min = parseInt('{{ filterElements['totalRange']['min'] }}');
+    var max = parseInt('{{ filterElements['totalRange']['max'] }}');
+
+    ranger('total-range', {
+        'from': min,
+        'to': max,
+        'min': min,
+        'max': max
+    });
+
+    function ranger(selector, options) {
+
+        if (typeof options === 'undefined') {
+            options = {};
+        }
+
+        var rangeDefaults = {
+            type: 'double',
+            onFinish: function (data) {
+                $('#' + selector + '-input-min').val(data.from);
+                $('#' + selector + '-input-max').val(data.to);
+                filterReloadDT();
+            }
+        };
+
+        var range = rangeDefaults;
+
+        for (opt in options) {
+            range[opt] = options[opt];
+        }
+
+        $('#' + selector).ionRangeSlider(range);
+    }
+
+</script>

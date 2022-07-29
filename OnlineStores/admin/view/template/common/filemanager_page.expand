@@ -1,0 +1,471 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block title %}
+    {{ lang('pg_heading_title') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+
+{% block content %}
+
+<link rel="stylesheet" type="text/css" href="view/stylesheet/cube/css/libs/font-awesome.css"/>
+        <div class="panel panel-white">
+            <div class="panel-heading">
+                <h6 class="panel-title"><span class="text-bold">{{ lang('text_uploadImage') }}</span></h6>
+                <div class="heading-elements not-collapsible">
+                    <ul class="icons-list">
+                        <li><a data-action="collapse" class=""></a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel-body">
+
+                <div class="row">
+                        <div class="col-sm-5">
+                            <a href="{{ parent }}" data-toggle="tooltip" title="{{ lang('button_parent') }}"
+                               id="button-parent" class="btn btn-default"><i class="fa fa-level-up"></i></a>
+                            <a href="{{ refresh }}" data-toggle="tooltip" title="{{ lang('button_refresh') }}"
+                               id="button-refresh" class="btn btn-default"><i class="fa fa-refresh"></i></a>
+                            <button type="button" data-toggle="tooltip" title="{{ lang('button_upload') }}"
+                                    id="button-upload" class="btn btn-primary"><i class="fa fa-upload"></i></button>
+                            <button type="button" data-toggle="tooltip" title="{{ lang('button_folder') }}"
+                                    id="button-folder" class="btn btn-default"><i class="fa fa-folder"></i></button>
+                            <button type="button" data-toggle="tooltip" title="{{ lang('button_delete') }}"
+                                    id="button-delete" class="btn btn-danger"><i class="fa fa-trash-o"></i></button>
+                            <button type="button" data-toggle="modal" title="{{ lang('button_link') }}"
+                                disabled   id="button-link" class="btn btn-default"  data-target="#linkModal"><i class="fa fa-link"></i></button>        
+                        </div>
+                        <div class="col-sm-7">
+                         <form action="{{ link('common/filemanager/show_md_manager') }}?directory={{directory}}" method="post" id="search-form" />
+                            <div class="input-group">
+
+                                <input type="text" name="search" value="{{ filter_name }}"
+                                       placeholder="{{ entry_search }}" class="form-control">
+                                <span class="input-group-btn">
+                                <button type="button" data-toggle="tooltip" title="{{ button_search }}" id="button-search"
+                                        class="btn btn-primary"><i class="fa fa-search"></i></button>
+                                </span>
+                            </div>
+                            </form>
+                        </div>
+                    </div>
+                    <hr/>
+                    <div class="alert alert-success uploadHelp">
+                        <i class="fa fa-check-circle fa-fw fa-lg"></i>
+                        {{ lang('text_upload_help') }}
+                    </div>
+                    <form action="/upload-target" class="uploadZoneFileManager dropzone">
+                    </form>
+                    <!-- Load images and directories after uploading new image and remove -->
+                    {% for image in images|batch(4)   %}
+                    <div class="row">
+                        {% for image in image %}
+                        <div class="col-sm-3 col-xs-6 text-center" id="loadImagesFrame">
+                            {% if image['type'] == 'directory' %}
+                            <div class="text-center"><a href="{{ image['href'] }}" class="directory"
+                                                        style="vertical-align: middle;"><i class="fa fa-folder fa-5x"
+                                                                                           style="width: 150px; height: 150px; line-height: 150px;"></i></a>
+                            </div>
+                            <label>
+                                <input type="checkbox" name="path[]" value="{{ image['path'] }}"/>
+                                {{ image['name'] }}</label>
+                            {% endif %}
+                            {% if image['type'] == 'image' %}
+                            <a href="{{ image['href'] }}" class="thumbnail"
+                               data-filename="{{ image['name'] }}"
+                               data-filethumb="{{ image['thumb'] }}"
+                               data-filepath="{{ image['path'] }}"
+                               data-filesize="{{ image['size'] }}">
+                                <img src="{{ image['thumb'] }}"
+                                     alt="{{ image['name'] }}"
+                                     title="{{ image['name'] }}" style="width: 150px; height: 150px; line-height: 150px;" /></a>
+                            <label>
+                                <input type="checkbox" name="path[]" value="{{ image['path'] }}"/>
+                                {{ image['name'] }}</label>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <br/>
+                    {% endfor %}
+                    <div>{{ pagination }}</div>
+                </div>
+              <!-- ./row -->
+        </div>
+        <!-- ./panel-body -->
+     </div>
+     <!-- ./panel-white -->
+<!-- Modal -->
+<div class="modal fade" id="linkModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLongTitle">{{lang('button_link')}}</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+    <div class="modal-body">
+        <h4>{{lang('link_ask')}}</h4>
+        <p class="text-muted">{{lang('link_note')}}</p>  
+        <div class="form-group">
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="link_product_option" value="dont_link" 
+                {% if link_product_option == 'dont_link'%} checked {% endif %}>
+                <label class="form-check-label">
+                    {{lang('button_not_link')}}
+                </label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="link_product_option" value="link_as_main_image" 
+                {% if link_product_option == 'link_as_main_image' %} checked {% endif %}>
+                <label class="form-check-label" >
+                    {{lang('button_link_as_main_image')}}
+                </label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="link_product_option" value="link_as_sub_image" 
+                {% if link_product_option == 'link_as_sub_image'%} checked {% endif %}>
+                <label class="form-check-label" >
+                    {{lang('button_link_as_sub_image')}}
+                </label>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button id="image_link_cancel" type="button" class="btn btn-secondary" data-dismiss="modal">{{lang('button_cancel')}}</button>
+        <button id="image_link_setting" type="button" class="btn btn-primary">{{lang('button_save')}}</button>
+    </div>
+    </div>
+  </div>
+</div>
+<!-- End Modal -->
+{% endblock %}
+
+{% block scripts %}
+
+    {{ parent() }}
+
+
+        <script type="text/javascript">
+            var upload_done;
+            var images_to_link_array  = [];
+            document.title = "{{ lang('pg_heading_title') }}";
+            $(document).ready(function(){
+                $('.uploadHelp').hide();
+                var url = '{{ link('common/filemanager/upload') }}?directory={{ directory }}';
+                //var editorFunc = "{{ editorFunc }}";
+                if ($('.uploadZoneFileManager').length) {
+
+                    var myDropzone = new Dropzone(".uploadZoneFileManager", {url: url, clickable: '#button-upload, .uploadZoneFileManager'});
+                    var uploadCount = 1;
+                    myDropzone.on("success", function (file, resp) {
+                        console.log(file);
+                        console.log(resp);
+                        //if(file.name.indexOf('_') != -1){ //to only filter sku_imageName images
+                        var images = {                              
+                            "name" :file.name,
+                            "href" :resp.fileData.href,
+                             "path" :resp.fileData.path
+                        };
+                            images_to_link_array.push( images );
+                       // }
+                        if(uploadCount == $(myDropzone)[0].files.length){
+                            upload_done = true; 
+                            //window.location="{{ link('common/filemanager/show_md_manager') }}";
+                        }
+                        uploadCount++;
+                    });
+                }
+
+                $('input[name=\'search\']').on('keydown', function (e) {
+                    if (e.which == 13) {
+                        $('#button-search').trigger('click');
+                    }
+                });
+
+                $("#button-search").on('click',function(e){
+
+                    var url = '';
+                    var filter_name = $('input[name=\'search\']').val();
+
+                    if (filter_name) {
+                        url += '&filter_name=' + encodeURIComponent(filter_name);
+                    }
+
+                    {% if thumb is defined %}
+                    url += '&thumb=' + '{{thumb}}';
+                    {% endif %}
+
+                    {% if target is defined %}
+                    url += '&target=' + '{{target}}';
+                    {% endif %}
+
+                    {% if editorFunc != '' %}
+                    url += '&editorFunc=' + '{{editorFunc}}';
+                    {% endif %}
+
+                    {% if callerName != '' %}
+                    url += '&callerName=' + '{{callerName}}';
+                    {% endif %}
+
+                    action= $("#search-form").attr('action') +url;
+                    $("#search-form").attr('action',action);
+
+                    $("#search-form").trigger('submit');
+                });
+            });
+
+            function thumbClick(clickEventElem) {
+                var fileData = $(clickEventElem).data('fileData');
+
+                {% if editorFunc != 'null' %}
+                    if (typeof window["{{ editorFunc }}"] == 'function') {
+                        window["{{ editorFunc }}"]("{{ target }}", "{{ thumb }}", fileData.href, fileData.path, fileData.thumb);
+                    }
+                {% else %}
+                    $('#{{ target }}').val(fileData.path).trigger('change');
+
+                    {% if thumb is defined %}
+                        {% if thumb in "img-slayerID" %}
+                            {#<?php if (strpos($thumb, "img-slayerID", 0) === 0) { ?>#}
+                            var $parentDiv = $('#{{ thumb }}').parent();
+                            $('#{{ thumb }}').remove();
+                            $parentDiv.append("<img src='" + fileData.href + "' alt='' id='" + "{{ thumb }}" + "' />");
+                            $pavoEditor.storeCurrentLayerData();
+                        {% elseif thumb == "imgMgrThumb" %}
+                            $('#{{ thumb }}').attr('src', fileData.href);
+                        {% else %}
+                            $('#{{ thumb }}').attr('src', fileData.thumb);
+                        {% endif %}
+                    {% endif %}
+                {% endif %}
+            }
+
+            $(document).ready(function(){
+                {% if target is defined %}
+                $('a.thumbnail').on('click', function (e) {
+                    e.preventDefault();
+
+                    {% if editorFunc != 'null' %}
+                    {% if callerName == 'ckeditor' %}
+                    CKEDITOR.tools.callFunction('{{ editorFunc }}', $(this).attr('href'));
+                    {% elseif callerName == 'dropzone-editor' %}
+
+                    var evt = new CustomEvent('ec:imagemanager:thumb-click', {
+                        detail: {
+                            fileName: $(this).attr('data-filename'),
+                            fileSize: $(this).attr('data-filesize'),
+                            fileThumb: $(this).attr('data-filethumb'),
+                            filePath: $(this).attr('data-filepath')
+                        }
+                    });
+
+                    window.dispatchEvent(evt);
+
+                    {% else %}
+                    if (typeof window["{{ editorFunc }}"] == 'function') {
+                        window["{{ editorFunc }}"]("{{ target }}", "{{ thumb }}", $(this).attr('href'), $(this).parent().find('input').attr('value'), $(this).find('img').attr('src'));
+                    }
+                    {% endif %}
+                    {% else %}
+                    $('#{{target}}').val($(this).parent().find('input').attr('value')).trigger('change');
+
+                    {% if thumb is defined %}
+                    {% if thumb in "img-slayerID" %}
+                    {#<?php if (strpos($thumb, "img-slayerID", 0) === 0) { ?>#}
+                    var $parentDiv = $('#<?php echo $thumb; ?>').parent();
+                    $('#{{thumb}}').remove();
+                    $parentDiv.append("<img src='" + $(this).attr("href") + "' alt='' id='" + "{{thumb}}" + "' />");
+                    $pavoEditor.storeCurrentLayerData();
+                    {% elseif thumb == "imgMgrThumb" %}
+                    $('#{{thumb}}').attr('src', $(this).attr('href'));
+                    {% else %}
+                    $('#{{thumb}}').attr('src', $(this).find('img').attr('src'));
+                    {% endif %}
+                    {% endif %}
+                    {% endif %}
+
+
+                });
+                {% endif %}
+
+            });
+
+
+
+            //--></script>
+        <script type="text/javascript"><!--
+            $('#NOTWORKINGNOW').on('click', function () {
+                $('#form-upload').remove();
+
+                $('body').prepend('<form enctype="multipart/form-data" id="form-upload" style="display: none;"><input type="file" name="file" value="" /></form>');
+
+                $('#form-upload input[name=\'file\']').trigger('click');
+
+                if (typeof timer != 'undefined') {
+                    clearInterval(timer);
+                }
+
+                timer = setInterval(function () {
+                    if ($('#form-upload input[name=\'file\']').val() != '') {
+                        clearInterval(timer);
+
+                        $.ajax({
+                            url: '{{ link('common/filemanager/upload') }}?directory={{ directory }}',
+                            type: 'post',
+                            dataType: 'json',
+                            data: new FormData($('#form-upload')[0]),
+                            cache: false,
+                            contentType: false,
+                            processData: false,
+                            beforeSend: function () {
+                                $('#button-upload i').replaceWith('<i class="fa fa-circle-o-notch fa-spin"></i>');
+                                $('#button-upload').prop('disabled', true);
+                            },
+                            complete: function () {
+                                $('#button-upload i').replaceWith('<i class="fa fa-upload"></i>');
+                                $('#button-upload').prop('disabled', false);
+                            },
+                            success: function (json) {
+                                if (json['error']) {
+                                    alert(json['error']);
+                                }
+
+                                if (json['success']) {
+                                    alert(json['success']);
+
+                                    $('#button-refresh').trigger('click');
+                                }
+                            },
+                            error: function (xhr, ajaxOptions, thrownError) {
+                                alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                            }
+                        });
+                    }
+                }, 500);
+            });
+
+            $(document).ready(function(){
+                $('#button-folder').popover({
+                    html: true,
+                    placement: 'bottom',
+                    trigger: 'click',
+                    title: '{{ entry_folder }}',
+                    content: function () {
+                        html = '<div class="input-group">';
+                        html += '  <input type="text" name="folder" value="" placeholder="{{ entry_folder }}" class="form-control">';
+                        html += '  <span class="input-group-btn"><button type="button" title="{{ button_folder }}" id="button-create" class="btn btn-primary"><i class="fa fa-plus-circle"></i></button></span>';
+                        html += '</div>';
+
+                        return html;
+                    }
+                });
+
+                $('#button-folder').on('shown.bs.popover', function () {
+                    $('#button-create').on('click', function () {
+                        $.ajax({
+                            url: '{{ link('common/filemanager/folder') }}?directory={{directory}}',
+                            type: 'post',
+                            dataType: 'json',
+                            data: 'folder=' + encodeURIComponent($('input[name=\'folder\']').val()),
+                            beforeSend: function () {
+                                $('#button-create').prop('disabled', true);
+                            },
+                            complete: function () {
+                                $('#button-create').prop('disabled', false);
+                            },
+                            success: function (json) {
+                                if (json['error']) {
+                                    alert(json['error']);
+                                }
+
+                                if (json['success']) {
+                                    alert(json['success']);
+                                    window.location="{{ link('common/filemanager/show_md_manager') }}";
+                                    $('#button-refresh').trigger('click');
+                                }
+                            },
+                            error: function (xhr, ajaxOptions, thrownError) {
+                                alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                            }
+                        });
+                    });
+                });
+
+                $('#button-delete').on('click', function (e) {
+                    if (confirm('{{ text_confirm }}')) {
+                        $.ajax({
+                            url: '{{ link('common/filemanager/delete') }}',
+                            type: 'post',
+                            dataType: 'json',
+                            data: $('input[name^=\'path\']:checked'),
+                            beforeSend: function () {
+                                $('#button-delete').prop('disabled', true);
+                            },
+                            complete: function () {
+                                $('#button-delete').prop('disabled', false);
+                            },
+                            success: function (json) {
+                                if (json['error']) {
+                                    alert(json['error']);
+                                }
+
+                                if (json['success']) {
+                                    alert(json['success']);
+                                    location.reload();
+
+                                    //$('#button-refresh').trigger('click');
+                                }
+                            },
+                            error: function (xhr, ajaxOptions, thrownError) {
+                                alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                            }
+                        });
+                    }
+                });
+                $('input[name^=\'path\']').on('change',function (e) {
+                    if (this.checked) {
+                        $('#button-link').prop('disabled', false);
+                    }
+                });
+            });
+
+            //--></script>
+            <script>
+                $(document).ready(function(){
+                    $('#image_link_setting').on('click', function (e) {
+                        $.ajax({
+                            url: '{{ link('common/filemanager/linkImageSetting') }}',
+                            type: 'post',
+                            dataType: 'json',
+                            data: {link_product_option : encodeURIComponent($('input[name="link_product_option"]:checked').val()), images_to_link_array : images_to_link_array},
+                            beforeSend: function () {
+                                $('#image_link_cancel').prop('disabled', true);
+                                $('#image_link_setting').prop('disabled', true);
+                                $('#image_link_setting').addClass('load-circle');
+                            },
+                            complete: function () {
+                                $('#image_link_cancel').prop('disabled', false);
+                                $('#image_link_setting').prop('disabled', false);
+                                $('#image_link_setting').removeClass('load-circle');
+                            },
+                            success: function (json) {
+                                if (json['success']) {
+                                    alert(json['success']);
+                                    $('#linkModal').modal('hide');
+                                    if(upload_done){
+                                        location.reload();
+                                    }
+                                }
+                            }
+                        });
+                    });
+                });
+            </script>
+{% endblock scripts %}

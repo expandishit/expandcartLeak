@@ -1,0 +1,150 @@
+<?php
+class ControllerPaymentTwoCheckout extends Controller {
+	protected function index() {
+		$this->load->model('checkout/order');
+		
+		$order_info = $this->model_checkout_order->getOrder($this->session->data['order_id']);
+		
+		$this->data['action'] = 'https://www.2checkout.com/checkout/spurchase';
+
+		// get 2checkout setting
+        $towcheckoutSetting = $this->model_setting_setting->getSetting('twocheckout');
+        // check if customer add doller value from 2checkout setting get usd value or set it to 1
+        $usdValue = (isset($towcheckoutSetting['twocheckout_usd']) && $towcheckoutSetting['twocheckout_usd'] > 0) ? $towcheckoutSetting['twocheckout_usd'] : 1;
+		// check currency code
+        if($order_info['currency_code'] != "USD")
+        {
+            $this->data['total'] = $this->currency->format($order_info['total'], "USD", $usdValue, false);
+        }else{
+            $this->data['total'] = $order_info['total'];
+        }
+
+		$this->data['total'] = round($this->data['total'],2);
+		$this->data['sid'] = $this->config->get('twocheckout_account');
+		//$this->data['total'] = $this->currency->format($order_info['total'], $order_info['currency_code'], $order_info['currency_value'], false);
+		$this->data['cart_order_id'] = $this->session->data['order_id'];
+		$this->data['card_holder_name'] = $order_info['payment_firstname'] . ' ' . $order_info['payment_lastname'];
+		$this->data['street_address'] = $order_info['payment_address_1'];
+		$this->data['city'] = $order_info['payment_city'];
+		
+		if ($order_info['payment_iso_code_2'] == 'US' || $order_info['payment_iso_code_2'] == 'CA') {
+			$this->data['state'] = $order_info['payment_zone'];
+		} else {
+			$this->data['state'] = 'XX';
+		}
+		
+		$this->data['zip'] = $order_info['payment_postcode'];
+		$this->data['country'] = $order_info['payment_country'];
+		$this->data['email'] = $order_info['email'];
+		$this->data['phone'] = $order_info['telephone'];
+
+		if ($this->cart->hasShipping()) {
+			$this->data['ship_street_address'] = $order_info['shipping_address_1'];
+			$this->data['ship_city'] = $order_info['shipping_city'];
+			$this->data['ship_state'] = $order_info['shipping_zone'];
+			$this->data['ship_zip'] = $order_info['shipping_postcode'];
+			$this->data['ship_country'] = $order_info['shipping_country'];
+		} else {
+			$this->data['ship_street_address'] = $order_info['payment_address_1'];
+			$this->data['ship_city'] = $order_info['payment_city'];
+			$this->data['ship_state'] = $order_info['payment_zone'];
+			$this->data['ship_zip'] = $order_info['payment_postcode'];
+			$this->data['ship_country'] = $order_info['payment_country'];			
+		}
+		
+		$this->data['products'] = array();
+		
+		$products = $this->cart->getProducts();
+
+
+		foreach ($products as $key=>$product) {
+
+			$this->data['products'][] = array(
+				'product_id'  => $product['product_id'],
+				'name'        => $product['name'],
+				'description' => $product['name'],
+				'quantity'    => $product['quantity'],
+				'price'		  => $this->currency->format($product['price'], $order_info['currency_code'], $order_info['currency_value'], false)
+			);
+		}
+
+		if ($this->config->get('twocheckout_test')) {
+			$this->data['demo'] = 'Y';
+		} else {
+			$this->data['demo'] = '';
+		}
+		
+		$this->data['lang'] = $this->session->data['language'];
+
+		$this->data['return_url'] = $this->url->link('payment/twocheckout/callback', '', 'SSL');
+		
+        // if(file_exists(DIR_TEMPLATE . 'customtemplates/' . STORECODE . '/' . $this->config->get('config_template') . '/template/payment/twocheckout.expand')) {
+        //     $this->template = 'customtemplates/' . STORECODE . '/' . $this->config->get('config_template') . '/template/payment/twocheckout.expand';
+        // }
+        // else {
+        //     $this->template = $this->config->get('config_template') . '/template/payment/twocheckout.expand';
+        // }
+        
+        $this->template = 'default/template/payment/twocheckout.expand';
+		
+		$this->render_ecwig();
+	}
+
+	// The order shouldn't be confirmed here.
+	// Instead in the callback after confirming the payment transaction was a success.
+
+    public function confirm() {
+    	$this->data['action'] = 'https://www.2checkout.com/checkout/spurchase';
+
+    	$this->load->model('checkout/order');
+    	//$this->model_checkout_order->confirm($this->session->data['order_id'], $this->config->get('config_order_status_id'));
+    	//$order_info = $this->model_checkout_order->getOrder($this->session->data['order_id']);
+    	//if($order_info){
+    	//	$this->model_checkout_order->addOrder($order_info);
+    }
+	
+	public function callback() {
+
+		if ($this->request->server['REQUEST_METHOD'] != 'POST'){
+			$data = $this->request->get;
+		}else{
+			$data=  $this->request->post;
+		}
+
+		$this->load->model('checkout/order');
+		
+		$order_info = $this->model_checkout_order->getOrder($this->session->data['order_id']);
+		
+		if (!$this->config->get('twocheckout_test')) {
+			$order_number = $data['order_number'];
+		} else {
+			$order_number = '1';
+		}
+		
+		if (strtoupper(md5(html_entity_decode($this->config->get('twocheckout_secret')) . $this->config->get('twocheckout_account') . $order_number . $data['total'])) == $data['key']) {
+			if ($this->currency->format($order_info['total'], $order_info['currency_code'], $order_info['currency_value'], false) == $data['total']) {
+				$this->model_checkout_order->confirm($this->session->data['order_id'], $this->config->get('twocheckout_order_status_id'));
+			} else {
+				$this->model_checkout_order->confirm($this->session->data['order_id'], $this->config->get('config_order_status_id'));// Ugh. Some one've faked the sum. What should we do? Probably drop a mail to the shop owner?				
+			}
+			
+			// We can't use $this->redirect() here, because of 2CO behavior. It fetches this page
+			// on behalf of the user and thus user (and his browser) see this as located at 2checkout.com
+			// domain. So user's cookies are not here and he will see empty basket and probably other
+			// weird things.
+			
+			echo '<html>' . "\n";
+			echo '<head>' . "\n";
+			echo '  <meta http-equiv="Refresh" content="0; url=' . $this->url->link('checkout/success') . '">' . "\n";
+			echo '</head>'. "\n";
+			echo '<body>' . "\n";
+			echo '  <p>Please follow <a href="' . $this->url->link('checkout/success') . '">link</a>!</p>' . "\n";
+			echo '</body>' . "\n";
+			echo '</html>' . "\n";
+			exit();
+		} else {
+			echo 'The response from 2checkout.com can\'t be parsed. Contact site administrator, please!'; 
+		}		
+	}
+}
+?>

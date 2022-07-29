@@ -1,0 +1,233 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block title %}
+    {{ lang('heading_title', 'sale/customer') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+    {% set cancel = link('sale/component/customers') %}
+
+{% block headelements %}
+    {% include "includes/buttons_top.expand" %}
+{% endblock headelements %}
+
+{% block content %}
+    <form action="{{ link('sale/customer/insert') }}" class="form">
+        <div class="row">
+            <div class="panel panel-white">
+                <div class="panel-heading">
+                    <h6 class="panel-title"><span class="text-bold">{{ lang('heading_title', 'sale/customer') }}</span></h6>
+                    <div class="heading-elements not-collapsible">
+                        <ul class="icons-list">
+                            <li><a data-action="collapse" class=""></a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="panel-body">
+                    <div class="collapse in" id="panel1">
+                        <div class="form-group col-md-6" id="firstname-group">
+                            <label>{{ lang('entry_name') }} <span class="text-danger">*</span></label>
+                            <input type="text" value="{{ firstname }}" name="firstname" class="form-control" autocomplete="off">
+                            <span class="help-block"></span>
+                        </div>
+
+                        <div class="form-group col-md-6" id="email-group">
+                            <label>{{ lang('entry_email') }}
+                                {% if customer_fields['email'] == '1' %}
+                                    <span class="text-danger">*</span>
+                                {% endif %}
+                            </label>
+                            <input type="text" value="{{ email }}" name="email" class="form-control" autocomplete="off">
+                            <span class="help-block"></span>
+                        </div>
+                            
+                        <div class="form-group col-md-6" id="telephone-group">
+                            <label>{{ lang('entry_telephone') }}
+                                {% if customer_fields['telephone'] == '1' %}
+                                    <span class="text-danger">*</span>
+                                {% endif %}
+                            </label>
+                            <input type="tel" value="{{ telephone }}" style="direction: ltr;"
+                                name="telephone" class="form-control" autocomplete="off">
+                            <span class="help-block"></span>
+                        </div>
+                        
+                        <div class="form-group col-md-6" id="dob-group">
+                            <label>{{ lang('entry_dob') }}
+                                {% if customer_fields['dob'] == '1' %}
+                                    <span class="text-danger">*</span>
+                                {% endif %}
+                            </label>
+                            <input id="dob" value="{{ dob }}" name="dob" class="form-control" autocomplete="off">
+                            <span class="help-block"></span>
+                        </div>
+                        
+                        <div class="form-group col-md-6" id="customer_group_id-group">
+                            <label>{{ lang('entry_customer_group') }}</label>
+
+                            <select name="customer_group_id" class="form-control">
+                                <option selected="selected" value="" disabled>{{lang('text_none')}}</option>
+                                {% for cg in customer_groups %}
+                                    <option value="{{ cg['customer_group_id'] }}"
+                                            {{ customer_group_id == cg['customer_group_id'] ? 'selected="selected"' : '' }}>
+                                        {{ cg['name'] }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <span class="help-block"></span>
+                        </div>
+
+                        <div class="form-group col-md-6" id="company-group">
+                            <label>{{ lang('entry_company') }}
+                                {% if customer_fields['company'] == '1' %}
+                                    <span class="text-danger">*</span>
+                                {% endif %}
+                            </label>
+                            <input type="text" value="{{ company }}" style="direction: ltr;"
+                                name="company" class="form-control" autocomplete="off">
+                            <span class="help-block"></span>
+                        </div>
+                        
+                        <div class="form-group col-md-6" id="gender-group">
+                            <label>{{ lang('entry_gender') }}
+                                {% if customer_fields['gender'] == '1' %}
+                                    <span class="text-danger">*</span>
+                                {% endif %}
+                            </label>
+                            <div>
+                                <select class="form-control" name="gender">
+                                    <option value="" selected="selected" disabled>{{lang('text_none')}}</option>
+                                    <option value="m" id="gender_m">{{lang('entry_gender_m') }}</option>
+                                    <option value="f" id="gender_f">{{lang('entry_gender_f') }}</option>
+                                </select>
+                            </div>
+                            <span class="help-block"></span>
+                        </div>
+
+                        <div class="form-group col-md-6" id="newsletter-group">
+                            <label class="">{{ lang('entry_newsletter') }}</label>
+                            <div class="checkbox checkbox-switchery">
+                                <label>
+                                    <input type="checkbox" onchange="changeStatus(this);" name="newsletter" class="switchery" {{ newsletter in ['1', 1, 'on'] ? 'checked' }}>
+                                    <span class="switchery-status">{{ newsletter in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                </label>
+                            </div>
+                            <span class="help-block"></span>
+                        </div>
+
+                        <div class="clearfix"></div>
+                        
+                        <div class="form-group col-md-6" id="status-group">
+                            <label class="">{{ lang('entry_status') }}</label>
+                            <div class="checkbox checkbox-switchery">
+                                <label>
+                                    <input type="checkbox" onchange="changeStatus(this);" name="status" class="switchery" {{ status in ['1', 1, 'on'] ? 'checked' }}>
+                                    <span class="switchery-status">{{ status in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                </label>
+                            </div>
+                            <span class="help-block"></span>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% set cancel = link('sale/component/customers') %}
+        <!-- Lower Buttons -->
+        {% include "includes/buttons_bottom.expand" %}
+        <!-- End Lower Buttons -->
+
+    </form>
+
+    <script>
+
+    function changeStatus(checkbox)
+    {
+        var self = $(checkbox);
+        var switch_status = self.siblings('.switchery-status');
+
+        if ( self.is(':checked') )
+        {
+            switch_status.html("{{ lang('text_enabled') }}");
+        }
+        else
+        {
+            switch_status.html("{{ lang('text_disabled') }}");
+        }
+    }
+    function changeStatusActive(checkbox)
+    {
+        var self = $(checkbox);
+        var switch_status = self.siblings('.switchery-status');
+
+        if ( self.is(':checked') )
+        {
+            switch_status.html("{{ lang('text_active') }}");
+        }
+        else
+        {
+            switch_status.html("{{ lang('text_inactive') }}");
+        }
+    }
+
+        $.fn.stepy.defaults.backLabel = '<i class="icon-arrow-left13 position-left"></i> {{ lang('button_prev') }}';
+        $.fn.stepy.defaults.nextLabel = '{{ lang('button_next') }} <i class="icon-arrow-right14 position-right"></i>';
+        $(".customerForm").stepy();
+        $('.customerForm').find('.button-next').addClass('btn btn-primary');
+        $('.customerForm').find('.button-back').addClass('btn btn-default');
+
+        $('select').select2();
+
+        $('.zones').select2({
+            ajax: {
+                url: 'sale/customer/country',
+                data: function (params) {
+
+                    var $geoZones = $(this).parents('.geoZones');
+
+                    var $countries = $('.countries', $geoZones);
+
+                    var $value = $countries.val();
+
+                    return {
+                        country_id: $value
+                    };
+                },
+                dataType: 'json',
+                processResults: function (data) {
+                    return {
+                        results: $.map(data.zone, function (item, index) {
+                            return {
+                                id: item.zone_id,
+                                text: item.name
+                            };
+                        })
+                    };
+                },
+                cache: true
+            }
+        });
+
+    </script>
+    
+    <script>
+        $(function(){  
+          var datePikerObject = {
+                autoApply: true,
+                startDate: moment().format('YYYY-MM-DD'),
+                endDate: moment().format('YYYY-MM-DD'),
+                dateFormat: 'yy-mm-dd'
+            };
+
+            $('#dob').datepicker(datePikerObject);
+        });
+    </script>
+    
+{% endblock content %}

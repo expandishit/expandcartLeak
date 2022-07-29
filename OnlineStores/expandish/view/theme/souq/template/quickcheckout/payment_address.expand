@@ -1,0 +1,301 @@
+<!-- Quick Checkout v4.0 by Dreamvention.com quickcheckout/register.tpl -->
+<div id="payment_address_wrap" {% if not payment_address['display'] %}class="qc-hide"{% endif %}>
+  <div class="box box-border">
+    <div class="box-heading">
+      <span class="wrap"><span class="qc-icon-profile"></span></span>
+      <span class="text">{{ payment_address['title'] }}</span>
+    </div>
+    <div class="box-content">
+      {% if payment_address['description'] %}<div class="description">{{ payment_address['description'] }}</div>{% endif %}
+
+      {% if is_logged %}
+
+      {% if address_style  == 'radio' %}
+      <div>
+        {% for address in addresses %}
+          <div class="radio-input">
+            <input type="radio" name="payment_address[address_id]" value="{{ address['address_id'] }}" id="payment_address_exists_{{ address['address_id'] }}" {{ address['address_id'] == payment_address['address_id'] ? 'checked="checked"' : '' }} data-require="require" class="styled" data-refresh="2" autocomplete='off' />
+            <label for="payment_address_exists_{{ address['address_id'] }}">
+                {{ address['firstname'] }}
+                {{ address['lastname'] }}
+                {{ address['address_1'] }}
+                {{ address['city'] }}
+                {{ address['zone'] }}
+                {{ address['country'] }}
+            </label>
+          </div>
+        {% endfor %}
+         <div class="radio-input">
+            <input type="radio" name="payment_address[address_id]" value="0" id="payment_address_exists_0" {{ payment_address['address_id'] == 0 ? 'checked="checked"' : '' }} class="styled" data-refresh="2" autocomplete='off' />
+            <label for="payment_address_exists_0">{{ lang('text_address_new') }}</label>
+        </div>
+      </div>
+      {% else %}
+      <div>
+        <div id="payment_address_exists_1_block" class="radio-input">
+          <input type="radio" name="payment_address[exists]" value="1" id="payment_address_exists_1" {{ payment_address['exists'] ? 'checked="checked"' : '' }} class="styled" data-refresh="1" autocomplete='off' />
+          <label for="payment_address_exists_1">{{ lang('text_address_existing') }}</label>
+        </div>
+      </div>
+      <div id="payment_address_exists_list" class="select-input {{ not payment_address['exists'] ?  'qc-hide' : '' }}">
+        <select class="custom-select" name="payment_address[address_id]" style="width: 100%; margin-bottom: 15px;" data-require="require" data-refresh="3">
+          {% for address in addresses %}
+              <option value="{{ address['address_id'] }}" {{ address['address_id'] == payment_address['address_id'] ? 'selected="selected"' : '' }}>
+                  {{ address['firstname'] }}
+                  {{ address['lastname'] }}
+                  {{ address['address_1'] }}
+                  {{ address['city'] }}
+                  {{ address['zone'] }}
+                  {{ address['country'] }}
+              </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <div id="payment_address_exists_0_block" class="radio-input">
+          <input type="radio" name="payment_address[exists]" value="0" id="payment_address_exists_0" {{ not payment_address['exists'] ?  'checked="checked"' : '' }}  class="styled" data-refresh="1" autocomplete='off' />
+          <label for="payment_address_exists_0">{{ lang('text_address_new') }}</label>
+        </div>
+      </div>
+      {% endif %}
+      {% endif %}
+      {%  if payment_address['send_as_gift']['status'] == 1  %}
+      <div>
+          <div id="payment_send_as_gift_block" class="checkbox-input">
+              <input type="checkbox" name="{{ name }}[{{ payment_address['send_as_gift']['id'] }}]"
+                   id="{{ name }}_{{ payment_address['send_as_gift']['id'] }}"
+                   data-require="{{ payment_address['send_as_gift']['require'] ? 'require' : '' }}"
+                   data-refresh="{{ payment_address['send_as_gift']['refresh'] ? payment_address['send_as_gift']['refresh'] : 0 }}"
+                    {% if payment_address['send_as_gift']['value'] == 1 %} value="1" {% else %} value="0" {% endif %}
+                    {% if payment_address['send_as_gift']['value'] == 1 %} checked="checked" {% endif %}
+                   class="styled"
+                   autocomplete='off' />
+              <label for="payment_address_send_as_gift">{{ lang('send_as_gift') }}</label>
+          </div>
+      </div>
+      {% endif %}
+      {%  if config('enable_storable_products') == 1  %}
+      <div>
+          <div id="payment_store_in_store_block" class="checkbox-input">
+              <input type="checkbox" name="order_attributes[store_in_store]"
+                   id="store_in_store"
+                   data-require=""
+                   data-refresh="0"
+                    {% if order_attributes['store_in_store'] == 1 %} value="1" {% else %} value="0" {% endif %}
+                    {% if order_attributes['store_in_store'] == 1 %} checked="checked" {% endif %}
+                   class="styled"
+                   autocomplete='off' />
+              <label for="store_in_store">{{ lang('storable_product') }}</label>
+          </div>
+      </div>
+      {% endif %}
+      {% if payment_address['fields']['telephone']['require'] == 1 and payment_address['fields']['telephone']['display'] == 1 and customer_telephone is empty and payment_address['fields']['telephone']['value'] is empty %}
+        <div id="payment_address">
+          {{ field_view }}
+        </div>
+      {% else %}
+        <div id="payment_address" {{ payment_address['exists'] ?  'class="qc-hide"' : '' }}>
+          {{ field_view }}
+        </div>
+      {% endif %}
+      <!-- #payment_address -->
+  </div> <!-- .box-content -->
+</div> <!-- .box -->
+</div> <!-- #payment_address_wrap -->
+<!--<?php
+// echo '<pre>';
+// print_r($this->session->data['payment_address']);
+// echo '</pre>';
+?>-->
+{% if payment_address['fields']['telephone']['require'] %}
+  <script src="/expandish/view/javascript/common/checkout_phone_validation.js"></script>
+{% endif %}
+
+<script type="text/javascript"><!--
+// $('#company_id_input').hide();
+// $('#tax_id_input').hide();
+
+
+{% if payment_address['fields']['customer_group_id']['options'] %}
+$(document).on('click', 'input[name=\'payment_address[customer_group_id]\']', function() {
+  var customer_group = [];
+
+{% for customer_group in payment_address['fields']['customer_group_id']['options'] %}
+  customer_group[{{ customer_group['customer_group_id'] }}] = [];
+  customer_group[{{ customer_group['customer_group_id'] }}]['company_id_display'] = '{{ customer_group['company_id_display'] }}';
+  customer_group[{{ customer_group['customer_group_id'] }}]['company_id_required'] = '{{ customer_group['company_id_required'] }}';
+  customer_group[{{ customer_group['customer_group_id'] }}]['tax_id_display'] = '{{ customer_group['tax_id_display'] }}';
+  customer_group[{{ customer_group['customer_group_id'] }}]['tax_id_required'] = '{{ customer_group['tax_id_required'] }}';
+{% endfor %}
+
+  if (customer_group[this.value]) {
+    if (customer_group[this.value]['company_id_display'] == '1') {
+      $('#company_id_input').show();
+    } else {
+      $('#company_id_input').hide();
+    }
+    if (customer_group[this.value]['tax_id_display'] == '1') {
+      $('#tax_id_input').show();
+    } else {
+      $('#tax_id_input').hide();
+    }
+    if (customer_group[this.value]['company_id_required'] == '1') {
+      $('#payment_address_company_id').attr('data-require', 'require');
+      $('label[for=\'payment_address_company_id\'] span.required.qc-hide').removeClass('qc-hide');
+    } else {
+      $('#payment_address_company_id').attr('data-require', '');
+      $('label[for=\'payment_address_company_id\'] span.required').addClass('qc-hide');
+    }
+    if (customer_group[this.value]['tax_id_required'] == '1') {
+      $('#payment_address_tax_id').attr('data-require', 'require');
+      $('label[for=\'payment_address_tax_id\'] span.required.qc-hide').removeClass('qc-hide');
+    } else {
+      $('#payment_address_tax_id').attr('data-require', '');
+      $('label[for=\'payment_address_tax_id\'] span.required').addClass('qc-hide');
+    }
+  }
+});
+{% endif %}
+$(document).on('click', 'input[name=\'payment_address[exists]\']', function() {
+	if (this.value == '0') {
+		$('#payment_address_exists_list').hide();
+		$('#payment_address').show();
+	} else {
+		$('#payment_address_exists_list').show();
+		$('#payment_address').hide();
+	}
+});
+
+function refreshPaymentAddessZone(value) {
+
+	$.ajax({
+		url: 'index.php?route=module/quickcheckout/country&country_id=' + value,
+		dataType: 'json',
+		beforeSend: function() {
+
+		},
+		complete: function() {
+
+		},
+		success: function(json) {
+
+			if (json['postcode_required'] == '1') {
+				$('#payment-postcode-required').show();
+			} else {
+				$('#payment-postcode-required').hide();
+			}
+
+			html = '<option value="">{{ lang('text_select') }}</option>';
+
+			if (json['zone'] != '') {
+
+				for (i = 0; i < json['zone'].length; i++) {
+        			html += '<option value="' + json['zone'][i]['zone_id'] + '"';
+					if (json['zone'][i]['zone_id'] == '{{ payment_address['fields']['zone_id']['value'] }}') {
+	      				html += ' selected="selected"';
+	    			}
+
+	    			html += '>' + json['zone'][i]['name'] + '</option>';
+				}
+			} else {
+				html += '<option value="0" selected="selected">{{ lang('text_none') }}</option>';
+			}
+
+			$('#payment_address_wrap select[name=\'payment_address[zone_id]\']').html(html);
+
+            $('#payment_address_iso_code_2').val(json['iso_code_2']);
+            $('#payment_address_phonecode').val(json['phonecode']);
+            refreshPhonecodeAndFlag();
+		},
+		error: function(xhr, ajaxOptions, thrownError) {
+			console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+		}
+		});
+}
+
+function refreshPhonecodeAndFlag() {
+    {% if not display_country_code %}
+    return;
+    {% endif %}
+
+  var iso_code_2 = $('#payment_address_iso_code_2').val();
+    var phonecode = $('#payment_address_phonecode').val();
+
+    var phoneWidth = "45%";
+    if(phonecode.length == 3)
+        phoneWidth = "43%";
+    else if(phonecode.length == 4)
+        phoneWidth = "42%";
+
+    if($('#telephone_div').length == 0) {
+        $('#payment_address_telephone').wrap("<div id='telephone_div' style='display:inline-block;width:53%;direction:ltr !important;white-space: nowrap;'></div>");
+        $('#payment_address_telephone').width(phoneWidth);
+        $('#payment_address_telephone').css('text-align', 'left');
+        $("<img id='imgPhonecode' src='admin/view/image/flags/" + iso_code_2.toLowerCase() + ".png' title='" + iso_code_2 + "' /><span id='spanPhonecode'> +" + phonecode + "  </span>").insertBefore('#payment_address_telephone');
+    }
+    else {
+        $("#imgPhonecode").attr("src","admin/view/image/flags/" + iso_code_2.toLowerCase() + ".png");
+        $("#spanPhonecode").text(" +" + phonecode + "  ");
+    }
+}
+//refreshPaymentAddessZone($('#payment_address_wrap select[name=\'payment_address[country_id]\']').val())
+function refreshPaymentAddessArea(value) {
+	$.ajax({
+		url: 'index.php?route=module/quickcheckout/zone&zone_id=' + value,
+		dataType: 'json',			
+		success: function(json) {
+			html = '<option value="">{{ lang('text_select') }}</option>';
+
+			if (json['area'] != '') {
+				for (i = 0; i < json['area'].length; i++) {
+        	html += '<option value="' + json['area'][i]['area_id'] + '"';
+					if (json['area'][i]['area_id'] == '{{ payment_address['fields']['area_id']['value'] }}') {
+	      		html += ' selected="selected"';
+	    		}
+	    		html += '>' + json['area'][i]['name'] + '</option>';
+				}
+			} else {
+				html += '<option value="0" selected="selected">{{ lang('text_none') }}</option>';
+			}
+			
+			$('#payment_address_wrap select[name=\'payment_address[area_id]\']').html(html);
+		},
+		error: function(xhr, ajaxOptions, thrownError) {
+			console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+		}
+	});
+}
+$('#payment_address_wrap select[name=\'payment_address[country_id]\']').bind('change', function(){
+	refreshPaymentAddessZone($(this).val());
+});
+$('#payment_address_wrap select[name=\'payment_address[zone_id]\']').bind('change', function(){
+    
+	refreshPaymentAddessArea($(this).val());	
+});                        
+//  $('#payment_address_wrap select[name=\'payment_address[country_id]\']').addClass('js-select2 country');
+//  $('#payment_address_wrap select[name=\'payment_address[zone_id]\']').addClass('js-select2 city');
+//switchery
+// var elem = document.querySelector('.styled');
+//   var init = new Switchery(elem);
+
+$(function(){
+    refreshPhonecodeAndFlag();
+	if($.isFunction($.fn.uniform)){
+		$(" .styled, input:radio.styled").uniform().removeClass('styled');
+	}
+
+
+	if($.isFunction($.fn.colorbox)){
+		$('.colorbox').colorbox({
+			width: 640,
+			height: 480
+		});
+	}
+	if($.isFunction($.fn.fancybox)){
+		$('.fancybox').fancybox({
+			width: 640,
+			height: 480
+		});
+	}
+});
+//--></script>

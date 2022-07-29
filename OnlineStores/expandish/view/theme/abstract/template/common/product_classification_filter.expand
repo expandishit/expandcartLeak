@@ -1,0 +1,96 @@
+<div id="content" class="container">
+    <div class="middle">
+        <div class="row">
+            <div class="col-md-12">
+                <div>
+                    <h3 style="margin: 30px 0;padding: 0;text-align: center;">{{ pc_form_title }}</h3>
+                    <form id='' action="" method="get" class="form-inline">
+                        <input type="hidden" name="route" value="product/search">
+                        <input type="hidden" name="pc_target" value="pc_app">
+                        <input type="hidden" name="search" value="_">
+                        <div id="" class="row">
+                            <div style="" class="col-md-4 pc_filter_inputs">
+                                <select name="pc_brand_id" class="form-control brand_select" style="width:100%">
+                                    <option>{{ pc_brand_text }}</option>
+                                    {% for pb in pc_brands %}
+                                        <option value="{{ pb['pc_brand_id'] }}">
+                                            {{ pb['name'] }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div style="" class="col-md-4 pc_filter_inputs">
+                                <select name="pc_model_id" class="form-control model_select" style="width:100%">
+                                    <option>{{ pc_model_text }}</option>
+
+                                </select>
+                            </div>
+
+                            <div style="" class="col-md-4 pc_filter_inputs">
+                                <select name="pc_year_id" class="form-control year_select" style="width:100%">
+                                    <option>{{ pc_year_text }}</option>
+
+                                </select>
+                            </div>
+
+                        </div>
+                        <div style="text-align: center;margin: 30px 0;">
+                            <input type="submit"
+                                   value="{{ lang('text_search') }}"
+                                   class="btn btn-success"/>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <br><br>
+        </div>
+    </div>
+</div>
+<script>
+    $(document).ready(function(){
+        $('body').on("change",".brand_select",function () {
+            var self = this;
+            var brand = $(self).val();
+
+            var textData = "<option>{{  pc_model_text  }}</option>";
+            $.ajax({
+                url: '{{ link('module/product_classification/get_models_by_brand') }}',
+                method: 'POST',
+                dataType: 'JSON',
+                data: {brand: brand},
+                success: function (response) {
+                    if (response['status'] == 'success') {
+                        var models = response['models'];
+                        models.forEach(function (model) {
+                            textData += '<option value="' + model['pc_model_id'] + '">' + model['name'] + '</option>';
+                        })
+                        $('.model_select').html(textData);
+                    }
+                }
+            });
+        });
+
+        $('body').on("change",".model_select",function () {
+            var self = this;
+            var model_id = $(".model_select").val();
+            var textData = '<option>{{  pc_year_text  }}</option>';
+            $.ajax({
+                url: '{{ link('module/product_classification/get_years_by_model') }}',
+                method: 'POST',
+                dataType: 'JSON',
+                data: {model: model_id},
+                success: function (response) {
+                    if (response['status'] == 'success') {
+                        var years = response['years'];
+                        years.forEach(function (year) {
+                            textData += '<option value="' + year['pc_year_id'] + '">' + year['name'] + '</option>';
+                        })
+                        $('.year_select').html(textData);
+
+                    }
+                }
+            });
+        });
+    });
+</script>

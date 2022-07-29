@@ -1,0 +1,72 @@
+<?php
+
+$_  = [ 
+    'tagerly_heading_title'  => 'TAGERLY', 
+    'error_warning'    => 'Avertissement: Assurez-vous de revoir des champs incorrects ou obligatoires! ', 
+    'please_wait' => 'Veuillez patienter ...', 
+
+    //entry
+    'entry_status'  => 'Statut', 
+    'entry_page_from'  => 'De la page', 
+    'entry_page_to'  => 'À la page', 
+    'entry_custom_pages'  => 'Pages personnalisées', 
+    'entry_all_categories'  => 'Importer tous les produits', 
+    'entry_custom_categories'  => 'Importer des catégories personnalisées', 
+    'entry_list'  => 'Votre liste de produits sur TAGERLY', 
+    'entry_categories'  => 'Catégories', 
+    'entry_categories_help'  => 'Les catégories qui importent à partir de', 
+    'entry_apikey'  => 'Key API', 
+    'entry_secretkey'  => 'Clé secrète', 
+    'entry_name'  => 'Nom du client', 
+    'entry_mobile'  => 'Téléphone', 
+    'entry_mobile_2'  => 'Phone 2', 
+    'entry_address'  => "Adresse", 
+    'entry_state'  => 'State', 
+    'entry_description'  => 'Description', 
+    'entry_send_order_status'  => 'Statut de commande', 
+    'entry_send_order_status_help'  => 'Choisissez l\'état de la commande dans laquelle la commande sera envoyée à Tagerly', 
+
+    //text
+    'heading_title_send_order'  => 'Envoyer l\'ordre à tagler', 
+    'general_settings'  => 'Paramètres généraux', 
+    'text_settings_success'  => 'Paramètres mis à jour avec succès', 
+    'text_order_success'  => 'Votre commande est placée avec succès', 
+    'text_tagerly_notes'  => 'Informations importantes pour intégrer avec Termy', 
+    'text_tagerly_notes_price'  => 'Les prix de vente des produits doivent être ajustés après l\'importation des produits de Termally pour éviter de rejeter les commandes de Termely', 
+    'text_tagerly_notes_currency'  => 'Vous devez activer la monnaie de la livre égyptienne et en faire la monnaie par défaut ', 
+    'profit_margin'  => "Marge bénéficiaire", 
+    'add_profit_margin'  => 'Ajouter une marge bénéficiaire', 
+    'text_success'  => 'Paramètres mis à jour avec succès', 
+    'text_settings'  => 'Paramètres', 
+    'text_sync_products'  => 'Sync produits stock', 
+    'btn_sync_products'  => 'Sync maintenant', 
+    'text_products_synced'  => 'Produits Total synchronisés', 
+    'text_customer_info'  => 'Informations client', 
+    'text_enabled'  => 'Activé', 
+    'text_disabled'  => 'Désactivé', 
+    'text_import'  => 'Produits d\'importation et catégories', 
+    'text_import_products'  => 'Import Products', 
+    'text_categories_imported'  => 'Catégories importées totales', 
+    'text_products_imported'  => 'Produits importés totaux', 
+    'text_import_products_note'  => 'Attention: lors de l\'importation de produits, vos produits seront supprimés et les produits importés de Mart. Le processus d\'importation de tous les produits a lieu, s\'il vous plaît ne fermez pas la page en permanence ', 
+    'text_success_imported_products'  => 'Produits importés Total% S Produit', 
+    'job_started_message'  => 'Le processus d\'importation a été démarré avec succès, veuillez noter qu\'il s\'agit d\'un processus de consommation d\'heure et de ressources et il faut quelque temps. Essayez de vérifier la section de vos produits après quelques minutes pour voir le nombre de produits importés. ', 
+
+    // error
+    'error_permission'      => 'Avertissement: vous n\'avez pas la permission de modifier les codes!', 
+    'unexpected_error'      => "Une erreur inattendue S\'est produite", 
+    'error_apikey_required'      => 'Touche API est requise', 
+    'error_secretkey_required'      => 'Clé secrète est requise', 
+    'error_categories_ids_required'      => 'Catégories est requise', 
+    'error_name_required'      => 'Nom du client est requis', 
+    'error_phone_required'      => 'Le téléphone client est requis', 
+    'error_phone_2_required'      => 'Le téléphone client 2 est requis', 
+    'error_address_required'      => 'Adresse client est requise', 
+    'error_state_required'      => 'Etat est requis', 
+
+    // btn
+    'btn_import_products'  => 'Import Products', 
+    'btn_import_categories'  => 'Catégories d\'importation', 
+    'button_send_order'  => 'Envoyer une commande', 
+];
+

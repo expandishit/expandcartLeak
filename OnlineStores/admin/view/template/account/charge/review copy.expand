@@ -1,0 +1,319 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% set dualMenuEnabled = false %}
+
+{% block title %}
+    {{ lang('review_heading') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+<span class="headLinksEffect">
+</span>
+{% endblock headelements %}
+
+{% block content %}
+
+<style>
+.StripeElement {
+    box-sizing: border-box;
+
+    height: 40px;
+
+    padding: 10px 12px;
+
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background-color: white;
+
+    box-shadow: 0 1px 3px 0 #e6ebf1;
+    -webkit-transition: box-shadow 150ms ease;
+    transition: box-shadow 150ms ease;
+}
+
+.StripeElement--focus {
+    box-shadow: 0 1px 3px 0 #cfd7df;
+}
+
+.StripeElement--invalid {
+    border-color: #fa755a;
+}
+
+.StripeElement--webkit-autofill {
+    background-color: #fefde5 !important;
+}
+
+.panel.panel-default .bg-success {
+    padding-bottom: 15px;
+}
+
+.payment-method:not(:last-child) {
+    border-bottom: 1px solid #ccc;
+}
+
+.payment-method {
+    padding: 10px;
+}
+
+#spinner {
+    text-align: center;
+    position: absolute;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    top: 0;
+    width: 100%;
+    right: 0;
+    z-index: 1000;
+}
+
+#spinner .fas {
+    vertical-align: middle;
+    margin: 0 auto;
+    position: absolute;
+    top: 50%;
+}
+</style>
+
+{#% include "account/charge/modals/stripe-charge.expand" %#}
+<div id="spinner" style="display: none;">
+    <div class="fa-3x"><i class="fas fa-spinner fa-pulse"></i></div>
+</div>
+<form method="POST" id="charges-form">
+<div class="row">
+    <div class="col-md-2"></div>
+    <div class="col-md-8">
+        <div class="panel panel-default">
+            <div class="bg-success"></div>
+            <div class="panel-body">
+                <div class="form-errors"></div>
+                <div class="collapse in" id="panel-posts">
+                    <div class="form-group col-md-12" id="name-group">
+                        <div class="col-md-6 text-bold">{{ lang('product_name') }}</div>
+                        <div class="col-md-6">{{ lang('product_' ~ productId) }}</div>
+                    </div>
+
+                    <div class="form-group col-md-12" id="name-group">
+                        <div class="col-md-6 text-bold">{{ lang('billing_cycle') }}</div>
+                        <div class="col-md-6">
+                            {{ lang('billing_' ~ billingCycle) }}
+                        </div>
+                    </div>
+
+                    <div class="form-group col-md-12" id="name-group">
+                        <div class="col-md-6 text-bold">{{ lang('billing_amount') }}</div>
+                        <div class="col-md-6">{{ product['after'] }}</div>
+                    </div>
+
+                    <div class="form-group col-md-12" id="name-group">
+                        <div class="col-md-12 text-bold">{{ lang('payment_methods') }}</div>
+                    </div>
+
+                    <div class="form-group col-md-12">
+                        <div class="col-md-12 payment-method">
+                            <div class="col-md-2">
+                                <input type="radio" class="styled" name="method" value="stripe" id="stripe_method" />
+                            </div>
+                            <div class="col-md-10"><label for="stripe_method">{{ lang('method_stripe') }}</label></div>
+                            <div class="col-md-12" id="stripe-container" style="display: none;">
+                                <div class="row" id="card-element">
+                                    {#<div class="form-group">
+                                        <label for="username">Full name (on the card)</label>
+                                        <input type="text" name="username"
+                                            placeholder="Jason Doe" required class="form-control">
+                                    </div>#}
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="card_number">{{ lang('cc_number') }}</label>
+                                                <div class="input-group">
+                                                    <div class="input-group-addon">
+                                                        <span class="input-group-text text-muted">
+                                                            <i class="fa fa-cc-visa mx-1"></i>
+                                                            <i class="fa fa-cc-amex mx-1"></i>
+                                                            <i class="fa fa-cc-mastercard mx-1"></i>
+                                                        </span>
+                                                    </div>
+                                                    <input type="text" name="card_number"
+                                                        placeholder="{{ lang('cc_number_ph') }}" class="form-control">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-4">
+                                            <div class="form-group">
+                                                <label><span class="hidden-xs">{{ lang('cc_expiration') }}</span></label>
+                                                <div class="input-group">
+                                                    <input type="number" placeholder="MM" name="month"
+                                                        style="width: 50%;"
+                                                        class="form-control" required>
+                                                    <input type="number" placeholder="YY" name="year"
+                                                        style="width: 50%;"
+                                                        class="form-control" required>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-2">
+                                            <div class="form-group mb-4">
+                                                <label data-toggle="tooltip"
+                                                    title="Three-digits code on the back of your card">
+                                                    {{ lang('cc_cvc') }} <i class="fa fa-question-circle"></i>
+                                                </label>
+                                                <input type="text" name="cvc" required class="form-control">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="card-errors" role="alert"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-12 payment-method">
+                            <div class="col-md-2">
+                                <input type="radio" class="styled" name="method" value="paypal" id="paypal_method" />
+                            </div>
+                            <div class="col-md-2"><label for="paypal_method">{{ lang('method_paypal') }}</label></div>
+                            <div class="col-md-8" id="paypal-container" style="display: none;">
+                                <div>{{ lang('paypal_hint') }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {#<div class="form-group col-md-6" id="name-group">
+                        <div class="col-md-6 text-bold">{{ lang('change_cycle') }}</div>
+                        <div class="col-md-6">
+                        {% if (billingCycle == 'monthly') %}
+                        {% elseif (billingCycle == 'annually') %}
+                        {% endif %}
+                        </div>
+                    </div>#}
+                </div>
+            </div>
+            <div class="panel-footer-condensed text-center">
+                <button type="button" class="btn btn-primary submit-form" disabled>{{ lang('button_save') }}</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ lang('button_cancel') }}</button>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2"></div>
+</div>
+
+<input type="hidden" id="amount-field" name="amount" value="{{ product['after'] }}" />
+<input type="hidden" id="customer-field" name="customer" value="{{ customer }}" />
+<input type="hidden" id="currency-field" name="currency" value="usd" />
+<input type="hidden" id="plan-id-field" name="plan_id" value="{{ productId }}" />
+<input type="hidden" id="paypal-plan-id-field" name="paypal_plan_id" value="{{ paypalPlanId }}" />
+<input type="hidden" id="plan-type-field" name="plan_type" value="{{ billingCycle }}" />
+
+</form>
+
+<script type="text/javascript" src="view/assets/js/plugins/forms/styling/uniform.min.js"></script>
+<script>
+$('.styled').uniform({radioClass: 'choice'});
+
+let urls = {
+    'paypal': "{{ link('account/charge/paypalCharge') }}",
+    'stripe': "{{ link('account/charge/stripeCharge') }}",
+};
+
+var submitForm = $('.submit-form');
+
+$('.payment-method :radio').change(function (e) {
+    let v = $(this).val();
+
+    if (v != 'stripe' && v != 'paypal') {
+        submitForm.attr('disabled', true);
+
+        return;
+    }
+
+    if (typeof urls[v] == 'undefined') {
+        submitForm.attr('disabled', true);
+
+        return;
+    }
+
+    if (v == 'stripe') {
+        $('#paypal-container').hide(() => {
+            $('#stripe-container').show();
+        });
+    } else if (v == 'paypal') {
+        $('#stripe-container').hide(() => {
+            $('#paypal-container').show();
+        });
+    }
+
+    submitForm.attr('disabled', false);
+
+    $('#charges-form').attr('action', urls[v]);
+});
+
+submitForm.click(function () {
+
+    submitForm.attr('disabled', true);
+
+    switchSpinner();
+
+    let pm = $('[name="method"]:checked').val();
+
+    if (pm != 'stripe' && pm != 'paypal') {
+        console.log('error 1');
+        return;
+    }
+
+    let action = $('#charges-form').attr('action');
+
+    if (typeof urls[pm] == 'undefined' || urls[pm] != action) {
+        console.log('error 2');
+        return;
+    }
+
+    if (pm == 'stripe') {
+        let me = $('.form-errors');
+        me.html('');
+
+        $.ajax({
+            url: action,
+            method: 'POST',
+            dataType: 'JSON',
+            data: $('#charges-form').serialize(),
+            success: (r) => {
+                if (typeof r.status != 'undefined' && r.status == 'OK') {
+                    window.location = r.location;
+                } else {
+                    for (i in r.errors) {
+                        let e = r.errors[i];
+                        me.append(`<div class="alert alert-danger">${e}</div>`);
+                    }
+                    switchSpinner();
+
+                    submitForm.attr('disabled', false);
+                }
+            }
+        });
+    } else if (pm == 'paypal') {
+        $.ajax({
+            url: action,
+            method: 'POST',
+            dataType: 'JSON',
+            data: $('#charges-form').serialize(),
+            success: (r) => {
+                if (typeof r.status != 'undefined' && r.status == 'OK') {
+                    window.location = r.approve_url;
+                }
+            }
+        });
+    }
+});
+
+function switchSpinner() {
+    if ($('#spinner').is(":hidden")) {
+        $('#spinner').show();
+    } else {
+        $('#spinner').hide();
+    }
+}
+</script>
+
+{% endblock content %}
+

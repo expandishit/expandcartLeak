@@ -1,0 +1,85 @@
+{# <script src="{{ script_link }}"></script> #}
+<div class="buttons">
+  <div class="right">
+    <input type="button" value="{{ lang('button_confirm') }}"  id="button-confirm"
+           class="button
+    fawary-pay-btn"
+ 		src="https://www.atfawry.com//FawryMerchantWeb/resources/images/fawry_new_logo_en.png"/>
+  </div>
+    <div id="fawry-UAT"></div>
+</div>
+
+
+<script type="text/javascript">
+
+
+function fawry_iframe() {
+	const configuration = {
+        locale : "{{ language }}",
+        divSelector: 'fawry-UAT',
+        mode: DISPLAY_MODE.SEPARATED,
+        onSuccess: successCallBack,
+        onFailure: failureCallBack,
+    };
+	
+	$.ajax({
+			url: '{{ link('payment/fawry/preparePaymentData') }}',
+			type: 'get',
+			dataType: 'JSON',
+			success: function(chargeRequest){
+				console.log('chargeRequest',chargeRequest);
+				 FawryPay.checkout(chargeRequest, configuration);
+			}
+	});
+
+}
+
+function successCallBack(data) {
+    console.log('handle success call back as desired, data', data);
+    document.getElementById('fawryPayPaymentFrame')?.remove();
+}
+
+function failureCallBack(data) {
+    console.log('handle failure call back as desired, data', data);
+    document.getElementById('fawryPayPaymentFrame')?.remove();
+}
+
+/** Vanilla js load script */
+function loadScript(url, id, callback) {
+    var script = document.getElementById(id);
+    if (script) {
+        callback && callback();
+        return;
+    }
+
+    script = document.createElement("script")
+    script.type = "text/javascript";
+    script.id = id;
+
+    if (script.readyState) { //IE
+        script.onreadystatechange = function () {
+            if (script.readyState == "loaded" || script.readyState == "complete") {
+                script.onreadystatechange = null;
+                callback && callback();
+            }
+        };
+    } else { //Others
+        script.onload = function () {
+            callback && callback();
+        };
+    }
+
+    script.src = url;
+    document.getElementsByTagName("head")[0].appendChild(script);
+}    
+
+(function() {
+    var btn = document.querySelector('#button-confirm');
+    if (!btn) return;
+    btn.addEventListener('click', function() {
+        loadScript('{{script_link}}', 'fawry-pay-sdk', fawry_iframe)
+    }, !1);
+}());
+</script>
+
+{% include 'default/template/payment/external_payment_msg.expand' %}

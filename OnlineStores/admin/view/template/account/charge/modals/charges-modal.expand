@@ -1,0 +1,234 @@
+<style>
+    .payment-methods {
+        font-size: 130px;
+        color: #0685bf;
+    }
+
+    .payment-methods .charges i {
+        border: #034665 1px solid;
+        padding: 50px;
+        border-radius: 15px;
+    }
+
+    .payment-methods .charges i:hover {
+        background-color: #f5f5f5;
+        border-color: #0685bf;
+        cursor: pointer;
+    }
+
+    #spinner {
+        text-align: center;
+        position: absolute;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        top: 0;
+        width: 100%;
+        right: 0;
+        z-index: 1000;
+    }
+
+    #spinner .fas {
+        vertical-align: middle;
+        margin: 0 auto;
+        position: absolute;
+        top: 50%;
+    }
+</style>
+
+<div class="modal fade" id="charges-modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div id="spinner" style="display: none;">
+                <div class="fa-3x"><i class="fas fa-spinner fa-pulse"></i></div>
+            </div>
+            <div class="modal-header">
+                <h5 class="modal-title">{{ lang('payment_info') }}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+
+                <div class='modal-errors'></div>
+
+
+                <div class="row payment-methods" id="payment-methods">
+                    <div class="col-md-6 col-sm-12 text-center paypal charges">
+                        <i class="charge fab fa-paypal"
+                            data-action="{{ link('account/charge/paypalCharge') }}"
+                            id="paypal-charge"></i>
+                    </div>
+                    <div class="col-md-6 col-sm-12 text-center srtipe charges">
+                        <i class="charge fas fa-credit-card"
+                            data-action="{{ link('account/charge/stripeCharge') }}"
+                            id="srtipe-charge"></i>
+                    </div>
+                </div>
+
+                <form method="POST" style="display: none;" action="{{ link('account/charge/stripeCharge') }}"
+                    id="charges-form">
+                    <div class="form-row">
+                        <label for="card-element">الدفع بواسطة كروت الإئتمان</label>
+                    </div>
+                    <div class="form-row">
+                        <div id="card-element">
+                            <div class="text-center"><div class="fa-3x"><i class="fas fa-spinner fa-pulse"></i></div></div>
+                        </div>
+                        <!-- Used to display Element errors. -->
+                        <div id="card-errors" role="alert"></div>
+                    </div>
+                    <input type="hidden" id="amount-field"   name="amount" value="" />
+                    <input type="hidden" id="customer-field" name="customer" value="{{ customer }}" />
+                    <input type="hidden" id="currency-field" name="currency" value="usd" />
+                    <input type="hidden" id="plan-id-field"   name="plan_id" value="0" />
+                    <input type="hidden" id="plan-type-field" name="plan_type" value="monthly" />
+                </form>
+            </div>
+            <div class="modal-footer" style="display: none;">
+                <button type="button" class="btn btn-primary submit-form stripe">{{ lang('button_save') }}</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ lang('button_cancel') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://js.stripe.com/v3/"></script>
+
+<script>
+
+var chargesModal = $('#charges-modal');
+
+chargesModal.on('show.bs.modal', function (e) {
+    let r = $(e.relatedTarget), c = $(e.currentTarget);
+    $('#amount-field').val(r.data('amount'));
+    $('#amount-currency').val(r.data('currency'));
+    $('#plan-id-field').val(r.data('plan-id'));
+    $('#plan-type-field').val(r.data('plan-type'));
+});
+
+$('#srtipe-charge').click(function () {
+
+    $('.modal-footer, #charges-form').slideDown();
+    $('#payment-methods').slideUp();
+
+    // Create a Stripe client.
+    var stripe = Stripe('{{ constant("STRIPE_PUBLIC_KEY") }}');
+
+    // Create an instance of Elements.
+    var elements = stripe.elements();
+
+    // Custom styling can be passed to options when creating an Element.
+    // (Note that this demo uses a wider set of styles than the guide below.)
+    var style = {
+        base: {
+            color: '#32325d',
+            fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+            fontSmoothing: 'antialiased',
+            fontSize: '16px',
+            '::placeholder': {
+                color: '#aab7c4'
+            }
+        },
+        invalid: {
+            color: '#fa755a',
+            iconColor: '#fa755a'
+        }
+    };
+
+    // Create an instance of the card Element.
+    var card = elements.create('card', {style: style});
+
+    // Add an instance of the card Element into the `card-element` <div>.
+    card.mount('#card-element');
+
+    // Handle real-time validation errors from the card Element.
+    card.addEventListener('change', function(event) {
+        var displayError = document.getElementById('card-errors');
+        if (event.error) {
+            displayError.textContent = event.error.message;
+        } else {
+            displayError.textContent = '';
+        }
+    });
+
+    $('.submit-form.stripe').click(function (e) {
+        switchSpinner();
+        e.preventDefault();
+
+        stripe.createToken(card).then(function(result) {
+            if (result.error) {
+                // Inform the user if there was an error.
+                var errorElement = document.getElementById('card-errors');
+                errorElement.textContent = result.error.message;
+            } else {
+                // Send the token to your server.
+                // stripeTokenHandler(result.token);
+                var form = document.getElementById('charges-form');
+                var hiddenInput = document.createElement('input');
+                hiddenInput.setAttribute('type', 'hidden');
+                hiddenInput.setAttribute('name', 'stripeToken');
+                hiddenInput.setAttribute('value', result.token.id);
+                form.appendChild(hiddenInput);
+
+                let me = $('.modal-errors');
+                me.html('');
+
+                // $('#charges-form').submit();
+                let u = $('#charges-form').attr('action');
+                $.ajax({
+                    url: u,
+                    method: 'POST',
+                    dataType: 'JSON',
+                    data: $('#charges-form').serialize(),
+                    success: (r) => {
+                        if (typeof r.status != 'undefined' && r.status == 'OK') {
+                            console.log('complete integration with whmcs');
+
+                            window.location = r.location;
+                        } else {
+                            for (i in r.errors) {
+                                let e = r.errors[i];
+                                me.append(`<div class="alert alert-warning">${e}</div>`);
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    });
+
+});
+
+function switchSpinner() {
+    if (chargesModal.find('#spinner').is(":hidden")) {
+        // chargesModal.find('#payment-methods').hide();
+        chargesModal.find('#spinner').show();
+    } else {
+        // chargesModal.find('#payment-methods').hide();
+        chargesModal.find('#spinner').show();
+    }
+}
+
+$('#paypal-charge').click(function () {
+
+    let t = $(this);
+
+    switchSpinner();
+
+    $.ajax({
+        url: t.data('action'),
+        method: 'POST',
+        dataType: 'JSON',
+        data: $('#charges-form').serialize(),
+        success: (r) => {
+            if (typeof r.status != 'undefined' && r.status == 'OK') {
+
+                window.location = r.approve_url;
+
+            }
+        }
+    });
+
+});
+
+</script>

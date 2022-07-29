@@ -1,0 +1,257 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% set dualMenuEnabled = true %}
+
+{% block title %}
+{{ lang('heading_title') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+{{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block secondarymenu %}
+    {% include 'module/custom_email_templates/menu.expand' with {'expand': '#custom_email_template', 'active': '#template'} %}
+{% endblock secondarymenu %}
+
+{% block headelements %}
+    {% include "includes/buttons_top.expand" %}
+{% endblock headelements %}
+
+{% block content %}
+
+<!-- Start Form -->
+<form id="form" class="form" action="{{ action }}" method="post" enctype="multipart/form-data">
+    <div class="col-md-12" id="error-area">
+    </div>
+    <div class="col-md-12">
+
+        <!-- Advanced legend -->
+        <div class="panel panel-flat">
+            <div class="panel-body">
+                <fieldset>
+                    <legend class="text-semibold">
+                        <i class="fas fa-check-circle fa-lg position-left"></i>
+                        {{ text_form|trim(':') }}
+                        <a class="control-arrow" data-toggle="collapse" data-target="#panel1">
+                            <i class="icon-circle-down2"></i>
+                        </a>
+                    </legend>
+                    <div class="collapse in" id="panel1" >
+                       <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group" id="status-group" >
+                                <div class="col-md-6">
+                                    <label> {{ lang('entry_status') }} </label>
+                                    <span class="help-block"></span>
+                                </div>
+                                <div class="col-md-6">
+                                    <!-- Switchery -->
+                                   <div class="checkbox checkbox-switchery no-margin">
+                                       <label>
+                                           <input type="checkbox" onchange="changeStatus(this);" name="status" class="switchery" {{ status in ['1', 1, 'on'] ? 'checked' }}>
+                                           <span class="switchery-status">{{ status in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                       </label>
+                                   </div>
+                                   <!-- /Switchery -->
+                                   <input type="hidden" name="store_id" value="{{ store_id }}" class="form-control" />
+                                   <input type="hidden" name="code" value="{{ code }}" class="form-control" />
+                                </div>
+                            </div> <br>
+                            <!-- form-group -->
+                            <div class="form-group" id="bcc-group">
+                                <div class="col-md-6">
+                                    <label> {{ lang('entry_bcc') }} </label>
+                                    <span class="help-block">{{ help_bcc }}</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <input type="text" name="bcc" value="{{bcc}}" placeholder="{{entry_bcc}}" id="input-bcc" class="form-control" />
+                                </div>
+                            </div>
+                            <br><br><br>
+                            <!-- form-group -->
+                            <div class="form-group" id="entry_product-group">
+                                <div class="col-md-6">
+                                    <label> {{ lang('entry_product') }} </label>
+                                    <span class="help-block">{{ help_product }}</span>
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-control" name="product">
+                                        <option value="0">{{text_disabled}}</option>
+                                        {% for key,value in products %}
+                                            <option value="{{key}}" {{ key == product ? 'selected="selected"' : '' }} >{{value}}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-sm-3">
+                                    <div class="input-group">
+                                        <span class="input-group-addon">{{entry_product_limit}}</span>
+                                        <input type="text" name="product_limit" value="{{product_limit}}" placeholder="{{entry_product_limit}}" id="input-product-limit" class="form-control" />
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- form-group -->
+                        </div>
+                        <!-- col-md-12 -->
+                        </div>
+                        <!-- row -->
+                    </div>
+                </fieldset>
+            </div>
+        </div>
+        <!-- /a legend -->
+    </div>
+    <!-- /col-md-12 -->
+    <div class="col-md-12">
+        <!-- Advanced legend -->
+        <div class="panel panel-flat">
+            <div class="panel-body">
+                <fieldset>
+                    <legend class="text-semibold">
+                        <i class="fas fa-check-circle fa-lg position-left"></i>
+                        {{ lang('tab_template')|trim(':') }}
+                        <a class="control-arrow" data-toggle="collapse" data-target="#panel1">
+                            <i class="icon-circle-down2"></i>
+                        </a>
+                    </legend>
+                    <div class="collapse in" id="panel1" >
+                       <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                           <div class="tab-content">
+                               {% for lng in languages %}
+                                   <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}"
+                                        id="langTab{{ lng['language_id'] }}">
+                                        <div class="form-group"
+                                               id="subject{{ lng['language_id'] }}-group">
+                                               <label class="control-label">
+                                                   {{ lang('entry_subject') }}
+                                               </label>
+                                               {% set lang='' %}
+                                               {% if template_description[lng['language_id']]['subject'] is defined %}
+                                                   {% set lang=template_description[lng['language_id']]['subject'] %}
+                                               {% endif %}
+                                               <input type="text" class="form-control"
+                                                      id="input-subject{{ lng['language_id'] }}"
+                                                      name="template_description[{{lng['language_id']}}][subject]"
+                                                      value="{{lang}}"
+                                                      placeholder="{{entry_subject}}" id="input-subject{{lng['language_id']}}"
+                                               >
+                                               <span class="help-block"></span>
+                                        </div>
+                                        <div class="form-group" id="template-group">
+                                              <label> {{ lang('Load template') }} </label>
+                                              <select class="form-control" name="template" data-language-id="{{lng['language_id']}}">
+                                                  <option value="0">{{text_template}}</option>
+                                                  {% for template in templates %}
+                                                      <option value="{{template}}">{{template}}</option>
+                                                  {% endfor %}
+                                              </select>
+                                              <span class="help-block"></span>
+                                        </div>
+                                        <div class="form-group" id="description{{lng['language_id']}}-group">
+                                              <div class="col-md-2">
+                                                <label class="control-label s_help" for="input-description{{lng['language_id']}}">{{entry_description}}<b>{{text_shortcode}}</b></label>
+                                              </div>
+
+                                              <div class="col-md-10">
+                                                <textarea
+                                                       name="template_description[{{ lng['language_id'] }}][description]"
+                                                       id="input-description{{lng['language_id']}}"
+                                                       placeholder="{{entry_description}}"
+                                                       class="summernote"
+                                                >{{ template_description[lng['language_id']]['description'] is defined ? template_description[lng['language_id']]['description'] : "" }}</textarea>
+
+                                              </div>
+                                              <span class="help-block"></span>
+                                        </div>
+                                   </div>
+                               {% endfor %}
+                           </div>
+
+                           <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                               {% for language in languages %}
+                                   <li class="{{ loop.first ? 'active' : '' }}">
+                                       <a href="#langTab{{ language['language_id'] }}" data-toggle="tab"
+                                          aria-expanded="false">
+                                           <img src="view/image/flags/{{ language['image'] }}"
+                                                title="{{ language['name'] }}" class="pull-right">
+                                           <div> {{ language['name'] }}</div>
+                                       </a>
+                                   </li>
+                               {% endfor %}
+                           </ul>
+
+                       </div>
+
+                    </div>
+                </fieldset>
+            </div>
+        </div>
+        <!-- /a legend -->
+    </div>
+    <!-- /col-md-12-->
+</form>
+<!-- End Form -->
+
+<!-- Lower Buttons -->
+    {% include "includes/buttons_bottom.expand" %}
+    <!-- End Lower Buttons -->
+{% endblock content %}
+{% block scripts %}
+    {{ parent() }}
+    {% import _self as dtControls %}
+    <script>
+    var customHeaders = {
+        "X-EC-FORM-INPUTS": "SECURED"
+    };
+    function changeStatus(checkbox)
+    {
+        var self = $(checkbox);
+        var switch_status = self.siblings('.switchery-status');
+
+        if ( self.is(':checked') )
+        {
+            switch_status.html("{{ lang('text_enabled') }}");
+        }
+        else
+        {
+            switch_status.html("{{ lang('text_disabled') }}");
+        }
+    }
+</script>
+<script type="text/javascript">
+$(document).ready(function(){
+/**** issue exists within summernote plugin https://github.com/summernote/summernote/issues/94 */
+$('.note-codable').unbind('keyup');
+$('.note-codable').change(function(){
+	$(this).closest('.note-editing-area').find('.note-editable').html(this.value);
+	$(this).parent().parent().parent().find('.summernote')[0].innerHTML = (this.value);
+});
+
+/****/
+    $('select[name="template"]').on('change', function() {
+      var file = $(this).val();
+      var language_id = $(this).data('language-id');
+
+      if (file != '0') {
+        $.ajax({
+          url: "{{ link('module/custom_email_templates/loadtemplate') }}?file="+file+"&format=raw",
+          dataType: 'json',
+          success: function(json) {
+            if (json['warning']) {
+              alert(json['warning']);
+            } else {
+              $('#langTab' + language_id + ' input[name$="[subject]"]').val(json['subject']);
+              $('#langTab' + language_id + ' textarea[name$="[description]"]').html(json['description']);
+
+              $('#input-description' + language_id).summernote('code',$('#langTab' + language_id + ' textarea[name$="[description]"]').text());
+            }
+          }
+        });
+      }
+    });
+
+});
+
+</script>
+{% endblock scripts %}

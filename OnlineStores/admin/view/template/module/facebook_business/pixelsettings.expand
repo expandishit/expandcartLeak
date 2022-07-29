@@ -1,0 +1,191 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+
+{% block title %}
+{{ lang('heading_title_facebook') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block content %}
+
+<style>
+    .content-wrapper {
+        background-color: #f8f9ff;
+    }
+
+    .page-header-default {
+        background-color: transparent;
+    }
+    .page-header-content + .breadcrumb-line {
+        border: 0;
+    }
+
+    .page-header {
+        margin: 0 70px;
+    }
+
+    .breadcrumb-line {
+        /* border-bottom: 1px solid #e0ddef !important; */
+        margin: 0 32px;
+        border-top: 0;
+        margin-bottom: 30px !important;
+    }
+
+    .list-wrapper {
+        margin: 0 60px;
+    }
+    @media (max-width: 768px) {
+        .page-header {
+            margin: 0;
+        }
+
+        .list-wrapper {
+        margin: 0 0px;
+    }
+    }
+    
+</style>
+
+
+
+<section class="list-wrapper">
+    <div class="container-size-center">
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="panel">
+                <div class="panel-body facebook-shop-title-holder">
+                    <span class="font-14 facebook-shop-title"><span class="m-bold">{{lang("fbBusinessLabel")}}: </span>
+                          {{business_data["name"]}}
+
+                    </span>
+                    <span class="font-14 facebook-shop-title"><span class="m-bold">{{ lang("facebookpixelLabel") }} : </span>
+                      {% for pixel in pixels %}
+                          {% if pixel["id"] == pixel_id %}
+                              {{ pixel["name"] }}
+                          {% endif %}
+                      {% endfor %}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <div class="d-flex j-content-between ai-center">
+
+                </div>
+                <div class="panel panel-white">
+                    <div class="panel-body">
+                        <div class="d-flex j-content-between ai-center">
+                            <p class="m-bold">{{ lang('pixel_status') }}</p>
+                            <div class="switch-component " id="status-group">
+                                <div class="switch-inner">
+                                    <label class="switch-cover">
+                                        <input type="checkbox" class="hide"   name="status"
+                                               {%  if pixelSettings["mn_integ_fbp_code"] is empty %}
+                                                checked
+                                               {% else %}
+                                                {{ pixelSettings["mn_integ_fbp_status"] in ['1', 1, 'on'] ? 'checked' : "" }}
+                                                {% endif %}
+                                        >
+                                        <span class="switch-btn mr-10"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <div class="panel panel-white">
+                    <div class="panel-body">
+                        <div class="mb-15">
+                            <p class="m-bold">
+                                {{ lang('trackedActions') }}
+                            </p>
+                            <span class="font-color-light font-12 s-bold">
+                                {{ lang('pixel_settings_note') }}
+                            </span>
+                            
+                        </div>
+                        <div class="form-group">
+
+                            <select name="selected_events" id="posts" class="form-control select" multiple>
+                               {% for event in pixel_actions %}
+                                   <option value="{{ event }}"
+                                           {% if  pixelSettings["mn_integ_fbp_action"] is empty %}
+
+                                           selected
+                                           {% else %}
+                                           {% if  event in pixelSettings["mn_integ_fbp_action"] %}
+                                            selected
+                                           {% endif %}
+                                           {% endif %}
+                                   > {{ event }} </option>
+                                {% endfor %}
+                            </select>
+                            <span class="help-block"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="row-twoside">
+                    <div class="start-side">
+                        <div class="start-side">
+                            <a href="{{ link('module/facebook_business/facebooksettings') }}" class="bold">{{ lang("accountSettingsBtn") }}</a>
+                        </div>
+                    </div>
+                    <div class="row-twoside">
+                        <button class="btn btn-default mr-10"> {{ lang("cancelBtn") }} </button>
+                        <button disabled id="saveBtn" class="btn btn-primary"> {{ lang("saveBtn") }} </button>
+                    </div>
+            
+                </div>
+            </div>
+        </div>
+
+</div>
+</section>
+
+
+
+<script>
+
+$(document).ready(function() {
+
+    $("select, input").on("change", function() {
+        $("#saveBtn").removeAttr("disabled");
+    });
+
+    $("#saveBtn").click(function() {
+
+        var events 	= $("select").val();
+        var stat 	= $("input[type='checkbox']").is(":checked") ? 1 : 0 ;
+
+        $.ajax({
+            url: "/admin/module/facebook_business/storePixelEvents",
+            type: "POST",
+            data: {
+                "selected_events": events,
+                "pixel_status": stat,
+            },
+            success: function(data) {
+                var json = JSON.parse(data);
+                if (json.success == "1") {
+                    self.notify('','success', json.success_msg);
+                } else {
+
+                    self.notify('failure', 'failure', json.error);
+                }
+            }
+        })
+    });
+});
+</script>
+
+{% endblock content %}
+

@@ -1,0 +1,78 @@
+<!--special products  -->
+{% set css_class = 'featured' %}
+{% if fields.separateboxes.field_value == '1' and fields.sidead.field_value == ''  %}
+    {% set css_class = 'bestseller' %}
+{% elseif fields.sidead.field_value != '' %}
+    {% set css_class = 'arrival' %}
+{% endif %}
+
+{% set products_per_item = fields.rows.field_value %}
+{% set special_products = getSpecialProducts(30, 256, 291) %}
+{% set items_products = special_products|chunk(products_per_item) %}
+{% set items_count = items_products|length %}
+
+
+{% if items_count > 0 %}
+<div class="block-{{ css_class }}-opt8" id="section-{{ section_id }}">
+  {% if fields.displaysectiontitle.field_value == '1' %}
+    <div class="block-title heading-opt2">
+      <span class="title">{{ fields.sectiontitle.field_value }}</span>
+    </div>
+  {% endif %}
+
+  <div class="block-content">
+    {% if fields.sidead.field_value != '' and fields.sideadlink.field_value != '' %}
+      <div class="col-banner">
+        <a href="{{ fields.sideadlink.field_value }}" class="img"><img src="{{ fields.sidead.field_value }}" alt="{{ fields.sectiontitle.field_value }}"></a>
+      </div>
+    {% endif %}
+
+    <div class="col-products">
+      <div class="owl-carousel"
+           data-nav="{{ items_count > 1 ? 'true' : 'false' }}"
+           data-dots="false"
+           data-margin="10"
+           data-responsive='{
+                             "0":{"items":1},
+                             "360":{"items":2},
+                             "480":{"items":3},
+                             "768":{"items":{{ fields['sidead']['field_value'] != '' ? '3' : '4' }}},
+                             "992":{"items":{{ fields['sidead']['field_value'] != '' ? '3' : '4' }}},
+                             "1200":{"items":{{ fields['sidead']['field_value'] != '' ? '3' : '4' }}}
+                            }'>
+        {% for item_products in items_products %}
+          <div class="item">
+            {% for item_product in item_products %}
+              <div class=" product-item product-item-opt-4">
+                <div class="product-item-info">
+                  <div class="product-item-photo">
+                    <a class="product-item-img" href="{{ item_product.href }}"><img alt="{{ item_product.name }}" src="{{ item_product.thumb }}"></a>
+                    <a class="btn btn-quickview" href="{{ item_product.href }}"><span>quickview</span></a>
+                  </div>
+                  <div class="product-item-detail">
+                    <strong class="product-item-name"><a href="{{ item_product.href }}">{{ item_product.name }}</a></strong>
+                    <div class="product-item-price">
+                        {% if ('-1' in item_product.price) or ('-1' in item_product.special) %}
+                          <span class="price-box__new clickable" onclick="contact_us('{{ item_product.product_id }}');">{{ lang('button_req_quote') }} </span>
+                          <div id="enquiry-{{ item_product.product_id }}"  style="display:none">{{ item_product.name }}</div>
+                        {% elseif item_product.special != ''%}
+                          <span class="price">{{ item_product.special }}</span>
+                          <span class="old-price">{{ item_product.price }}</span>
+                        {% else %}
+                          <span class="price">{{ item_product.price }}</span>
+                        {% endif %}
+                        {% if item_product.stock_status != '' %}
+                        <span class='stock-status'> {{item_product.stock_status}}</span>
+                        {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div><!-- special products -->
+{% endif %}

@@ -1,0 +1,41 @@
+<form class="form-horizontal">
+  <fieldset id="payment">
+    <div>{{ text_name }}</div>
+   </fieldset>
+</form>
+<div class="buttons">
+  <div class="pull-right">
+    <input type="button" value="{{ button_confirm }}" id="button-confirm" data-loading-text="{{ text_loading }}" class="btn btn-primary" />
+  </div>
+</div>
+<script type="text/javascript">
+$('#button-confirm').bind('click', function() {
+  $.ajax({
+    url: 'index.php?route=payment/gc_creditcard/getParameters',
+    type: 'post',
+    dataType: 'json',
+    beforeSend: function() {
+      if( $('#gc_error').is(":visible") ) {
+        $('#gc_error').remove();
+      }
+      $('#button-confirm').attr('disabled', true);
+      $('#payment').before('<div id="gc_info" class="alert alert-info"><i class="fa fa-info-circle"></i> {{ text_wait }}</div>');
+    },
+    complete: function() {
+
+      $('.attention').remove();
+    },
+    success: function(json) {
+
+      if( json['error'] ) {
+        $('#button-confirm').attr('disabled', false);
+        $('#gc_info').remove();
+        $('#payment').before('<div id="gc_error" class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> ' + json['error_msg'] + '</div>');
+      }
+      else {
+        location = json['success'];
+      }
+    }
+  });
+});
+</script>

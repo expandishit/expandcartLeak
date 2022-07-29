@@ -1,0 +1,179 @@
+<style>
+@media (max-width: 768px) {
+    body .sidebar-detached .sidebar {
+        display: block !important;
+    }
+
+    body.sidebar-detached-hidden .sidebar-detached .sidebar {
+        display: none !important;
+    }
+}
+</style>
+<div class="sidebar-detached" id="customer-filter-sidebar">
+    <div class="sidebar sidebar-default sidebar-normal">
+        <div class="sidebar-content">
+            <form id="filter" method="post">
+                <!-- Filter -->
+                <div class="sidebar-category">
+                    <div class="category-title cursor-pointer">
+                        <span>{{ lang('lbl_customer_general') }}</span>
+                        <ul class="icons-list">
+                            <li><a href="#" data-action="collapse"></a></li>
+                        </ul>
+                    </div>
+
+                    <div class="category-content" style="padding-bottom: 0">
+                        <div class="form-group" id="name-group">
+                            <label class="control-label">{{ lang('column_name') }}</label>
+                            <input type="text" name="filter[name]" class="form-control">
+                            <span class="help-block"></span>
+                            <span class="text-muted"></span>
+                        </div>
+                        <div class="form-group" id="email-group">
+                            <label class="control-label">{{ lang('column_email') }}</label>
+                            <input type="email" name="filter[email]" class="form-control">
+                            <span class="help-block"></span>
+                            <span class="text-muted"></span>
+                        </div>
+                        <div class="form-group" id="phone-group">
+                            <label class="control-label">{{ lang('column_phone') }}</label>
+                            <input type="text" name="filter[phone]" class="form-control">
+                            <span class="help-block"></span>
+                            <span class="text-muted"></span>
+                        </div>
+                        {# <div class="form-group" id="customer_group_id-group">
+                            <label class="control-label">{{ lang('column_customer_group') }}</label>
+                            <select class="multiselect-tags form-control" multiple="multiple"
+                                    name="filter[customer_group_id][]" id="customer_group_id">
+                                {% for customer_group in customer_groups %}
+                                    <option value="{{ customer_group['customer_group_id'] }}">{{ customer_group['name'] }}</option>
+                                {% endfor %}
+                            </select>
+                            <span class="help-block"></span>
+                            <span class="text-muted"></span>
+                        </div> #}
+                        <div class="form-group" id="date-added-group">
+                            <label class="control-label">{{ lang('filter_label_date_added') }}</label>
+                            <input class="form-control date-added"
+                                   type="text">
+
+                            <input type="hidden" name="filter[date_added][start]" id="date-added-start"/>
+                            <input type="hidden" name="filter[date_added][end]" id="date-added-end"/>
+                            <span class="help-block"></span>
+                            <span class="text-muted">{{ langempty('date-added_help') }}</span>
+                        </div>
+                        <div class="form-group" id="approved-group">
+                            <label class="control-label">{{ lang('column_approved') }}</label>
+                            <select class="multiselect-tags form-control"
+                                    name="filter[approved]" id="approved_customers">
+                            <option value="">{{ lang('text_select_all') }}</option>
+                            <option value="1">{{ lang('text_yes') }}</option>
+                            <option value="0">{{ lang('text_no') }}</option>
+                            </select>
+                            <span class="help-block"></span>
+                            <span class="text-muted"></span>
+                        </div>
+                        <div class="form-group" id="status-group">
+                            <label class="control-label">{{ lang('column_status') }}</label>
+                            <select class="multiselect-tags form-control"
+                                    name="filter[status]" id="status_customers">
+                            <option value="">{{ lang('text_select_all') }}</option>
+                            <option value="1">{{ lang('text_yes') }}</option>
+                            <option value="0">{{ lang('text_no') }}</option>
+                            </select>
+                            <span class="help-block"></span>
+                            <span class="text-muted"></span>
+                        </div>
+                    </div>
+                </div>
+                <!-- /filter -->
+                <div class="category-content" style="padding-top: 10px">
+                    <button type="reset" id="resetList"
+                            class="btn btn-default btn-block mt-10">{{ lang('lbl_reset_filter') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    $(document).ready(function () {
+
+        $('select:not(.multiple-select, .dataTables_length select)').select2({
+            width: '100%',
+            minimumResultsForSearch: Infinity,
+        });
+
+        $('.multiple-select').select2({
+            tags: true,
+            tokenSeparators: [','],
+            minimumResultsForSearch: Infinity,
+        });
+
+
+        $('.notSearchable').select2({
+            minimumResultsForSearch: 5,
+        });
+
+
+        $('.date-added').daterangepicker({
+            autoApply: true,
+            ranges: locales['drp_ranges'],
+            locale: locales['drp_locale']
+        }, function (start, end, label) {
+            $('#date-added-start').val(start.format('YYYY-MM-DD'));
+            $('#date-added-end').val(end.format('YYYY-MM-DD'));
+        });
+
+        $('input, select', $('#filter')).not('.dtSelectAll, #slot-days-select').change(function (event) {
+            event.preventDefault();
+            filterReloadDT();
+//            $('#btnreset').removeClass('hidden');
+        });
+
+        $('#filter').on('reset', function (e) {
+            $('#btnreset').addClass('hidden');
+            groupReloadDT()
+        });
+
+        $('#btnreset').on('click', function (e) {
+            e.preventDefault();
+            $('#resetList').trigger("click");
+            //$('#filter')[0].reset();
+        });
+
+    });
+
+    function filterReloadDT() {
+        $('#btnreset').removeClass('hidden');
+        var $formData = $('#group_filter').serialize();
+
+        dt.on('preXhr.dt', function (e, settings, data) {
+            return $.extend(data, {filter: $formData});
+        });
+
+        dt.ajax.reload();
+    }
+    $("#group_filter input").change(function() {
+        filterReloadDT()
+        $(".customer-group-box[type='reset']").removeClass("active")
+    })
+    $(".customer-group-box[type='reset']").click(function() {
+        dt.on('preXhr.dt', function (e, settings, data) {
+            return $.extend(data, {filter: ''});
+        });
+        dt.ajax.reload();
+        $(this).addClass("active")
+    })
+    // function filterReloadDT() {
+    //     var $formData = $('#group_filter').serialize();
+    //
+    //     dt.on('preXhr.dt', function (e, settings, data) {
+    //         return $.extend(data, {filter: $formData});
+    //     });
+    //
+    //     dt.ajax.reload();
+    // }
+
+</script>

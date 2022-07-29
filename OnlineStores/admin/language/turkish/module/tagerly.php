@@ -1,0 +1,70 @@
+<?php
+
+$_ = [ 
+    'tagerly_heading_title'  => 'Tagerly', 
+    'error_warning'    => 'Uyarı: Lütfen yanlış veya gerekli alanları gözden geçirdiğinizden emin olun!', 
+    'please_wait' => 'lütfen bekleyin ...', 
+
+    //entry
+    'entry_status'  => 'Durum', 
+    'entry_page_from'  => 'Sayfadan', 
+    'entry_page_to'  => 'Sayfaya', 
+    'entry_custom_pages'  => 'Özel Sayfalar', 
+    'entry_all_categories'  => 'Tüm Ürünleri İçe Aktar', 
+    'entry_custom_categories'  => 'Özel Kategorilerden İçe Aktar', 
+    'entry_list'  => 'Tagerly\'de Ürünleriniz Listesi', 
+    'entry_categories'  => 'Kategoriler', 
+    'entry_categories_help'  => 'Ürünlerin ithal ettiği kategoriler', 
+    'entry_apikey'  => 'Api Anahtarı', 
+    'entry_secretkey'  => 'Gizli Anahtar', 
+    'entry_name'  => 'Müşteri Adı', 
+    'entry_mobile'  => 'Telefon', 
+    'entry_mobile_2'  => 'Telefon 2', 
+    'entry_address'  => 'Adres', 
+    'entry_state'  => 'Eyalet', 
+    'entry_description'  => 'Açıklama', 
+    'entry_send_order_status'  => 'Sipariş Durumu', 
+    'entry_send_order_status_help'  => 'Siparişin tagerly gönderileceği sipariş durumunu seçin', 
+
+    //text
+    'heading_title_send_order'  => 'Siparişi Tagerly\'ye Gönder', 
+    'general_settings'  => 'Genel Ayarlar', 
+    'text_settings_success'  => 'Ayarlar Başarıyla Güncellendi', 
+    'text_order_success'  => 'Siparişiniz Başarıyla Verildi', 
+    'text_tagerly_notes'  => 'Tagerly ile Entegrasyon İçin Önemli Bilgiler', 
+    'text_tagerly_notes_price'  => 'Tagerly\'den gelen siparişlerin reddedilmemesi için ürünlerin Tagerly\'den ithal edilmesinden sonra ürünlerin satış fiyatlarının ayarlanması gerekir', 
+    'text_tagerly_notes_currency'  => 'Mısır Lirası para birimini etkinleştirmeli ve varsayılan para birimi yapmalısınız', 
+    'text_success'  => 'Ayarlar Başarıyla Güncellendi', 
+    'text_settings'  => 'ayarlar', 
+    'text_sync_products'  => 'Ürün Stoklarını Senkronize Et', 
+    'btn_sync_products'  => 'Şimdi Senkronize Et', 
+    'text_products_synced'  => 'Toplam Senkronize Ürünler', 
+    'text_customer_info'  => 'Müşteri Bilgileri', 
+    'text_enabled'  => 'Etkin', 
+    'text_disabled'  => 'Devre Dışı', 
+    'text_import'  => 'Ürünleri ve Kategorileri İçe Aktar', 
+    'text_import_products'  => 'Ürünleri İçe Aktar', 
+    'text_categories_imported'  => 'Toplam İçe Aktarılan Kategoriler', 
+    'text_products_imported'  => 'Toplam İthal Ürün', 
+    'text_import_products_note'  => 'Dikkat: Ürünleri ithal ederken ürünleriniz kaldırılacak ve ürünler Mart\'tan ithal edilecektir. Tüm ürünleri içe aktarma işlemi gerçekleşiyor, lütfen sayfayı kalıcı olarak kapatmayın ', 
+    'text_success_imported_products'  => 'Toplam İthal Ürün  Ürünü', 
+    'job_started_message'  => 'İçe aktarma işlemi başarıyla başlatıldı, lütfen bunun zaman ve kaynak tüketen bir süreç olduğunu ve biraz zaman aldığını unutmayın. İthal edilen ürün adedini görmek için birkaç dakika sonra ürünlerinizi kontrol etmeye çalışın. ', 
+
+    // error
+    'error_permission'      => 'Uyarı: Kodları değiştirme izniniz yok!', 
+    'unexpected_error'      => 'Beklenmedik Bir Hata Oluştu', 
+    'error_apikey_required'      => 'Api anahtarı Gerekli', 
+    'error_secretkey_required'      => 'Gizli Anahtar Gereklidir', 
+    'error_categories_ids_required'      => 'Kategoriler Gereklidir', 
+    'error_name_required'      => 'Müşteri Adı Gereklidir', 
+    'error_phone_required'      => 'Müşteri Telefonu Gereklidir', 
+    'error_phone_2_required'      => 'Müşteri Telefonu 2 Gereklidir', 
+    'error_address_required'      => 'Müşteri Adresi Gereklidir', 
+    'error_state_required'      => 'Durum Gerekli', 
+
+    // btn
+    'btn_import_products'  => 'Ürünleri İçe Aktar', 
+    'btn_import_categories'  => 'Kategorileri İçe Aktar', 
+    'button_send_order'  => 'Sipariş Gönder', 
+];
+

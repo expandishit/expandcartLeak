@@ -1,0 +1,27 @@
+<?php
+
+$_  = [ 
+    'heading_title'  => 'Nîşaneyên Firebase', 
+    'firebase_notifications'  => 'Nîşaneyên Firebase', 
+    'notification_title'  => 'Sernav', 
+    'notification_type'  => 'Type', 
+    'options'  => 'Vebijarkên', 
+    'add_new_notification'  => 'Danasîna nû binivîse', 
+    'entry_name'  => 'Navê', 
+    'entry_topic'  => 'Mijarek', 
+    'entry_title'  => 'Sernav', 
+    'entry_type'  => 'Type', 
+    'entry_body'  => 'Laş', 
+    'notification_details'  => 'Details Notification', 
+    'view_details'  => 'Detajên View', 
+    'text_all'  => 'Hemî', 
+    'text_android'  => 'Android', 
+    'text_ios'  => 'IOS', 
+    'entry_additional_data'  => 'Daneyên pêvekê', 
+    'addtional_none'  => 'None', 
+    'addtional_deal'  => 'Deal', 
+    'addtional_product'  => 'Hilber', 
+    'addtional_category'  => 'Kategorî', 
+    'entry_product_data'  => 'Hilber hilbijêrin', 
+    'entry_category_data'  => 'Kategorî hilbijêrin', 
+];

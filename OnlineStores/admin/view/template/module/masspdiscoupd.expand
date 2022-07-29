@@ -1,0 +1,1092 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% set bodyClasses = "has-detached-right" %}
+
+{% block title %}
+{{ lang('heading_title') }}
+<style>
+    #datatable-language_wrapper{
+        overflow-x: scroll;
+    }
+    @media(min-width: 1025px){
+        .modal-lg {
+                width: 1182px;
+            }
+    }
+    .picker{
+        top:0;
+        margin-top:0;
+    }
+
+</style>
+{% endblock title %}
+
+{% block breadcrumb %}
+{{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+     <a onclick="showDialogModal();" class="button btn btn-primary">{{masstxt_upd_add_discount}}</a>
+{% endblock headelements %}
+
+{% block content %}
+
+
+
+ <div class="sidebar-detached">
+     <div class="sidebar sidebar-default sidebar-normal">
+         <div class="sidebar-content">
+             <form id="filter" method="post">
+             <!-- Filter -->
+             <div class="sidebar-category">
+                 <div class="category-title cursor-pointer category-collapsed">
+                     <span>{{ lang('tab_general') }}</span>
+                     <ul class="icons-list">
+                         <li><a href="#" data-action="collapse" class="rotate-180"></a></li>
+                     </ul>
+                 </div>
+                 <!-- General sidebar -->
+                 <div class="category-content" style="display: none;">
+                     <div class="form-group" id="filter_name-group">
+                         <label>{{ lang('masstxt_name') }}</label>
+                         <input type="text" name="filter_name" value="{{filter_name}}" class="form-control" />
+                         <span class="help-block">{{masstxt_name_help}}</span>
+                     </div>
+                     <div class="form-group" id="filter_tag-group">
+                         <label>{{ lang('masstxt_tag') }}</label>
+                         <input type="text" name="filter_tag" value="{{filter_tag}}" class="form-control" />
+                         <span class="help-block">{{masstxt_tag_help}}</span>
+                     </div>
+                     <div class="form-group" id="filter_model-group">
+                         <label>{{ lang('masstxt_model') }}</label>
+                         <input type="text" name="filter_model" value="{{filter_model}}" class="form-control" />
+                         <span class="help-block">{{masstxt_model_help}}</span>
+                     </div>
+                     <div class="form-group" id="product_category-group">
+                          <label class="control-label">{{masstxt_categories}}</label>
+                          <select class="multiselect-tags form-control" multiple="multiple"
+                                  name="product_category[]" id="product_categories">
+                              <option value="0" {{ 0 in product_category ? 'selected="selected"' : '' }}  >{{ masstxt_none_cat }}</option>
+
+                              {% for category in categories %}
+                                <option value="{{category['category_id']}}" {{ category['category_id'] in product_category ? 'selected="selected"' : '' }}  >{{ category['name'] }}</option>
+
+                              {% endfor %}
+                          </select>
+                          <span class="help-block">{{masstxt_unselect_all_to_ignore}}</span>
+                     </div>
+                     <div class="form-group" id="manufacturer_ids-group">
+                           <label class="control-label">{{masstxt_manufacturers}}</label>
+                           <select class="multiselect-tags form-control" multiple="multiple"
+                                   name="manufacturer_ids[]" id="manufacturer_ids">
+                               <option value="0" {{ 0 in manufacturer_ids ? 'selected="selected"' : '' }}  >{{ masstxt_none }}</option>
+
+                               {% for manufacturer in manufacturers %}
+                                 <option value="{{manufacturer['manufacturer_id']}}" {{ manufacturer['manufacturer_id'] in manufacturer_ids ? 'selected="selected"' : '' }}  >{{ manufacturer['name'] }}</option>
+
+                               {% endfor %}
+                           </select>
+                           <span class="help-block">{{masstxt_unselect_all_to_ignore}}</span>
+                      </div>
+                      {% if sellers is defined %}
+                        <div class="form-group" id="seller_ids-group">
+                            <label class="control-label">{{masstxt_sellers}}</label>
+                            <select class="multiselect-tags form-control" multiple="multiple"
+                                    name="seller_ids[]" id="seller_ids">
+                                {% for seller in sellers %}
+                                <option value="{{seller['seller_id']}}" 
+                                    {{ seller['seller_id'] in seller_ids ? 'selected="selected"' : '' }}  >
+                                    {{ seller['c.name'] }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <span class="help-block">{{masstxt_unselect_all_to_ignore}}</span>
+                        </div>
+                      {% endif %}
+                 </div>
+
+             </div>
+             <!-- ./General sidebar -->
+             <div class="sidebar-category">
+                  <div class="category-title cursor-pointer category-collapsed">
+                      <span>{{ lang('tab_filters') }}</span>
+                      <ul class="icons-list">
+                          <li><a href="#" data-action="collapse" class="rotate-180"></a></li>
+                      </ul>
+                  </div>
+                  <div class="category-content" style="display: none;">
+                    <div class="form-group" id="filters_ids-group">
+                           <label class="control-label">{{masstxt_p_filters}}</label>
+                           <select class="multiselect-tags form-control" multiple="multiple"
+                                   name="filters_ids[]" id="filters_ids">
+                               <option value="0" {{ 0 in filters_ids ? 'selected="selected"' : '' }}  >{{ masstxt_none_fil }}</option>
+
+                               {% for p_filtes in p_filters %}
+                                 <option value="{{p_filter['filter_id']}}" {{ p_filter['filter_id'] in filters_ids ? 'selected="selected"' : '' }}  >{{ p_filter['group'] ~ '&gt;' ~ p_filter['name']}}</option>
+                               {% endfor %}
+                           </select>
+                           <span class="help-block">{{masstxt_unselect_all_to_ignore}}</span>
+                    </div>
+                  </div>
+
+             </div>
+             <!-- ./Filter sidebar -->
+             <div class="sidebar-category">
+                   <div class="category-title cursor-pointer category-collapsed">
+                       <span>{{ lang('tab_price') }}</span>
+                       <ul class="icons-list">
+                           <li><a href="#" data-action="collapse" class="rotate-180"></a></li>
+                       </ul>
+                   </div>
+                   <div class="category-content" style="display: none;">
+                     <div class="form-group" id="price-range-group">
+                         <label class="control-label">{{ masstxt_price }}</label>
+                         <div class="noui-slider-primary noui-slider-solid noui-slider-sm"
+                                                      id="price-range" style="margin-bottom: 30px;"></div>
+                         <label class="control-label">{{ lang('custom_price') }}</label>
+
+                         <input type="text" value="{{ price_mmarese }}" name="price_mmarese"  class="form-control" style="margin-bottom:5px;width:50%;float:left" id="price-range-input-min">
+                         <input type="text" value="{{ price_mmicse }}"name="price_mmicse"  class="form-control" style="margin-bottom:5px;width:50%;float:left" id="price-range-input-max">
+                         <div style='clear:both'></div>
+			 <span class="help-block">{{masstxt_price_help}}</span>
+                         <span class="help-block">{{masstxt_leave_empty_to_ignore}}</span>
+                         <span class="text-muted"></span>
+                     </div>
+                     <div class="form-group" id="tax_class_filter-group">
+                          <label class="control-label">{{ masstxt_tax_class }}</label>
+                          <select class="form-control"
+                                 name="tax_class_filter" id="tax_class_filter">
+                             <option value="any"{{ tax_class_filter=='any' ? 'selected="selected"' : '' }}>{{masstxt_ignore_this}}</option>
+                             <option value="0"{{ tax_class_filter=='0' ? 'selected="selected"' : '' }}>{{masstxt_none}}</option>
+                             {% for tax_class in tax_classes %}
+                               <option value="{{tax_class['tax_class_id']}}" {{ tax_class['tax_class_id']==tax_class_filter ? 'selected="selected"' : '' }}>
+                               {{ tax_class['title'] }}</option>
+                             {% endfor %}
+                          </select>
+                          <span class="help-block"></span>
+                          <span class="text-muted"></span>
+                     </div>
+                   </div>
+             </div>
+             <!-- ./Price sidebar -->
+             <div class="sidebar-category">
+                <div class="category-title cursor-pointer category-collapsed">
+                    <span>{{masstxt_discount}}</span>
+                    <ul class="icons-list">
+                        <li><a href="#" data-action="collapse" class="rotate-180"></a></li>
+                    </ul>
+                </div>
+                <div class="category-content" style="display: none;">
+                     <div class="form-group" id="discount-range-group">
+                         <label class="control-label">{{masstxt_customer_group}}</label>
+                         <select class="form-control"
+                                 name="d_cust_group_filter" id="d_cust_group_filter">
+                             <option value="any"{{ d_cust_group_filter=='any' ? 'selected="selected"' : '' }}>{{masstxt_all}}</option>
+
+                             {% for customer_group in customer_groups %}
+                               <option value="{{customer_group['customer_group_id']}}" {{ customer_group['customer_group_id'] == d_cust_group_filter ? 'selected="selected"' : '' }}>
+                               {{ customer_group['name'] }}</option>
+                             {% endfor %}
+                         </select>
+                         <br><br>
+                         <div class="noui-slider-primary noui-slider-solid noui-slider-sm"
+                              id="discount-range" style="margin-bottom: 30px;"></div>
+                         <input type="hidden" value="{{d_price_mmarese}}" name="d_price_mmarese" id="discount-range-input-min">
+                         <input type="hidden" value="{{d_price_mmicse}}" name="d_price_mmicse" id="discount-range-input-max">
+                         <span class="help-block">{{masstxt_leave_empty_to_ignore}}</span>
+                         <span class="text-muted"></span>
+                     </div>
+                </div>
+             </div>
+             <!-- ./Discount price sidebar -->
+
+             <!-- Special Price sidebar
+             <div class="sidebar-category">
+                 <div class="category-title cursor-pointer category-collapsed">
+                     <span>{{masstxt_special}}</span>
+                     <ul class="icons-list">
+                         <li><a href="#" data-action="collapse" class="rotate-180"></a></li>
+                     </ul>
+                 </div>
+                 <div class="category-content" style="display: none;">
+                      <div class="form-group" id="discount-range-group">
+                          <label class="control-label">{{masstxt_customer_group}}</label>
+                          <select class="form-control"
+                                  name="s_cust_group_filter" id="s_cust_group_filter">
+                              <option value="any" {{ s_cust_group_filter=='any' ? 'selected="selected"' : '' }}>{{masstxt_all}}</option>
+                              {% for customer_group in customer_groups %}
+                                <option value="{{customer_group['customer_group_id']}}" {{ customer_group['customer_group_id'] == s_cust_group_filter ? 'selected="selected"' : '' }}>
+                                {{ customer_group['name'] }}</option>
+                              {% endfor %}
+                          </select>
+                          <br><br>
+                          <div class="noui-slider-primary noui-slider-solid noui-slider-sm"
+                               id="special-price-range" style="margin-bottom: 30px;"></div>
+                          <input type="hidden" value="{{s_price_mmarese}}" name="s_price_mmarese" id="special-price-range-input-min">
+                          <input type="hidden" value="{{s_price_mmicse}}" name="s_price_mmicse" id="special-price-range-input-max">
+                          <span class="help-block">{{masstxt_leave_empty_to_ignore}}</span>
+                          <span class="text-muted"></span>
+                      </div>
+                 </div>
+                </div>
+                -->
+                <!-- ./Special price sidebar -->
+
+                <div class="sidebar-category">
+                   <div class="category-title cursor-pointer category-collapsed">
+                       <span>{{ lang('tab_quantity') }}</span>
+                       <ul class="icons-list">
+                           <li><a href="#" data-action="collapse" class="rotate-180"></a></li>
+                       </ul>
+                   </div>
+                   <div class="category-content" style="display: none;">
+                        <div class="form-group" id="quantity-range-group">
+                            <label class="control-label">{{masstxt_quantity}}</label>
+                            <div class="noui-slider-primary noui-slider-solid noui-slider-sm"
+                                 id="quantity-range" style="margin-bottom: 30px;"></div>
+                            <input type="hidden" value="{{stock_mmarese}}" name="stock_mmarese" id="quantity-range-input-min">
+                            <input type="hidden" value="{{stock_mmicse}}" name="stock_mmicse" id="quantity-range-input-max">
+                            <span class="help-block">{{masstxt_leave_empty_to_ignore}}</span>
+                            <span class="text-muted"></span>
+                        </div>
+                        <div class="form-group" id="min-quantity-range-group">
+                            <label>{{masstxt_minimum_quantity}}</label>
+                            <div class="noui-slider-primary noui-slider-solid noui-slider-sm"
+                                 id="min-quantity-range" style="margin-bottom: 30px;"></div>
+                            <input type="hidden" value="{{min_q_mmarese}}" name="min_q_mmarese" id="min-quantity-range-input-min">
+                            <input type="hidden" value="{{min_q_mmicse}}" name="min_q_mmicse" id="min-quantity-range-input-max">
+                            <span class="help-block">{{masstxt_leave_empty_to_ignore}}</span>
+                            <span class="text-muted"></span>
+                        </div>
+                        <div class="form-group" id="subtract_filter-group">
+                              <label class="control-label">{{ masstxt_subtract_stock }}</label>
+                              <select class="form-control"
+                                     name="subtract_filter" id="subtract_filter">
+                                 <option value="any" {{ subtract_filter=='any' ? 'selected="selected"' : '' }}>{{masstxt_ignore_this}}</option>
+                                 <option value="1" {{ subtract_filter=='1' ? 'selected="selected"' : '' }}>{{masstxt_yes}}</option>
+                                 <option value="0" {{ subtract_filter=='0' ? 'selected="selected"' : '' }}>{{masstxt_no}}</option>
+                              </select>
+                              <span class="help-block"></span>
+                              <span class="text-muted"></span>
+                        </div>
+
+                        <div class="form-group" id="stock_status_filter-group">
+                              <label class="control-label">{{masstxt_out_of_stock_status}}</label>
+                              <select class="form-control"
+                                      name="stock_status_filter" id="stock_status_filter">
+                                  <option value="any"{{ stock_status_filter=='any' ? 'selected="selected"' : '' }}>{{masstxt_ignore_this}}</option>
+
+                                  {% for stock_status in stock_statuses %}
+                                    <option value="{{ stock_status['stock_status_id'] }}" {{ stock_status['stock_status_id'] == stock_status_filter ? 'selected="selected"' : '' }}>
+                                    {{ stock_status['name'] }}</option>
+                                  {% endfor %}
+                              </select>
+                              <span class="help-block"></span>
+                              <span class="text-muted"></span>
+                        </div>
+                        <div class="form-group" id="shipping_filter-group">
+                              <label class="control-label">{{ masstxt_requires_shipping }}</label>
+                              <select class="form-control"
+                                     name="shipping_filter" id="shipping_filter">
+                                 <option value="any" {{ shipping_filter=='any' ? 'selected="selected"' : '' }}>{{masstxt_ignore_this}}</option>
+                                 <option value="1" {{ shipping_filter=='1' ? 'selected="selected"' : '' }}>{{masstxt_yes}}</option>
+                                 <option value="0" {{ shipping_filter=='0' ? 'selected="selected"' : '' }}>{{masstxt_no}}</option>
+                              </select>
+                              <span class="help-block"></span>
+                              <span class="text-muted"></span>
+                        </div>
+                   </div>
+                </div>
+                <!-- ./Quantity sidebar -->
+                <div class="sidebar-category">
+                   <div class="category-title cursor-pointer category-collapsed">
+                       <span>{{ lang('tab_date') }}</span>
+                       <ul class="icons-list">
+                           <li><a href="#" data-action="collapse" class="rotate-180"></a></li>
+                       </ul>
+                   </div>
+                   <div class="category-content" style="display: none;">
+                        <div class="form-group" id="date_available-range-group">
+                            <label class="control-label">{{masstxt_date_available}}</label>
+                            <input type="text" class="form-control daterange-basic"
+                              id="date_available"
+                             name="date_mmarese">
+                            <span class="help-block">{{masstxt_leave_empty_to_ignore}}</span>
+                            <span class="text-muted"></span>
+                        </div>
+                        <div class="form-group" id="date_added-range-group">
+                            <label>{{masstxt_date_added}}</label>
+                            <input type="text" class="form-control daterange-basic"
+                               id="date_added"
+                             name="date_added_mmarese">
+                            <span class="help-block">{{masstxt_leave_empty_to_ignore}}</span>
+                            <span class="text-muted"></span>
+                        </div>
+                        <div class="form-group" id="date_modified-range-group">
+                            <label>{{masstxt_date_modified}}</label>
+                            <input type="text" class="form-control daterange-basic"
+                                id="date_modified"
+                               name="date_modified_mmarese">
+                            <span class="help-block">{{masstxt_leave_empty_to_ignore}}</span>
+                            <span class="text-muted"></span>
+                        </div>
+                   </div>
+                </div>
+                <!-- ./Date sidebar -->
+                <div class="sidebar-category">
+                   <div class="category-title cursor-pointer category-collapsed">
+                       <span>{{ lang('tab_settings') }}</span>
+                       <ul class="icons-list">
+                           <li><a href="#" data-action="collapse" class="rotate-180"></a></li>
+                       </ul>
+                   </div>
+                   <div class="category-content" style="display: none;">
+                        <div class="form-group" id="prod_status-group">
+                              <label class="control-label">{{ masstxt_status }}</label>
+                              <select class="form-control"
+                                     name="prod_status" id="prod_status">
+                                 <option value="any" {{ prod_status=='any' ? 'selected="selected"' : '' }}>{{masstxt_ignore_this}}</option>
+                                 <option value="1" {{ prod_status=='1' ? 'selected="selected"' : '' }}>{{masstxt_enabled}}</option>
+                                 <option value="0" {{ prod_status=='0' ? 'selected="selected"' : '' }}>{{masstxt_disabled}}</option>
+                              </select>
+                              <span class="help-block"></span>
+                              <span class="text-muted"></span>
+                        </div>
+                       <div class="form-group" id="store_filter-group">
+                             <label class="control-label">{{masstxt_store}}</label>
+                             <select class="form-control"
+                                     name="store_filter" id="store_filter">
+                                 <option value="any"{{ store_filter=='any' ? 'selected="selected"' : '' }}>{{masstxt_ignore_this}}</option>
+                                 <option value="0"{{ store_filter=='0' ? 'selected="selected"' : '' }}>{{masstxt_default}}</option>
+                                 {% for store in stores %}
+                                   <option value="{{ store['store_id'] }}" {{ store['store_id'] == store_filter ? 'selected="selected"' : '' }}>
+                                   {{ store['name'] }}</option>
+                                 {% endfor %}
+                             </select>
+                             <span class="help-block"></span>
+                             <span class="text-muted"></span>
+                       </div>
+                       <div class="form-group" id="filter_attr-group">
+                            <label class="control-label">{{masstxt_with_attribute}}</label>
+                            <select class="form-control"
+                                    name="filter_attr" id="filter_attr">
+                                <option value="any"{{ filter_attr=='any' ? 'selected="selected"' : '' }}>{{masstxt_ignore_this}}</option>
+                                {% for attribute in all_attributes %}
+                                  <option value="{{ attribute['attribute_id'] }}" {{ attribute['attribute_id'] == filter_attr ? 'selected="selected"' : '' }}>
+                                  {{ attribute['attribute_group'] ~ " > " ~ attribute['name']  }}</option>
+                                {% endfor %}
+                            </select>
+                            <span class="help-block"></span>
+                            <span class="text-muted"></span>
+                      </div>
+                      <div class="form-group" id="filter_attr-group">
+                              <label class="control-label">{{masstxt_with_attribute}}</label>
+                              <select class="form-control"
+                                      name="filter_attr" id="filter_attr">
+                                  <option value="any"{{ filter_attr=='any' ? 'selected="selected"' : '' }}>{{masstxt_ignore_this}}</option>
+                                  {% for attribute in all_attributes %}
+                                    <option value="{{ attribute['attribute_id'] }}" {{ attribute['attribute_id'] == filter_attr ? 'selected="selected"' : '' }}>
+                                    {{ attribute['attribute_group'] ~ " > " ~ attribute['name']  }}</option>
+                                  {% endfor %}
+                              </select>
+                              <span class="help-block"></span>
+                              <span class="text-muted"></span>
+                      </div>
+                      <div class="form-group" id="filter_attr_val-group">
+                            <label class="control-label">{{masstxt_with_attribute_value}}</label>
+                            <textarea name="filter_attr_val" >{{ filter_attr_val }}</textarea>
+                            <span class="help-block">{{masstxt_leave_empty_to_ignore}}</span>
+                            <span class="text-muted"></span>
+                      </div>
+                      <div class="form-group" id="filter_opti-group">
+                            <label class="control-label">{{masstxt_with_this_option}}</label>
+                            <select class="form-control"
+                                    name="filter_opti" id="filter_opti">
+                                <option value="any"{{ filter_opti=='any' ? 'selected="selected"' : '' }}>{{masstxt_ignore_this}}</option>
+                                {% for option in all_options %}
+                                  <option value="{{ option['option_id'] }}" {{ option['option_id'] == filter_opti ? 'selected="selected"' : '' }}>
+                                  {{ option['name']  }}</option>
+                                {% endfor %}
+                            </select>
+                            <span class="help-block"></span>
+                            <span class="text-muted"></span>
+                      </div>
+                      <div class="form-group" id="filter_opti_val-group">
+                          <label class="control-label">{{masstxt_with_this_option_value}}</label>
+                          <select class="form-control"
+                                  name="filter_opti_val" id="filter_opti_val">
+                              <option value="any"{{ filter_opti=='any' ? 'selected="selected"' : '' }}>{{masstxt_ignore_this}}</option>
+                              {% for option_val in all_optval %}
+                                <option value="{{ option_val['option_value_id'] }}" {{ option_val['option_value_id'] == filter_opti_val ? 'selected="selected"' : '' }}>
+                                {{ option_val['o_name']  }} - {{ option_val['ov_name']  }}</option>
+                              {% endfor %}
+                          </select>
+                          <span class="help-block"></span>
+                          <span class="text-muted"></span>
+                      </div>
+                   </div>
+                </div>
+                <!-- ./Setting sidebar -->
+             <!-- /filter -->
+             <div class="category-content">
+                 <button type="reset" id="filterList" class="btn bg-blue btn-block mt-10">{{ lang('masstxt_search') }}</button>
+                 <button type="reset" id="resetList" class="btn bg-green btn-block mt-10">{{ lang('masstxt_clear_search') }}</button>
+             </div>
+             </form>
+         </div>
+     </div>
+   </div>
+
+    <div id="dialog-template-preview" class="modal fade ">
+        <form action="{{submit_action}}" class="form" method="post" >
+        <div id="selected-products-wrapper-div"></div>
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h5 class="modal-title">{{ masstxt_p_updates }}</h5>
+                </div>
+                <div class="modal-body">
+                    <span class="help-block">{{masstxt_upd_help1}}</span>
+
+                    <h3>{{masstxt_upd_discount}}</h3>
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            {{masstxt_upd_set_new_discounts}}
+                        </div>
+                        <div class="panel-body">
+                            <div class="table-responsive">
+                                <table id="discount" class="table table-hover dataTable no-footer">
+                                    <thead>
+                                      <tr>
+                                        <td class="left" style="background-color:#EFEFEF;">{{masstxt_upd_customer_group}}</td>
+                                        <td class="right" style="background-color:#EFEFEF;">{{masstxt_upd_quantity}}</td>
+                                        <td class="right" style="background-color:#EFEFEF;">{{masstxt_upd_priority}}</td>
+                                        <td class="right" style="background-color:#EFEFEF;">{{masstxt_upd_price_type}}</td>
+                                        <td class="left" style="background-color:#EFEFEF;">{{masstxt_upd_date_start}}</td>
+                                        <td class="left" style="background-color:#EFEFEF;">{{masstxt_upd_date_end}}</td>
+                                         <td class="left" style="background-color:#EFEFEF;">{{masstxt_upd_domain}}</td>
+                                        <td style="background-color:#EFEFEF;"></td>
+                                      </tr>
+                                    </thead>
+                                    {% set discount_row = 0 %}
+                                    {% for product_discount in product_discounts %}
+                                    <tbody id="discount-row{{ discount_row }}">
+                                      <tr>
+                                        <td class="left">
+                                           <select name="product_discount[{{discount_row}}][customer_group_id]">
+                                            {% for customer_group in customer_groups %}
+                                                {% if customer_group['customer_group_id'] == product_discount['customer_group_id'] %}
+                                                    <option value="{{customer_group['customer_group_id']}}" selected="selected">{{customer_group['name']}}</option>
+                                                {% else %}
+                                                    <option value="{{customer_group['customer_group_id']}}">{{customer_group['name'] }}</option>
+                                                {% endif %}
+                                            {% endfor %}
+                                          </select>
+                                        </td>
+                                        <td class="right"><input type="text" name="product_discount[{{discount_row}}][quantity]" value="{{product_discount['quantity']}}" size="2" /></td>
+                                        <td class="right"><input type="text" name="product_discount[{{discount_row}}][priority]" value="{{product_discount['priority']}}" size="2" /></td>
+                                        <td class="right">
+                                        {% if product_discount['price_mode'] is not defined %}
+                                            {% set product_discount = product_discount|merge({'price_mode': 'flat'})  %}
+                                        {% endif %}
+                                        <select name="product_discount[{{discount_row}}][price_mode]">
+                                            <option value="flat"{{ product_discount['price_mode']=='flat' ? ' selected="selected"' : ''}}>{{masstxt_upd_flat}}</option>
+                                            <option value="sub"{{ product_discount['price_mode']=='sub' ? ' selected="selected"' : ''}}>{{masstxt_upd_subtraction_price}}</option>
+                                            <option value="per"{{ product_discount['price_mode']=='per' ? ' selected="selected"' : ''}}>{{masstxt_upd_percentage_price}}</option>
+                                        </select>
+                                        <input type="text" name="product_discount[{{discount_row}}][price]" value="{{product_discount['price']}}" size="6" /></td>
+                                        <td class="left"><input type="text" name="product_discount[{{discount_row}}][date_start]" value="{{product_discount['date_start']}}" class="date" size="8" /></td>
+                                        <td class="left"><input type="text" name="product_discount[{{discount_row}}][date_end]" value="{{product_discount['date_end']}}" class="date"  size="8"/></td>
+                                        <td class="left"><a onclick="$('#discount-row{{discount_row}}').remove();" class="button btn btn-primary"><span>{{masstxt_remove}}</span></a></td>
+                                      </tr>
+                                    </tbody>
+                                    {% set discount_row=discount_row+1 %}
+                                   {% endfor %}
+                                    <tfoot>
+                                      <tr>
+                                        <td colspan="7"></td>
+                                        <td class="left"><a onclick="addDiscount();" class="button btn btn-primary"><span>{{masstxt_upd_add_discount}}</span></a></td>
+                                      </tr>
+                                   </tfoot>
+                                </table>
+                            </div>
+                            <!-- ./table-responsive -->
+
+                             <div class="form-group">
+                                  <label class="display-block text-semibold">{{masstxt_update_mode}}</label>
+                                  <label class="">
+                                        <input type="radio" {{ upd_mode=='ad' ? ' checked="checked"' : '' }} value="ad" name="upd_mode">
+                                         {{masstxt_upd_mode_discount_ad}}
+                                  </label>
+                                  <span class="help-block">{{masstxt_upd_mode_discount_ad_help}}</span>
+                                   <label>
+                                        <input type="radio" {{ upd_mode=='re' ? ' checked="checked"' : '' }} value="re" name="upd_mode" >
+                                         {{masstxt_upd_mode_discount_re}}
+                                  </label>
+                                  <span class="help-block">{{masstxt_upd_mode_discount_re_help}}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <! ./panel-default -->
+                    <!--
+                    <h3>{{masstxt_upd_special}}</h3>
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            {{masstxt_upd_set_new_special}}
+                        </div>
+                        <div class="panel-body">
+                            <div class="table-responsive">
+                                <table id="special" class="table table-hover dataTable no-footer">
+                                    <thead>
+                                      <tr>
+                                        <td class="left" style="background-color:#EFEFEF;">{{masstxt_upd_customer_group}}</td>
+                                        <td class="right" style="background-color:#EFEFEF;">{{masstxt_upd_priority}}</td>
+                                        <td class="right" style="background-color:#EFEFEF;">{{masstxt_upd_price_type}}</td>
+                                        <td class="left" style="background-color:#EFEFEF;">{{masstxt_upd_date_start}}</td>
+                                        <td class="left" style="background-color:#EFEFEF;">{{masstxt_upd_date_end}}</td>
+                                        <td style="background-color:#EFEFEF;"></td>
+                                      </tr>
+                                    </thead>
+                                    {% set special_row = 0 %}
+                                    {% for product_special in product_specials %}
+                                    <tbody id="special-row{{ special_row }}">
+                                      <tr>
+                                        <td class="left">
+                                           <select name="product_special[{{special_row}}][customer_group_id]">
+                                            {% for customer_group in customer_groups %}
+                                                {% if customer_group['customer_group_id'] == product_special['customer_group_id'] %}
+                                                    <option value="{{customer_group['customer_group_id']}}" selected="selected">{{customer_group['name']}}</option>
+                                                {% else %}
+                                                    <option value="{{customer_group['customer_group_id']}}">{{customer_group['name'] }}</option>
+                                                {% endif %}
+                                            {% endfor %}
+                                          </select>
+                                        </td>
+                                        <td class="right"><input type="text" name="product_special[{{special_row}}][quantity]" value="{{product_special['quantity']}}" size="2" /></td>
+                                        <td class="right"><input type="text" name="product_special[{{special_row}}][priority]" value="{{product_special['priority']}}" size="2" /></td>
+                                        <td class="right">
+                                        {% if product_special['price_mode'] is not defined %}
+                                            {% set product_special = product_special|merge({'price_mode': 'flat'})  %}
+                                        {% endif %}
+                                        <select name="product_special[{{special_row}}][price_mode]">
+                                            <option value="flat"{{ product_special['price_mode']=='flat' ? ' selected="selected"' : ''}}>{{masstxt_upd_flat}}</option>
+                                            <option value="sub"{{ product_special['price_mode']=='sub' ? ' selected="selected"' : ''}}>{{masstxt_upd_subtraction_price}}</option>
+                                            <option value="per"{{ product_special['price_mode']=='per' ? ' selected="selected"' : ''}}>{{masstxt_upd_percentage_price}}</option>
+                                        </select>
+                                        <input type="text" name="product_special[{{special_row}}][price]" value="{{product_special['price']}}" size="6" /></td>
+                                        <td class="left"><input type="text" name="product_special[{{special_row}}][date_start]" value="{{product_special['date_start']}}" class="date" size="8" /></td>
+                                        <td class="left"><input type="text" name="product_special[{{special_row}}][date_end]" value="{{product_special['date_end']}}" class="date"  size="8"/></td>
+                                        <td class="left"><a onclick="$('#special-row{{special_row}}').remove();" class="button btn btn-primary"><span>{{masstxt_remove}}</span></a></td>
+                                      </tr>
+                                    </tbody>
+                                    {% set discount_row=discount_row+1 %}
+                                   {% endfor %}
+                                    <tfoot>
+                                      <tr>
+                                        <td colspan="5"></td>
+                                        <td class="left"><a onclick="addSpecial();" class="button btn btn-primary"><span>{{masstxt_upd_add_special}}</span></a></td>
+                                      </tr>
+                                   </tfoot>
+                                </table>
+                            </div>
+
+                             <div class="form-group">
+                                  <label class="display-block text-semibold">{{masstxt_update_mode}}</label>
+                                  <label class="radio-inline radio-left">
+                                        {{masstxt_upd_mode_special_ad}}
+                                        <input type="radio" {{ upd_mode2=='ad' ? ' checked="checked"' : '' }} value="ad" name="upd_mode2" class="styled" >
+                                  </label>
+                                  <span class="help-block">{{masstxt_upd_mode_special_ad_help}}</span>
+                                   <label class="radio-inline radio-left">
+                                        {{masstxt_upd_mode_special_re}}
+                                        <input type="radio" {{ upd_mode2=='re' ? ' checked="checked"' : '' }} value="re" name="upd_mode2" class="styled" >
+                                  </label>
+                                  <span class="help-block">{{masstxt_upd_mode_special_re_help}}</span>
+                            </div>
+                        </div>
+                    </div>
+                   -->
+                    <! ./panel-default -->
+                    <div class="form-group">
+                        <span class="counter" style="font-weight:bold;">0</span>
+                        {{masstxt_mass_update_button_top1}}
+
+                        <br /><br />
+                        <input type='hidden' name="mass_update" />
+                        <input type="button" onclick="submitForm()" value="{{masstxt_mass_update_button}}" name="mass_update" style="font-weight:bold;font-size:15px;padding:7px 40px;color:#FF0000;">
+                        <br /><br />
+                        <span class="help-block">{{masstxt_mass_update_button_help}}</span>
+                    </div>
+                </div>
+                <!-- ./model-body -->
+            </div>
+            <!-- ./model-content -->
+        </div>
+        <!-- ./model-dialog -->
+        </form>
+    </div>
+    <!-- ./dialog-template-preview -->
+    <!-- Detached content -->
+    <div class="container-detached">
+        <div class="content-detached">
+            <div class="panel panel-flat">
+                <table class="table datatable-basic" id="datatable-language" >
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th>{{ lang('masstxt_table_name') }}</th>
+                        <th>{{ lang('masstxt_table_model') }}</th>
+                        <th>{{ lang('masstxt_table_price') }}</th>
+                        <th>{{ lang('masstxt_table_quantity') }}</th>
+                        <th>{{ lang('masstxt_table_status') }}</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+    </div>
+    <!-- /detached content -->
+{% endblock content %}
+{% block scripts %}
+    {{ parent() }}
+    {% import _self as dtControls %}
+    <script type="text/javascript" src="view/assets/js/plugins/sliders/nouislider.min.js"></script>
+    <script type="text/javascript" src="view/assets/js/plugins/sliders/ion_rangeslider.min.js"></script>
+    <script>
+    var action = '{{ action }}';
+    var table;
+    $(document).ready(function() {
+        $('select').select2();
+
+        $('.touchspinney').TouchSpin({
+            'postfix': '{{ current_currency_code }}',
+            'decimals': 2,
+        });
+        var price_min = parseInt('{{ price_mmarese }}');
+        var price_max = parseInt('{{ price_mmicse }}');
+        var discount_min = parseInt('{{ d_price_mmarese }}');
+        var discount_max = parseInt('{{ d_price_mmicse }}');
+
+        var qty_min = parseInt('{{ stock_mmarese }}');
+        var qty_max = parseInt('{{ stock_mmicse }}');
+
+        ranger('price-range', {
+            'from': price_min,
+            'to': price_max,
+            'min': price_min,
+            'max': price_max
+        });
+        ranger('discount-range', {
+            'from': discount_min,
+            'to': discount_max,
+            'min': discount_min,
+            'max': discount_max
+        });
+        ranger('special-price-range', {
+            'from': price_min,
+            'to': price_max,
+            'min': price_min,
+            'max': price_max
+        });
+        ranger('quantity-range', {
+            'from': qty_min,
+            'to': qty_max,
+            'min': qty_min,
+            'max': qty_max
+        });
+        ranger('min-quantity-range', {
+            'from': qty_min,
+            'to': qty_max,
+            'min': qty_min,
+            'max': qty_max
+        });
+
+        $.extend($.fn.dataTable.defaults, {
+            autoWidth: false,
+            columnDefs: [{
+                orderable: false,
+                width: '100px',
+            }],
+            dom: '<"datatable-header"fl><"datatable-scroll-wrap"t><"datatable-footer"ip>',
+            language: locales['dt_language'],
+            drawCallback: function () {
+                $(this).find('tbody tr').slice(-3).find('.dropdown, .btn-group').addClass('dropup');
+            },
+            preDrawCallback: function () {
+                $(this).find('tbody tr').slice(-3).find('.dropdown, .btn-group').removeClass('dropup');
+            }
+        });
+
+        //Setup date form controls (available date, added date & modified date)
+        $('.daterange-basic').daterangepicker({
+            autoApply: true,
+            autoUpdateInput: false,
+            ranges: locales['drp_ranges'],
+            locale: locales['drp_locale'],
+
+        });
+
+        $('.daterange-basic').on('apply.daterangepicker', function(ev, picker) {
+            $(this).val(picker.startDate.format('MM/DD/YYYY') + ' - ' + picker.endDate.format('MM/DD/YYYY'));
+        });
+
+        $('.daterange-basic').on('cancel.daterangepicker', function(ev, picker) {
+            $(this).val('');
+        });
+
+        $('.daterangepicker-inputs').addClass('hidden');
+
+        table=$('#datatable-language').DataTable({
+            "rowId": "rule_id",
+            "language": locales['dt_language'],
+            "select": {
+                style: 'multi',
+                selector: 'td:first-child'
+            },
+            "language": {
+                "zeroRecords": "No records to display"
+            },
+            "ajax": action,
+
+            columns: [
+                  {
+                     title:`<input name="select_all" id="select_all" type="checkbox" class="styled" onchange='selectAll();'>`,
+                     orderable: false,
+                     data: "product_id",
+                     width: "50px",
+                     render: function (data, type, row) {
+                         return `<input data-id="${row['product_id']}" value="${row['product_id']}" name="selected[]" type="checkbox" class="select-checkbox">`;
+                     }
+                  },
+                  {
+                      data: 'name',
+                  },
+                  {
+                      data: "model",
+                  },
+                  {
+                      data: "price",
+                  },
+                  {
+                      data: "quantity",
+                      render: function(data, whatever, row) {
+                        if ( row['quantity'] <= 0 ) {
+                            return '<span class="text-danger">' + row['quantity'] + '</span>';
+                        } else if (row['quantity'] <= 5) {
+                            return '<span class="text-warning">' + row['quantity'] + '</span>';
+                        }
+                        else{
+                            return '<span class="text-success">' + row['quantity'] + '</span>';
+                        }
+
+                     }
+                  },
+                  {
+                      data: "status",
+                      render: function(data, whatever, row) {
+                          if ( row['status'] == '1' || row['status'] == 1 ) {
+                              return '<span class="label label-success">' + row['status_text'] + '</span>';
+                          } else {
+                              return '<span class="label label-danger">' + row['status_text'] + '</span>';
+                          }
+                      }
+                  },
+
+            ]
+        });
+
+
+        // while  searching and the selected all checked then remove selected rows .
+        table.on( 'search.dt', function () {
+            if($('#select_all').is(":checked")){
+                 table.rows().deselect();
+                 $('.counter').text(table.rows('.selected').count());
+                 $('#select_all').attr('checked', false);
+            }
+        } );
+
+
+        $('[data-popup="tooltip"]').tooltip();
+
+        table.on('select', function() {
+            $('.counter').text(table.rows('.selected').count());
+        });
+
+        table.on('deselect', function() {
+            $('.counter').text(table.rows('.selected').count());
+        });
+
+
+        // On each draw, loop over the `detailRows` array and show any child rows
+        table.on('draw', function () {
+            $(".switch").bootstrapSwitch();
+            $(".styled, .multiselect-container input").uniform({
+                radioClass: 'choice'
+            });
+            // select all products
+           // table.rows().select();
+            $('.counter').text(table.rows('.selected').count());
+        });
+
+        $('.dataTables_length select').select2({
+            minimumResultsForSearch: Infinity,
+            width: 'auto'
+        });
+        $(".styled, .multiselect-container input").uniform({
+            radioClass: 'choice'
+        });
+
+        $('#filterList').click(function(){
+            event.preventDefault();
+            filterReloadDT();
+        });
+
+        $('input:not(:checkbox,[name="upd_mode"])', 'select').change(function (event) {
+            event.preventDefault();
+            filterReloadDT();
+        });
+
+        $('#filter').on('reset', function (e) {
+            $('#btnreset').addClass('hidden');
+        });
+
+        $('#btnreset').on('click', function(e){
+            e.preventDefault();
+            $('#resetList').trigger("click");
+        });
+         $('#resetList').click(function () {
+
+            $(':input', '#filter')
+                .not(':button, :submit, :reset, :hidden')
+                .val('')
+                .prop('checked', false)
+                .prop('selected', false);
+
+            $('#filter').find('select').each(function () {
+                this.value = '';
+            }).trigger('change');
+
+            $('#filter').find('.noui-slider-primary').each(function () {
+                $(this).data('ionRangeSlider').reset();
+            });
+
+            table.on('preXhr.dt', function (e, settings, data) {
+                return $.extend(data, {filter: null});
+            });
+
+            table.ajax.reload();
+        });
+
+        $("#select_all").click(function(e){
+            toggleSelectAll(this);
+        });
+    });
+
+    /**
+     * Check if any row selected from datatable before showing the modal
+     */
+    function showDialogModal(){
+        if (table.rows( '.selected').any()){
+            $('#dialog-template-preview').modal('show');
+        }else{
+           $("#error-area").append("<div class=\"alert alert-danger alert-styled-left alert-bordered\">" +
+               "<button type=\"button\" class=\"close\" data-dismiss=\"alert\"><span>×</span><span class=\"sr-only\">Close</span></button>" +
+               "{{lang('masstxt_error_no_products_selected')}}" +
+               "</div>");
+            setTimeout(function(){
+                $("#error-area").empty();
+            },3000);
+        }
+    }
+    function toggleSelect() {
+        $('.counter').text(table.rows('.selected').count());
+    }
+    function toggleSelectAll(checkbox) {
+        if (checkbox.checked == true) {
+            //select all  filterd rows
+            table.rows( { search: 'applied' } ).select()
+
+        } else {
+            table.rows().deselect();
+        }
+        $('.counter').text(table.rows('.selected').count());
+    }
+    function filterReloadDT()
+    {
+        $('#btnreset').removeClass('hidden');
+        var $formData = $('#filter').serialize();
+        table.on('preXhr.dt', function (e, settings, data) {
+            return $.extend(data, {filter: $formData});
+        });
+
+        table.ajax.reload();
+    }
+
+
+
+     function noUiranger(id, options) {
+
+        if (typeof options === 'undefined') {
+            options = {};
+        }
+
+        var rangeDefaults = {
+            type: "double",
+            tooltips: true,
+            connect: true,
+        };
+        var selector = document.getElementById(id);
+
+        var range = rangeDefaults;
+
+        for (opt in options) {
+            range[opt] = options[opt];
+        }
+
+        $('#' + id + '-input-min').val(range[min]);
+        $('#' + id + '-input-max').val(range[max]);
+
+        noUiSlider.create(selector, range);
+        selector.noUiSlider.on('update', function (value, handle) {
+            $('#' + id + '-input-min').val(value[0]);
+            $('#' + id + '-input-max').val(value[1]);
+        });
+
+
+    }
+
+    function ranger(selector, options) {
+
+        if (typeof options === 'undefined') {
+            options = {};
+        }
+
+        var rangeDefaults = {
+            type: 'double',
+            onChange: function (data) {
+                $('#' + selector + '-input-min').val(data.from);
+                $('#' + selector + '-input-max').val(data.to);
+                filterReloadDT();
+            }
+        };
+
+        var range = rangeDefaults;
+
+        for (opt in options) {
+            range[opt] = options[opt];
+        }
+
+        $('#' + selector).ionRangeSlider(range);
+    }
+
+var discount_row = {{discount_row is defined ? discount_row:0 }};
+
+function addDiscount() {
+	html  = '<tbody id="discount-row' + discount_row + '">';
+	html += '  <tr>';
+    html += '    <td class="left"><select class="form-control select2" name="product_discount[' + discount_row + '][customer_group_id]">';
+    html += '<option value="-1">{{lang('masstxt_update_all_groups')}}</option>';
+    {% for customer_group in customer_groups %}
+    html += '      <option value="{{ customer_group['customer_group_id'] }}">{{customer_group['name']}}</option>';
+    {% endfor %}
+    html += '    </select></td>';
+    html += '    <td class="right"><input type="text" class="form-control discount-quantity" name="product_discount[' + discount_row + '][quantity]" value="" size="2" /></td>';
+    html += '    <td class="right"><input type="text" class="form-control" name="product_discount[' + discount_row + '][priority]" value="" size="2" /></td>';
+    html += '    <td class="right"><select class="form-control select2" name="product_discount[' + discount_row + '][price_mode]">';
+    	html += '<option value="flat">{{masstxt_upd_flat}}</option>';
+    	html += '<option value="sub">{{masstxt_upd_subtraction_price}}</option>';
+    	html += '<option value="per">{{masstxt_upd_percentage_price}}</option></select>';
+    	html += '<input type="text" class="form-control"    name="product_discount[' + discount_row + '][price]" value="" size="6" /></td>';
+    html += '    <td class="left"><input type="text" name="product_discount[' + discount_row + '][date_start]" value="" class="form-control picker__input date" size="8"/></td>';
+	html += '    <td class="left"><input type="text"  name="product_discount[' + discount_row + '][date_end]" value="" class="form-control picker__input date" size="8" /></td>';
+	html += '    <td class="left"><select type="text" name="product_discount[' + discount_row + '][domain]" class="form-control select2">';
+    html += '    <option value="-1">{{lang('all_domain_text')}}</option>';
+
+	      {% for domainId in dedicatedDomains['domains'] %}
+          html += '      <option value="{{ domainId['domain_id'] }}">{{ domainId['domain'] }}</option>';
+          {% endfor %}
+	    html +='</select></td>';
+	html += '    <td class="left"><a onclick="$(\'#discount-row' + discount_row + '\').remove();" class="button btn btn-danger"><span>{{masstxt_remove}}</span></a></td>';
+	html += '  </tr>';
+    html += '</tbody>';
+
+	$('#discount tfoot').before(html);
+
+    $(".select2").select2();
+
+	$('#discount-row' + discount_row + ' .date').pickadate({format: 'yyyy-mm-dd'});
+
+    discount_row++;
+
+}
+var special_row = {{ special_row is defined ? special_row:0 }};
+
+function addSpecial() {
+	html  = '<tbody id="special-row' + special_row + '">';
+	html += '  <tr>';
+    html += '    <td class="left"><select name="product_special[' + special_row + '][customer_group_id]">';
+    {% for customer_group in customer_groups %}
+    html += '      <option value="{{customer_group['customer_group_id']}}">{{customer_group['name']}}</option>';
+    {% endfor %}
+    html += '    </select></td>';
+    html += '    <td class="right"><input type="text" class="form-control" name="product_special[' + special_row + '][priority]" value="" size="2" /></td>';
+
+    html += '    <td class="right"><select name="product_special[' + special_row + '][price_mode]">';
+    	html += '<option value="flat">{{masstxt_upd_flat}}</option>';
+    	html += '<option value="sub">{{masstxt_upd_subtraction_price}}</option>';
+    	html += '<option value="per">{{masstxt_upd_percentage_price}}</option></select>';
+	html += '<input type="text" class="form-control"  name="product_special[' + special_row + '][price]" value="" size="6" /></td>';
+    html += '    <td class="left"><input type="text" name="product_special[' + special_row + '][date_start]" value="" class="form-control picker__input date" size="8" /></td>';
+	html += '    <td class="left"><input type="text" name="product_special[' + special_row + '][date_end]" value="" class="form-control picker__input date" size="8" /></td>';
+	html += '    <td class="left"><a onclick="$(\'#special-row' + special_row + '\').remove();" class="button btn btn-danger"><span>{{masstxt_remove}}</span></a></td>';
+	html += '  </tr>'; 
+    html += '</tbody>';
+
+	$('#special tfoot').before(html);
+
+	$('#special-row' + special_row + ' .date').pickadate({format: 'yyyy-mm-dd'});
+
+    $("select").select2();
+
+	special_row++;
+}
+
+function submitForm(){
+
+    $('.error-required').remove();
+
+    var errors = false;
+
+    $('.discount-quantity').each(function () {
+        if (!$(this).val()) {
+            errors = true;
+            $(this).parent().append('<p class="text-danger error-required" style="position:absolute">{{ masstxt_required }}</p>');
+        }
+    });
+
+    if (errors) {
+        return;
+    }
+
+    $('#selected-products-wrapper-div').html('');
+    let rws = table.rows('.selected').data().toArray();
+    let items = [];
+
+    for (var i = 0; i < rws.length; i++) {
+        items.push(rws[i].product_id);
+    }
+
+    $('#selected-products-wrapper-div').append( "<input type='hidden' name='selectedProducts' value='"+items.join()+"'>" );
+
+    $('.form').submit();
+    $('#dialog-template-preview').modal('toggle');
+    $('#discount tbody').remove();
+    $('#selected-products-wrapper-div').html('');
+
+}
+</script>
+{% endblock scripts %}

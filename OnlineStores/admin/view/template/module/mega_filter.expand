@@ -1,0 +1,126 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% set dualMenuEnabled = true %}
+
+{% block title %}
+    {{ lang('heading_title', 'module/mega_filter') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block secondarymenu %}
+    {% include 'module/mega_filter_menu.expand' with {'expand': '#mega_filter', 'active': '#layout'} %}
+{% endblock secondarymenu %}
+
+{% block headelements %}
+    <a onclick="addNewPopUp()" class="btn btn-success btn-labeled btn-xs"><b><i class="icon-plus3"></i></b>{{ button_add_module }}</a>
+{% endblock headelements %}
+
+{% block content %}
+<form action="" class="form" method="post" enctype="multipart/form-data">
+	<div class="tab-content" style="padding-left: 0">
+		<div class="panel panel-flat" id='layout'>
+	          <table class="table table-hover datatable-pagination"  id='datatableGrid'>
+	            <thead>
+	              <tr>
+	                <th class="left">#</th>
+	                <th class="left">{{ text_name }}</th>
+	                <th class="text-center"></th>
+	              </tr>
+	            </thead>
+	            <tbody class="layout-list">
+	            	{% set layout_row = 1 %}  
+	              	{% if modules is not empty %}
+	              	{% for row, module in modules %}
+	              	  {% if module['id'] %}
+	              	  	{% set id = module['id'] %}
+	              	  {% else %}
+	              	  	{% set id = row %}
+	              	  {% endif %}
+	                  <tr id="layout_{{ id }}">
+	                    <td style="width: 100px">{{ id }}</td>
+	                    <td class="left">
+	                    	<a href="module/mega_filter/update?layout_id={{ module['id'] }}">
+		                       {% if module['name'] is not empty %} {{ module['name'] }}  {% else %} {{ tab_module }} {{ row }} {% endif %}
+		                   </a>
+	                       <input type="hidden" name="mega_filter_module[name]" value="{% if module['name'] is not empty %} {{ module['name'] }}  {% else %} {{ tab_module }} {{ row }} {% endif %}">
+	                       <input type="hidden" name="mega_filter_module[id]" value="{{ id }}">
+	                    </td>
+	                    
+	                    <td class="text-center" style="width: 15%">
+	                      
+	                      <ul class="icons-list pull-right">
+	                        <li class="dropdown">
+	                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+	                                <i class="icon-menu9"></i>
+	                            </a>
+	                            <ul class="dropdown-menu dropdown-menu-right">
+	                                <li><a href="module/mega_filter/update?layout_id={{ id }}"><i class="far fa-edit"></i>{{ lang('text_edit') }}</a></li>
+	                                <li><a onclick="removePopUp('{{ id }}')" data-rowid="368"><i class="fas fa-trash"></i>{{ lang('text_delete') }}</a></li>
+	                            </ul>
+	                        </li>
+	                    </ul>
+	                    </td>
+	                  </tr>
+	                  {% set layout_row =  id+1 %}
+					{% endfor %} 
+				{% else %}
+	              <tr id='noresults'>
+	                <td class="center" colspan="4">{{ text_no_results }}</td>
+	              </tr>
+	            {% endif %}
+	            </tbody>
+	          </table>
+	    </div>
+	</div>
+</form>
+<script type="text/javascript">
+var actionForm = '{{ action_save_data }}';
+var count = {{ layout_row }};
+function addNewPopUp() {
+    var tpl     = '<tr id="layout_'+ count +'">';
+    tpl     += '<td style="width: 100px">'+ count +'</td><td class="left">{{ tab_module }} '+ count +'</td><input type="hidden" name="mega_filter_module[name]" value="{{ tab_module }} '+ count +'"><input type="hidden" name="mega_filter_module[id]" value="'+ count +'">';
+    tpl     += '<td class="text-center"  style="width: 15%"><ul class="icons-list pull-right"><li class="dropdown"><a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="icon-menu9"></i></a><ul class="dropdown-menu dropdown-menu-right"><li>';
+    tpl     += '<a href="module/mega_filter/update?popup_id='+ count +'"><i class="far fa-edit"></i> Edit</a>';
+    tpl     += '</li><li>';
+    tpl     += '<a onclick="removePopUp('+ count +')" data-rowid="368"><i class="fas fa-trash"></i> Delete</a></li></ul></li></ul>';
+    tpl     += '<input type="hidden" name="ids['+ count +']" value="'+ count +'" />';
+    tpl     += '</td></tr>';
+    
+    $('.layout-list').append(tpl);
+    $('#noresults').remove();
+    $('.form').attr('action', actionForm+'?mf_id='+count)
+    count++;
+    $('.form').submit();    
+}
+
+// Remove PopUp
+function removePopUp(id) {
+    confirmMessage(function () {
+        $('#layout_'+id).remove();
+        $('.form').attr('action', actionForm+'?rmv_id='+id)
+        $('.form').submit();    
+    });
+}
+
+$(document).ready(function() {
+	$('#datatableGrid').DataTable({
+	    columnDefs: [{ 
+	        orderable: false,
+	        targets: [ 4 ]
+	    }],
+	    dom: '<"datatable-header"fl><"datatable-scroll-wrap"t><"datatable-footer"ip>',
+	    language: {
+	        search: '<span>' + locales['filter'] + ':</span> _INPUT_',
+	        searchPlaceholder: locales['filter_placeholder'],
+	        lengthMenu: '<span>' + locales['show'] + ':</span> _MENU_',
+	        paginate: locales['paginate']
+	    }
+
+	});
+});
+</script> 
+{% endblock %}

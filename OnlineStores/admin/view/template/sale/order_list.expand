@@ -1,0 +1,1396 @@
+{% extends "base.expand" %}
+
+
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+
+{% set bodyClasses = "has-detached-right sidebar-detached-hidden" %}
+
+{% block title %}
+    {{ heading_title }}
+{% endblock title %}
+
+{% set hideHeader = true %}
+
+{% set icon = random(['fa-check-circle', 'fa-hand-peace', 'fa-thumbs-up']) %}
+{% set default_selected_order_statuses = [1, '1', 2, '2', 3, '3'] %}
+
+{% block content %}
+
+<div class="list-wrapper">
+    <div class="">
+        <div class="inner-settings-title mb-10 orders-title">
+            <h4 class="fb-app-title">
+                {{lang("heading_title")}}
+            </h4>
+            <div class="btns">
+                <a class="text-dt-btn  {{ base.plan_trial_id == '3' ? 'plan-lock-btn' : '' }}" href="{{ link('tool/w_import_tool') }}">{% if base.plan_trial_id == "3" %}<i class="fas fa-lock gray-lock"></i>{% endif %} {{ lang('button_import') }}</a>
+                <a class="text-dt-btn  {{ base.plan_trial_id == '3' ? 'plan-lock-btn' : '' }}" href="{{ link('tool/w_export_tool') }}">{% if base.plan_trial_id == "3" %}<i class="fas fa-lock gray-lock"></i>{% endif %} {{ lang('button_export') }}</a>
+                <a class="theme-btn rounded-primary-btn  {{ base.plan_trial_id == '3' ? 'plan-lock-btn' : '' }}" href="{{ link('sale/order/insert') }}">{% if base.plan_trial_id == "3" %} <i class="fas fa-lock gray-lock"></i> {% endif %}{{ lang('btn_new_order') }}</a>
+            </div>
+        </div>
+
+        {# hidden form to print Orders #}
+        <form action="{{ link('sale/order/invoice') }}" method="post" style="display: none;" target="_blank" id="print_orders_hidden_form"></form>
+        {# /hidden form to print Orders #}
+
+        <style>
+            textarea
+            {
+                resize: vertical;
+            }
+            .ltr
+            {
+                direction: ltr;
+            }
+            .dt-buttons .double-select.disabled:not(.plan-lock-btn)::after {content: "{{lang('text_double_select_first')}}"}
+        </style>
+
+        {% include "sale/order/modals/mylerz-send-orders.expand" %}
+        {% include "sale/order/modals/assign_admin_to_orders.expand" %}
+        <!-- Detached content -->
+
+        <div class="panel">
+            <div class="panel-body pt-0 pb-0">
+                <div class="card-body">
+                    <div id="order-grid">
+                        {% include "sale/order/list.expand" %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- /detached content -->
+
+        <!-- Detached sidebar -->
+        {% include "sale/order/filter.expand" %}
+        <!-- /detached sidebar -->
+    </div>
+
+    <div class="table-guide">
+        <i class="fas fa-info-circle"></i>
+        {{lang('text_learn_more_about')}}&nbsp;
+        {%  set url = "https://support.expandcart.com/orders" %}
+        <a href="{{ url }}">{{lang('text_orders')}} <i class="fas fa-external-link-alt"></i></a>
+    </div>
+</div>
+
+<!-- Modal  -->
+<div id="processing-modal" class="modal fade">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h5 class="modal-title">{{ lang('confirm_order_status', 'sale/order') }}</h5>
+            </div>
+
+            <hr>
+
+            <div class="text-center">
+                <label class="label label-warning" id="old-order-status"></label> <i class="fa fa-arrow-right"></i>
+                <label class="label label-success" id="new-order-status"></label>
+            </div>
+
+            <form class="form" id='change-order-status-form' method='post' action="">
+                <div class="modal-body">
+                    <input type="hidden" id="order-status-id-hidden-value" name="order_status_id">
+                    <!-- Notify Customer -->
+                    <div class="form-group" id="xd-group">
+                        <label class="control-label">{{ lang('entry_notify') }}</label>
+                        <div class="checkbox checkbox-switchery">
+                            <label>
+                                <input type="checkbox" onchange="changeStatus(this);" name="notify" class="switchery" {{ notify in ['1', 1, 'on'] ? 'checked' }}>
+                                <span class="switchery-status">{{ notify in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                            </label>
+                        </div>
+                    </div>
+                    <!-- /Notify Customer -->
+                    <!-- Comment -->
+                    <div class="form-group">
+                        <div class="form-group col-md-12" id="xd-group">
+                            <label for="comment" class="control-label">{{ lang('entry_comment') }}</label>
+                            <textarea name="comment" id="comment" rows="5" cols="30" class="form-control" style="margin-bottom:20px;"></textarea>
+                        </div>
+                    </div>
+                    <!-- /Comment -->
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link" data-dismiss="modal">{{ lang('text_close') }}</button>
+                    <button type="submit" id="submit-change-order-status-form" class="btn btn-primary">{{ lang('button_save') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div id="bulk-order-status-modal" class="modal fade">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h5 class="modal-title">{{ lang('confirm_order_status') }}</h5>
+            </div>
+
+            <form id='bulk-order-status-form' method='post'
+                action="{{ link('sale/order/addHistory') }}">
+                <div class="modal-body">
+                    <div class="modal-errors"></div>
+                    <!-- Notify Customer -->
+                    <div class="form-group col-md-12" id="xd-group">
+                        <label class="control-label">{{ lang('entry_status') }}</label>
+                        <select class="select2 form-control" name="order_history[order_status_id]">
+                            {% for os in order_statuses %}
+                            <option value="{{ os['order_status_id'] }}">{{ os['name'] }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <!-- /Notify Customer -->
+                    <!-- Comment -->
+                    <div class="form-group col-md-12" id="xd-group">
+                        <label for="comment" class="control-label">{{ lang('entry_comment') }}</label>
+                        <textarea name="order_history[comment]" id="comment" rows="5" cols="30" class="form-control" style="margin-bottom:20px;"></textarea>
+                    </div>
+                    <!-- /Comment -->
+                    <div class="form-group col-md-6" id="xd-group">
+                        <label style="width: 100%;" class="checkbox-inline checkbox-left ">
+                            <input type="checkbox" value="1" class="styled" name="order_history[notify]" id="notify">
+                            {{ lang('entry_notify') }}
+                        </label>
+                    </div>
+                    {% if smsapp == true %}
+                        <div class="form-group  col-md-6" id="xd-group">
+                            <label style="width: 100%;" class="checkbox-inline checkbox-left">
+                                <input type="checkbox" value="1" class="styled" name="order_history[notify_by_sms]" id="notify_by_sms">
+                                {{ lang('entry_notify_by_sms') }}
+                            </label>
+                        </div>
+                    {% endif %}
+                </div>
+                <div style="clear: both"></div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link" data-dismiss="modal">{{ lang('text_close') }}</button>
+                    <button type="button" id="bulk-order-status-form-trigger"
+                        class="btn btn-primary">{{ lang('button_save') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- /Modal -->
+
+<!-- filter Modal -->
+<div id="filter-modal" class="modal fade">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h5 class="modal-title">{{ lang('filter_columns') }}</h5>
+            </div>
+            <form class="form" id='change-order-status-form' method='post' action="">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>{{ lang('lbl_kanban_status') }}</label>
+                        <select name="filter-order-statuses" id="filter-order-statuses" multiple>
+                            {% for os in order_statuses %}
+                                <option value="{{ os['order_status_id'] }}" {{ os['order_status_id'] in selected_statuses or os['order_status_id'] in default_selected_order_statuses ? 'selected' }}>{{ os['name'] }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- /filter Modal -->
+
+{% endblock content %}
+
+
+{% block scripts %}
+    <script>
+        $('.orders-title .btns').prepend(
+            `<a href="{{ insert }}" class="theme-btn rounded-primary-btn  {{ base.plan_trial_id == '3' ? 'plan-lock-btn' : '' }}">{% if base.plan_trial_id == "3" %} <i class="fas fa-lock gray-lock"></i> {% endif %}{{ lang('btn_new_order') }}</a>`
+        )
+        $('.orders-title .btns').prepend(`<a class="text-dt-btn  {{ base.plan_trial_id == '3' ? 'plan-lock-btn' : '' }}" href="{{ link('tool/w_import_tool') }}">{% if base.plan_trial_id == "3" %}<i class="fas fa-lock gray-lock"></i>{% endif %} {{ lang('button_import') }}</a>`)
+        $('.orders-title .btns').prepend(`<a class="text-dt-btn  {{ base.plan_trial_id == '3' ? 'plan-lock-btn' : '' }}" href="{{ link('tool/w_export_tool') }}">{% if base.plan_trial_id == "3" %}<i class="fas fa-lock gray-lock"></i>{% endif %} {{ lang('button_export') }}</a>`)
+    </script>
+    {# {{ parent() }} #}
+    {% import _self as dtControls %}
+    <script>
+        var links = {};
+
+        links['dtHandler'] = '{{ link('localisation/language/dtHandler') }}';
+        links['dtUpdateStatus'] = '{{ link("localisation/language/dtUpdateStatus") }}';
+        links['dtDelete'] = '{{ link('localisation/language/dtDelete') }}';
+        links['insert'] = '{{ link('localisation/language/insert') }}';
+        links['update'] = '{{ link('localisation/language/update') }}';
+        links['send'] = '{{ link('localisation/language/send') }}';
+
+        function changeStatus(checkbox)
+        {
+            var self = $(checkbox);
+            var switch_status = self.siblings('.switchery-status');
+
+            if ( self.is(':checked') )
+            {
+                switch_status.html("{{ lang('text_enabled') }}");
+                if(self.attr('data-archived') && self.attr('data-archived') == '1'){
+                    $(".bulk-archive").attr({
+                        "data-original-title": locales['button_unarchive'],
+                        "data-action" : "unarchive"
+                    });
+                }
+            }
+            else
+            {
+                switch_status.html("{{ lang('text_disabled') }}");
+                if(self.attr('data-archived') && self.attr('data-archived') == '1'){
+                    $(".bulk-archive").attr({
+                        "data-original-title": locales['button_archive'],
+                        "data-action" : "archive"
+                    });
+                }
+            }
+        }
+
+        $(document).ready(function() {
+            $.extend($.fn.dataTable.defaults, {
+                autoWidth: false,
+                dom: '<"datatable-header"Bf><"datatable-scroll-wrap"t><"datatable-footer"lip>',
+                language: locales['dt_language'],
+                lengthMenu: [[10, 25, 50, 100, 200], [10, 25, 50, 100, 200]]
+            });
+
+
+            $('#resetList').click(function () {
+
+                $(':input', '#filter')
+                    .not(':button, :submit, :reset, :hidden')
+                    .val('')
+                    .prop('checked', false)
+                    .prop('selected', false);
+
+                $('#filter').find('select').each(function () {
+                    this.value = '';
+                }).trigger('change');
+
+                var archivedChk = $('.archived-switch');
+                if ( archivedChk.is(':checked') )
+                {
+                    archivedChk.trigger('click');
+                }
+
+                $('#filter').find('.noui-slider-primary').each(function () {
+                    $(this).data('ionRangeSlider').reset();
+                });
+
+                orderTable.on('preXhr.dt', function (e, settings, data) {
+                    return $.extend(data, {filter: null});
+                });
+
+                orderTable.ajax.reload();
+            });
+        });
+
+        function toggleFilter(el) {
+            //debugger;
+            var isFilterHidden = $('body').hasClass('sidebar-detached-hidden');
+
+            if(isFilterHidden) $(el).children('a').children('span').text('{{ lang('lbl_hide_filter') }}');
+            else $(el).children('a').children('span').text('{{ lang('lbl_filter') }}');
+        }
+
+        var orderTable;
+
+        Array.prototype.remove = function(item)
+        {
+            // index will have -1 if item does not exist
+            // else it will have the index of 1st item found in array
+            var index = this.indexOf(item);
+
+            if (index > -1)
+            {
+                // splice() method is used to add/remove items(s) in array
+                this.splice(index, 1);
+            }
+
+            return index;
+        }
+
+        var selectedIds = [];
+        $(document).ready(function(){
+            showHideOrderStatuses();
+
+            $('.hide-on-grid-view').hide();
+
+            $('select:not(.multiselect-bs,#product_id,#customer_id,#warehouse_id)').select2({dropdownAutoWidth : true});
+
+            orderTable = $('#datatable-language').DataTable({
+                processing: true,
+                serverSide: true,
+                stateSave: true,
+                rowId: "order_id",
+                ajax: {
+                    url: '{{ link('sale/order/dtHandler') }}',
+                    type: "post",
+                    beforeSend: function() {
+                        $('#datatable-language').before('<div class="text-center loading" style="position: absolute;width: 100%;height: 100%;"><img src="view/image/blue-loading-gif-transparent-9.gif"  style="width: 100px" /></div>');
+                    },
+                    complete: function(res) {
+                        $('.loading').remove();
+                        res.responseJSON.recordsTotal == 0 ? location.reload() : '';
+                    },
+                    error: function (e,m,l) {
+                        $(".datatables_country-error").html("");
+                        $("#datatables_country").append('<tbody class="datatables_country-error"><tr><th colspan="3">No data found in the server</th></tr></tbody>');
+                        $("#datatables_country_processing").css("display", "none");
+                    }
+                },
+                dom: '<"datatable-header"fB><"datatable-scroll-wrap"t><"datatable-footer"lip>',
+                language: {
+                    ...locales['dt_language'],
+                    search: ''
+                },
+                select: {
+                    style: 'multi',
+                    selector: 'td:first-child'
+                },
+                drawCallback: function () {
+                    if($("#datatable-language").find('tbody tr').length > 2){
+                        $("#datatable-language").find('tbody tr').slice(-2).find('.dropdown, .btn-group').addClass('dropup');
+                    }
+                },
+                preDrawCallback: function() {
+                    if($("#datatable-language").find('tbody tr').length > 2){
+                        $("#datatable-language").find('tbody tr').slice(-2).find('.dropdown, .btn-group').removeClass('dropup');
+                    }
+                },
+                buttons: [
+                      {% if isOrderAssigneeAppInstalled %}
+                       {
+                        text: "<i style='font-size: 18px;' class='fa fa-user-circle-o'></i> {{lang('dtb_assign')}}",
+                        className: "assign_order_bulk_button disabled",
+                        action(e, dt, node, config) {
+                            $('#assign_admin_to_orders_bulk-modal').modal('toggle');
+                        }
+                    },// assign_order
+                    {% endif %}
+                    {
+                        text: "<i class='icon-merge'></i> {{lang('dtb_merge')}}",
+                        className: "disabled double-select {{ base.plan_trial_id == '3' ? 'plan-lock-btn' : 'merge-orders' }}",
+                        action(e, dt, node, config) {
+                            {% if base.plan_trial_id != '3' %}
+                                swal({
+                                    title: "{{ lang('merge_orders_title') }}",
+                                    text: "{{ lang('merge_orders_text') }}",
+                                    type: "info",
+                                    showCancelButton: true,
+                                    confirmButtonColor: "#ef5350",
+                                    confirmButtonText: "{{ lang('merge_orders_yes_button') }}",
+                                    cancelButtonText: "{{ lang('merge_orders_no_button') }}",
+                                },
+                                function(isConfirm)
+                                {
+                                    if ( isConfirm )
+                                    {
+                                        update_selected_rows();
+                                        mergeOrders( selectedIds );
+                                    }
+                                });
+                            {% endif %}
+                        }
+                    },// merge
+                    {
+                        text: "<i class='icon-pencil7'></i> {{lang('dtb_edit')}}",
+                        className: "bulk-order-status-update disabled",
+                        action(e, dt, node, config) {
+                            $('#bulk-order-status-modal').modal('toggle');
+                        }
+                    },// edit
+                    {% if shipping_mylerz %}
+                    {
+                        text: "<i class='icon-paperplane'></i> {{lang('dtb_shipping')}}",
+                        className: "mylerz-send-bulk-orders-button disabled",
+                        action(e, dt, node, config) {
+                            $('#mylerz-send-bulk-orders-modal').modal('toggle');
+                        }
+                    },// shipping
+                    {% endif %}
+                    {
+                        text: "<i class='icon-archive'></i> {{lang('dtb_archive')}}",
+                        className: 'dt-menu bulk-archive disabled',
+                        action: function(e, dt, node, config) {
+                            var selectedRows = dt.rows('.selected').data();
+                            var archive_action =  $(".bulk-archive").attr('data-action');
+                            selectedRows.each(function(item) {
+                                selectedIds.push(item.order_id);
+                            });
+                            if (selectedIds.length > 0){
+
+                                if(archive_action == 'archive'){
+                                    var textData = {
+                                        title: locales['cm_archive_title'],
+                                        text: locales['cm_undo_text'],
+                                        confirmButtonText: locales['cm_confirm_archive_button']
+                                    };
+                                }else{
+                                    var textData = {
+                                        title: locales['cm_unarchive_title'],
+                                        text: locales['cm_undo_text'],
+                                        confirmButtonColor: "#2196F3",
+                                        confirmButtonText: locales['cm_confirm_unarchive_button']
+                                    };
+                                }
+
+                                confirmMessage(function () {
+                                    $.ajax({
+                                        url: '{{ link('sale/order/dtDelete') }}',
+                                        type: 'post',
+                                        data: {id: selectedIds, action : archive_action },
+                                        success: function(){
+                                            reloadDT();
+                                        }
+                                    });
+                                }, '', textData);
+                            }
+                        }
+                    },// archive
+                    {
+                        extend: 'colvis',
+                        text: '<i class="fas fa-columns"></i> {{lang("dtb_custom_col")}}',
+                        className: 'dt-menu dt-list btn-colvis',
+
+                        {% set endTarget = 18 %}
+
+                        {% if delivery_slot %}
+                            {% set endTarget = endTarget + 2 %}
+                        {% endif %}
+                        {% if wkpos %}
+                            {% set endTarget = endTarget + 1 %}
+                        {% endif %}
+                        {% if warehouses %}
+                            {% set endTarget = endTarget + 1 %}
+                        {% endif %}
+                        /*
+                        If you need to add a new cols to cols list just add a new condition here with the number of columns,
+                        if your new column is fixed without conditions then just increment the init of endTarget above
+                        * */
+
+                        {% set col_list = range(2,endTarget)  %}
+                        columns: [{{ col_list|join(',') }}]
+                    },// cols
+                    {# {
+                        extend: 'collection',
+                        text: '<i class="icon-drawer-out"></i>',
+                        className: 'btn btn-default btn-export',
+                        buttons: [
+                            {
+                                extend: 'copyHtml5',
+                                text: locales['buttons']['copy'],
+                                exportOptions: {
+                                    columns: ':visible'
+                                }
+                            },
+                            {
+                                extend: 'csvHtml5',
+                                text: locales['buttons']['export2csv'],
+                                fieldSeparator: ',',
+                                extension: '.csv',
+                                bom: "true",
+                                exportOptions: {
+                                    columns: ':visible:not(.do-not-export-csv)'
+                                }
+                            },
+                            {
+                                extend: 'excelHtml5',
+                                text: locales['buttons']['export2excel'],
+                                exportOptions: {
+                                    columns: ':visible:not(.do-not-export-excel)'
+                                }
+                            },
+                            {
+                                extend: 'pdfHtml5',
+                                text: locales['buttons']['export2pdf'],
+                                exportOptions: {
+                                    columns: ':visible:not(.do-not-export-pdf)'
+                                }
+                            }
+                        ]
+                    }, #}
+                    {
+                        text: "<i class='far fa-trash-alt'></i> {{lang('dtb_delete')}}",
+                        className: 'dt-menu bulk-delete disabled {{ not can_do_action('deleteOrder') ? 'hidden' }}',
+                        action: function(e, dt, node, config) {
+                            var selectedRows = dt.rows('.selected').data();
+                            selectedRows.each(function(item) {
+                                selectedIds.push(item.order_id);
+                            });
+                            if (selectedIds.length > 0){
+                                confirmMessage(function () {
+                                    $.ajax({
+                                        url: '{{ link('sale/order/dtDelete') }}',
+                                        type: 'post',
+                                        data: {id: selectedIds, action : 'delete'},
+                                        success: function(){
+                                            reloadDT();
+                                        }
+                                    });
+                                });
+                            }
+                        }
+                    },// delete
+                    {
+                        extend: 'collection',
+                        text: `<i class="fas fa-file-download"></i> {{lang('dtb_export_table')}}`,
+                        className: `dt-menu dt-list btn-export {{base.plan_trial_id == 3 ? "disabled plan-lock-btn" : ""}}`,
+                        buttons: [
+                            {
+                                extend: 'copyHtml5',
+                                text: locales['buttons']['copy'],
+                                exportOptions: {
+                                    columns: ':visible'
+                                }
+                            },
+                            {
+                                extend: 'csvHtml5',
+                                text: locales['buttons']['export2csv'],
+                                fieldSeparator: ',',
+                                extension: '.csv',
+                                bom: "true",
+                                exportOptions: {
+                                    columns: ':visible:not(.do-not-export-csv)',
+                                    orthogonal: 'export',
+                                }
+                            },
+                            {
+                                extend: 'excelHtml5',
+                                text: locales['buttons']['export2excel'],
+                                exportOptions: {
+                                    columns: ':visible:not(.do-not-export-excel)',
+                                    orthogonal: 'export',
+                                }
+                            },
+                            {
+                                extend: 'pdfHtml5',
+                                exportOptions: {
+                                    columns: ':visible:not(.do-not-export-pdf)'
+                                },
+                                text: locales['buttons']['export2pdfexcel']
+                            }
+                        ]
+                    }// export
+                ],
+
+                columns: [
+                    {
+                        title:`<input type="checkbox" class="styled" onchange='toggleSelectAll(this);'>`,
+                        orderable: false,
+                        width: "50px",
+                        data: 'order_id',
+                        render: function(data, type, row) {
+                        return `<input type="checkbox" row-id="${row['order_id']}" class="select-checkbox">`;
+                        }
+                    },
+                    {
+                        data: "order_id",
+                        render: function (data, type, row) {
+                            return `<a class="text-semibold" href="{{ link('sale/order/info?order_id=') }}${row['order_id']}"> {{ lang('text_order_number') }} {{ lang('text_order_text') }}${row['order_id']}</a>`;
+                        }
+                    },
+                    {
+                        data: 'customer',
+                        render: function (data, type, row) {
+                            if ( row['customer_id'] && row['customer_id'] != 0)
+                            {
+                                return `<a target="_blank" href="{{ link('sale/customer/update?customer_id=')}}${row['customer_id']}">${row['customer']}</a>`;
+                            }
+                            else
+                            {
+                                return `<span title="{{ lang('customer_not_in_db') }}">${row['customer']}</span>`;
+                            }
+                        }
+                    },
+                    {
+                        data: 'payment_country'
+                    },
+                    {
+                        data: 'payment_zone'
+                    },
+                    {
+                        data: 'payment_city'
+                    },
+                    {
+                        data: 'payment_address_1'
+                    },
+                    {
+                        data: 'address',
+                        render: function (data, type, row) {
+                            return (data != null && data != '') ? data : row['payment_address'];
+                        }
+                    },
+                    {
+                        title : '{{ text_telephone }}',
+                        data: 'payment_telephone'
+                    },
+                    {
+                        title : '{{ text_fax }}',
+                        data: 'fax'
+                    },
+                    {
+                        title: '{{ lang('column_shipping_method') }}',
+                        data: 'shipping_method'
+                    },
+
+                    {
+                        title: '{{ lang('column_status') }}',
+                        data: "status",
+                        render: function (data, type, row) {
+                            if(row['status_color'])
+                                return `<label class="label label-success" style="background-color: ${row['status_color']}; border-color: ${row['status_color']}">${row['status']}</label>`;
+                            else
+                                return `<label class="label label-success">${row['status']}</label>`;
+                        }
+                    },
+
+                    {
+                        title: '{{ lang('column_status_comment') }}',
+                        data: "status_comment"
+                    },
+                    {
+                        title: '{{ lang('column_total') }}',
+                        data: "total",
+                        render: function (data, type, row) {
+                            return `<label class="label label-primary">${row['total']}</label>`;
+                        }
+                    },
+                    {
+                        title: '{{ lang('column_transaction_id') }}',
+                        data: "transaction_id"
+                    },
+                    {
+                        title: '{{ lang('column_receipt_id') }}',
+                        data: "receipt_id"
+                    },
+                    {
+                        title: '{{ lang('column_payment_amount') }}',
+                        data: "payment_amount"
+                    },
+                    {% if wkpos %}
+                    {
+                        title: '{{ lang('column_outlet') }}',
+                        data: "pos_order_id",
+                        render: function (data, type, row) {
+                            if(row['pos_order_id'])
+                                return `<label class="label label-info">POS</label>`;
+                            else
+                                return `<label class="label label-info">Online Store</label>`;
+                        }
+
+                    },
+                    {% endif %}
+
+                    {% if warehouses %}
+                    {
+                        title: '{{ lang('column_warehouses') }}',
+                        data: "wrs_data"
+                    },
+                    {% endif %}
+
+                    {% if delivery_slot %}
+                    {
+                        title: '{{ lang('column_ds_date') }}',
+                        data: "ds_date",
+                    },
+                    {
+                        title: '{{ lang('column_ds_time') }}',
+                        data: "ds_time",
+                    },
+                    {% endif %}
+                     {% if isOrderAssigneeAppInstalled %}
+                    {
+                        title: '{{ lang('column_assignee') }}',
+                        data: "order_assignee_name"
+                    },
+                    {% endif %}
+
+                    {
+                        title: '{{ lang('column_date_added') }}',
+                        data: 'date_added',
+                        render: function(data, type, row) {
+                            var arr = data.split(/[- :]/);
+                            var date = new Date(arr[0], arr[1]-1, arr[2], arr[3], arr[4], arr[5]);
+                            // var unixTimestamp = Date.parse(data);
+                            // console.log(data);
+                            // var date = new Date(unixTimestamp);
+                            var hours = date.getHours();
+                            var minutes = "0" + date.getMinutes();
+                            var seconds = "0" + date.getSeconds();
+                            var formattedTime = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
+                            var formattedDate = date.toLocaleDateString();
+                            return formattedTime + " " + formattedDate ;
+                        }
+                    },
+                    {
+                        title: '{{ lang('column_date_modified') }}',
+                        data: 'date_modified',
+                        render: function(data, type, row) {
+                            // var unixTimestamp = Date.parse(data);
+                            // var date = new Date(unixTimestamp);
+                            var arr = data.split(/[- :]/);
+                            var date = new Date(arr[0], arr[1]-1, arr[2], arr[3], arr[4], arr[5]);
+
+                            var hours = date.getHours();
+                            var minutes = "0" + date.getMinutes();
+                            var seconds = "0" + date.getSeconds();
+                            var formattedTime = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
+                            var formattedDate = date.toLocaleDateString();
+                            return formattedTime + " " + formattedDate ;
+                        }
+                    }
+                ],
+                order: [[1, "desc"]],
+                columnDefs: [
+                    {
+                        targets: 3,
+                        visible: false
+                    },
+                    {
+                        targets: 4,
+                        visible: false
+                    },
+                    {
+                        targets: 5,
+                        visible: true
+                    },
+                    {
+                        targets: 6,
+                        visible: false
+                    },
+                    {
+                        targets: 7,
+                        className: 'ltr text-left',
+                        visible: false
+                    },
+                    {
+                        targets: 8,
+                        visible: false,
+                        searchable: true
+                    },
+                    {
+                        targets: 9,
+                        visible: false,
+                    },
+                    {
+                        targets: 12,
+                        visible: false,
+                    },
+                    {
+                        targets: 14,
+                        visible: false,
+                    },
+                    {
+                        targets: 15,
+                        visible: false,
+                    },
+                    {
+                        targets: 16,
+                        visible: false,
+                    },
+                    {
+                        targets: 18,
+                        visible: false,
+                    },
+                    {
+                        {% set actionTarget = 19 %}
+
+                        {% if delivery_slot %}
+                            {% set actionTarget = actionTarget + 2 %}
+                        {% endif %}
+                        {% if isOrderAssigneeAppInstalled %}
+                            {% set actionTarget = actionTarget + 1 %}
+                        {% endif %}
+                        {% if wkpos %}
+                            {% set actionTarget = actionTarget + 1 %}
+                        {% endif %}
+                        {% if warehouses %}
+                            {% set actionTarget = actionTarget + 1 %}
+                        {% endif %}
+                        /*
+                        If you need to change action icon position just add a new condition here with the number of columns,
+                        if your new column is fixed without conditions then just increment the init of actionTarget above
+                        * */
+
+                        targets: {{ actionTarget }},
+                        orderable: false,
+                        width: "10px",
+                        className: "text-center",
+                        render: function (data, type, row) {
+
+                            if(row['archived'] == 0)
+                                var archived = `<li><a onclick="removeItem(${row['order_id']}, 'archive')"><i class='icon-archive'></i> ${locales['button_archive']}</a></li>`;
+                            else
+                                var archived = `<li><a onclick="removeItem(${row['order_id']}, 'unarchive')"><i class='icon-archive'></i> ${locales['button_unarchive']}</a></li>`;
+
+
+                                 var orderId= row['order_id'] ;
+                                 var isOrderAssigneeApp = parseInt('{{ isOrderAssigneeAppInstalled }}');
+                                 var isAllowedToAssignOrder = parseInt('{{ isAllowedToAssignOrder }}');
+                                 var orderAssignee='';
+                                 if(isOrderAssigneeApp && isAllowedToAssignOrder){
+                                     var orderAssignee=` <li><a><i class='icon-user'></i> {{ lang('button_assign_order') }}</a></li>
+                                             <form id="assignOrderForm${row['order_id']}">
+                                                <div class="form-group">
+                                                <select onchange="orderAssignee(${row['order_id']});" id="assignOrderSelect${row['order_id']}" class="form-control">
+                                                    <option value="0" selected>{{ lang('text_select_admin') }}</option>
+                                                    {% for k, admin in admins_list %}
+                                                    <option
+                                                        {{ (isAllowedToAssignOrder == false and admin['user_id'] != user_id) ? 'disabled' : '' }}
+                                                        data-unique-id="{{ admin['user_id'] }}"
+                                                        value='{{admin['user_id']}}'>{{ admin['firstname'] }} {{ admin['lastname'] }} </option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                          </form>`;
+                                 }
+                            return `<ul class="icons-list pull-right{{order_assignee}}" {% if isOrderAssigneeAppInstalled %} onclick="assignOrderActionRow(${row['order_id']},${row['order_assignee_id']})"{% endif %}>
+                                    <li class="dropdown">
+                                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                            <i class="icon-menu9"></i>
+                                        </a>
+                                        <ul class="dropdown-menu dropdown-menu-right">
+                                            <li><a href="{{ link('sale/order/info') }}?order_id=${row['order_id']}"><i class="fas fa-eye fa-lg"></i> ${locales['button_view']}</a></li>
+                                            <li><a href='{{ link('sale/order/update') }}?order_id=${row['order_id']}'><i class='icon-pencil7'></i> ${locales['button_edit']}</a></li>
+                                            `+archived+`
+                                            <li style="{{ not can_do_action('deleteOrder') ? 'display: none;'}}"><a onclick="removeItem(${row['order_id']}, 'delete')"><i class='icon-trash'></i> ${locales['button_delete']}</a></li>
+                                            `+orderAssignee+`
+                                        </ul>
+                                    </li>
+                                </ul>
+                            `;
+                        }
+                    }
+                ]
+
+            });
+
+
+            let actionBtns = [
+                {# `<div id="btnreset" class="hidden"><a class="btn btn-default" type="reset" href="#"><i class="icon-reset"></i></a></div>`, #}
+                `
+                {% if delivery_slot %}
+                <a class="dt-menu" href="{{ link('module/delivery_slot/slot_orders') }}" target="_blank"><i class="far fa-clock"></i> {{lang('dtb_slot_order')}}</a>
+                {% endif %}
+                `,// slot order
+                `
+                <div class="dropdown dt-menu">
+                    <a class="dropdown-toggle  {{ base.plan_trial_id == '3' ? 'plan-lock-btn disabled' : '' }}" data-toggle="dropdown" aria-expanded="false" id="dt_btns_drop1">
+                        <i class="far fa-file-alt"></i> {{lang('button_invoice')}}
+                    </a>
+                    {% if base.plan_trial_id != '3' %}
+                    <ul class="dropdown-menu dropdown-menu dropdown-menu-right" aria-labelledby="dt_btns_drop1">
+                        {% for language in storeLagnuages %}
+                            <li class="disabled print-orders-container">
+                                <a class="printOrders"
+                                data-langid="{{ language['language_id'] }}"
+                                data-langdirectory="{{ language['directory'] }}"
+                                data-langcode="{{ language['code'] }}">
+                                    <img src="view/image/flags/{{ language['image'] }}"
+                                        title="{{ language['name'] }}" class="pull-right">
+                                    {{ lang('print_language') }}: {{ language['name'] }}
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                </div>
+                `,// export
+            ]
+            $.each(actionBtns, function(_,el) {
+                $('.dt-buttons').append(el);
+                console.log(el)
+            })
+
+            $('.dataTables_filter').append(`<a onclick="toggleFilter(this)" class="sidebar-detached-hide btn btn-default"><i class='icon-filter3'></i> </a>`)
+
+
+            {# $('[data-popup="tooltip"]').tooltip(); #}
+
+            // On each draw, loop over the `detailRows` array and show any child rows
+            orderTable.on('draw', function () {
+                $(".switch").bootstrapSwitch();
+                $(".styled, .multiselect-container input").uniform({
+                    radioClass: 'choice'
+                });
+            });
+
+            $('.printOrders').click(function () {
+                var selectedRows = orderTable.rows('.selected').data();
+
+                var $langId = $(this).attr('data-langid');
+                var $langDirectory = $(this).attr('data-langdirectory');
+                var $langCode = $(this).attr('data-langcode');
+
+                selectedRows.each(function(item) {
+                    $('form#print_orders_hidden_form').append('<input type="hidden" name="selected[]" value="' + item.order_id + '">');
+                });
+
+                $('form#print_orders_hidden_form').append(
+                    '<input type="hidden" name="language_id" value="' + $langId + '" />'
+                );
+
+                $('form#print_orders_hidden_form').append(
+                    '<input type="hidden" name="language_directory" value="' + $langDirectory + '" />'
+                );
+
+                $('form#print_orders_hidden_form').append(
+                    '<input type="hidden" name="language_code" value="' + $langCode + '" />'
+                );
+
+                $('form#print_orders_hidden_form').submit();
+                $('form#print_orders_hidden_form').html('');
+            });
+
+            orderTable.on( 'select', function ( e, objDT, type, indexes ) {
+                if ( orderTable.rows( '.selected' ).any() )
+                {
+                    $(".bulk-delete").removeClass('disabled');
+                    $(".bulk-archive").removeClass('disabled');
+                    $('.btn-print').removeClass('disabled');
+                    $('.print-orders-container').removeClass('disabled');
+                }
+                else
+                {
+                    $(".bulk-delete").addClass('disabled');
+                    $(".bulk-archive").addClass('disabled');
+                    $(".btn-print").addClass('disabled');
+                    $('.print-orders-container').addClass('disabled');
+                }
+
+                if ( $('.selected').length >= 2 ) $('.merge-orders').removeClass('disabled')
+                else $('.merge-orders').addClass('disabled')
+
+                if ( $('.selected').length >= 1 ) {
+                    $('.bulk-order-status-update').removeClass('disabled');
+                    $('.mylerz-send-bulk-orders-button').removeClass('disabled');
+                     $('.assign_order_bulk_button').removeClass('disabled');
+                } else {
+                    $('.bulk-order-status-update').removeClass('disabled');
+                    $('.mylerz-send-bulk-orders-button').addClass('disabled');
+                }
+
+            })
+            .on( 'deselect', function ( e, objDT, type, indexes ) {
+                if ( orderTable.rows( '.selected' ).any() )
+                {
+                    $(".bulk-delete").removeClass('disabled');
+                    $(".bulk-archive").removeClass('disabled');
+                    $('.btn-print').removeClass('disabled');
+                    $('.print-orders-container').removeClass('disabled');
+                }
+                else
+                {
+                    $(".bulk-delete").addClass('disabled');
+                    $(".bulk-archive").addClass('disabled');
+                    $(".btn-print").addClass('disabled');
+                    $('.print-orders-container').addClass('disabled');
+                     $('.assign_order_bulk_button').addClass('disabled');
+                }
+
+                if ( $('.selected').length >= 2 ) $('.merge-orders').removeClass('disabled')
+                else $('.merge-orders').addClass('disabled')
+
+                if ( $('.selected').length >= 1 ) {
+                    $('.bulk-order-status-update').removeClass('disabled')
+                    $('.mylerz-send-bulk-orders-button').removeClass('disabled')
+                } else {
+                    $('.bulk-order-status-update').removeClass('disabled')
+                    $('.mylerz-send-bulk-orders-button').addClass('disabled')
+                }
+            })
+            .on( 'search.dt', function (e, objDT) {
+                if ( orderTable.rows( '.selected' ).any() )
+                {
+                    $(".bulk-delete").removeClass('disabled');
+                    $(".bulk-archive").removeClass('disabled');
+                    $('.btn-print').removeClass('disabled');
+                    $('.print-orders-container').removeClass('disabled');
+                }
+                else
+                {
+                    $(".bulk-delete").addClass('disabled');
+                    $(".bulk-archive").addClass('disabled');
+                    $(".btn-print").addClass('disabled');
+                    $('.print-orders-container').addClass('disabled');
+                }
+            });
+
+
+            $('#bulk-order-status-modal').on('show.bs.modal', function (ev) {
+                $('#bulk-order-status-modal').find('.modal-errors').html('');
+                let r = $(ev.relatedTarget), c = $(ev.currentTarget);
+
+                var selectedRows = orderTable.rows('.selected').data();
+                selectedRows.each(function(item) {
+                    c.find('form').append(
+                        `<input type="hidden" class="order_id_for_status" name="order_id[]" value="${item.order_id}" />`
+                    );
+                });
+            });
+
+            $('#bulk-order-status-modal').on('hide.bs.modal', function (ev) {
+                let r = $(ev.relatedTarget), c = $(ev.currentTarget);
+
+                c.find('form').find('.order_id_for_status').remove();
+            });
+
+            $('#bulk-order-status-form-trigger').click(function () {
+
+                let f = $('#bulk-order-status-form');
+                let d = f.serialize();
+                let u = f.attr('action');
+
+                $('#bulk-order-status-modal').find('.modal-errors').html('');
+
+                $.ajax({
+                    url: u,
+                    data: d,
+                    method: 'POST',
+                    dataType: 'JSON',
+                    success: (r) => {
+                        if (typeof r.status != 'undefined' && r.status == 'OK') {
+                            orderTable.rows('.selected').deselect();
+                            reloadDT();
+                            $('#bulk-order-status-modal').modal('toggle');
+                            return;
+                        }
+
+                        for (i = 0; i < r.errors.length; i++) {
+                            let e = r.errors[i];
+                            $('#bulk-order-status-modal').find('.modal-errors').append(
+                                `<div class="alert alert-danger">${e}</div>`
+                            );
+                        }
+                    }
+                });
+
+            });
+
+            $('.dataTables_length select').select2({
+                minimumResultsForSearch: Infinity,
+                width: 'auto'
+            });
+            $(".styled, .multiselect-container input").uniform({
+                radioClass: 'choice'
+            });
+        });
+
+        function mergeOrders( ids )
+        {
+            $.ajax({
+                url: "{{ link('sale/order/mergeOrders') }}",
+                type: "POST",
+                data: {selected: ids},
+                success: function (resp)
+                {
+                    resp = JSON.parse(resp);
+                    console.log(resp);
+                    reloadDT();
+                    notify(resp.title, resp.type, resp.msg);
+
+                    if ( resp.redirect == '1' )
+                    {
+                        window.location.href = resp.to;
+                    }
+                }
+            });
+        }
+
+
+        function removeItem(id, action)
+        {
+            var textData = undefined;
+
+            if(action == 'unarchive'){
+                textData = {
+                        title: locales['cm_undo_title'],
+                        text: locales['cm_undo_text'],
+                        type : 'info',
+                        showCancelButton: true,
+                        confirmButtonColor: "#2196F3",
+                        confirmButtonText: locales['cm_confirm_undo_button'],
+                        cancelButtonText: locales['cm_cancel_button']
+                    };
+            }else if(action == 'archive'){
+                textData = {
+                                title: locales['cm_archive_title'],
+                                text: locales['cm_undo_text'],
+                                confirmButtonText: locales['cm_confirm_archive_button']
+                            };
+            }
+
+            confirmMessage(
+                function ()
+                {
+                    $.ajax({
+                        url: "{{ link('sale/order/dtDelete') }}",
+                        type: "post",
+                        data: { id: id, action : action },
+                        success: function ( resp )
+                        {
+                            reloadDT();
+                        }
+                    });
+                }
+            , '', textData);
+        }
+
+        function reloadDT()
+        {
+            orderTable.ajax.reload();
+            // loadKanbanCards();
+        }
+
+        function loadKanbanCards()
+        {
+            $.ajax({
+                url: "{{ link('sale/order/getKanbanCards') }}",
+                type: "post",
+                success: function ( resp )
+                {
+                    $('.kanban-cards-area').html('');
+
+                    resp = JSON.parse(resp);
+                    $.each( resp.order_statuses, function ( index, value ) {
+                        $.each( value.orders, function( oindex, ovalue ) {
+                            drawKanbanCard ( value, ovalue );
+                        });
+                    });
+                }
+            });
+        }
+
+        function drawKanbanCard( order_status, order )
+        {
+            var kanban_col = $('.order-status-col-' + order_status.order_status_id);
+            var kanban_body = kanban_col.find('.kanban-cards-area');
+
+            html = '';
+
+            html += '<div id="' + order.order_id + '">';
+            html += `<div class="panel border-left-lg border-left-warning invoice-grid timeline-content cursor-move kanban-entry grab" id="order-num-`+ order.order_id +`" draggable="true" data-order-id="` + order.order_id + `" data-os-id="` + order_status.order_status_id + `">`;
+
+            html += '<div class="panel-heading">';
+            html += `<h6 class="panel-title"> # <a href="{{ link('sale/order/update?order_id=') }}"` + order.order_id + `>` + order.order_id + `</a></h6>`;
+            html += '<div class="heading-elements">';
+            html += '<ul class="icons-list">';
+            html += `<li><label class="label label-primary text-right">` + order.total + `</label></li>`;
+            html += '<li><a class="collapsy"><i class="fa fa-caret-down"></i></a></li>';
+            html += '<li><a data-action="move"></a></li>';
+            html += '</ul></div></div>';
+
+            html += '<div class="panel-body kanban-card-content" style="display:none;">';
+            html += '<div class="row">';
+            html += '<div class="col-sm-12">';
+            html += '<h6 class="text-semibold no-margin-top">';
+
+            if ( order.customer_id )
+            {
+                html += `<a href="{{ link('sale/customer/update?customer_id=') }}` + order.customer_id + `" class="text-semibold">` + order.customer + `</a>`;
+            }
+            else
+            {
+                html += `<span title="{{ lang('customer_not_in_db') }}">` + order.customer + `</span>`;
+            }
+
+            html += '</h6>';
+            html += '<ul class="list list-unstyled">';
+            html += `<li> {{ lang('column_date_added') }} <span class="text-semibold">` + order.date_added + `</span></li>`;
+            html += '</ul></div></div></div>';
+
+            html += '<div class="panel-footer panel-footer-condensed" style="display:none;"><a class="heading-elements-toggle"><i class="icon-more"></i></a><a class="heading-elements-toggle"><i class="icon-more"></i></a>';
+            html += '<div class="heading-elements">';
+            html += '<span class="heading-text">';
+            html += `<span class="status-mark border-danger position-left"></span> {{ lang('column_date_modified') }} <span class="text-semibold">` + order.date_modified + `</span>`;
+            html += '</span></div></div></div></div>';
+
+            kanban_body.append( html );
+            return;
+        }
+
+        function toggleSelectAll(checkbox)
+        {
+            if (checkbox.checked == true) {
+                orderTable.rows().select();
+            } else {
+                orderTable.rows().deselect();
+            }
+        }
+
+        $(document).on('click', '#filter-button', function(e) {
+            e.preventDefault();
+            $('#filter-modal').modal('show');
+        }).on('click', '#grid-view-button', function() {
+            $('.hide-on-grid-view').hide();
+            $('.show-on-grid-view').show();
+        }).on('click', '#kanban-view-button', function() {
+            $('.hide-on-kanban-view').hide();
+            $('.show-on-kanban-view').show();
+        }).on('change', '#filter-order-statuses', function() {
+            showHideOrderStatuses();
+        });
+
+        function update_selected_rows()
+        {
+            var selectedRows = orderTable.rows('.selected').data();
+            selectedRows.each(function(item) {
+                selectedIds.push(item.order_id);
+            });
+        }
+
+
+        function showHideOrderStatuses()
+        {
+            $('.order-status-col').hide();
+
+            $('#filter-order-statuses option:selected').each(function() {
+                var order_status_id = $(this).attr('value');
+                $('.order-status-col-' + order_status_id).show();
+            });
+        }
+
+        function draggableInit()
+        {
+            var order_id;
+            var original_order_status_id;
+            var new_order_status_id;
+
+            $(document).on('dragstart', '[draggable=true]', function (event) {
+                order_id = $(this).attr('data-order-id');
+                original_order_status_id = $(this).attr('data-os-id');
+                event.originalEvent.dataTransfer.setData("text/plain", event.target.getAttribute('id'));
+            });
+
+            $('#sortableKanbanBoards .kanban-drop-zone').bind('dragover', function (event) {
+                event.preventDefault();
+            });
+
+            $('#sortableKanbanBoards .col-md-3 .kanban-drop-zone').bind('drop', function (event)
+            {
+                var self = $(this);
+                new_order_status_id = self.attr('data-os-id');
+
+                if ( original_order_status_id != new_order_status_id )
+                {
+                    var elementId = event.originalEvent.dataTransfer.getData("text/plain");
+                    var elem = $('#' + elementId);
+
+                    var modal = $('#processing-modal');
+                    var form = $('#change-order-status-form');
+                    var order_id = elem.attr('data-order-id');
+                    var new_order_status_name = $('.order-status-col-' + new_order_status_id + ' span.order-status-name').text();
+                    var old_order_status_name = $('.order-status-col-' + original_order_status_id + ' span.order-status-name').text();
+
+                    form.attr('action', '{{ link("sale/order/history?order_id=") }}' + order_id);
+
+                    modal.find('label#new-order-status').text(new_order_status_name);
+                    modal.find('label#old-order-status').text(old_order_status_name);
+
+                    $('#processing-modal').modal('show');
+
+                    $(document).on('click', '#submit-change-order-status-form', function(event) {
+                        event.preventDefault();
+                        startLoadingScreen();
+                        var notify;
+                        if ( modal.find('[name=notify]').is(':checked') ) { notify = 1; } else { notify = 0; }
+
+                        var comment = modal.find('[name=comment]').text();
+
+                        $.ajax({
+                            url: form.attr('action'),
+                            type: "post",
+                            data: {notify: notify, comment: comment, order_status_id: parseInt(new_order_status_id)},
+                            success: function (resp) {
+                                reloadDT();
+                                removeLoadingScreen();
+                                $('#processing-modal').modal('hide');
+                            }
+                        });
+
+                    });
+                }
+            });
+        }
+
+        $(document).ready(function() {
+            //reloadDT();
+            draggableInit();
+        }).on('click', '.collapsy', function() {
+            var panel_body = $(this).closest('.panel').find('.kanban-card-content');
+            var panel_footer = $(this).closest('.panel').find('.panel-footer');
+
+            if ( panel_body.hasClass('opened') )
+            {
+                panel_body.slideUp('fast').removeClass('opened');
+                panel_footer.slideUp('fast').removeClass('opened');
+                $(this).html('<i class="fa fa-caret-down"></i>');
+                return;
+            }
+            else
+            {
+                panel_body.slideDown('fast').addClass('opened');
+                panel_footer.slideDown('fast').addClass('opened');
+                $(this).html('<i class="fa fa-caret-up"></i>');
+                return;
+            }
+        });
+        function orderAssignee(id)
+        {
+            var assignOrderVal = $("#assignOrderSelect"+id).val();
+            var uid = assignOrderVal;
+            var orderId =id;
+            var assignOrderHref = "{{ link('sale/order/assignOrder') }}";
+
+              confirmMessage(() => {
+                    $.ajax({
+                        url: assignOrderHref,
+                        dataType: 'JSON',
+                        method: 'POST',
+                        data: {user_id: uid, order_id: orderId},
+                        success: (r) => {
+                            assignOrderVal = uid;
+                        if (typeof r.status !== 'undefined' && r.status === 'OK') {
+                            orderTable.rows('.selected').deselect();
+                            reloadDT();
+                            notify('', 'success', "{{lang('assigned_success')}}");
+                            return;
+                          }
+
+                        }
+                    });
+                }, () => {
+                    $('#assignOrderSelect'+orderId).val(assignOrderVal).change();
+                }, {
+                    title: "{{ lang('assign_order') }}",
+                    text: "{{ lang('ms_assign_order_confirm_body') }}",
+                    type: "info",
+                    showCancelButton: true,
+                    confirmButtonColor: "#2196F3",
+                    confirmButtonText: "{{ lang('assign_order_confirm_button') }}",
+                    cancelButtonText: "{{ lang('cm_cancel_button') }}"
+                });
+        }
+        function assignOrderActionRow(orderId,assigneID)
+            {
+            if(assigneID){$('#assignOrderSelect'+orderId).val(assigneID);}
+            }
+
+
+    </script>
+
+{% endblock scripts %}
+{% block endScripts %}
+    <script>
+
+    </script>
+{% endblock %}

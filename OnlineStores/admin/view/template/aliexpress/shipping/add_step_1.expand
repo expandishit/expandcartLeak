@@ -1,0 +1,140 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+
+{% block title %}
+    {{ lang('heading_title') }}
+{% endblock title %}
+
+{% set dualMenuEnabled = true %}
+{% block secondarymenu %}
+    {% include 'aliexpress/menu.expand' with {'active': '#tab-shipping-setting'} %}
+{% endblock secondarymenu %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+    <button type="button" class="btn btn-primary btn-ladda btn-ladda-spinner top-save-button"
+        data-style="zoom-in" onclick="$('#shipping-form').submit();">
+        <i class="far fa-save fa-lg position-left"></i> {{ lang('button_save') }}
+    </button>
+
+    <a href="{{ link('aliexpress/manager_shipping') }}" data-toggle="tooltip"
+        title="{{ lang('button_shipping') }}" class="btn btn-primary">
+        <i class="fa fa-plus"></i> {{ lang('button_shipping') }}
+    </a>
+{% endblock headelements %}
+
+{% block content %}
+<form id="shipping-form" action="{{ link('aliexpress/manager_shipping/addshipping') }}"
+    enctype="multipart/form-data" method="post">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-white">
+                <div class="panel-heading">
+                    <h6 class="panel-title">
+                        <span class="text-bold">
+                            <i class="fa fa-cog"></i>
+                            <span>{{ lang('text_edit') }}</span>
+                        </span>
+                    </h6>
+                    <div class="heading-elements not-collapsible">
+                        <ul class="icons-list">
+                            <li><a data-action="collapse" class=""></a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="panel-body">
+                    <div class="form-group required">
+                        <label class="control-label">
+                            <span data-toggle="tooltip" title="{{ lang('entry_csv') }}">
+                                {{ lang('entry_csv') }}
+                            </span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-btn">
+                                <button type="button" class="btn btn-primary"
+                                    onclick="$('input[name=\'up_file\']').trigger('click');">
+                                    <i class="fa fa-upload"></i> {{ lang('button_upload') }}
+                                </button>
+                            </span>
+                            <input type="text" id="input-csv-name" class="form-control" disabled />
+                        </div>
+                        <input type="file" name="up_file" class="form-control" style="display:none;">
+                        <div class="hide csv-warning">
+                            {{ lang('entry_error_csv') }}
+                        </div>
+                    </div>
+
+                    <div class="form-group required">
+                        <label class="control-label">
+                            <span data-toggle="tooltip" title="{{ lang('entry_separator') }}">
+                                {{ lang('entry_separator') }}
+                            </span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-btn">
+                                <button type="button" class="btn btn-primary separator">
+                                    <i class="fa fa-keyboard-o"></i> {{ lang('entry_sep_manually') }}
+                                </button>
+                            </span>
+                            <div>
+                                <select name="separator" id="separator" class="form-control">
+                                    <option value=";">Semicolon ; </option>
+                                    <option value=" ">Tab</option>
+                                    <option value=",">Comma ,</option>
+                                    <option value=":">Colon : </option>
+                                    <option value="|">Vertical bar</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+
+    $(document).ready(function () {
+        $('select').select2({
+            minimumResultsForSearch: -1,
+        });
+    });
+
+    jQuery('input[name=up_file]').change(function() {
+        csv_val = jQuery(this).val().split('.').pop();
+        $('#input-csv-name').val(jQuery(this).val().replace(/C:\\fakepath\\/i, ''));
+        if (csv_val != 'csv') {
+            jQuery('.csv-warning').addClass('text-danger').removeClass('hide');
+        } else {
+            jQuery('.csv-warning').addClass('hide').removeClass('text-danger');
+        }
+    });
+
+    jQuery('input[name=up_file]').change(function() {
+        csv_val = jQuery(this).val().split('.').pop();
+        if (csv_val != 'csv') {
+            jQuery(this).parents('.required').addClass('has-error');
+            jQuery('.view_red').slideDown();
+        } else {
+            jQuery('.view_red').slideUp();
+        }
+    });
+
+    nextHtml = false;
+    prevHtml = $("<input type='text' class=\"form-control\"/>").attr({
+        name: 'separator'
+    });
+
+    jQuery('.separator').click(function() {
+        catchDiv = $(this).parent().next();
+        nextHtml = catchDiv.html();
+        catchDiv.html(prevHtml);
+        prevHtml = nextHtml;
+    })
+</script>
+{% endblock %}

@@ -1,0 +1,161 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block title %}
+    {{ lang('heading_title_esnad') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+
+     <a href="{{ link('sale/order/info?order_id=')~order_id }}"  class="button btn btn-success">{{ lang('button_return') }}</a>
+     <a href="{{ esnad_sticker_pdf }}"  target="_blank" class="button btn btn-primary">{{ lang('button_print_label') }}</a>
+{% endblock headelements %}
+
+
+{% block content %}
+    <!-- Fieldset legend -->
+ <div class="row">
+ <div class="alert alert-info" id="infoDialog" style="display: none;">
+    <i class="fa fa-exclamation-circle"></i> <span id="infoDialogText">{{ lang('please_wait') }}</span>
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+ </div>
+    <form method="post" class="form">
+       <div class="col-md-12">
+          <!-- Advanced legend -->
+          <div class="panel panel-white">
+             <div class="panel-heading">
+                <h6 class="panel-title"><span class="text-bold"><i class="fa fa-cog fa-lg"></i> {{ lang('text_shipment_details') }}</span></h6>
+                <div class="heading-elements not-collapsible">
+                   <ul class="icons-list">
+                      <li><a data-action="collapse" class=""></a></li>
+                   </ul>
+                </div>
+             </div>
+              <div class="panel-body">
+                  <div class="collapse in" id="panel1">
+                      <div class="form-group col-md-6">
+                          <label class="">
+                              {{ lang('entry_name') }} <span class="text-danger">*</span>
+                          </label>
+                          <input type="text" name="esnad_entry_recipient_name" id="esnad_entry_recipient_name" class="form-control"
+                                 value="{{ shipment_details['orderData']['receiver']['name'] }}"/>
+                      </div>
+
+                      <div class="form-group col-md-6">
+                          <label class="">
+                              {{ lang('entry_mobile') }} <span class="text-danger">*</span>
+                          </label>
+                          <input type="text" name="esnad_entry_recipient_phone" id="esnad_entry_recipient_phone" class="form-control"
+                                 value="{{ shipment_details['orderData']['receiver']['phone'] }}"/>
+                      </div>
+
+
+                      <div class="form-group col-md-6">
+                          <label>{{ lang('entry_city') }}</label> <span class="text-danger">*</span>
+                          <input type="text" name="esnad_entry_recipient_city" id="esnad_entry_recipient_city" class="form-control"
+                                 value="{{ shipment_details['orderData']['receiver']['cityName'] }}"/>
+                      </div>
+
+                      <div class="form-group col-md-6">
+                          <label class="">
+                              {{ lang('entry_address') }} <span class="text-danger">*</span>
+                          </label>
+                          <input type="text" name="esnad_entry_recipient_address" id="esnad_entry_recipient_address" class="form-control"
+                                 value="{{ shipment_details['orderData']['receiver']['address']  }}"/>
+                      </div>
+
+                      <div class="form-group col-md-6">
+                          <label class="">
+                              {{ lang('entry_ref_num') }}
+                          </label>
+                          <input type="text" name="esnad_entry_ref_num" id="esnad_entry_ref_num" class="form-control"
+                                 value="{{ shipment_details['orderData']['customerNo'] }}" />
+                      </div>
+
+                      <div class="form-group col-md-6">
+                          <label class="">{{ lang('entry_is_cod') }} </label>
+                          <input type="text" name="esnad_entry_ref_num" id="esnad_entry_ref_num" class="form-control"
+                                 value="{{ shipment_details['orderData']['isCod'] }}"/>
+                      </div>
+
+                      <div class="form-group col-md-6">
+                          <label class=""> {{ lang('entry_amount') }} </label>
+                          <input type="text" name="esnad_entry_amount" id="esnad_entry_amount" class="form-control"
+                                 value="{{ shipment_details['orderData']['orderAmount'] }}" />
+                      </div>
+
+                      <div class="form-group col-md-6">
+                          <label class=""> {{ lang('entry_package_code') }} </label>
+                          <input type="text" value="{{ shipment_details['orderData']['packageList'][0]['packageCode'] }}" name="esnad_entry_package_code" id="esnad_entry_package_code" class="form-control"
+                          />
+                      </div>
+
+                      <div class="form-group col-md-6">
+                          <label class=""> {{ lang('entry_package_weight') }} </label>
+                          <input type="text" name="esnad_entry_package_weight" id="esnad_entry_package_weight" class="form-control"
+                                 value="{{ shipment_details['orderData']['totalWeight'] }}" />
+                      </div>
+
+                      <div class="form-group col-md-6">
+                          <label class=""> {{ lang('entry_package_volume') }} </label>
+                          <input type="text" name="esnad_entry_package_volume" id="esnad_entry_package_volume" class="form-control"
+                                 value="{{ shipment_details['orderData']['totalVolume'] }}" />
+                      </div>
+
+
+                      <div class="form-group col-md-6">
+                          <label> {{ lang('entry_pcs') }} </label>
+                          <input type="text" name="esnad_entry_totalInnerCount" id="esnad_entry_pcs" class="form-control"
+                                 value="{{ shipment_details['orderData']['totalInnerCount'] }}" />
+                      </div>
+
+                      <div class="clearfix"></div>
+                  </div>
+              </div>
+          </div>
+          <!-- /a legend -->
+       </div>
+    </form>
+
+ </div>
+
+    <script>
+        // Default initialization
+        $('.select').select2({
+            minimumResultsForSearch: Infinity
+        });
+
+        $('.form').on("submit",function(){
+         $("#infoDialog").fadeIn(300);
+         setTimeout(function(){
+             $("#infoDialog").fadeOut(300);
+         },4000);
+        });
+
+
+         function cancelShipment() {
+                        $("#infoDialog").fadeIn(300);
+                        $.ajax({
+                            url: '{{ link('shipping/esnad/cancelShipment?order_id=')~order_id }}',
+                            dataType: 'json',
+                            success: function (response) {
+                                $("#infoDialogText").text(response.success_msg);
+                                if ( response.redirect == 1 )
+                                {
+                                    window.location.href = response.to;
+                                    return;
+                                }
+                            },
+                            error:function(){
+                             $("#infoDialogText").text(" {{ lang('error_esnad_tracking') }} ");
+                            }
+                        });
+                    }
+    </script>
+
+{% endblock %}

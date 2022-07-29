@@ -1,0 +1,300 @@
+<div class="col-md-12">
+    <!-- Advanced legend -->
+    <div class="features-table-container">
+        <div class="collapse in" id="feed-panel">
+            <table id="dt_product_review" class="table table-hover datatable-highlight">
+                <thead>
+                <tr>
+                    <th></th>
+                    <th>{{ lang('column_product_name') }}</th>
+                    <th>{{ lang('column_price') }}</th>
+                    <th>{{ lang('column_quantity') }}</th>
+                    <th>{{ lang('column_feed') }}</th>
+                </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
+</div> <!-- col-md-12 -->
+
+<div class="modal fade feed_status_id" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="feedid_status"><strong>{{ lang('column_feed') }}</strong></h4>
+        </div>
+        <div class="modal-body feed_html">
+
+        </div>
+        <div class="modal-footer">
+            <span class="demo-spin" style="color: #1e91cf;position: relative;top: 6px;"><i class="fa  fa-spin fa-2x fa-fw"></i></span>
+
+            <button type="button" class="btn btn-default" data-dismiss="modal">{{ lang('button_close') }}</button>
+        </div>
+
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+    var dt;
+    $(document).ready(function() {
+        $.extend($.fn.dataTable.defaults, {
+            autoWidth: false,
+            dom: '<"datatable-header"fB><"datatable-scroll-wrap"t><"datatable-footer"lip>',
+            language: locales['dt_language'],
+            lengthMenu: [[10, 25, 50, 100, 200], [10, 25, 50, 100, 200]]
+        });
+        dt = $('#dt_product_review').DataTable({
+            processing: true,
+            serverSide: true,
+            stateSave: false,
+            language: {
+                ...locales['dt_language'],
+                search: ''
+            },
+            autoWidth: false,
+            select: {
+                style: 'multi',
+                selector: 'td:first-child'
+            },
+            lengthMenu: [[10, 25, 50, 100, 200], [10, 25, 50, 100, 200]],
+            ajax: {
+                url: "{{ link('amazon/amazon_map/product_review/dtHandler') }}",
+                type: 'POST',
+            },
+            buttons: [
+                {
+                    text: "<i class='icon-trash'></i>",
+                    className: 'btn btn-default bulk-delete disabled',
+                    action: function (e, dt, node, config) {
+                        var selectedRows = dt.rows('.selected').data();
+                        var selectedIds = [];
+                        selectedRows.each(function (item) {
+                            selectedIds.push(item.product_id);
+                        });
+                        if (selectedIds.length > 0) {
+                            confirmMessage(function () {
+                                $.ajax({
+                                    url: '{{ delete_action }}',
+                                    type: 'post',
+                                    data: {
+                                        account_id: '{{ account_id }}',
+                                        selected_feed: selectedIds
+                                    },
+                                    success: function () {
+                                        reloadDT();
+                                    }
+                                });
+                            });
+                        }
+                    }
+                },
+                {
+                    extend: 'collection',
+                    text: '<i class="icon-drawer-out"></i>',
+                    className: 'btn btn-default btn-export',
+                    buttons: [
+                        {
+                            extend: 'copyHtml5',
+                            text: locales['buttons']['copy'],
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        },
+                        {
+                            extend: 'csvHtml5',
+                            text: locales['buttons']['export2csv'],
+                            fieldSeparator: ',',
+                            extension: '.csv',
+                            bom: "true",
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        },
+                        {
+                            extend: 'excelHtml5',
+                            text: locales['buttons']['export2excel'],
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        },
+                        {
+                            extend: 'pdfHtml5',
+                            text: locales['buttons']['export2pdf'],
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        }
+                    ]
+                },
+                {
+                    extend: 'colvis',
+                    text: '<i class="icon-grid3"></i>',
+                    className: 'btn btn-default btn-colvis',
+                    columns: [1, 2, 3,4]
+                },
+            ],
+            columnDefs:[
+                {
+                    targets: 0,
+                    orderable: false,
+                    className: 'select-checkbox',
+                    
+                },{
+                targets: 4,
+                orderable: false,
+                render: function (data, type, row) {
+                    return `<span class="btn btn-primary" 
+                            onclick="checkFeedStatus('`+row+`','`+data['product_id']+`')">Check Feed Status</span>
+                    `;
+                }
+            }],
+            columns: [
+                {
+                    title: `<input type="checkbox" class="select-checkbox" onchange='toggleSelectAll(this);'>`,
+                    data: "product_id",
+                },
+                {data: "name"},
+                {data: "price"},
+                {data: "feed_id"},
+            ],
+        });
+        $('[data-popup="tooltip"]').tooltip();
+        
+        $(".bulk-delete").attr({
+            "data-popup": "tooltip",
+            "title": locales['button_delete']
+        });
+        
+        $(".btn-export").attr({
+            "data-popup": "tooltip",
+            "title": locales['button_export']
+        });
+        
+        $(".btn-colvis").attr({
+            "data-popup": "tooltip",
+            "title": locales['button_colvis']
+        });
+        
+        dt.on('select', function (e, objDT, type, indexes) {
+            if (dt.rows('.selected').any()) $(".bulk-delete").removeClass('disabled');
+            else $(".bulk-delete").addClass('disabled');
+        })
+        .on('deselect', function (e, objDT, type, indexes) {
+            if (dt.rows('.selected').any()) $(".bulk-delete").removeClass('disabled');
+            else $(".bulk-delete").addClass('disabled');
+        })
+        .on('search.dt', function (e, objDT) {
+            if (dt.rows('.selected').any()) $(".bulk-delete").removeClass('disabled');
+            else $(".bulk-delete").addClass('disabled');
+        });
+
+        $('.select').select2();
+
+        $('input, select').change(function (event) {
+            event.preventDefault();
+        });
+
+
+    });
+    function toggleSelectAll(checkbox) {
+        if (checkbox.checked == true) {
+            dt.rows().select();
+        } else {
+            dt.rows().deselect();
+        }
+    }
+
+    function removeItem(id) {
+        //alert(clientId);
+        confirmMessage(function () {
+            ajax("{{ delete_action }}", {account_id: '{{ account_id }}',selected_feed: [id]}, function (res) {
+                reloadDT();
+            });
+        });
+    }
+
+    function reloadDT() {
+        dt.ajax.reload();
+    }
+
+
+</script>
+
+<script>
+
+function checkFeedStatus(feed_id,product_id) {
+       var html = '';
+      $.ajax({
+          url : '{{ link("amazon/amazon_map/product_review/checkFeedStatus") }}',
+          data: {
+            'account_id' : '{{ account_id }}',
+            'feed_id'    : feed_id,
+            'product_id' : product_id
+          },
+          dataType:'json',
+          type:'POST',
+          beforeSend: function() {
+
+            $('.block_div, #profiler_product').css('display','block');
+            $('.block_div').css('display','block');
+
+          },
+          complete:function() {
+              $('.block_div').css('display','none');
+
+          },
+          success: function(response) {
+
+            if(response.status){
+              html +=createMessage(response);
+            } else {
+                html +='<div class="alert alert-danger"><i class="fa fa-exclamation-circle"><b>Warning Product Id ('+response.product_id+')</b>:'+response.comment+' </i><button type="button" class="close" data-dismiss="alert">&times;</button></div>';
+
+            }
+            $('.feed_html').append(html);
+            $('.feed_status_id').modal('show');
+
+        },
+        error: function(xhr, ajaxOptions, thrownError) {
+          alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+        }
+      });
+  }
+  function createMessage(data) {
+
+    var html ='<br><b>Product Detail, Product Id </b>:'+data.product_id;
+    html +='<br><div class="alert alert-danger"><i class="fa fa-exclamation-circle"><b>MessagesProcessed</b> : '+data.ProcessingSummary.MessagesProcessed+' <br><b>MessagesSuccessful</b> :'+data.ProcessingSummary.MessagesSuccessful+' <br><b>MessagesWithError</b> :'+data.ProcessingSummary.MessagesWithError+' <br><b>MessagesWithWarning</b> :'+data.ProcessingSummary.MessagesWithWarning+' </i><button type="button" class="close" data-dismiss="alert">&times;</button></div>';
+
+    if(data.ProcessingSummary.MessagesWithError >1) {
+       $.each( data.Result, function(field_data, value_data){
+           html +='<div class="alert alert-danger"><i class="fa fa-exclamation-circle"><b>ResultMessageCode</b> '+value_data.ResultMessageCode+' <br><b>ResultDescription</b> :'+value_data.ResultDescription+' </i><button type="button" class="close" data-dismiss="alert">&times;</button></div>';
+       });
+      } else {
+             html +='<div class="alert alert-danger"><i class="fa fa-exclamation-circle"><b>ResultMessageCode</b> '+data.Result.ResultMessageCode+' <br><b>ResultDescription</b> :'+data.Result.ResultDescription+' </i><button type="button" class="close" data-dismiss="alert">&times;</button></div>';
+          }
+
+        if(data.move_map){
+                html +='<div class="alert alert-success"><i class="fa fa-exclamation-circle"><b>Success </b>: <?php echo $text_seccu ?> </i><button type="button" class="close" data-dismiss="alert">&times;</button></div>';
+                $('.product_id_'+data.product_id).remove();
+           }
+
+           return html;
+
+
+  }
+
+
+</script>
+<style>
+.feed_html {
+  max-height: 400px;
+    overflow-y: scroll;
+}
+</style>
+
+
+{% endblock scripts %}

@@ -1,0 +1,144 @@
+import { Injectable } from '@angular/core'
+import { Http, Response, Headers, URLSearchParams } from '@angular/http';
+import { BehaviorSubject } from 'rxjs/BehaviorSubject';
+import { Observable } from 'rxjs/Observable';
+import { environment } from '../environments/environment';
+import { FieldVal } from '../model'
+import { DomSanitizer, SafeResourceUrl } from "@angular/platform-browser";
+import 'rxjs/add/operator/mergeMap';
+import 'rxjs/Rx';
+
+
+
+@Injectable()
+export class CommonService {
+    public HeaderName$ = new BehaviorSubject<string>("");
+    public Languages$ = new BehaviorSubject<any>(null);
+    public LanguageObject$ = new BehaviorSubject<any>(null);
+    public Res$ = new BehaviorSubject<any>({});
+    public selectedPageCodeName = "";
+    public selectedPageRoute = "";
+    public TemplateHtml$ = new BehaviorSubject<any>(null);
+    public PreviousRoute$ = new BehaviorSubject<any>(null);
+    public ShowProgressSpinner$ = new BehaviorSubject<boolean>(false);
+
+    //Save Button in top nav bar
+    //public showSaveButton$ = new BehaviorSubject<boolean>(false);
+    //public saveButtonClicked$ = new BehaviorSubject<boolean>(false);
+
+    private ServiceUrl(method: string): string {
+        return 'teditor/' + method;
+    }
+
+    constructor(private http: Http, private sanitizer: DomSanitizer) {
+
+    }
+
+    UpdateObjectName(ObjectType: string, ObjectId: number, NewObjectName: string) {
+        const body = new URLSearchParams();
+        body.set("ObjectType", ObjectType);
+        body.set("ObjectId", ObjectId.toString());
+        body.set("NewObjectName", NewObjectName);
+
+        let headers = new Headers();
+        headers.append('Content-Type', 'application/x-www-form-urlencoded');
+
+        return this.http.post(this.ServiceUrl("UpdateObjectName"), body.toString(), {
+            headers: headers
+        }).map(res => res.json());
+    }
+
+    Publish() {
+        this.ShowProgressSpinner();
+        return this.http.get(this.ServiceUrl("Publish")).map((res) => res.json())
+        .do(() => {
+            this.HideProgressSpinner();
+        });
+    }
+
+    ResetDraftVersion() {
+        this.ShowProgressSpinner();
+        return this.http.get(this.ServiceUrl("ResetDraftVersion")).map((res) => res.json())
+        .do(() => {
+            this.HideProgressSpinner();
+        });
+    }
+
+    GetLanguages() {
+        return this.http.get(this.ServiceUrl("GetLanguages")).map((res) => {
+            let Languages = res.json().Languages;
+            let _languages = [];
+            Object.keys(Languages).forEach((c) => {
+                Languages[c].image = "../view/image/flags/" + Languages[c].image;
+                _languages.push(Languages[c]);
+            });
+            console.log(_languages);
+            this.Languages$.next(_languages);
+            this.LanguageObject$.next(_languages[0]);
+            return _languages;
+        });
+    }
+
+    GetResources() {
+        return this.http.get("../view/template/teditor/assets/resources/resources." + environment.langCode + ".json")
+            .map((res: any) => { this.Res$.next(res.json()); console.log(res.json()); });
+    }
+
+    PreviewTemplate(SectionId:number = null) {
+        let lang = "en";
+        this.LanguageObject$.subscribe(l => {
+            if(l != null){
+                lang = l.code;
+
+                console.log(this.selectedPageCodeName);
+                let url = window.location.href.slice(0, window.location.href.indexOf("admin/"));
+                if (this.selectedPageCodeName == "general") {
+                    let fixedRoute = '';
+                  switch (this.selectedPageRoute.toLowerCase()) {
+                    case 'affiliate':
+                    case 'affiliate/':
+                      fixedRoute = 'affiliate/login';
+                      break;
+                    case 'checkout':
+                    case 'checkout/':
+                      fixedRoute = 'checkout/checkout';
+                      break;
+                    case 'product':
+                    case 'product/':
+                      fixedRoute = 'product/product';
+                      break;
+                    case 'account':
+                    case 'account/':
+                      fixedRoute = 'account/account';
+                      break;
+                    default:
+                      fixedRoute = this.selectedPageRoute;
+                  }
+                    url = url + "index.php?route="+fixedRoute;
+                }
+                else {
+                    url = url + "index.php?route=common/home";
+                }
+                url = url + "&isdraft=1";
+                url = url + "&draftlangcode=" + lang;
+                if(SectionId != null) {
+                    url = url + "&draftsectionid=" + SectionId.toString();
+                }
+
+                this.TemplateHtml$.next(this.sanitizer.bypassSecurityTrustResourceUrl(url));
+            }
+        });
+        //return this.TemplateHtml$.asObservable();
+    }
+
+    ShowProgressSpinner() {
+        if(!this.ShowProgressSpinner$.getValue())
+            this.ShowProgressSpinner$.next(true);
+    }
+
+    HideProgressSpinner() {
+        if(this.ShowProgressSpinner$.getValue())
+            this.ShowProgressSpinner$.next(false);
+    }
+
+}

@@ -1,0 +1,178 @@
+<form id="mass-mail-form">
+    <div id="mass_mail" class="modal fade">
+        <div class="modal-dialog modal-full">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h5 class="modal-title">{{ lang('heading_title', 'marketing/mass_mail_sms') }}</h5>
+                </div>
+
+                <div class="modal-body">
+
+                    <div id="error-area"></div>
+
+                    <div class="hide" id="to-mail_product-group">
+                        <select multiple="multiple"
+                                name="abandoned_orders[]" id="mail_abandoned_orders">
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="mail_subject-group">
+                        <label class="control-label">{{ lang('lbl_subject') }} <span
+                                    class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="mail_subject" name="mail_subject"
+                               value="{{ mail_subject }}" placeholder="{{ langempty('mail_subject_ph') }}">
+                        <span class="help-block"></span>
+                        <span class="text-muted">{{ langempty('subject_help') }}</span>
+                    </div>
+                    <div class="row">
+                        <div class="form-group col-md-9" id="mail_message-group">
+                            <label class="control-label">{{ lang('lbl_message') }} <span
+                                        class="text-danger">*</span></label>
+                            <textarea name="mail_message" id="mail_message" class="summernote"></textarea>
+                            <span class="help-block"></span>
+                            <span class="text-muted">{{ langempty('message_help') }}</span>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="control-label">{{ lang("lbl_available_vars") }}</label>
+                            <div class="well">
+                                <div class="input-group">
+                                    <label class="control-label position-left">{{ lang('lbl_first_name') }}</label>
+                                    <a class="label label-primary mass-editor"
+                                       data-append="{firstname}">
+                                        {firstname}
+                                    </a>
+                                </div>
+                                <div class="input-group">
+                                    <label class="control-label position-left">{{ lang('lbl_last_name') }}</label>
+                                    <a class="label label-primary mass-editor"
+                                       data-append="{lastname}">
+                                        {lastname}
+                                    </a>
+                                </div>
+
+                                <div class="input-group">
+                                    <label class="control-label position-left">{{ lang('lbl_orderid') }}</label>
+                                    <a class="label label-primary mass-editor"
+                                       data-append="{orderid}">
+                                        {orderid}
+                                    </a>
+                                </div>
+
+                                <div class="input-group">
+                                    <label class="control-label position-left">{{ lang('lbl_invoice') }}</label>
+                                    <a class="label label-primary mass-editor"
+                                       data-append="{invoice}">
+                                        {invoice}
+                                    </a>
+                                </div>
+
+                                <div class="input-group">
+                                    <label class="control-label position-left">{{ lang('lbl_telephone') }}</label>
+                                    <a class="label label-primary mass-editor"
+                                       data-append="{telephone}">
+                                        {telephone}
+                                    </a>
+                                </div>
+
+                                <div class="input-group">
+                                    <label class="control-label position-left">{{ lang('lbl_email') }}</label>
+                                    <a class="label label-primary mass-editor"
+                                       data-append="{email}">
+                                        {email}
+                                    </a>
+                                </div>
+
+                                <div class="input-group">
+                                    <label class="control-label position-left">{{ lang('lbl_products') }}</label>
+                                    <a class="label label-primary mass-editor"
+                                       data-append="{products}">
+                                        {products}
+                                    </a>
+                                </div>
+                                <div class="input-group">
+                                    <label class="control-label position-left">{{ lang('lbl_products_images') }}</label>
+                                    <a class="label label-primary mass-editor"
+                                       data-append="{productsImages}">
+                                        {productsImages}
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link" data-dismiss="modal">{{ lang('button_close') }}</button>
+                    <button type="button" id="submit-mass-mail"
+                            class="btn btn-primary">{{ lang('button_send') }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <input type="hidden" name="mail_to" id="mail_to" value="abandoned_orders"/>
+</form>
+
+<script>
+
+    $(document).ready(function () {
+
+        $('.mass-editor').click(function () {
+            var $this = $(this);
+
+            var $data = $this.attr('data-append');
+
+            jQuery('.summernote').summernote('pasteHTML', '<br />' + $data + '<br />');
+        });
+
+    });
+
+    $('#submit-mass-mail').click(function (event) {
+
+        event.preventDefault();
+
+        var $form = $('#mass-mail-form');
+
+        $.ajax({
+            url: '{{ link('marketing/mass_mail_sms/sendMail') }}',
+            method: 'POST',
+            data: $form.serialize(),
+            dataType: 'json',
+            success: function (response) {
+
+                $('#mass_mail').find('.form-group').removeClass('has-error').find('.help-block').text('');
+
+                $('#mass_mail #error-area').html('');
+
+                if (response.success == '1') {
+
+                    $('#mass_mail').modal('toggle');
+
+                    notify('', 'success', response.success_msg);
+                } else {
+
+                    for (err in response.errors) {
+                        var error = response.errors[err];
+
+                        if (err == 'error') {
+                            $('#mass_mail #error-area').append(
+                                '<div class="alert alert-danger alert-styled-left alert-bordered">' +
+                                '<button type="button" class="close" data-dismiss="alert">' +
+                                '<span>&times;</span>' +
+                                '<span class="sr-only">X</span>' +
+                                '</button>' + error + '</div>'
+                            );
+                        } else {
+                            var errorParent = $('#' + err).parents('.form-group');
+
+                            errorParent.addClass('has-error');
+                            errorParent.find('.help-block').text(error);
+                        }
+                    }
+
+                }
+            }
+        });
+    });
+</script>

@@ -1,0 +1,1289 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block title %}
+    {{ lang('heading_title') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+
+    {% if not is_shipment %}
+        <div style="display: inline-block;">
+            <!-- Switchery -->
+            <div class="checkbox checkbox-switchery">
+                <label class="control-label">{{ lang('entry_notify_customer') }}</label>
+                <label>
+                    <input type="checkbox" onchange="changeStatus(this);" name="aramex_email_customer" class="switchery" {{ aramex_email_customer not in [0, '0', 'off'] or aramex_email_customer is null ? 'checked' }}>
+                    <span class="switchery-status">{{ aramex_email_customer not in [0, '0', 'off'] or aramex_email_customer is null ? lang('text_enabled') : lang('text_disabled') }}</span>
+                </label>
+            </div>
+            <!-- /Switchery -->
+        </div>
+        &nbsp; &nbsp;
+    {% endif %}
+
+    <a href="{{ back_to_order }}" class="btn btn-success"> {{ text_back_to_order }} </a>
+
+    <a href="{{ aramex_rate_calculator }}"  class="button btn btn-warning">{{ text_rate_calculator }}</a>
+
+    {% if is_shipment %}
+
+        <a onclick="returnCheck();" class="button btn btn-primary">{{ text_return_shipment }}</a>
+        <a href="{{ aramex_print_label }}" target="_blank" class="button btn btn-primary">{{ text_print_label }}</a>
+        <a href="{{ aramex_schedule_pickup }}"  class="button btn btn-primary">{{ text_schedule_pickup }}</a>
+        <a href="{{ aramex_traking }}"  class="button btn btn-primary">{{ text_track }}</a>
+
+    {% else %}
+
+        <a onclick="formSubmit($('.form'))" class="button btn btn-primary">{{ text_create_sipment }}</a>
+
+    {% endif %}
+
+    {# {% include "includes/buttons_top.expand" %} #}
+
+{% endblock headelements %}
+
+{% block content %}
+    <style>
+        textarea
+        {
+            resize: vertical;
+        }
+    </style>
+    
+    <!-- Start Form -->
+    <form enctype="multipart/form-data" action="{{ aramex_create_sipment }}" method="post" class="form" id="aramex_shipment" novalidate="novalidate">
+
+        <input type="hidden" value="" name="aramex_shipment_referer">
+        <input type="hidden" value="{{ aramex_shipment_shipper_account }}" name="aramex_shipment_shipper_account">
+        <input type="hidden" value="{{ reference }}" name="aramex_shipment_original_reference">
+
+        <div class="row">
+            <!-- Billing Account -->
+            <div class="col-md-12" id="aramex_shipment_creation_general_info">
+                <div class="panel panel-white">
+                    <div class="panel-heading">
+                        <h6 class="panel-title"><span class="text-bold">{{ lang('text_billing_account') }}</span></h6>
+                        <div class="heading-elements not-collapsible">
+                            <ul class="icons-list">
+                                <li><a data-action="collapse" class=""></a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="collapse in" id="fields-panel">
+                            <!-- Account -->
+                            <div class="form-group col-md-6" id="aramex_shipment_shipper_account-group">
+                                <label for="aramex_shipment_shipper_account" class="control-label">{{ lang('entry_account') }}</label>
+                                {% if additional_account %}
+                                    <select class="form-control" name="aramex_shipment_shipper_account">
+                                        <option value="{{ aramex_shipment_shipper_account }}">{{ aramex_shipment_shipper_account }}</option>
+                                        {% for key,value in additional_account %}
+                                        <option value="{{ value['account_number'] }}">{{ value['account_number'] }}</option>
+                                        {% endfor %}
+                                    </select>
+                                {% else %}
+                                    <input type="text" class="form-control" id="aramex_shipment_shipper_account" name="aramex_shipment_shipper_account" value="{{ aramex_shipment_shipper_account }}">
+                                {% endif %}
+                                <span class="text-muted">{{ text_global_setting_msg }}</span>
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Account -->
+                            <!-- Payment -->
+                            <div class="form-group col-md-6" id="aramex_shipment_info_billing_account-group">
+                                <label for="cod_order_status" class="control-label">{{ lang('entry_payment') }}</label>
+
+                                <select name="aramex_shipment_info_billing_account" id="aramex_shipment_info_billing_account" class="form-control aramex_all_options valid payment_switcher" onchange="resetShipperDetail(this);">
+                                    <option value="1" {{ aramex_shipment_info_billing_account == '1' ? "selected" }}> {{ text_shipper_account }}</option>
+                                    <option value="2" {{ aramex_shipment_info_billing_account == '2' ? "selected" }}> {{ text_consignee_account }}</option>
+                                    <option value="3" {{ aramex_shipment_info_billing_account == '3' ? "selected" }}> {{ text_third_party }}</option>
+                                </select>
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Payment -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- /Billing Account -->
+
+
+            <!-- Shipper Details -->
+            <div class="col-md-6" id="aramex_shipment_creation_general_info">
+                <div class="panel panel-white">
+                    <div class="panel-heading">
+                        <h6 class="panel-title"><span class="text-bold">{{ lang('text_shipper_details') }}</span></h6>
+                        <div class="heading-elements not-collapsible">
+                            <ul class="icons-list">
+                                <li><a data-action="collapse" class=""></a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="collapse in" id="fields-panel">
+                            <!-- Refrence -->
+                            <div class="form-group col-md-6" id="aramex_shipment_shipper_reference-group">
+                                <label for="aramex_shipment_shipper_reference" class="control-label">{{ lang('entry_reference') }}</label>
+                                <input type="text" class="form-control" id="aramex_shipment_shipper_reference" name="aramex_shipment_shipper_reference" value="{{ reference }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Refrence -->
+                            <!-- Shipper Name -->
+                            <div class="form-group col-md-6" id="aramex_shipment_shipper_name-group">
+                                <label for="aramex_shipment_shipper_name" class="control-label">{{ lang('entry_name') }}</label>
+                                <input type="text" class="form-control" id="aramex_shipment_shipper_name" name="aramex_shipment_shipper_name" value="{{ aramex_shipment_shipper_name }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Shipper Name -->
+                            <!-- Shipper Email -->
+                            <div class="form-group col-md-6" id="aramex_shipment_shipper_email-group">
+                                <label for="aramex_shipment_shipper_email" class="control-label">{{ lang('entry_email') }}</label>
+                                <input type="text" class="form-control" id="aramex_shipment_shipper_email" name="aramex_shipment_shipper_email" value="{{ aramex_shipment_shipper_email }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Shipper Email -->
+                            <!-- Shipper company -->
+                            <div class="form-group col-md-6" id="aramex_shipment_shipper_company-group">
+                                <label for="aramex_shipment_shipper_company" class="control-label">{{ lang('entry_company') }}</label>
+                                <input type="text" class="form-control" id="aramex_shipment_shipper_company" name="aramex_shipment_shipper_company" value="{{ aramex_shipment_shipper_company }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Shipper company -->
+                            <!-- Shipper Country -->
+                            <div class="form-group col-md-6" id="aramex_shipment_info_billing_account-group">
+                                <label for="aramex_shipment_shipper_country" class="control-label">{{ lang('entry_country') }}</label>
+
+                                <select name="aramex_shipment_shipper_country" id="aramex_shipment_shipper_country" class="form-control valid aramex_countries validate-select">
+                                    {% for country in countries %}
+                                        <option value="{{ country['iso_code_2'] }}" {{ country['iso_code_2'] == aramex_shipment_shipper_country ? "selected"}}>{{ country['name'] }}</option>
+                                    {% endfor %}
+                                </select>
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Shipper Country -->
+                            <!-- Shipper City -->
+                            <div class="form-group col-md-6" id="aramex_shipment_shipper_city-group">
+                                <label for="aramex_shipment_shipper_city" class="control-label">{{ lang('entry_city') }}</label>
+                                <input type="text" class="form-control" id="aramex_shipment_shipper_city" name="aramex_shipment_shipper_city" value="{{ aramex_shipment_shipper_city }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Shipper City -->
+                            <!-- Shipper Postal Code -->
+                            <div class="form-group col-md-6" id="aramex_shipment_shipper_postal-group">
+                                <label for="aramex_shipment_shipper_postal" class="control-label">{{ lang('entry_postal_code') }}</label>
+                                <input type="text" class="form-control" id="aramex_shipment_shipper_postal" name="aramex_shipment_shipper_postal" value="{{ aramex_shipment_shipper_postal }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Shipper Postal Code -->
+                            <!-- Shipper State -->
+                            <div class="form-group col-md-6" id="aramex_shipment_shipper_state-group">
+                                <label for="aramex_shipment_shipper_state" class="control-label">{{ lang('entry_state') }}</label>
+                                <input type="text" class="form-control" id="aramex_shipment_shipper_state" name="aramex_shipment_shipper_state" value="{{ aramex_shipment_shipper_state }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Shipper State -->
+                            <!-- Shipper Phone -->
+                            <div class="form-group col-md-6" id="aramex_shipment_shipper_phone-group">
+                                <label for="aramex_shipment_shipper_phone" class="control-label">{{ lang('entry_phone') }}</label>
+                                <input type="text" class="form-control" id="aramex_shipment_shipper_phone" name="aramex_shipment_shipper_phone" value="{{ aramex_shipment_shipper_phone }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Shipper Phone -->
+                            <!-- Shipper Address -->
+                            <div class="form-group col-md-6" id="aramex_shipment_shipper_street-group">
+                                <label for="aramex_shipment_shipper_street" class="control-label">{{ lang('entry_address') }}</label>
+                                <textarea type="text" class="form-control" id="aramex_shipment_shipper_street" name="aramex_shipment_shipper_street">{{ aramex_shipment_shipper_street }}</textarea>
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Shipper Address -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- /Shipper Details -->
+
+
+            <!-- Receiver Details-->
+            <div class="col-md-6" id="receiver_details">
+                <div class="panel panel-white">
+                    <div class="panel-heading">
+                        <h6 class="panel-title"><span class="text-bold">{{ lang('text_receiver_details') }}</span></h6>
+                        <div class="heading-elements not-collapsible">
+                            <ul class="icons-list">
+                                <li><a data-action="collapse" class=""></a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="collapse in" id="fields-panel">
+                            <!-- Refrence -->
+                            <div class="form-group col-md-6" id="aramex_shipment_receiver_reference-group">
+                                <label for="aramex_shipment_receiver_reference" class="control-label">{{ lang('entry_reference') }}</label>
+                                <input type="text" class="form-control" id="aramex_shipment_receiver_reference" name="aramex_shipment_receiver_reference" value="{{ reference }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Refrence -->
+                            <!-- Receiver Name -->
+                            <div class="form-group col-md-6" id="aramex_shipment_receiver_name-group">
+                                <label for="aramex_shipment_receiver_name" class="control-label">{{ lang('entry_name') }}</label>
+                                <input type="text" class="form-control" id="aramex_shipment_receiver_name" name="aramex_shipment_receiver_name" value="{{ aramex_shipment_receiver_name }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Receiver Name -->
+                            <!-- Receiver Email -->
+                            <div class="form-group col-md-6" id="aramex_shipment_receiver_email-group">
+                                <label for="aramex_shipment_receiver_email" class="control-label">{{ lang('entry_email') }}</label>
+                                <input type="text" class="form-control" id="aramex_shipment_receiver_email" name="aramex_shipment_receiver_email" value="{{ aramex_shipment_receiver_email }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Receiver Email -->
+                            <!-- Receiver company -->
+                            <div class="form-group col-md-6" id="aramex_shipment_receiver_company-group">
+                                <label for="aramex_shipment_receiver_company" class="control-label">{{ lang('entry_company') }}</label>
+                                <input type="text" class="form-control" id="aramex_shipment_receiver_company" name="aramex_shipment_receiver_company" value="{{ aramex_shipment_receiver_company }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Receiver company -->
+                            <!-- Receiver Country -->
+                            <div class="form-group col-md-6" id="aramex_shipment_info_billing_account-group">
+                                <label for="aramex_shipment_receiver_country" class="control-label">{{ lang('entry_country') }}</label>
+
+                                <select name="aramex_shipment_receiver_country" id="aramex_shipment_receiver_country" class="form-control valid aramex_countries validate-select">
+                                    {% for country in countries %}
+                                        <option value="{{ country['iso_code_2'] }}" {{ country['iso_code_2'] == aramex_shipment_receiver_country ? "selected"}}>{{ country['name'] }}</option>
+                                    {% endfor %}
+                                </select>
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Receiver Country -->
+                            <!-- Receiver City -->
+                            <div class="form-group col-md-6" id="aramex_shipment_receiver_city-group">
+                                <label for="aramex_shipment_receiver_city" class="control-label">{{ lang('entry_city') }}</label>
+                                <input type="text" class="form-control" id="aramex_shipment_receiver_city" name="aramex_shipment_receiver_city" value="{{ aramex_shipment_receiver_city }}">
+                                <input type="hidden" name="aramex_shipment_receiver_area_id" value="{{aramex_shipment_receiver_area_id}}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Receiver City -->
+                            <!-- Receiver Postal Code -->
+                            <div class="form-group col-md-6" id="aramex_shipment_receiver_postal-group">
+                                <label for="aramex_shipment_receiver_postal" class="control-label">{{ lang('entry_postal_code') }}</label>
+                                <input type="text" class="form-control" id="aramex_shipment_receiver_postal" name="aramex_shipment_receiver_postal" value="{{ aramex_shipment_receiver_postal }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Receiver Postal Code -->
+                            <!-- Receiver State -->
+                            <div class="form-group col-md-6" id="aramex_shipment_receiver_state-group">
+                                <label for="aramex_shipment_receiver_state" class="control-label">{{ lang('entry_state') }}</label>
+                                <input type="text" class="form-control" id="aramex_shipment_receiver_state" name="aramex_shipment_receiver_state" value="{{ aramex_shipment_receiver_state }}">
+                                <input type="hidden" name="aramex_shipment_receiver_state_id" value="{{ aramex_shipment_receiver_state_id }}" />
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Receiver State -->
+                            <!-- Receiver Phone -->
+                            <div class="form-group col-md-6" id="aramex_shipment_receiver_phone-group">
+                                <label for="aramex_shipment_receiver_phone" class="control-label">{{ lang('entry_phone') }}</label>
+                                <input type="text" class="form-control" id="aramex_shipment_receiver_phone" name="aramex_shipment_receiver_phone" value="{{ aramex_shipment_receiver_phone }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Receiver Phone -->
+                            <!-- Receiver Address -->
+                            <div class="form-group col-md-6" id="aramex_shipment_receiver_street-group">
+                                <label for="aramex_shipment_receiver_street" class="control-label">{{ lang('entry_address') }}</label>
+                                <textarea type="text" class="form-control" id="aramex_shipment_receiver_street" name="aramex_shipment_receiver_street">{{ aramex_shipment_receiver_street }}</textarea>
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Receiver Address -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- /Receiver Details-->
+
+            <!-- Third Party Details-->
+            <div class="col-md-12" id="third_party_details" style="display: none;">
+                <div class="panel panel-white">
+                    <div class="panel-heading">
+                        <h6 class="panel-title"><span class="text-bold">{{ lang('text_third_party_details') }}</span></h6>
+                        <div class="heading-elements not-collapsible">
+                            <ul class="icons-list">
+                                <li><a data-action="collapse" class=""></a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="collapse in" id="fields-panel">
+                            <!-- Refrence -->
+                            <div class="form-group col-md-6" id="aramex_shipment_third_party_reference-group">
+                                <label for="aramex_shipment_third_party_reference" class="control-label">{{ lang('entry_reference') }}</label>
+                                <input type="text" class="form-control" id="aramex_shipment_third_party_reference" name="aramex_shipment_third_party_reference" value="{{ reference }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Refrence -->
+                            <!-- Third Party Name -->
+                            <div class="form-group col-md-6" id="aramex_shipment_third_party_name-group">
+                                <label for="aramex_shipment_third_party_name" class="control-label">{{ lang('entry_name') }}</label>
+                                <input type="text" class="form-control" id="aramex_shipment_third_party_name" name="aramex_shipment_third_party_name" value="{{ aramex_shipment_third_party_name }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Third Party Name -->
+                            <!-- Third Party Email -->
+                            <div class="form-group col-md-6" id="aramex_shipment_third_party_email-group">
+                                <label for="aramex_shipment_third_party_email" class="control-label">{{ lang('entry_email') }}</label>
+                                <input type="text" class="form-control" id="aramex_shipment_third_party_email" name="aramex_shipment_third_party_email" value="{{ aramex_shipment_third_party_email }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Third Party Email -->
+                            <!-- Third Party company -->
+                            <div class="form-group col-md-6" id="aramex_shipment_third_party_company-group">
+                                <label for="aramex_shipment_third_party_company" class="control-label">{{ lang('entry_company') }}</label>
+                                <input type="text" class="form-control" id="aramex_shipment_third_party_company" name="aramex_shipment_third_party_company" value="{{ aramex_shipment_third_party_company }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Third Party company -->
+                            <!-- Third Party Country -->
+                            <div class="form-group col-md-6" id="aramex_shipment_info_billing_account-group">
+                                <label for="aramex_shipment_third_party_country" class="control-label">{{ lang('entry_country') }}</label>
+
+                                <select name="aramex_shipment_third_party_country" id="aramex_shipment_third_party_country" class="form-control valid aramex_countries validate-select">
+                                    {% for country in countries %}
+                                        <option value="{{ country['iso_code_2'] }}" {{ country['iso_code_2'] == aramex_shipment_third_party_country ? "selected"}}>{{ country['name'] }}</option>
+                                    {% endfor %}
+                                </select>
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Third Party Country -->
+                            <!-- Third Party City -->
+                            <div class="form-group col-md-6" id="aramex_shipment_third_party_city-group">
+                                <label for="aramex_shipment_third_party_city" class="control-label">{{ lang('entry_city') }}</label>
+                                <input type="text" class="form-control" id="aramex_shipment_third_party_city" name="aramex_shipment_third_party_city" value="{{ aramex_shipment_third_party_city }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Third Party City -->
+                            <!-- Third Party Postal Code -->
+                            <div class="form-group col-md-6" id="aramex_shipment_third_party_postal-group">
+                                <label for="aramex_shipment_third_party_postal" class="control-label">{{ lang('entry_postal_code') }}</label>
+                                <input type="text" class="form-control" id="aramex_shipment_third_party_postal" name="aramex_shipment_third_party_postal" value="{{ aramex_shipment_third_party_postal }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Third Party Postal Code -->
+                            <!-- Third Party State -->
+                            <div class="form-group col-md-6" id="aramex_shipment_third_party_state-group">
+                                <label for="aramex_shipment_third_party_state" class="control-label">{{ lang('entry_state') }}</label>
+                                <input type="text" class="form-control" id="aramex_shipment_third_party_state" name="aramex_shipment_third_party_state" value="{{ aramex_shipment_third_party_state }}">
+                                <input type="hidden" name="aramex_shipment_third_party_state_id" value="{{ aramex_shipment_third_party_state_id }}" />
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Third Party State -->
+                            <!-- Third Party Phone -->
+                            <div class="form-group col-md-6" id="aramex_shipment_third_party_phone-group">
+                                <label for="aramex_shipment_third_party_phone" class="control-label">{{ lang('entry_phone') }}</label>
+                                <input type="text" class="form-control" id="aramex_shipment_third_party_phone" name="aramex_shipment_third_party_phone" value="{{ aramex_shipment_third_party_phone }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Third Party Phone -->
+                            <!-- Third Party Address -->
+                            <div class="form-group col-md-6" id="aramex_shipment_third_party_street-group">
+                                <label for="aramex_shipment_third_party_street" class="control-label">{{ lang('entry_address') }}</label>
+                                <textarea type="text" class="form-control" id="aramex_shipment_third_party_street" name="aramex_shipment_third_party_street">{{ aramex_shipment_third_party_street }}</textarea>
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Third Party Address -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- /Third Party Details-->
+
+            <!-- Product Information -->
+            <div class="col-md-12" id="aramex_shipment_creation_general_info">
+                <div class="panel panel-white">
+                    <div class="panel-heading">
+                        <h6 class="panel-title"><span class="text-bold">{{ lang('text_product_name') }}</span></h6>
+                        <div class="heading-elements not-collapsible">
+                            <ul class="icons-list">
+                                <li><a data-action="collapse" class=""></a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="collapse in" id="fields-panel">
+                           
+                            <table class="table col-md-12" style="width: 100%;">
+                                <tr>
+                                    <th class="aramex_item_name">{{ text_product_name }}</th>
+                                    <th class="aramex_item_qty">{{ text_product_qty }}</th>
+                                </tr>
+                                
+                                {% set qty = 0 %}
+
+                                {% for op in order_products %}
+                                
+                                    <tr class="aramex_item_tobe_shipped" id="item{{ op['order_product_id'] }}" style="width: 100%;">
+
+                                        <td class="aramex_item_name" style="width: 80%;">
+                                            <span title="{{ op['name'] }}">{{ op['name'] }}</span>
+                                            <input type="hidden" value="{{ op['quantity'] }}" name="aramex_items[{{ op['order_product_id'] }}]" id="aramex_items_{{ op['order_product_id'] }}">
+                                        </td>
+
+                                        <td class="aramex_item_qty" style="width: 20%;">
+                                        
+                                            <label class="label label-success" style="padding: 10px 20px;"> {{ op['quantity'] }} </label>
+
+                                            <input type="hidden" value="{{ op['quantity'] }}" name="{{ op['order_product_id'] }}" class="aramex_input_items_qty valid" readonly>
+
+                                            <input type="hidden" value="{{ op['price'] }}" name="aramex_items_base_price_{{ op['order_product_id'] }}" id="aramex_items_base_price_{{ op['order_product_id'] }}">
+                                            <input type="hidden" value="{{ op['weight'] }}" name="aramex_items_base_weight_{{ op['order_product_id'] }}" id="aramex_items_base_weight_{{ op['order_product_id'] }}">
+                                            <input type="hidden" value="{{ op['quantity'] }}" name="aramex_items_total_{{ op['order_product_id'] }}" id="aramex_items_total_{{ op['order_product_id'] }}">
+                                        </td>
+                                    </tr>
+
+                                    {% set qty = qty + op['quantity'] %}
+
+                                {% endfor %}
+                            </table>
+
+                            <div class="form-group col-md-12 text-center" id="aramex_shipment_info_items_subtotal-group">
+                                <label for="aramex_shipment_info_foreignhawb" class="control-label">{{ lang('entry_number_of_items') }}</label>
+                                <br>
+                                <div class="col-md-12">
+                                    <label style="width: 100%; height: 30px; vertical-align: middle; line-height: 25px;font-size: 17px;" class="label label-info"> {{ qty }} </label>
+                                </div>
+                                <span class="help-block"></span>
+                            </div>
+                            
+                            {% if aramex_custom_pieces == 1 %}
+                            <div class="form-group col-md-12" id="custom_product_pieces">
+                                <div style="width:150px;margin:auto" class="text-center">
+                                    <label for="aramex_custom_product_pieces" class="control-label">{{ lang('text_custom_product_pieces') }}</label>
+                                    <input type="number" min="1" class="form-control" id="aramex_custom_product_pieces" name="aramex_custom_product_pieces" value="{{ qty }}" style="text-align:center">
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- /Product Information -->
+
+            
+            <!-- Shippment Information -->
+            <div class="col-md-12" id="shipment_infromation">
+                <div class="panel panel-white">
+                    <div class="panel-heading">
+                        <h6 class="panel-title"><span class="text-bold">{{ lang('text_shipment_information') }}</span></h6>
+                        <div class="heading-elements not-collapsible">
+                            <ul class="icons-list">
+                                <li><a data-action="collapse" class=""></a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="collapse in" id="fields-panel">
+                            
+                            <div style="display:none" class="text_short">{{ entry_total_weight }} <span id="order-total-weight">210.00</span> {{ text_kg }}</div>
+
+                            <!-- Total Weight -->
+                            <div class="form-group col-md-6" id="weighttot-group">
+                                <label for="weighttot" class="control-label">{{ lang('entry_total_weight') }}</label>
+                                <div class="row">
+                                    <div class="col-md-10">
+                                        <input type="text" class="form-control" id="weighttot" name="weighttot" value="{{ weighttot }}">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <select name="weight_unit" class="fl width-60">
+                                            <option value="KG" {{ weight_unit =='KG' or weight_unit == 'kg' ? 'selected' }} >{{ text_kg }}</option>
+                                            <option value="LB" {{ weight_unit =='LB' or weight_unit == 'lb' ? 'selected' }} >{{ text_lb }}</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Total Weight -->
+
+                            <!-- Shippment Information Reference -->
+                            <div class="form-group col-md-6" id="aramex_shipment_info_reference-group">
+                                <label for="aramex_shipment_info_reference" class="control-label">{{ lang('entry_reference') }}</label>
+                                <input type="text" class="form-control" id="aramex_shipment_info_reference" name="aramex_shipment_info_reference" value="{{ reference }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Shippment Information Reference -->
+
+                            {% set checkCountry = ( aramex_shipment_shipper_country == aramex_shipment_receiver_country ) %}
+
+                            <!-- Product Group -->
+                            <div class="form-group col-md-6" id="aramex_shipment_info_product_group-group">
+                                <label for="cod_order_status" class="control-label">{{ lang('entry_product_group') }}</label>
+
+                                <select name="aramex_shipment_info_product_group" id="aramex_shipment_info_product_group" class="form-control aramex_all_options">
+                                    <option value="DOM" {{ group == 'DOM' or checkCountry ? 'selected' }}> {{ text_domestic }} </option>
+                                    <option value="EXP" {{ group == 'EXP' or ( group == '' and not checkCountry ) ? 'selected' }}> {{ text_inter_express }}</option>
+                                </select>
+                                <div id="aramex_shipment_info_product_group_div" style="display: none;"></div>
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Product Group -->
+
+
+                            {% set allowed_domestic_methods = aramex_allowed_domestic_methods %}
+                            {% set allowed_international_methods = aramex_allowed_international_methods %}
+                            {% set domestic_methods = all_allowed_domestic_methods %}
+                            {% set international_methods = all_allowed_international_methods %}
+                            {% set allowed_domestic_methods_apply = [] %}
+                            {% set allowed_international_methods_apply = [] %}
+
+                            <!-- Service Type -->
+                            <div class="form-group col-md-6" id="aramex_shipment_info_product_group-group">
+                                <label for="cod_order_status" class="control-label">{{ lang('entry_service_type') }}</label>
+
+                                <select class="aramex_all_options form-control" id="aramex_shipment_info_product_type" name="aramex_shipment_info_product_type">
+                                
+                                    {% if allowed_domestic_methods|length > 0 %}
+                                        {% set i = 1 %}
+
+                                        {% for key, val in domestic_methods %}
+
+                                            {% if val['value'] in allowed_domestic_methods %}
+
+                                                {% if i == 1 %}
+                                                    {% set selected_str = (type == val['value'] or checkCountry) ? 'selected' %}
+                                                {% else %}
+                                                    {% set selected_str = (type == val['value']) ? 'selected' %}
+                                                {% endif %}
+                                                
+                                                {% set allowed_domestic_methods_apply = allowed_domestic_methods_apply|merge({ (val['value']) : val['label'] }) %}
+
+                                                <option {{ selected_str }} value="{{ val['value'] }}" id="{{ val['value'] }}"  class="DOM">{{ val['label'] }}</option>
+
+                                                {% set i = i + 1 %}
+
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endif %}
+
+                                    {% if allowed_international_methods|length > 0 %}
+                                        {% set i = 1 %}
+
+                                        {% for key, val in international_methods %}
+
+                                            {% if val['value'] in allowed_international_methods %}
+
+                                                {% if i == 1 %}
+                                                    {% set selected_str = (type == val['value'] or checkCountry) ? 'selected' %}
+                                                {% else %}
+                                                    {% set selected_str = (type == val['value']) ? 'selected' %}
+                                                {% endif %}
+                                                
+                                                {% set allowed_international_methods_apply = allowed_international_methods_apply|merge({ (val['value']) : val['label'] }) %}
+
+                                                <option {{ selected_str }} value="{{ val['value'] }}" id="{{ val['value'] }}"  class="EXP">{{ val['label'] }}</option>
+
+                                                {% set i = i + 1 %}
+
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endif %}
+
+                                </select>
+                                <div id="aramex_shipment_info_service_type_div" style="display: none;"></div>
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Service Type -->
+
+                            <!-- Additional Services -->
+                            <div class="form-group col-md-6" id="aramex_shipment_info_product_group-group">
+                                <label for="cod_order_status" class="control-label">{{ lang('entry_additional_services') }}</label>
+
+                                <select class="aramex_all_options form-control" id="aramex_shipment_info_service_type" name="aramex_shipment_info_service_type">
+                                    
+                                    <option value=""></option>
+
+                                    {% set allowed_domestic_additional_services = aramex_allowed_domestic_additional_services %}
+                                    {% set allowed_international_additional_services = aramex_allowed_international_additional_services %}
+                                    {% set domestic_additional_services = all_allowed_domestic_additional_services %}
+                                    {% set international_additional_services = all_allowed_international_additional_services %}
+
+                                    {% if allowed_domestic_additional_services|length > 0 %}
+                                        {% set i = 1 %}
+
+                                        {% for key, val in domestic_additional_services %}
+                                            {% if val['value'] in allowed_domestic_additional_services %}
+                                                
+                                                <option {{ stype == val['value'] and group == 'DOM' ? 'selected'}} value="{{ val['value'] }}" id="dom_as_{{ val['value']}}" class="DOM local">{{ val['label'] }}</option>
+                                                {% set i = i + 1 %}
+
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endif %}
+
+                                    {% if allowed_international_additional_services|length > 0 %}
+                                        {% set i = 1 %}
+
+                                        {% for key, val in domestic_additional_services %}
+                                            {% if val['value'] in allowed_international_additional_services %}
+                                                
+                                                <option {{ stype == val['value'] and group == 'DOM' ? 'selected'}} value="{{ val['value'] }}" id="exp_as_{{ val['value']}}" class="non-local EXP">{{ val['label'] }}</option>
+                                                {% set i = i + 1 %}
+
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endif %}
+
+                                </select>
+                                <div id="aramex_shipment_info_service_type_div" style="display: none;"></div>
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Additional Services -->
+
+                            <!-- Payment Type -->
+                            <div class="form-group col-md-6" id="aramex_shipment_info_payment_type-group">
+                                <label for="aramex_shipment_info_payment_type" class="control-label">{{ lang('entry_payment_type') }}</label>
+
+                                <select name="aramex_shipment_info_payment_type" id="aramex_shipment_info_payment_type" class="form-control valid aramex_countries validate-select">
+                                    <option value="P" {{ pay_type == 'P' ? 'selected' }}> {{ text_prepaid }} </option>
+                                    <option value="C" {{ pay_type == 'C' or payment_code == 'cod' ? 'selected' }}> {{ text_collect }} </option>
+                                    <option value="3" {{ pay_type == '3' ? 'selected' }}> {{ text_third_party }} </option>
+                                </select>
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Payment Type -->
+
+                            <!-- Payment Option -->
+                            <div class="form-group col-md-6" id="aramex_shipment_info_payment_type-group">
+                                <label for="aramex_shipment_info_payment_type" class="control-label">{{ lang('entry_payment_option') }}</label>
+
+                                <select name="aramex_shipment_info_payment_option" id="aramex_shipment_info_payment_option" class="form-control">
+                                    <option value="" {{ pay_type == 'C' ? 'selected' }}> </option>
+                                    <option style="display: none;" value="ASCC" id="ASCC" > {{ text_payment_shipper }}</option>
+                                    <option style="display: none;" value="ARCC" id="ARCC"> {{ text_payment_consignee }}</option>
+                                    <option id="CASH" value="CASH" {{ pay_option == 'CASH' ? 'selected' }}> {{ text_payment_cash }}</option>
+                                    <option id="ACCT" value="ACCT" {{ pay_option == 'ACCT' or payment_code == 'cod' ? 'selected' }}> {{ text_payment_account }}</option>
+                                    <option id="PPST" value="PPST" {{ pay_option == 'PPST' ? 'selected' }}> {{ text_payment_prepaid }}</option>
+                                    <option id="CRDT" value="CRDT" {{ pay_option == 'CRDT' ? 'selected' }}> {{ text_payment_credit }}</option>
+                                </select>
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Payment Option -->
+
+                            <!-- COD Amount -->
+                            <div class="form-group col-md-6" id="aramex_shipment_info_cod_amount-group">
+                                <label for="aramex_shipment_info_cod_amount" class="control-label">{{ lang('entry_cod_amount') }}</label>
+                                <input type="text" class="form-control touchspinney" id="aramex_shipment_info_cod_amount" name="aramex_shipment_info_cod_amount" value="{{  payment_code == 'cod'? cod_value:'0' }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /COD Amount -->
+
+                            <!-- Custom Amount -->
+                            <div class="form-group col-md-6" id="aramex_shipment_info_custom_amount-group">
+                                <label for="aramex_shipment_info_custom_amount" class="control-label">{{ lang('entry_custom_amount') }}</label>
+                                <input type="text" class="form-control touchspinney" id="aramex_shipment_info_custom_amount" name="aramex_shipment_info_custom_amount" value="{{ custom_amount }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Custom Amount -->
+
+                            <!-- Currency -->
+                            <div class="form-group col-md-6" id="aramex_shipment_currency_code-group">
+                                <label for="aramex_shipment_currency_code" class="control-label">{{ lang('entry_currency') }}</label>
+                                <input type="text" class="form-control" id="aramex_shipment_currency_code" name="aramex_shipment_currency_code" value="{{ currency_code }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Currency -->
+
+                            <!-- Comment -->
+                            <div class="form-group col-md-6" id="aramex_shipment_info_comment-group">
+                                <label for="aramex_shipment_info_comment" class="control-label">{{ lang('entry_comment') }}</label>
+                                <textarea type="text" class="form-control" id="aramex_shipment_info_comment" name="aramex_shipment_info_comment">{{ aramex_shipment_info_comment }}</textarea>
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Comment -->
+
+                            <!-- Foreign Shippment Number -->
+                            <div class="form-group col-md-6" id="aramex_shipment_info_foreignhawb-group">
+                                <label for="aramex_shipment_info_foreignhawb" class="control-label">{{ lang('entry_foreign_shipment_no') }}</label>
+                                <input type="text" class="form-control" id="aramex_shipment_info_foreignhawb" name="aramex_shipment_info_foreignhawb" value="{{ aramex_shipment_info_foreignhawb }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Foreign Shippment Number -->
+
+                            <!-- File Name 1 -->
+                            <div class="form-group col-md-12" id="aramex_shipment_info_foreignhawb-group">
+                                <label for="aramex_shipment_info_foreignhawb" class="control-label">{{ lang('entry_filename_1') }}</label>
+                                
+                                <div class="row">
+                                    <div class="col-md-10">
+                                        <input type="file" class="form-control" size="7" id="file1" name="file1">
+                                    </div>
+                                
+                                    <div class="col-md-2">
+                                        <button class="btn btn-danger" id="filereset" name="filereset">{{ text_Reset }}</button>
+                                      </div>
+                                </div>
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /File Name 1 -->
+
+                            <!-- File Name 2 -->
+                            <div class="form-group col-md-12" id="aramex_shipment_info_foreignhawb-group">
+                                <label for="aramex_shipment_info_foreignhawb" class="control-label">{{ lang('entry_filename_2') }}</label>
+                                <div class="row">
+                                    <div class="col-md-10">
+                                        <input type="file" class="form-control" size="7" id="file2" name="file2">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button class="btn btn-danger" id="file2reset" name="file2reset">{{ text_Reset }}</button>
+                                    </div>
+                                </div>
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /File Name 2 -->
+
+                            <!-- File Name 3 -->
+                            <div class="form-group col-md-12" id="aramex_shipment_info_foreignhawb-group">
+                                <label for="aramex_shipment_info_foreignhawb" class="control-label">{{ lang('entry_filename_3') }}</label>
+                                <div class="row">
+                                    <div class="col-md-10">
+                                        <input type="file" class="form-control" size="7" id="file2" name="file2">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button class="btn btn-danger" id="file3reset" name="file3reset">{{ text_Reset }}</button>
+                                    </div>
+                                </div>
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /File Name 3 -->
+
+                            <!-- Description -->
+                            <div class="form-group col-md-12" id="aramex_shipment_description_div-group">
+                                <label for="aramex_shipment_info_foreignhawb" class="control-label">{{ lang('entry_description') }}</label>
+                                <input type="text" class="form-control" name="aramex_shipment_description" id="aramex_shipment_description" value="{{ product_arr|join(',') }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Description -->
+
+                            <!-- Item Price -->
+                            <div class="form-group col-md-12 text-center" id="aramex_shipment_info_items_subtotal-group">
+                                <label for="aramex_shipment_info_foreignhawb" class="control-label">{{ lang('entry_items_price') }}</label>
+                                <br>
+                                <div class="col-md-12">
+                                    <label style="width: 100%; height: 30px; vertical-align: middle; line-height: 25px;font-size: 17px;" class="label label-success"> {{ total }} {{ currency_code }} </label>
+                                </div>
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Item Price -->
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- /Shippment Information -->
+
+
+        </div>
+
+    </form>
+    <!-- End Form -->
+
+
+
+
+<script>
+    
+    function returnCheck(){
+        if($('.payment_switcher').val() == 1 || $('.payment_switcher').val() == 3) {
+            alert("{{ error_consignee_account }}>");
+        }else{
+            formSubmit($('.form'));
+        }
+    }
+    
+    //var $ = jQuery.noConflict();
+    
+    var allowed_domestic_methods = {{ allowed_domestic_methods|json_encode() }};
+    var allowed_international_methods = {{ allowed_international_methods|json_encode() }};
+    
+    var allowed_domestic_methods_apply = {{ allowed_domestic_methods_apply|json_encode() }};
+    var allowed_international_methods_apply = {{ allowed_international_methods_apply|json_encode() }};
+
+    
+    var aramex_shipment_shipper_name = document.getElementById('aramex_shipment_shipper_name').value;
+    var aramex_shipment_shipper_email = document.getElementById('aramex_shipment_shipper_email').value;
+    var aramex_shipment_shipper_company = document.getElementById('aramex_shipment_shipper_company').value;
+    var aramex_shipment_shipper_street = document.getElementById('aramex_shipment_shipper_street').value;
+    var aramex_shipment_shipper_country = document.getElementById('aramex_shipment_shipper_country').value;
+    var aramex_shipment_shipper_city = document.getElementById('aramex_shipment_shipper_city').value;
+    var aramex_shipment_shipper_postal = document.getElementById('aramex_shipment_shipper_postal').value;
+    var aramex_shipment_shipper_state = document.getElementById('aramex_shipment_shipper_state').value;
+    var aramex_shipment_shipper_phone = document.getElementById('aramex_shipment_shipper_phone').value;
+
+    var aramex_shipment_receiver_name = document.getElementById('aramex_shipment_receiver_name').value;
+    var aramex_shipment_receiver_email = document.getElementById('aramex_shipment_receiver_email').value;
+    var aramex_shipment_receiver_company = document.getElementById('aramex_shipment_receiver_company').value;
+    var aramex_shipment_receiver_street = document.getElementById('aramex_shipment_receiver_street').value;
+    var aramex_shipment_receiver_country = document.getElementById('aramex_shipment_receiver_country').value;
+    var aramex_shipment_receiver_city = document.getElementById('aramex_shipment_receiver_city').value;
+    var aramex_shipment_receiver_postal = document.getElementById('aramex_shipment_receiver_postal').value;
+    var aramex_shipment_receiver_state = document.getElementById('aramex_shipment_receiver_state').value;
+    var aramex_shipment_receiver_phone = document.getElementById('aramex_shipment_receiver_phone').value;
+
+    var cod_amount = parseFloat( "{{ cod_value }}" );
+    function formSubmit(element){
+        $('#aramex_shipment_info_payment_type').removeAttr('disabled');
+        $('#aramex_shipment_info_payment_option').removeAttr('disabled');
+        element.submit();
+    }
+
+    function resetShipperDetail(el){
+
+        var elValue = el.value;    
+
+        if(elValue == "3"){
+            $("#third_party_details").show();
+            $('#aramex_shipment_info_payment_type').val('3').trigger('change');
+            $('#aramex_shipment_info_payment_type').attr('disabled',true);
+            $('#aramex_shipment_info_payment_option').val('').trigger('change');
+            $('#aramex_shipment_info_payment_option').attr('disabled',true);
+        }
+        else{
+            $("#third_party_details").hide();
+            $('#aramex_shipment_info_payment_type').removeAttr('disabled');
+            $('#aramex_shipment_info_payment_option').removeAttr('disabled');
+            $('#aramex_shipment_info_payment_type').val('P').trigger('change');
+        }
+        
+        return;
+
+        var flag = 0;
+
+
+        if(elValue == 2){
+            document.getElementById('aramex_shipment_shipper_name').value = aramex_shipment_receiver_name;
+            document.getElementById('aramex_shipment_shipper_email').value = aramex_shipment_receiver_email;
+            document.getElementById('aramex_shipment_shipper_company').value = aramex_shipment_receiver_company;
+            document.getElementById('aramex_shipment_shipper_street').value = aramex_shipment_receiver_street;
+            document.getElementById('aramex_shipment_shipper_country').value = aramex_shipment_receiver_country;
+            document.getElementById('aramex_shipment_shipper_city').value = aramex_shipment_receiver_city;
+            document.getElementById('aramex_shipment_shipper_postal').value = aramex_shipment_receiver_postal;
+            document.getElementById('aramex_shipment_shipper_state').value = aramex_shipment_receiver_state;
+            document.getElementById('aramex_shipment_shipper_phone').value = aramex_shipment_receiver_phone;
+            document.getElementById('aramex_shipment_receiver_name').value = aramex_shipment_shipper_name;
+            document.getElementById('aramex_shipment_receiver_email').value = aramex_shipment_shipper_email;
+            document.getElementById('aramex_shipment_receiver_company').value = aramex_shipment_shipper_company;
+            document.getElementById('aramex_shipment_receiver_street').value = aramex_shipment_shipper_street;
+            document.getElementById('aramex_shipment_receiver_country').value = aramex_shipment_shipper_country;
+            document.getElementById('aramex_shipment_receiver_city').value = aramex_shipment_shipper_city;
+            document.getElementById('aramex_shipment_receiver_postal').value = aramex_shipment_shipper_postal;
+            document.getElementById('aramex_shipment_receiver_state').value = aramex_shipment_shipper_state;
+            document.getElementById('aramex_shipment_receiver_phone').value = aramex_shipment_shipper_phone;
+            flag = 1;
+        }
+        else if(elValue == 3){
+            document.getElementById('aramex_shipment_shipper_name').value = "";
+            document.getElementById('aramex_shipment_shipper_email').value = "";
+            document.getElementById('aramex_shipment_shipper_company').value = "";
+            document.getElementById('aramex_shipment_shipper_street').value = "";
+            document.getElementById('aramex_shipment_shipper_country').value = "";
+            document.getElementById('aramex_shipment_shipper_city').value = "";
+            document.getElementById('aramex_shipment_shipper_postal').value = "";
+            document.getElementById('aramex_shipment_shipper_state').value = "";
+            document.getElementById('aramex_shipment_shipper_phone').value = "";
+
+            document.getElementById('aramex_shipment_info_payment_type').value = '3';
+
+            document.getElementById('ASCC').style.display = 'block';
+            document.getElementById('ARCC').style.display = 'block';
+
+            document.getElementById('CASH').style.display = 'none';
+            document.getElementById('ACCT').style.display = 'none';
+            document.getElementById('PPST').style.display = 'none';
+            document.getElementById('CRDT').style.display = 'none';
+
+            $('#aramex_shipment_info_payment_option').val("");
+
+
+
+            flag = 2;
+        }
+        else{
+            if(flag = 1){
+            document.getElementById('aramex_shipment_receiver_name').value = aramex_shipment_receiver_name;
+            document.getElementById('aramex_shipment_receiver_email').value = aramex_shipment_receiver_email;
+            document.getElementById('aramex_shipment_receiver_company').value = aramex_shipment_receiver_company;
+            document.getElementById('aramex_shipment_receiver_street').value = aramex_shipment_receiver_street;
+            document.getElementById('aramex_shipment_receiver_country').value = aramex_shipment_receiver_country;
+            document.getElementById('aramex_shipment_receiver_city').value = aramex_shipment_receiver_city;
+            document.getElementById('aramex_shipment_receiver_postal').value = aramex_shipment_receiver_postal;
+            document.getElementById('aramex_shipment_receiver_state').value = aramex_shipment_receiver_state;
+            document.getElementById('aramex_shipment_receiver_phone').value = aramex_shipment_receiver_phone;
+
+
+            document.getElementById('aramex_shipment_shipper_name').value = aramex_shipment_shipper_name;
+            document.getElementById('aramex_shipment_shipper_email').value = aramex_shipment_shipper_email;
+            document.getElementById('aramex_shipment_shipper_company').value = aramex_shipment_shipper_company;
+            document.getElementById('aramex_shipment_shipper_street').value = aramex_shipment_shipper_street;
+            document.getElementById('aramex_shipment_shipper_country').value = aramex_shipment_shipper_country;
+            document.getElementById('aramex_shipment_shipper_city').value = aramex_shipment_shipper_city;
+            document.getElementById('aramex_shipment_shipper_postal').value = aramex_shipment_shipper_postal;
+            document.getElementById('aramex_shipment_shipper_state').value = aramex_shipment_shipper_state;
+            document.getElementById('aramex_shipment_shipper_phone').value = aramex_shipment_shipper_phone;
+
+            document.getElementById('aramex_shipment_info_payment_type').value = 'P';
+
+            document.getElementById('ASCC').style.display = 'none';
+            document.getElementById('ARCC').style.display = 'none';
+
+            document.getElementById('CASH').style.display = 'block';
+            document.getElementById('ACCT').style.display = 'block';
+            document.getElementById('PPST').style.display = 'block';
+            document.getElementById('CRDT').style.display = 'block';
+
+            $('#aramex_shipment_info_payment_option').val("");
+
+
+
+
+            }
+            else if(flag = 2){
+                document.getElementById('aramex_shipment_shipper_name').value = aramex_shipment_shipper_name;
+                document.getElementById('aramex_shipment_shipper_email').value = aramex_shipment_shipper_email;
+                document.getElementById('aramex_shipment_shipper_company').value = aramex_shipment_shipper_company;
+                document.getElementById('aramex_shipment_shipper_street').value = aramex_shipment_shipper_street;
+                document.getElementById('aramex_shipment_shipper_country').value = aramex_shipment_shipper_country;
+                document.getElementById('aramex_shipment_shipper_city').value = aramex_shipment_shipper_city;
+                document.getElementById('aramex_shipment_shipper_postal').value = aramex_shipment_shipper_postal;
+                document.getElementById('aramex_shipment_shipper_state').value = aramex_shipment_shipper_state;
+                document.getElementById('aramex_shipment_shipper_phone').value = aramex_shipment_shipper_phone;
+
+                document.getElementById('aramex_shipment_receiver_name').value = aramex_shipment_receiver_name;
+                document.getElementById('aramex_shipment_receiver_email').value = aramex_shipment_receiver_email;
+                document.getElementById('aramex_shipment_receiver_company').value = aramex_shipment_receiver_company;
+                document.getElementById('aramex_shipment_receiver_street').value = aramex_shipment_receiver_street;
+                document.getElementById('aramex_shipment_receiver_country').value = aramex_shipment_receiver_country;
+                document.getElementById('aramex_shipment_receiver_city').value = aramex_shipment_receiver_city;
+                document.getElementById('aramex_shipment_receiver_postal').value = aramex_shipment_receiver_postal;
+                document.getElementById('aramex_shipment_receiver_state').value = aramex_shipment_receiver_state;
+                document.getElementById('aramex_shipment_receiver_phone').value = aramex_shipment_receiver_phone;
+
+                document.getElementById('aramex_shipment_info_payment_type').value = 'P';
+
+                document.getElementById('ASCC').style.display = 'none';
+                document.getElementById('ARCC').style.display = 'none';
+
+                document.getElementById('CASH').style.display = 'block';
+                document.getElementById('ACCT').style.display = 'block';
+                document.getElementById('PPST').style.display = 'block';
+                document.getElementById('CRDT').style.display = 'block';
+
+                $('#aramex_shipment_info_payment_option').val("");
+
+
+            }
+            flag = 0;
+        }
+    }
+
+    /**
+    * Check if the aramex service Type is "CODS" the Payment Method will change to "P" because it CAN NOT be "C".
+    * Payment Method :- refer to Transportation Charges.
+    * Service Type :- refer to Who will pay for the parcel.
+    * So if the Service Type "CODS" that will includes the Transportation Charges.
+    */
+    $("#aramex_shipment_info_service_type").change(function(){
+        if($("#aramex_shipment_info_service_type").val() == "CODS"){
+            $('#aramex_shipment_info_payment_type option[value="C"]').attr("selected",false);
+            $('#aramex_shipment_info_payment_type').val("P").change();
+        }
+    });
+
+    $('#aramex_shipment_info_payment_type').change(function(){
+        //alert('Hello');
+        if($('#aramex_shipment_info_payment_type').val() == "P"){
+            
+            document.getElementById('ASCC').style.display = 'none';
+            document.getElementById('ARCC').style.display = 'none';
+
+            document.getElementById('CASH').style.display = 'block';
+            document.getElementById('ACCT').style.display = 'block';
+            document.getElementById('PPST').style.display = 'block';
+            document.getElementById('CRDT').style.display = 'block';
+
+            $('#aramex_shipment_info_payment_option').val("");
+            $('#aramex_shipment_info_payment_option').removeAttr('disabled');
+
+        }
+
+        else if($('#aramex_shipment_info_payment_type').val() == "C"){
+            /**
+            * check if the payment Method is "C" change the Service Type to be unselected.
+            */
+            if($("#aramex_shipment_info_service_type").val() == "CODS"){
+                $('#aramex_shipment_info_service_type option[value="CODS"]').attr("selected",false);
+                $('#aramex_shipment_info_service_type').val("").change();
+            }
+
+            document.getElementById('ASCC').style.display = 'block';
+            document.getElementById('ARCC').style.display = 'block';
+
+            document.getElementById('CASH').style.display = 'none';
+            document.getElementById('ACCT').style.display = 'none';
+            document.getElementById('PPST').style.display = 'none';
+            document.getElementById('CRDT').style.display = 'none';
+
+            $('#aramex_shipment_info_payment_option').val("");
+            $('#aramex_shipment_info_payment_option').removeAttr('disabled');
+            $("#aramex_shipment_info_cod_amount").val(cod_amount);
+        }
+        else{
+            $('#aramex_shipment_info_payment_option').attr('disabled',true);
+            $('#aramex_shipment_info_payment_option').val("");
+            $("#aramex_shipment_info_cod_amount").val("");
+        }
+    });
+
+
+    function togglePickup(){
+        $('#pickup_infromation').toggle('slow');
+    }
+
+
+    function aramexpop(itemscount)
+    {       
+        if(itemscount >= 0){
+            $("#aramex_overlay").css("display", "block");
+            $("#aramex_shipment_creation").fadeIn(1000);
+        }
+        else{
+            alert('{{ error_create_shipment }}>');
+        }
+
+    }
+
+    function aramexclose()
+    {
+        $("#aramex_overlay").css("display", "none");
+        $("#aramex_shipment_creation").fadeOut(500);
+    }
+
+    function aramexhide(aramexid, item_price, order_total_weight)
+    {
+
+        if($(".aramex_item_tobe_shipped").length > 1){          
+            $("#order-total-weight").html((parseFloat($("#order-total-weight").html()) - parseFloat(order_total_weight)).toFixed(2));
+            $("#order_weight").val((parseFloat($("#order-total-weight").html()) - parseFloat(order_total_weight)).toFixed(2));
+
+            $("input[name=aramex_shipment_info_items_subtotal]").val((parseFloat($("input[name=aramex_shipment_info_items_subtotal]").val())-parseFloat(item_price)).toFixed(2));
+
+            //new
+            $('#aramex_shipment_info_cod_amount').val((parseFloat($('#aramex_shipment_info_cod_amount').val()) - parseFloat(parseInt($("input[name="+ aramexid +"]").val()) * parseFloat($('#aramex_items_base_price_'+aramexid).val()))).toFixed(2));
+
+            $("#item"+aramexid).css('background', '#F2C2C8');
+            $("#item"+aramexid).fadeOut(500);
+            $("#item"+aramexid+" input").val(0);
+            $("#item"+aramexid).remove();
+            $("#"+aramexid).remove();
+            get_tobe_shipped_items_number();
+        } else {
+            alert('{{ error_one_shipment }}>');
+        }
+    }
+
+    function get_tobe_shipped_items_number()
+    {
+        items_tobe_shipped_number = 0;
+        $("#aramex_items_table .aramex_input_items_qty").each(function(qty_index){
+                items_tobe_shipped_number += parseFloat($(this).val());
+        });
+        //items_tobe_shipped_number = $(".aramex_item_tobe_shipped").length;
+        $("#items_tobe_shipped_number").html(items_tobe_shipped_number);
+    }
+
+    var codTotal = $("#aramex_shipment_info_cod_amount").val();
+
+    $(".aramex_input_items_qty").keyup(function(){
+        var the_id = $(this).attr('name');
+        var items_price = 0;
+
+        var itemWeight = 0;
+        var itemTotalPrice = 0;
+
+        $("#aramex_items_"+the_id).val($(this).val());
+        $(".aramex_input_items_qty").each(function(price_index){
+            var the_id_qty = $(this).attr('name'); //alert(the_id_qty);
+            //alert(the_id_qty);
+            items_price += $(this).val() * $("#aramex_items_base_price_"+the_id_qty).val();
+            //alert(items_price)
+            itemWeight += $(this).val() * $("#aramex_items_base_weight_"+the_id_qty).val();
+            itemTotalPrice += (parseInt($("#aramex_items_total_"+the_id_qty).val()) - parseInt($(this).val())) * $("#aramex_items_base_price_"+the_id_qty).val();
+
+        });
+        
+        //$("input[name=aramex_shipment_info_items_subtotal]").val(items_price);
+
+        $("input[name=aramex_shipment_info_items_subtotal]").val(items_price.toFixed(2));
+        $("#order-total-weight").html(itemWeight.toFixed(2));
+
+        if(itemTotalPrice){
+            $("#aramex_shipment_info_cod_amount").val((parseFloat('{{ total }}') - parseFloat(itemTotalPrice)).toFixed(2));
+        }
+        else if(itemTotalPrice == 0){
+            $("#aramex_shipment_info_cod_amount").val(codTotal);
+        }
+
+        $("input[name=aramex_shipment_info_cod_value]").val(parseFloat(items_price) + parseFloat($("input[name=aramex_shipment_info_shipping_charges]").val()));
+        get_tobe_shipped_items_number();
+    });
+
+    var messages_content;
+
+    $("input[name=aramex_shipment_info_shipping_charges]").change(function(){
+        var cod_value = parseFloat($("input[name=aramex_shipment_info_shipping_charges]").val()) + parseFloat($("input[name=aramex_shipment_info_items_subtotal]").val());
+        $("input[name=aramex_shipment_info_cod_value]").val(cod_value);
+    });
+
+    $(".aramex_countries").change(function(){
+        if($("select[name=aramex_shipment_shipper_country]").val() != $("select[name=aramex_shipment_receiver_country]").val()){
+            $("select[name=aramex_shipment_info_product_group]").val('EXP');
+            $("#aramex_shipment_info_product_group").trigger('change');         
+            $("select[name=aramex_shipment_info_additional_services] option:selected").removeAttr("selected");
+            $("select[name=aramex_shipment_info_additional_services] .express_service").attr("selected", "selected");
+
+            
+
+        } else {
+            $("select[name=aramex_shipment_info_product_group]").val('DOM');
+            $("#aramex_shipment_info_product_group").trigger('change');         
+            $("select[name=aramex_shipment_info_additional_services] option:selected").removeAttr("selected");
+            $("select[name=aramex_shipment_info_additional_services] .domestic_service").attr("selected", "selected");
+            
+        }
+
+        $("#aramex_shipment_info_product_group_div").html($("select[name=aramex_shipment_info_product_group] option:selected").text());
+        $("#aramex_shipment_info_service_type_div").html($("select[name=aramex_shipment_info_service_type] option:selected").text());
+        $("#aramex_shipment_info_additional_services_div").html($("select[name=aramex_shipment_info_additional_services] option:selected").text());
+    });
+
+    $(".aramex_all_options").change(function(){
+
+    });
+
+
+    $("#aramex_shipment_info_product_group").change(function(){
+        if($("select[name=aramex_shipment_info_product_group]").val()=='EXP'){
+            $("#aramex_shipment_info_custom_amount").val(cod_amount);
+            $("select[name=aramex_shipment_info_additional_services] option:selected").removeAttr("selected");
+            $("select[name=aramex_shipment_info_additional_services] .express_service").attr("selected", "selected");
+            $("#aramex_shipment_info_product_type option").hide();
+            /*$(allowed_international_methods).each(function(index,val){
+                 if(index==0){
+                    document.getElementById('aramex_shipment_info_product_type').value = val;
+                 }
+                 document.getElementById(val).style.display = 'block';
+            });*/       
+            
+
+        }else if($("select[name=aramex_shipment_info_product_group]").val()=='DOM'){
+            $("select[name=aramex_shipment_info_additional_services] option:selected").removeAttr("selected");
+            $("select[name=aramex_shipment_info_additional_services] .domestic_service").attr("selected", "selected");
+            $("#aramex_shipment_info_product_type option").hide();
+            /*$(allowed_domestic_methods).each(function(index,val){
+                 if(index==0){
+                    document.getElementById('aramex_shipment_info_product_type').value = val;
+                 }
+                 document.getElementById(val).style.display = 'block';
+            });*/           
+            $("#aramex_shipment_info_custom_amount").val(0);
+        }
+        $("#aramex_shipment_info_service_type_div").html($("select[name=aramex_shipment_info_service_type] option:selected").text());
+        $("#aramex_shipment_info_additional_services_div").html($("select[name=aramex_shipment_info_additional_services] option:selected").text());
+
+     });
+    $("#aramex_shipment_info_product_group_div").html($("select[name=aramex_shipment_info_product_group] option:selected").text());
+    $("#aramex_shipment_info_service_type_div").html($("select[name=aramex_shipment_info_service_type] option:selected").text());
+    $("#aramex_shipment_info_additional_services_div").html($("select[name=aramex_shipment_info_additional_services] option:selected").text());
+
+    //$("#aramex_shipment").validate();
+
+    $(document).ready(function(){
+                $("#aramex_shipment_info_service_type").prop("selectedIndex", 1);
+
+                if(($('#aramex_messages').html() != "") && ($('.error-msg'))){
+                    $("#aramex_overlay").css("display", "block");
+                    $("#aramex_shipment_creation").fadeIn(1000);
+                }
+
+                 $(function() {
+                     //$( "#datepicker" ).datepicker();
+                     $( "#aramex_shipment_info_pickup_date" ).datepicker({ dateFormat: "yy-mm-dd" });
+                     $( "#aramex_shipment_info_ready_time" ).datepicker({ dateFormat: "yy-mm-dd" });
+                     $( "#aramex_shipment_info_last_pickup_time" ).datepicker({ dateFormat: "yy-mm-dd" });
+                     $( "#aramex_shipment_info_closing_time" ).datepicker({ dateFormat: "yy-mm-dd" });
+                     });
+
+                 $('#filereset').click(function(){
+                        $("#file1_div").html($("#file1_div").html());
+                     });
+                 $('#file2reset').click(function(){
+                        $("#file2_div").html($("#file2_div").html());
+                     });
+                 $('#file3reset').click(function(){
+                        $("#file3_div").html($("#file3_div").html());
+                     });
+                //$("#aramex_shipment").validate();
+
+                if($("select[name=aramex_shipment_info_product_group]").val()=='EXP'){
+                    $("#aramex_shipment_info_custom_amount").val( cod_amount );
+                }
+
+
+        });
+        
+        jQuery("#aramex_shipment_info_product_type").chained("#aramex_shipment_info_product_group");
+        jQuery("#aramex_shipment_info_service_type").chained("#aramex_shipment_info_product_group");            
+
+</script>
+
+
+<!-- Lower Buttons -->
+
+<div class="row">
+    <div class="col-md-12 text-right">
+        <hr/>
+        {% if is_shipment %}
+            <a onclick="returnCheck();" class="button btn btn-primary">{{ text_return_shipment }}</a>
+        {% else %}
+            <a onclick="formSubmit($('#aramex_shipment'));" class="button btn btn-primary">{{ text_create_sipment }}</a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- End Lower Buttons -->
+<script>
+    $(document).ready(function() {
+        $('select').select2();
+
+        $('.touchspinney').TouchSpin({
+            max: Infinity,
+            step: 0.01,
+            decimals: 2,
+        });
+    });
+    
+function changeStatus(checkbox)
+{
+    var self = $(checkbox);
+    var switch_status = self.siblings('.switchery-status');
+
+    if ( self.is(':checked') )
+    {
+        switch_status.html("{{ lang('text_enabled') }}");
+    }
+    else
+    {
+        switch_status.html("{{ lang('text_disabled') }}");
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,237 @@
+
+{% if success %}
+    <br>
+    <div class="alert alert-success alert-dismissible" role="alert">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        {{ success }}
+    </div>
+{% endif %}
+
+{% if error_warning %}
+    <br>
+    <div class="alert alert-warning alert-dismissible" role="alert">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        {{ error_warning }}
+    </div>
+{% endif %}
+<style>
+    .postContents {
+        border-bottom: 1px solid #ccc;
+        margin: 10px 0px 30px 0px;
+    }
+
+    .commentForm {
+        padding-bottom: 10px;
+        margin-top: 30px;
+        background-color: #f4f4f4;
+        border-radius: 10px;
+    }
+
+    .postContents {
+        border:0;
+    }
+
+    {% if lang('direction') == 'rtl' %}
+    .commentForm .title-base,
+    .commentForm button{
+        margin-right: 16px;
+    }
+    {% else %}
+    .commentForm .title-base,
+    .commentForm button{
+        margin-left: 16px;
+    }
+    {% endif %}
+
+    #comments-content{
+        margin-top: 20px;
+        padding: 0px;
+    }
+
+    header, .repo {
+        border: 1px solid #eee;
+        padding: 1em;
+        border-radius: 3px;
+      }
+      header :first-child, .repo :first-child {
+        margin-top: 0;
+      }
+      header :last-child, .repo :last-child {
+        margin-bottom: 0;
+      }
+
+    .repo {
+        margin-bottom: 1em;
+      }
+      .repo h3 {
+        margin-bottom: 5px;
+      }
+
+      .stats, .last-updated {
+        font-size: .7em;
+        color: #666;
+        margin-bottom: 5px;
+      }
+
+      .stats {
+        text-transform: uppercase;
+        font-weight: bold;
+      }
+
+      .last-updated {
+        font-style: italic;
+      }
+
+    .post-title{
+        margin: 0 0 20px 0
+    }
+
+    .post-image {
+        margin: 10px 0;
+    }
+
+    .social-share{
+        margin: 20px 0;
+        text-align: center;
+    }
+
+    .post-meta {
+        color: #868686;
+    }
+</style>
+<div id="content" class="container">
+    <br>
+    <!--========= Breadcrumb ===========================-->
+    <div class="breadcrumb-page">
+        <ol class="breadcrumb">
+            {% for breadcrumb in breadcrumbs %}
+                {% if loop.last %}
+                    <li class="active">{{ breadcrumb['text'] }}</li>
+                {% else %}
+                    <li><a href="{{ breadcrumb['href'] }}">{{ breadcrumb['text'] }}</a></li>
+                {% endif %}
+            {% endfor %}
+        </ol>
+    </div>
+
+    <br>
+    <div class="blog col-md-9">
+        <!--========= Post Content ===========================-->
+        <div class="post-title">
+            <h1 class="title-base">{{ post['name'] }}</h1>
+        </div>
+
+        <div class="post-image">
+            <img class="img-responsive" src="{{ image(post['post_image'],600,auto) }}" />
+        </div>
+
+        <div class="post-meta">
+            <span class="user">
+                {{ lang('posted_by') }} {{post['user']['firstname'] ~ ' ' ~ post['user']['lastname']}}
+            </span>
+            &nbsp;
+            <span class="time">
+                {{ lang('posted_at') }} {{post['created_at']}}
+            </span>
+        </div>
+
+        <div class="social-share">
+            <h4>{{ lang('share_post') }}</h4>
+            <div class="addthis_inline_share_toolbox"></div>
+        </div>
+
+        <div class="postContents">
+            {{ post['content'] }}
+        </div>
+
+        <div class="post-tags">
+            <p>{{ lang('keywords') }} {{post['meta_keywords']}}</p>
+        </div>
+
+
+
+        <!--========= Post :: Related Posts ===========================-->
+            {% if relatedPosts %}
+            <hr>
+            <h3>{{ lang('blog_related_posts') }}</h3>
+            <br>
+            <div class="row">
+                {# Get Related Posts / All Posts #}
+                {% for post in relatedPosts %}
+                <div class="col-sm-6 col-md-6">
+                        <div class="thumbnail">
+                            <a href="{{ link('blog/post', '&post_id=' ~ post['post_id'], 'SSL') }}">
+                                <img src="{{ image(post['post_image']) }}" alt="{{ post['name'] }}">
+                            </a>
+                            <div class="caption">
+                                <h4>
+                                    <span class="label label-danger">{{ post['created_at']|date("m/d/Y") }}</span>
+                                    <span><a class="label label-default" href="{{ link('blog/category', '&category_id=' ~ post['category_id'], 'SSL') }}">{{ post['category_name'] }}</a></span>
+                                </h4>
+                                <a href="{{ link('blog/post', '&post_id=' ~ post['post_id'], 'SSL') }}">
+                                    <h3>{{ post['name'] }}</h3>
+                                    <p>{{ htmlEntityDecode(post['description'])|slice(0, 249) }}</p>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+        <!--========= Post :: Add Comment ===========================-->
+        {% if enableCommenting %}
+        <div class="commentForm col-md-12 center border">
+            <h3 class="title-base">{{ lang('blog_add_comment') }}</h3>
+            <form action="{{ link('blog/comment/submit', '&post_id=' ~ post['post_id'], 'SSL') }}" method="post">
+                <div class="form-group col-md-6">
+                    <input type="text" name="comment[email]" class="form-control"
+                           placeholder="{{ lang('entry_email') }}" value="{{ email }}" />
+                </div>
+                <div class="form-group col-md-6">
+                    <input type="text" name="comment[name]" class="form-control"
+                           placeholder="{{ lang('entry_name') }}" value="{{ name }}" />
+                </div>
+                <div class="form-group col-md-12">
+                    <textarea placeholder="{{ lang('entry_comment') }}" name="comment[comment]" class="form-control"></textarea>
+                </div>
+                <button type="submit" class="btn btn-success col-md-2">{{ lang('button_send') }}</button>
+
+                <input type="hidden" name="comment[customer_id]" value="{{ customer_id }}" />
+            </form>
+        </div>
+        {% endif %}
+
+        <!--========= Post :: Comments ===========================-->
+        {% if showComments %}
+        <div class="comments col-md-12" id="comments-content">
+            {% for comment in comments %}
+                <div class="repo">
+                        <h3>{{ comment['name'] }}</h3>
+                        <div class="stats">{{ comment['email'] }}</div>
+                        <p>{{ comment['comment']|nl2br }}</p>
+                        <p class='last-updated'>{{ comment['created_at'] }}</p>
+                </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+    </div>
+    <div class="col-md-3">
+        <h2>{{ lang('blog_latest_categories') }}</h2>
+        <div class="list-group">
+
+            {# Get All Categories #}
+            {% for category in blogCategories|slice(0, 10) %}
+            <a href="{{ link('blog/category', '&category_id=' ~ category['category_id'], 'SSL') }}" class="list-group-item">
+                <h4 class="list-group-item-heading">{{ category['name'] }}</h4>
+                <p class="list-group-item-text">{{ category['description']|striptags|slice(0, 99) }}</p>
+            </a>
+            {% endfor %}
+            <a href="{{ link('blog/category/browse', '', 'SSL') }}" class="list-group-item">
+                <h4 class="list-group-item-heading">{{ lang('blog_all_categories') }}</h4>
+            </a>
+        </div>
+    </div>
+</div>
+<script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-5dad9910f9b03203"></script>

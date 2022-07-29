@@ -1,0 +1,306 @@
+<style type="text/css">
+.alert-message-success {
+    background-color: #edfce7;
+    {{ lang('direction') == 'rtl' ? 'border-right: 3px solid #069d27;' : 'border-left: 3px solid #069d27;' }}
+    
+}
+.alert-message-info {
+    background-color: #f4f8fa;
+    {{ lang('direction') == 'rtl' ? 'border-right: 3px solid #5bc0de;' : 'border-left: 3px solid #5bc0de;' }}
+}
+.alert-message {
+    margin: 10px 0;
+    padding: 8px;
+   
+}
+.alert-message .title{
+    font-size: 12px;
+    font-weight: bold;
+    padding: 10px 0;
+}
+.seller{
+    padding: 10px;
+    border-bottom: 1px solid #efefef;
+    background: #fff;
+}
+.seller img{
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+}
+.selected{
+    background: #f4f8fa;
+    cursor: default;
+}
+.date{
+    font-size: 11px;
+    color: #a7a7a7;
+    direction: ltr;
+}
+.members{
+    border: 1px solid #ddd;
+    {{ lang('direction') == 'rtl' ? 'border-left: 3px solid #ddd' : 'border-right: 3px solid #ddd' }}
+    ;min-height: 200px;padding-right: 0;background: #fff;padding-left: 0;
+}
+
+.current-user-row {
+    padding-right: 15px;
+}
+
+.current-name, .current-email, .current-phone {
+    padding: 0;
+    margin: 0;
+}
+</style>
+
+{% if product['product_id'] is not defined %}
+<div class="col-md-3 members" >
+    {# <h5 style="padding: 0 10px 10px 10px;border-bottom: 1px solid #efefef;margin-bottom: 0">{{ lang('text_'~ member_key ~ 's' ) }}:</h5> #}
+
+    <!--##################### List Sellers/Customers -->
+    {% if members %}
+        {% for member in members %}
+        <div class="seller {% if (chatted_user_type and chatted_user_type == member['id']) %} selected {% endif %}">
+            <a href="{{ member['href'] }}">
+                
+                    <img src="{{ member['avatar'] }}"/> <span class="badge badge-danger {{member['total_unread'] > 0 ? member['total_unread'] : 'hidden' }}">{{member['total_unread'] }}</span> &nbsp;&nbsp;<b>{{ member['nickname'] ?? member['name'] }}</b> 
+            </a>
+            {% if isSeller %}
+                <a href="javascript://" onclick="removeConv('{{ member['id'] }}')" class="pull-right" title="{{ lang('text_remove_conv') }}"><i class="fa fa-remove fa-lg text-danger"></i></a>
+            {% endif %}
+        <span class="badge badge-pill badge-info">{{lang('text_' ~ member['member_key'] ~ '_type')}}</span>
+        </div>
+        {% endfor %}
+
+        <div class="pagination">{{ pagination }}</div>
+    {% else %}
+        <br/>
+        <div class="content container"><div class="alert alert-warning" style="max-width: 23%">{{ lang('text_no_' ~ member_key) }}</div>
+        </div>
+    {% endif %}
+    <!--/ List Sellers/Customers -->
+</div>
+
+<!--##################### Messages Area -->
+<div class="col-md-9">
+{% else %}
+<div class="col-md-12">
+{% endif %}
+    {% if chatted_user_id %}
+    <div class="col-md-12 page-title-base" style="padding: 0">
+        <h4 class="title-base">
+            <strong>&raquo; {{ lang('text_' ~ member_key) }}</strong> {{ current_member ?? current_name }}
+            {% if subject %}
+                , <strong>{{ lang('text_subject') }}</strong> {{ subject }}
+            {% endif %}
+            {% if product %}
+                , <strong>{{ lang('text_product') }}</strong> <a href="index.php?route=product/product&product_id={{product['product_id']}}" target="_blank">{{ product['name'] }}</a>
+             {% endif %}
+        </h4>
+    </div>
+
+    <div style="clear: both;"></div>
+    <hr/>
+
+    <div class="row current-user-row">
+        <div class="col-md-4 current-name">
+            <strong>{{ lang('text_name') }}</strong> {{ current_name }}
+        </div>
+        <div class="col-md-6 current-email">
+            <strong>{{ lang('text_email') }}</strong> {{ current_email }}
+        </div>
+        <div class="col-md-2 current-phone">
+            <strong>{{ lang('text_phone') }}</strong> {{ current_phone }}
+        </div>
+    </div>
+    <hr/>
+
+     
+
+    <div style="clear: both;"></div>
+
+    <div class="messages_list">
+        {% set latest_id = 0 %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert-message alert-message-{% if message['owner_id'] == current_user_id %}success {% else %}info {% endif %}">
+                    <div class="title pull-left">
+                        {% if message['owner_id'] == current_user_id %}
+                            {{ lang('text_you') }}
+                        {% else %}
+                            {{ current_member ?? current_name }}
+                        {% endif %}
+                        
+                    </div>
+                    <p class="pull-right date">{{ message['date_added']|date("d M Y h:i:s A") }}</p>
+                    <div style="clear: both;"></div>
+                    <p>{{ message['message'] }}</p>
+                </div>
+                {% set latest_id = message['id'] %}
+            {% endfor %}
+        {% endif %}
+    </div>
+    <!-- <form action="{{ link('account/register', '', 'SSL') }}" method="post" id="signup" enctype="multipart/form-data"> -->
+        <hr>
+        <div class="row">
+            <div class="col-md-12">
+                {% if not messages and not subject %}
+                <div class="form-group {{ error_subject ? 'text-danger' : '' }}">
+                    <label for="subject">{{ lang('entry_subject') }}</label>
+                    <input type="text" name="subject" class="form-control" id="subject" value=""/>
+                </div>
+                {% else %}
+                    <input type="hidden" name="subject" class="form-control" value="{{ subject }}"/>
+                {% endif %}
+
+                <div class="form-group {{ error_lastname ? 'text-danger' : '' }}">
+                    <label for="lastname">{{ lang('entry_message') }} <span class="required">*</span></label>
+                    <textarea name="message" class="form-control" id="message"></textarea>
+                    
+                    <div class="text-danger" id="message-error" style="display: none;">{{ lang('error_message') }}</div>
+                    
+                </div>
+
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="pull-right">
+                    <input type="button" value="{{ lang('button_add') }}" id="submit-msg"
+                           class="btn btn-inline btn-primary btn-add" onclick="add_message()" />
+                </div>
+            </div>
+        </div>
+        <hr>
+        {% else %} 
+        <div class="alert alert-info">{{ lang('text_select_user') }}</div>
+    {% endif %}
+</div>
+
+<div style="clear: both;"></div>
+<script type="text/javascript">
+
+    var text_recently = "{{ lang('text_recently') }}";
+    var text_you   = "{{ lang('text_you') }}";
+    var latest_id = '{{ latest_id }}';
+    var current_member = '{{ current_member }}';
+
+    const user1_id = '{{current_user_id}}';
+    const user2_id = '{{chatted_user_id}}';
+    const user1_type = '{{current_user_type}}';
+    const user2_type = '{{chatted_user_type}}';
+
+    if(user1_id && user1_id) {
+        let msg_requests = 0;
+
+        const msgTimer = setInterval(get_new_messages, 5000);
+
+        function get_new_messages() {
+            if(msg_requests == 60)
+                window.location.reload();
+            $.ajax({
+                url: 'index.php?route=account/messagingseller/getNewMessages',
+                dataType: 'json',
+                method: 'post',
+                data: { user1_id, user2_id, latest_id },
+                success: function(json) {
+                    
+                    msg_requests++;
+                    if (json['messages']['messages']) {
+
+                        $('#subject').css('display', 'none');
+                        
+                        const messages = json['messages']['messages'];
+
+                        for (let i = 0; i < messages.length; i++) {
+                            if(user1_id == messages[i]['owner_id']) {
+                                $('.messages_list').append('<div class="alert-message alert-message-success"><div class="title  pull-left">'+text_you+'</div><p class="pull-right date">'+text_recently+'</p><div style="clear: both;"></div><p>'+messages[i]['message']+'</p></div>');
+                            } else {
+                                $('.messages_list').append('<div class="alert-message alert-message-info"><div class="title  pull-left">'+current_member+'</div><p class="pull-right date">'+text_recently+'</p><div style="clear: both;"></div><p>'+messages[i]['message']+'</p></div>');
+                            }
+
+                            latest_id = messages[i]['id']; 
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    $("#message").keypress(function (e) {
+        var code = (e.keyCode ? e.keyCode : e.which);
+        if (code == 13) {
+            $("#submit-msg").trigger('click');
+        }
+    });
+
+    function add_message() {
+        let msg = $('#message').val();
+
+        if(msg == '' || msg == null || msg == undefined ){
+             $('#message-error').fadeIn();
+             return;
+        }
+        $('#message-error').fadeOut();
+
+        const subject = $('#subject').val();
+        const product_id = '{{ product_id }}';
+        
+        $.ajax({
+            url: 'index.php?route=account/messagingseller/addmessage',
+            dataType: 'json',
+            method: 'post',
+            data: { user1_id, user2_id, user1_type, user2_type, subject, msg, product_id },
+            beforeSend: function() {
+                $('.btn-add').after('<span class="wait">&nbsp;<img src="{{ asset('image/loading.gif') }}" alt="" /></span>');
+            },
+            complete: function() {
+                $('.wait').remove();
+            },
+            success: function(json) {
+                if (json['status'] == '1') {
+
+                    //Update Last ID for update messages
+                    if (json['msg_id']) {
+                        latest_id = json['msg_id'];
+                    }
+                    ///////////////////////////////////
+
+                    msg = '<div class="alert-message alert-message-success"><div class="title pull-left">'+text_you+'</div><p class="pull-right date">'+text_recently+'</p><div style="clear: both;"></div><p>'+msg+'</p></div>';
+                
+                    $('.messages_list').append(msg);
+                    $('#message').val('');
+                    $('#subject').val('');
+                    $('#subject').css('display', 'none');
+                }
+            },
+            error: function(xhr, ajaxOptions, thrownError) {
+                alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+            }
+        });
+    }
+
+    {% if isSeller %}
+    function removeConv(customer_id){
+        var text_you   = "{{ lang('text_confirm_remove') }}";
+        var r = confirm(text_you);
+        if (r == true) {
+              $.ajax({
+                url: 'index.php?route=account/messagingseller/removeConvr',
+                dataType: 'json',
+                method: 'post',
+                data: { user1_id, user2_id},
+                success: function(json) {
+                    if (json['status'] == '1') {
+                        window.location.href = '{{ reload }}';
+                    }
+                },
+                error: function(xhr, ajaxOptions, thrownError) {
+                    alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                }
+            });
+        }
+    }
+    {% endif %}
+</script>

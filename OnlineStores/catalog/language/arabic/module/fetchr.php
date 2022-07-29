@@ -1,0 +1,3 @@
+<?php
+
+$_['fetchr_api_update_status_comment'] = 'تم تحديث الطلب بواسطة Fetchr API';

@@ -1,0 +1,170 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block title %}
+    {{ lang('create_shipment_heading_title') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+
+    <a href="{{ link('sale/order/info', {'order_id': orderId}) }}" class="btn btn-success"> {{ lang('text_back_to_order') }} </a>
+
+    {% if shipment %}
+
+        <a data-orderid="{{ orderId }}" id="checkStatus"
+           class="button btn btn-warning">{{ lang('text_check_shipment') }}</a>
+
+    {% else %}
+
+        <a onclick="$('.form').submit()" class="button btn btn-primary">{{ lang('text_create_sipment') }}</a>
+
+    {% endif %}
+
+{% endblock headelements %}
+
+{% block content %}
+
+    <div class="modal-dialog modal-full" id="label-data-container" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" id="dismiss-label" class="close">&times;</button>
+                <h5 class="modal-title">{{ lang('shipment_label_data') }}</h5>
+            </div>
+
+            <div class="modal-body" id="label-data" style="direction: ltr;">
+                <input type="text" class="form-control" onClick="this.setSelectionRange(0, this.value.length)"
+                       style="text-align: left; direction: ltr;" readonly="readonly">
+            </div>
+        </div>
+    </div>
+
+    <form action="{{ link('shipping/dhl/submitShipment') }}" method="post" class="form" id="dhl_shipment">
+
+        <div class="row">
+            <!-- Shipper Details -->
+            {% include "shipping/dhl/shipment/sender_info.expand" %}
+            <!-- /Shipper Details -->
+
+            <!-- Receiver Details-->
+            {% include "shipping/dhl/shipment/receiver_info.expand" %}
+            <!-- /Receiver Details-->
+
+            {% include "shipping/dhl/shipment/shipment_details.expand" %}
+
+            <!-- Shippment Information -->
+            {% include "shipping/dhl/shipment/shipment_info.expand" %}
+            <!-- /Shippment Information -->
+
+        </div>
+    <input type="hidden" name="order_id" value="{{ orderId }}" />
+    </form>
+
+    <div class="row">
+        <div class="col-md-12 text-right">
+            <hr/>
+            {% if is_shipment %}
+                <a onclick="returnCheck();" class="button btn btn-primary">{{ lang('text_return_shipment') }}</a>
+            {% else %}
+                <a onclick="$('#dhl_shipment').submit()" class="button btn btn-primary">{{ lang('text_create_sipment') }}</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+
+        var shipmentStatusUrl = '{{ link('shipping/dhl/shipmentStatus') }}';
+
+        $(document).ready(function() {
+            $('select').select2();
+
+            $('.touchspinney').TouchSpin({
+                max: Infinity,
+                decimals: 2,
+            });
+
+            $('#info_payment_type').change(function () {
+
+                if ($(this).val() === 'COD') {
+                    $('#bank-info').show();
+                } else {
+                    $('#bank-info').hide();
+                }
+
+            });
+
+            function changeCity(countryInputId, cityInputId, defaultValue) {
+                $('#' + countryInputId).bind('change', function () {
+
+                    var that = $(this);
+
+                    $.ajax({
+                        url: 'shipping/dhl/getZones?country_id=' + this.value,
+                        dataType: 'json',
+                        success: function (json) {
+
+                            that.parent().find('.country_name').val(json['name']);
+                            that.parent().find('.country_iso').val(json['iso_code_2']);
+
+                            html = '';
+
+                            if (json['zone'] != '') {
+                                for (i = 0; i < json['zone'].length; i++) {
+                                    html += '<option value="' + json['zone'][i]['name'] + '"';
+
+                                    if (
+                                        typeof defaultValue != 'undefined' &&
+                                        json['zone'][i]['zone_id'] == defaultValue
+                                    ) {
+                                        html += ' selected="selected"';
+                                    }
+
+                                    html += '>' + json['zone'][i]['name'] + '</option>';
+                                }
+                            }
+
+                            $('#' + cityInputId).html(html);
+                        }
+                    });
+                });
+            }
+
+            changeCity('sender_country', 'sender_city', '{{ config('config_zone_id') }}');
+            changeCity('receiver_country', 'receiver_city', '{{ order['shipping_zone_id'] }}');
+            $('#sender_country').trigger('change');
+            $('#receiver_country').trigger('change');
+
+            $('#checkStatus').click(function(e) {
+                e.preventDefault();
+
+                let orderId = $(this).attr('data-orderid');
+
+                checkStatus(orderId);
+            });
+
+            function checkStatus(orderId) {
+                $.ajax({
+                    url: shipmentStatusUrl,
+                    method: 'POST',
+                    dataType: 'JSON',
+                    data: {order_id: orderId},
+                    success: function (response) {
+
+                        $('#label-data-container').show();
+
+                        $('#label-data input').val(response['details']['label']);
+
+                        $('#dismiss-label').click(function () {
+                            $('#label-data-container').hide();
+                            $('#label-data input').val('');
+                        });
+                    }
+                });
+            }
+        });
+    </script>
+{% endblock %}

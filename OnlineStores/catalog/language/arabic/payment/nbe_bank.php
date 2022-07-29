@@ -1,0 +1,30 @@
+<?php
+
+$_ = [
+    "nbe_heading_title" => "بوابة الدفع  :: البنك الأهلي",
+    "text_title" => "الدفع عن طريق البنك الأهلي",
+    "text_credit_card" => "بيانات البطاقة",
+    "text_wait" => "إنتظر من فضلك",
+    "text_payment" => "الدفع",
+    "text_preauth" => "تصريح",
+    "text_approved" => "تم التأكيد",
+    "text_declined" => "ملغية",
+    "text_receipt_number" => "رقم الفاتورة",
+    "credit_card_charged_info" => "الرسوم التي سيتم تحصيلها من بطاقتك الإئتمانية ",
+    "text_month" => "شهر",
+    "text_year" => "سنة",
+    "entry_cc_owner" => "إسم حامل البطاقة",
+    "entry_cc_number" => "رقم البطاقة",
+    "entry_cc_expire_date" => "تاريخ إنتهاء البطاقة",
+    "entry_cc_cvv2" => "CVN",
+    "entry_cc_cvv2_placeholder" => "الرقم التأكيدي للبطاقة",
+    "error_declined" => "تم رفض الدفع",
+    "error_decline_reason" => "سبب الرفض",
+    "error_request" => "حدث خطأ اثناء تنفيذ طلبك, رجاءا تواصل مع المدير",
+    "error_invalid_creditcard" => "من فضلك قم بادخال رقم بطاقة صحيح",
+    "error_expiration_date" => "خطأ في تاريخ انتهاء البطاقة",
+    "error_invalid_cvn" => "خطأ في الرقم التاكيدي للبطاقة",
+    "error_is_empty" => "هذا الحقل مطلوب",
+    "error_common" => "من فضلك قم بتصحيح الأخطاء التالية",
+    "test_mode_warning" => "أنت الآن على وضع التجربة, لم يتم احتساب خصم اي مبالغ من بطاقتك الإئتمانية"
+];

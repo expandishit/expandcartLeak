@@ -1,0 +1,187 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% block title %}
+{{ heading_title }}
+{% endblock title %}
+
+{% block breadcrumb %}
+{{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+
+{% block headelements %}
+    <a href="{{ cancel }}" class="btn btn-default">{{ lang('button_cancel') }}</a>
+    <a class="btn btn-primary" onclick="$('.form').submit();">
+        <i class="far fa-save fa-lg position-left"></i>{{ lang('button_save') }}
+    </a>
+{% endblock headelements %}
+
+{% block content %}
+
+    {% if error_warning %}
+        <div class="alert alert-danger alert-styled-left alert-bordered knawat_import_message">
+            <button type="button" class="close" data-dismiss="alert"><span>×</span><span class="sr-only">Close</span></button>
+            {{ error_warning }}
+        </div>
+    {% endif %}
+
+    <!-- Fieldset legend -->
+    <div class="row">
+
+        <form action="{{ action }}" method="post" class="form">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="panel panel-white">
+                        <div class="panel-heading">
+                            <h6 class="panel-title"><span
+                                        class="text-bold">{{ lang('text_notes') }}</span></h6>
+                            <div class="heading-elements not-collapsible">
+                                <ul class="icons-list">
+                                    <li><a data-action="collapse" class=""></a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="panel-body">
+                            <div class="collapse in" id="fields-panel">
+                                <div class="col-md-12" id="api_key-group" style="text-align: center;">
+                                    <h4>{{ lang('text_fit_and_shop_product_note') }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="panel panel-white">
+                    <div class="panel-heading">
+                        <h6 class="panel-title"><span class="text-bold">{{ lang('general_settings') }}</span></h6>
+                        <div class="heading-elements not-collapsible">
+                            <ul class="icons-list">
+                                <li><a data-action="collapse" class=""></a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="collapse in" id="panel1">
+                            <div class="form-group col-md-12">
+                                <label>{{ lang('entry_status') }}</label>
+                                <div class="checkbox checkbox-switchery">
+                                    <label>
+                                        <input type="checkbox" onchange="changeStatus(this);"
+                                               name="fit_and_shop[status]" class="switchery"
+                                                {{ settingsData['status'] == 1 ? 'checked' : '' }}>
+                                        <span class="switchery-status">
+                                                {{ settingsData['status'] == 1 ? lang('text_enabled') : lang('text_disabled') }}
+                                            </span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="form-group col-md-12">
+                                <label class="control-label">
+                                    {{ lang('entry_apikey') }} <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" name="fit_and_shop[apikey]" class="form-control"
+                                       value="{{ settingsData['apikey'] }}"/>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="panel panel-white">
+                    <div class="panel-heading">
+                        <h6 class="panel-title"><span class="text-bold">{{ lang('text_import')|trim(':') }}</span></h6>
+                        <div class="heading-elements not-collapsible">
+                            <ul class="icons-list">
+                                <li><a data-action="collapse" class=""></a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="collapse in" id="panel1">
+                            <div class="form-group col-md-4">
+                                <label>{{ lang('btn_import_categories') }}</label>
+                               {% if measurments_categories|length  <= 0 %}
+                                <div>
+                                    <a id="import_categories" class="btn btn-success"><i class="icon-plus3"></i> {{ lang('btn_import_categories') }}</a>
+                                </div>
+                                <div class="import-category-process" style="display:none">
+                                    <img src="{{ajax_loader}}" style="width:30px;" />
+                                </div>
+                                 {% endif %}   
+                                <table class="table table-bordered import-categories-stats" style="display:none; margin-top:10px">
+                                    <tr class="categories-imported">
+                                        <td>{{ lang('text_categories_imported') }}</td>
+                                        {%if measurments_categories %}
+                                        <span>
+                                        {% for cat in measurments_categories %}
+                                            <td>{{cat['name']}}</td> 
+                                        {% endfor %}
+                                        </span>
+                                        {% endif %}
+                                    </tr>
+                                </table>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </form>
+
+        <!-- Lower Buttons -->
+        <div class="col-md-12 text-right">
+            <hr/>
+            <a href="{{cancel}}" class="btn btn-default">{{ lang('button_cancel') }}</a>
+            <a class="btn btn-primary" onclick="$('.form').submit();">
+                <i class="far fa-save fa-lg position-left"></i>{{ lang('button_save') }}
+            </a>
+        </div>
+    </div><!-- End Lower Buttons -->
+    <script>
+        var fit_and_shop_import_categories_ajax_url = '{{ fit_and_shop_import_categories_ajax_url }}';
+        var imported_categories = '{{ measurments_categories ? measurments_categories : NULL }}';
+        function changeStatus(checkbox) {
+            var self = $(checkbox);
+            var switch_status = self.siblings('.switchery-status');
+
+            if ( self.is(':checked') ) {
+                switch_status.html("{{ lang('text_enabled') }}");
+            } else {
+                switch_status.html("{{ lang('text_disabled') }}");
+            }
+        }
+        function confirmExit() {
+            return "You have attempted to leave this page. Are you sure?";
+        }
+        $(document).ready(function(){
+            if(imported_categories){
+                $('.import-categories-stats').show();
+            }else{
+                 $('.import-categories-stats').hide();
+            }
+            $('#import_categories').on('click', function (e) {
+                window.onbeforeunload = confirmExit;
+                e.preventDefault();
+                jQuery('#import_categories').hide();
+                jQuery('.import-category-process , .import-categories-stats').show();
+                $.ajax({
+                    type: "POST",
+                    url: fit_and_shop_import_categories_ajax_url.replace(/&amp;/g, '&'),
+                    success: function (res) {
+                        $('.categories-imported').append(res);
+                    },
+                    complete: function() {
+                        jQuery('#import_categories').show();
+                        jQuery('.import-category-process').hide();
+                    }
+                });
+                return false;
+            });
+        });
+    </script>
+{% endblock content %} 

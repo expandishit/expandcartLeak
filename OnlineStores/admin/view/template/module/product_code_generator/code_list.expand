@@ -1,0 +1,328 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block title %}
+    {{ lang('product_code_generator_heading_title') }}
+{% endblock title %}
+
+{% block headelements %}
+<span class="headLinksEffect">
+    <a href="{{ insert }}" class="btn btn-success btn-labeled btn-xs"><b><i class="icon-plus3"></i></b> {{ lang('btn_new_code') }}</a>
+</span>
+{% endblock headelements %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block content %}
+
+    <div id="modal_remote" class="modal">
+        <div class="modal-dialog modal-full">
+            <div class="modal-content">
+
+                <div class="modal-body"></div>
+
+            </div>
+        </div>
+    </div>
+
+    <div id="modal_update" class="modal">
+        <div class="modal-dialog modal-full">
+            <div class="modal-content">
+
+                <div class="modal-body"></div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="collapse in">
+                    <table id="datatableGrid" class="table table-hover datatable-highlight">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th>{{ lang('column_code', 'module/product_code_generator/history') }}</th>
+                                <th>{{ lang('column_product') }}</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+
+    {{ parent() }}
+
+    {% import _self as dtControls %}
+
+    <script>
+
+        var data = JSON.parse('{{ codes|json_encode|e('js') }}');
+
+        $(document).ready(function () {
+            $.extend($.fn.dataTable.defaults, {
+                autoWidth: false,
+                dom: '<"datatable-header"fB><"datatable-scroll-wrap"t><"datatable-footer"lip>',
+                language: locales['dt_language'],
+                lengthMenu: [[10, 25, 50, 100, 200], [10, 25, 50, 100, 200]]
+            });
+
+            // Reorder events
+            var table = $('#datatableGrid').DataTable({
+                language: locales['dt_language'],
+                select: {
+                    style: 'multi',
+                    selector: 'td:first-child'
+                },
+                data: data,
+                buttons: [
+                    {
+                        text: "<i class='icon-trash'></i>",
+                        className: 'btn btn-default bulk-delete disabled',
+                        action: function (e, dt, node, config) {
+                            var selectedRows = dt.rows('.selected').data();
+                            var selectedIds = [];
+                            selectedRows.each(function (item) {
+                                selectedIds.push(item.code_id);
+                            });
+                            if (selectedIds.length > 0) {
+                                confirmMessage(function () {
+                                    $.ajax({
+                                        url: '{{ link('module/product_code_generator/dtDelete') }}',
+                                        type: 'post',
+                                        data: {selected: selectedIds},
+                                        success: function (resp) {
+                                            var response = JSON.parse(resp);
+
+                                            if (response.success == '1')
+                                            {
+                                                notify('Success', 'success', response.success_msg);
+                                                dt.rows('.selected').remove().draw();
+                                            }
+                                            else
+                                            {
+                                                notify('error', 'warning', response.error);
+                                            }
+                                        }
+                                    });
+                                });
+                            }
+                        }
+                    },
+                    {
+                        extend: 'collection',
+                        text: '<i class="icon-drawer-out"></i>',
+                        className: 'btn btn-default btn-export',
+                        buttons: [
+                            {
+                                extend: 'copyHtml5',
+                                text: locales['buttons']['copy'],
+                                exportOptions: {
+                                    columns: ':visible'
+                                }
+                            },
+                            {
+                                extend: 'csvHtml5',
+                                text: locales['buttons']['export2csv'],
+                                fieldSeparator: ',',
+                                extension: '.csv',
+                                bom: "true",
+                                exportOptions: {
+                                    columns: ':visible'
+                                }
+                            },
+                            {
+                                extend: 'excelHtml5',
+                                text: locales['buttons']['export2excel'],
+                                exportOptions: {
+                                    columns: ':visible'
+                                }
+                            },
+                            {
+                                extend: 'pdfHtml5',
+                                text: locales['buttons']['export2pdf'],
+                                exportOptions: {
+                                    columns: ':visible'
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        extend: 'colvis',
+                        text: '<i class="icon-grid3"></i>',
+                        className: 'btn btn-default btn-colvis',
+                        columns: [1,2,3]
+                    }
+                ],
+                order: [[1, "asc"]],
+                columns: [
+                    {
+                        title: `<input type="checkbox" class="styled" id="toggleSelectAll">`,
+                        orderable: false,
+                        data: "code_id",
+                        width: "50px"
+                    },
+                    {
+                        data: 'code',
+                        render: function (data, type, row) {
+                            return `<a href='{{ link("module/product_code_generator/update") }}?code_id=`+ row['code_id'] +`'>${row['code']}</a>`;
+                        }
+                    },
+                    {data: 'name'},
+                ],
+                columnDefs: [
+                    {
+                        orderable: false,
+                        className: 'select-checkbox',
+                        targets: 0
+                    },
+                    {
+                        orderable: true,
+                        width: '30%',
+                        targets: [1]
+                    },
+                    {
+                        orderable: true,
+                        className: 'sortable',
+                        targets: [2]
+                    },
+                    {
+                        targets: 3,
+                        render: function (data, type, row) {
+                            return `<ul class="icons-list pull-right">
+                                    <li class="dropdown">
+                                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                            <i class="icon-menu9"></i>
+                                        </a>
+                                        <ul class="dropdown-menu dropdown-menu-right">
+                                            <li><a href='{{ link("module/product_code_generator/update") }}?code_id=`+ row['code_id'] +`'><i class='icon-pencil7'></i> ${locales['button_edit']}</a></li>
+                                            <li><a class='removeItem' data-rowid="` + row['code_id'] + `"><i class='icon-trash'></i> ${locales['button_delete']}</a></li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            `;
+                        }
+                    }
+                ],
+            });
+
+            $(".bulk-delete").attr({
+                "data-popup": "tooltip",
+                "title": locales['button_delete']
+            });
+            $(".btn-export").attr({
+                "data-popup": "tooltip",
+                "title": locales['button_export']
+            });
+            $(".btn-colvis").attr({
+                "data-popup": "tooltip",
+                "title": locales['button_colvis']
+            });
+
+            $('[data-popup="tooltip"]').tooltip();
+
+            $(".styled, .multiselect-container input").uniform({
+                radioClass: 'choice'
+            });
+
+            $('select').select2({
+                minimumResultsForSearch: Infinity,
+                width: 'auto'
+            });
+
+            table.on('select', function (e, objDT, type, indexes) {
+                if (table.rows('.selected').any()) $(".bulk-delete").removeClass('disabled');
+                else $(".bulk-delete").addClass('disabled');
+            }).on('deselect', function (e, objDT, type, indexes) {
+                if (table.rows('.selected').any()) $(".bulk-delete").removeClass('disabled');
+                else $(".bulk-delete").addClass('disabled');
+            }).on('search.dt', function (e, objDT) {
+                if (table.rows('.selected').any()) $(".bulk-delete").removeClass('disabled');
+                else $(".bulk-delete").addClass('disabled');
+            });
+
+            $('#toggleSelectAll').click(function () {
+                var checkbox = this;
+                if (checkbox.checked == true) {
+                    table.rows().select();
+                } else {
+                    table.rows().deselect();
+                }
+            });
+
+            $('.removeItem').click(function () {
+
+                var that = $(this);
+                var rowId = that.data('rowid');
+
+                confirmMessage(function () {
+                    ajax("{{ link("module/product_code_generator/dtDelete") }}", {selected: [rowId]}, function (res) {
+                        var response = JSON.parse(res);
+                        
+                        if (response.success == '1')
+                        {
+                            table.row(that.parents('tr')).remove().draw();
+                            notify('Success', 'success', response.success_msg);
+                        }
+                        else
+                        {
+                            notify('error', 'warning', response.error);
+                        }
+                    });
+                });
+            });
+
+            // Load remote content
+            $('#modal_remote').on('show.bs.modal', function () {
+                $(this).find('.modal-body').load('module/product_code_generator/insert', function () {
+
+                    $('select').select2({
+                        minimumResultsForSearch: Infinity
+                    });
+                });
+            });
+
+//            $('.modal_update_button').click(function() {
+//
+//                var href = $(this).data('remote');
+//
+//                console.log(href);
+//
+//                $('#modal_update').modal(function() {
+//
+//                    $(this).find('.modal-body').load(href, function () {
+//
+//                        $('select').select2({
+//                            minimumResultsForSearch: Infinity
+//                        });
+//                    });
+//                });
+//            });
+
+            $('#modal_update').on('show.bs.modal', function (e) {
+
+//                var attrId = $(this).data('attrid');
+
+                var remoteLink = $(e.relatedTarget).data('remotelink');
+
+                $(this).find('.modal-body').load(remoteLink, function () {
+
+                    $('select').select2({
+                        minimumResultsForSearch: Infinity
+                    });
+                });
+            });
+
+        });
+
+    </script>
+{% endblock scripts %}

@@ -1,0 +1,90 @@
+<!-- featured products -->
+{% set products_per_item = 1 %}
+
+{% if fields.TopDealProducts.field_value != '' %}
+    {% set featured_products = getFeaturedProducts(fields.TopDealProducts.field_value, 1000, 1000) %}
+{% else %}
+    {% set featured_products = getLatestProducts(10, 595, 738) %}
+{% endif %}
+
+{% set items_products = featured_products|chunk(products_per_item) %}
+{% set items_count = items_products|length %}
+
+
+<div class="deal-product-box11" id="section-{{ section_id }}">
+    <div class="container">
+        <h3 class="title30">{{ fields.TopDealTitle.field_value }}</h3>
+        <div class="deal-slider11">
+            <div class="wrap-item long-arrow" data-pagination="false" data-navigation="true" data-itemscustom="[[0,1]]">
+
+                {% for product in featured_products %}
+                <div class="item-deal11">
+                    <div class="row">
+                        <div class="col-md-6 col-sm-6 col-xs-12">
+                            <div class="deal-gallery">
+                                <div class="product-thumb">
+                                    <a href="{{ product.href }}" class="product-thumb-link">
+                                        <img class="img-responsive" src="{{ product.thumb }}" alt="">
+                                    </a>
+                                    <a href="{{ product.href }}" class="quickview-link"><i class="fa fa-search" aria-hidden="true"></i></a>
+                                </div>
+                            </div>
+                            <!-- End Gallery -->
+                        </div>
+                        <div class="col-md-6 col-sm-6 col-xs-12">
+                            <div class="deal-info11">
+                                {% if config('show_brands') %}
+                                <a href="{{ product.manufacturer_href }}"><h2 class="title18">{{ product.manufacturer }}</h2></a>
+                                {% endif %}
+                                <h2 class="title30">{{ product.name }}</h2>
+                                <div class="product-price">
+                                    {% if ('-1' in product.price) or ('-1' in product.special) %}
+                                        <ins><span class="clickable" onclick="contact_us('{{ product.product_id }}');">{{ lang('button_req_quote') }}</span></ins>
+                                        <div id="enquiry-{{ product.product_id }}"  style="display:none">{{ product.name }}:</div>
+                                    {% elseif product.special %}
+                                        <del><span>{{ product.price }}</span></del>
+                                        <ins><span>{{ product.special }}</span></ins>
+                                    {% else %}
+                                        <ins><span>{{ product.price }}</span><ins>
+                                    {% endif %}
+                                </div>
+                                {% if product.rating %}
+                                <div class="product-rate rate-counter">
+                                    <img src="{{ asset('images/icons/stars-' ~ product.rating ~ '.png') }}" alt="{{ lang('text_reviews')|format(reviews_count) }}" />
+                                    <a onclick="$('a[href=\'#tab-review\']').trigger('click');">{{ product.reviews_count }}</a>
+                                </div>
+                                {% endif %}
+
+                                {% if(product.description is not empty ) %}
+                                <div>
+                                    <p class="desc">{{ product.description|slice(0, 399) ~ '...' }}<a href="{{ product.href }}"><bold>View More</bold></a></p>
+                                </div>
+                                {% endif %}
+                                <div class="available">
+                                    {% if config('config_custom_stock_status_colors') == '1' and config('config_stock_display') == '0' %}
+                                        <span style="background-color: {{product.stock_status_color}};padding: 4px 8px;border-radius: 4px;box-shadow: 3px 3px 5px;">{{ lang('text_stock') }} <span class="avail-instock">{{ product.stock_status ?  product.stock_status : lang('text_instock') }}</span></span>
+                                    {% else %}
+                                        <span class="product-instock product-sold">{{ lang('text_stock') }}:  <b>{{ product.quantity > 0 ? product.quantity : product.stock_status }}</b></span>
+                                    {% endif %}
+                                </div>
+                                <div class="product-extra-link11">
+                                    {% if ('-1' in product.price) or ('-1' in product.special) %}
+                                    <a href="#" class="addcart-link" onclick="contact_us('{{ product.product_id }}');">{{ lang('button_req_quote') }}</a>
+                                    {% else %}
+                                     {% if customer.isCustomerAllowedToAdd_cart and ( config('config_hide_add_to_cart') != 1 or product.quantity >0 )  %}
+                                    <a href="#" class="addcart-link" onclick="addToCart({{ product.product_id }}, 1); return false;">{{ lang('button_cart') }}</a>
+                                    {% endif %}
+                                    {% endif %}
+                                    <a href="#" class="wishlist-link" onclick="addToWishList({{ product.product_id }}); return false;"><i class="fa fa-heart-o" aria-hidden="true"></i><span>{{ lang('button_wishlist') }}</span></a>
+                                    <a href="#" class="compare-link" onclick="addToCompare({{ product.product_id }}, 1); return false;"><i class="fa fa-file-o" aria-hidden="true"></i><span>{{ lang('button_compare') }}</span></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+
+            </div>
+        </div>
+    </div>
+</div>

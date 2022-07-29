@@ -1,0 +1,437 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block title %}
+    {{ lang('heading_title') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+
+    {% if(isShipping) %}
+        <a  onclick="$('#cancel_shipment').submit()" class="button btn btn-warning">{{ lang('button_cancel_shipment') }}</a>
+        <a href="{{ link('sale/order/info?order_id=')~order_id }}"  class="button btn btn-success">{{ lang('button_return') }}</a>
+        <a href="{{ trackingLink }}" target="_blank" class="button btn btn-success">{{ lang('button_track_shipment') }}</a>
+    {% else %}
+        <a onclick="$('.form').submit()" class="button btn btn-primary">{{ lang('button_create_shipment') }}</a>
+    {% endif %}
+
+{% endblock headelements %}
+
+
+{% block content %}
+
+    <!-- Fieldset legend -->
+    <div class="row">
+        <div class="alert alert-info" id="infoDialog" style="display: none;">
+            <i class="fa fa-exclamation-circle"></i> <span id="infoDialogText">{{ lang('please_wait') }}</span>
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+        </div>
+        <form action="{{ link('shipping/tookan/createDeliveryTask') }}" method="post" class="form">
+
+            <!-- RIGHT PANEL -->
+            <div class="col-md-3">
+                <div class="panel panel-white">
+                    <div class="panel-heading">
+                        <h6 class="panel-title"><span class="text-bold">الحالة</span></h6>
+                        <div class="heading-elements not-collapsible">
+                            <ul class="icons-list">
+                                <li><a data-action="collapse" class=""></a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- BODY -->
+                    <div class="panel-body">
+
+                        <!-- TOOKAN NOTIFICATION -->
+                        <div class="form-group col-md-12">
+                            <label class="control-label">
+                                {{ lang('entry_notify') }} <span class="text-danger">*</span>
+                            </label>
+                            <div class="checkbox checkbox-switchery">
+                                <label>
+                                    <input type="checkbox" onchange="changeStatus(this);" name="notify" class="switchery" {{ notify not in [0, '0', 'off'] or notify is null ? 'checked' }}>
+                                    <span class="switchery-status">{{ notify not in [0, '0', 'off'] or notify is null ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                </label>
+                            </div>
+                            <span class="help-block"> {{ lang('entry_notify_note') }}</span>
+                        </div>
+
+                        <!-- TOOKAN AUTO ASSIGNMENT -->
+                        <div class="form-group col-md-12">
+                            <label class="control-label">
+                                {{ lang('entry_auto_assignment') }} <span class="text-danger">*</span>
+                            </label>
+                            <div class="checkbox checkbox-switchery">
+                                <label>
+                                    <input type="checkbox" onchange="changeStatus(this);" name="auto_assignment" class="switchery" {{ auto_assignment not in [0, '0', 'off'] or auto_assignment is null ? 'checked' }}>
+                                    <span class="switchery-status">{{ auto_assignment not in [0, '0', 'off'] or auto_assignment is null ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                </label>
+                            </div>
+                            <span class="help-block"> {{ lang('entry_auto_assignment_note') }}</span>
+                        </div>
+
+                        <!-- TOOKAN GEO FENCE -->
+                        <div class="form-group col-md-12">
+                            <label class="control-label">
+                                {{ lang('entry_geofence') }}
+                            </label>
+                            <div class="checkbox checkbox-switchery">
+                                <label>
+                                    <input type="checkbox" onchange="changeStatus(this);" name="geofence" class="switchery" {{ geofence not in [0, '0', 'off'] or geofence is null ? 'checked' }}>
+                                    <span class="switchery-status">{{ geofence not in [0, '0', 'off'] or geofence is null ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                </label>
+                            </div>
+                            <span class="help-block"> {{ lang('entry_geofence_note') }}</span>
+                        </div>
+
+                    </div>
+                    <!-- END OF BODY -->
+                </div>
+            </div>
+            <!-- END OF RIGHT PANEL -->
+
+            <!-- LEFT PANEL -->
+            <div class="col-md-9">
+                <!-- HEAD -->
+                <div class="panel panel-white">
+                    <div class="panel-heading">
+                        <h6 class="panel-title"><span class="text-bold"><i class="fa fa-cog fa-lg"></i> {{ lang('text_shipment_settings') }}</span></h6>
+                        <div class="heading-elements not-collapsible">
+                            <ul class="icons-list">
+                                <li><a data-action="collapse" class=""></a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <!-- BODY -->
+                    <div class="panel-body">
+                        <div class="collapse in" id="panel1">
+
+                            <!-- TOOKAN JOB DESCRIPTION -->
+                            <div class="form-group col-md-6">
+                                <label class="control-label">
+                                    {{ lang('entry_job_description') }} <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" name="job_description" class="form-control"
+                                       value="{{ job_description|replace({"<br>":""}) }}"/>
+                                <span class="help-block"> {{ lang('entry_job_description_note') }}</span>
+                            </div>
+
+                            <!-- JOB PICKUP PHONE -->
+                            <div class="form-group col-md-6">
+                                <label class="control-label">
+                                    {{ lang('entry_job_pickup_phone') }} <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" name="job_pickup_phone" class="form-control"
+                                       value="{{ job_pickup_phone }}"/>
+                                <span class="help-block"> {{ lang('entry_job_pickup_phone_note') }}</span>
+                            </div>
+
+                            <!-- CUSTOMER EMAIL -->
+                            <div class="form-group col-md-6">
+                                <label class="control-label">
+                                    {{ lang('entry_customer_email') }}
+                                </label>
+                                <input type="text" name="customer_email" class="form-control"
+                                       value="{{ customer_email }}"/>
+                                <span class="help-block"> {{ lang('entry_customer_email_note') }}</span>
+                            </div>
+
+                            <!-- CUSTOMER USER NAME -->
+                            <div class="form-group col-md-6">
+                                <label class="control-label">
+                                    {{ lang('entry_customer_username') }}
+                                </label>
+                                <input type="text" name="customer_username" class="form-control"
+                                       value="{{ customer_username }}"/>
+                                <span class="help-block"> {{ lang('entry_customer_username_note') }}</span>
+                            </div>
+
+                            <!-- CUSTOMER PHONE -->
+                            <div class="form-group col-md-6">
+                                <label class="control-label">
+                                    {{ lang('entry_customer_phone') }} <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" name="customer_phone" class="form-control"
+                                       value="{{ customer_phone }}"/>
+                                <span class="help-block"> {{ lang('entry_customer_phone_note') }}</span>
+                            </div>
+
+                            <!-- CUSTOMER ADDRESS -->
+                            <div class="form-group col-md-6">
+                                <label class="control-label">
+                                    {{ lang('entry_customer_address') }} <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" name="customer_address" class="form-control"
+                                       value="{{ customer_address }}"/>
+                                <span class="help-block"> {{ lang('entry_customer_address_note') }}</span>
+                            </div>
+
+                            <!-- CUSTOMER JOB DELIVERY -->
+                            <div class="form-group col-md-6">
+                                <label class="control-label">
+                                    {{ lang('entry_job_delivery_datetime') }} <span class="text-danger">*</span>
+                                </label>
+                                <input type="datetime-local" name="job_delivery_datetime" class="form-control"
+                                       value="{{ job_delivery_datetime }}"/>
+                                <span class="help-block"> {{ lang('entry_job_delivery_datetime_note') }}</span>
+                            </div>
+
+                            <!-- TEAM ID -->
+                            <div class="form-group col-md-6">
+                                <label class="control-label">
+                                    {{ lang('entry_team_id') }} <span class="text-danger">*</span>
+                                </label>
+                                <select name="team_id" id="team_id" class="form-control">
+                                    {% if(teams) %}
+                                        {% for team in teams %}
+                                            <option value="{{ team['id'] }}">{ {{ team['id'] }} } {{ team['name'] }} </option>
+                                        {% endfor %}
+                                    {% else %}
+                                        <input type="text" name="team_id" class="form-control"
+                                               value="{{ team_id }}"/>
+                                    {% endif %}
+                                </select>
+                                <span class="help-block"> {{ lang('entry_team_id_note') }}</span>
+                            </div>
+
+                            <!-- AGENT ID -->
+                            <div class="form-group col-md-6" id="fleet_div">
+                                <label class="control-label">
+                                    {{ lang('entry_fleet_id') }} <span class="text-danger">*</span>
+                                </label>
+                                <select name="fleet_id" id="fleet_id" class="form-control">
+                                    {% if(agents) %}
+                                        {% for agent in agents %}
+                                            <option value="{{ agent['id'] }}">{ {{ agent['id'] }} } {{ agent['name'] }}</option>
+                                        {% endfor %}
+                                    {% else %}
+                                        <input type="text" name="fleet_id" class="form-control"
+                                               value="{{ fleet_id }}"/>
+                                    {% endif %}
+                                </select>
+                                <span class="help-block"> {{ lang('entry_fleet_id_note') }}</span>
+                            </div>
+
+                            <!-- TAGS -->
+                            <div class="form-group col-md-6">
+                                <label class="control-label">
+                                    {{ lang('entry_tags') }}
+                                </label>
+                                <input type="text" name="tags" class="form-control"
+                                       value="{{ tags }}"/>
+                                <span class="help-block"> {{ lang('entry_tags_note') }}</span>
+                            </div>
+
+                            <div class="clearfix"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MAP PANEL -->
+            <div class="col-md-offset-3 col-md-9">
+                <!-- HEAD -->
+                <div class="panel panel-white">
+                    <div class="panel-heading">
+                        <h6 class="panel-title"><span class="text-bold"><i
+                                        class="fa fa-cog fa-lg"></i> {{ lang('text_shipment_map') }}</span></h6>
+                        <div class="heading-elements not-collapsible">
+                            <ul class="icons-list">
+                                <li><a data-action="collapse" class=""></a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <!-- BODY -->
+                    <div class="panel-body">
+                        <div class="row">
+                            <div class="form-group col-md-5">
+                                <label class="control-label ">
+                                    {{ lang('entry_latitude') }}
+                                </label>
+                                <input type="text" class="form-control map_coordinates" value="{{ shipping_address_location.lat }}" name="latitude" id="lat">
+                            </div>
+                            <div class="form-group col-md-5">
+                                <label class="control-label ">
+                                    {{ lang('entry_longitude') }}
+                                </label>
+                                <input type="text" class="form-control map_coordinates" value="{{ shipping_address_location.lng }}" name="longitude" id="long">
+                            </div>
+                            <div class="form-group col-md-2">
+                                <label class="control-label "> &nbsp; &nbsp;</label>
+                                <button id="set-location" class="form-control btn-primary">{{ lang('entry_go') }}</button>
+                            </div>
+                            <div class="form-group col-md-12">
+                                <div id="error" class="alert alert-danger hide"></div>
+                            </div>
+                            <div class="form-group col-md-12">
+                                <div class="form-control" id="map"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- HIDDEN INPUTS -->
+            <input type="hidden" name="customer_country" value="{{ customer_country }}"/>
+            <input type="hidden" name="customer_cod" value="{{ customer_cod }}"/>
+            <input type="hidden" name="order_id" value="{{ order_id }}">
+        </form>
+
+        <!-- CANCEL SHIPMENT -->
+        {% if(isShipping)  %}
+        <form id="cancel_shipment" action="{{ link("shipping/tookan/cancelTask") }}" method="POST">
+            <input type="hidden" name="job_id" value="{{ job_id }}"/>
+            <input type="hidden" name="order_id" value="{{ order_id }}">
+        </form>
+        {% endif %}
+    </div>
+
+    <script>
+
+        $(document).ready(function(){
+            autoAssignTask();
+        });
+
+        $('#set-location').on('click', function(){            
+            //Validation
+            if(!validateCoordinates()) return;
+
+            //Format data
+            var coordinate = { lat: parseFloat($("input#lat").val()) , lng: parseFloat($("input#long").val()) };
+            
+            //Delete other markers
+            if (markers.length >= 1) {
+                deleteMarkers();
+            }
+            
+            //Add new marker
+            addMarker(coordinate, 17);
+        })
+
+        function validateCoordinates(){
+            //Prepare data
+            var latlngVal = /^-?([0-8]?[0-9]|90)\.[0-9]{1,6},-?((1?[0-7]?|[0-9]?)[0-9]|180)\.[0-9]{1,6}$/;
+            var latlng = $("input#lat").val() + ',' + $("input#long").val();
+            var invalid_latlng = '{{ lang("error_latlong") }}';
+
+            //Clear error div
+            $("#error").html('');
+            $('#error').addClass('hide');
+            
+            //Validate
+            if(!latlngVal.test(latlng)) {
+                // ERROR
+                $("#error").html(invalid_latlng);
+                $('#error').removeClass('hide');
+                return false;;
+            };
+            return true;
+        }
+
+        function autoAssignTask(){
+            if($("input[name='auto_assignment']").is(":checked")){
+                $("#fleet_div").hide();
+            } else {
+                $("#fleet_div").show();
+            }
+        }
+
+        function changeStatus(checkbox) {
+            var self = $(checkbox);
+            var switch_status = self.siblings('.switchery-status');
+
+            if (self.is(':checked')) {
+                switch_status.html("{{ lang('text_enabled') }}");
+            } else {
+                switch_status.html("{{ lang('text_disabled') }}");
+            }
+            autoAssignTask();
+        }
+    </script>
+
+    <script type="text/javascript">
+        // In the following example, markers appear when the user clicks on the map.
+        // The markers are stored in an array.
+        var map;
+        var markers = [];
+
+        function initMap() {
+            intLat = {{shipping_address_location.lat}};
+            initLog = {{shipping_address_location.lng}};
+            geocoder = new google.maps.Geocoder();
+            var haightAshbury = {lat: intLat , lng: initLog};
+            var zoom = 10;
+            if (intLat === 0 && initLog === 0) {
+                zoom = 3;
+            }
+            map = new google.maps.Map(document.getElementById('map'), {
+                zoom: zoom,                        // Set the zoom level manually
+                center: haightAshbury,
+                mapTypeId: 'terrain'
+            });
+            addMarker(haightAshbury);
+            // This event listener will call addMarker() when the map is clicked.
+            map.addListener('click', function (event) {
+                // alert(event.latLng)
+
+                console.log(event.latLng);
+                if (markers.length >= 1) {
+                    deleteMarkers();
+                }
+                addMarker(event.latLng);
+                document.getElementById('lat').value = event.latLng.lat();
+                document.getElementById('long').value = event.latLng.lng();
+
+            });
+        }
+
+        // Adds a marker to the map and push to the array.
+        function addMarker(location, zoom=3) {
+            console.log(location)
+            var marker = new google.maps.Marker({
+                position: location,
+                map: map
+            });
+
+            map.setZoom(zoom);
+            map.panTo(marker.position);
+
+            markers.push(marker);
+        }
+
+        // Sets the map on all markers in the array.
+        function setMapOnAll(map) {
+            for (var i = 0; i < markers.length; i++) {
+                markers[i].setMap(map);
+            }
+        }
+
+        // Removes the markers from the map, but keeps them in the array.
+        function clearMarkers() {
+            setMapOnAll(null);
+        }
+
+        // Deletes all markers in the array by removing references to them.
+        function deleteMarkers() {
+            clearMarkers();
+            markers = [];
+        }
+
+    </script>
+    <script async defer
+            src="https://maps.google.com/maps/api/js?key={{tookan_map_api_key}}&sensor=false&callback=initMap">
+    </script>
+    <style type="text/css">
+        #map {
+            height: 700px;
+            width: 100%;
+        }
+    </style>
+{% endblock %}

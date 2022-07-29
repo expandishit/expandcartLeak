@@ -1,0 +1,323 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% set bodyClasses = "has-detached-right sidebar-detached-hidden" %}
+
+{% block title %}
+    {{ lang('heading_title') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+
+{% block babyHeaderContent %}
+    {% set babyHeader = true %}
+    <ul class="nav navbar-nav">
+        <li onclick="toggleFilter(this)"><a class="sidebar-detached-hide"><i class='icon-filter3 position-left'></i> <span>{{ lang('lbl_filter_products') }}</span></a></li>
+        <li id="btnreset" class="hidden"><a type="reset" href="#"><i class="icon-reset position-left"></i> {{ lang('lbl_reset_filter') }}</a></li>
+    </ul>
+{% endblock %}
+
+{% block content %}
+
+<script>
+    function toggleFilter(el) {
+        //debugger;
+        var isFilterHidden = $('body').hasClass('sidebar-detached-hidden');
+
+        if(isFilterHidden) $(el).children('a').children('span').text('{{ lang('lbl_hide_filter') }}');
+        else $(el).children('a').children('span').text('{{ lang('lbl_filter_products') }}');
+    }
+</script>
+{% if error_warning %}
+<div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> {{ error_warning }}
+  <button type="button" class="close" data-dismiss="alert">&times;</button>
+</div>
+{% endif %}
+<div id="product-grid">
+    {% include "wkpos/products-list.expand" %}
+</div>
+
+<!-- Detached sidebar -->
+{% include "wkpos/products-filter.expand" %}
+<!-- /detached sidebar -->
+
+<!-- Print Barcode modal -->
+<div id="printBarcode" class="modal fade" role="dialog" tabindex="-1">
+<div class="modal-dialog modal-sm">
+  <div class="modal-content">
+    <div class="modal-header">
+      <button type="button" class="close" data-dismiss="modal">&times;</button>
+      <h4 class="modal-title">{{ text_enter_barcode }}</h4>
+    </div>
+    <div class="modal-body" style="padding-bottom: 45px;">
+      <form class="form-horizontal" action="{{ print_action }}" method="post">
+        <div class="form-group">
+          <label class="control-label col-sm-3" for="barcode-quantity">{{ entry_quantity }}</label>
+          <div class="col-sm-9">
+            <input type="number" min="1" name="quantity" id="barcode-quantity" class="form-control">
+            <input type="hidden" name="product_id" id="productId">
+          </div>
+        </div>
+        <div class="col-sm-12 text-center">
+          <input type="submit" class="btn btn-primary" value="{{ button_print }}">
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-default" data-dismiss="modal">{{ button_close }}</button>
+    </div>
+  </div>
+</div>
+</div>
+<button class="btn btn-info hide" id="showModal" data-toggle="modal" data-target="#printBarcode"><i class="fa fa-eye"></i></button>
+
+    <!-- Outlet/Supplier assing modal -->
+    <div id="assingOutSpl" class="modal fade" role="dialog" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">{{ text_assign_out_spl }}</h4>
+                </div>
+                <div class="modal-body" style="padding-bottom: 45px;">
+                    <hr style="margin-top: 0;">
+                    <input type="hidden" value="" id="mass-assign-ids">
+                    <div class="row">
+                        <div class="col-md-6" style="border-right: 1px solid #999;">
+                            <h4 style="margin-top: 0;">{{ text_outlets }}</h4>
+                            {% for outlet in outlets %}
+                                <div class="form-check form-check-inline">
+                                    <label class="form-check-label">
+                                        <input type="checkbox" id="mass-assign-oids" name="outlets" value="{{ outlet['outlet_id'] }}" class="form-check-input-styled outSplAssign" >
+                                        {{ outlet['name'] }}
+                                    </label>
+                                </div>
+                            {% endfor  %}
+                        </div>
+                        <div class="col-md-6">
+                            <h4 style="margin-top: 0;">{{ text_suppliers }}</h4>
+                            {% for supplier in suppliers %}
+                                <div class="form-check form-check-inline">
+                                    <label class="form-check-label">
+                                        <input type="checkbox" id="mass-assign-sids" name="suppliers" value="{{ supplier['supplier_id'] }}" class="form-check-input-styled outSplAssign" >
+                                        {{ supplier['name'] }}
+                                    </label>
+                                </div>
+                            {% endfor  %}
+                        </div>
+                    </div>
+                    <hr style="margin-bottom: 0;">
+                    <div class="assig-progress" style="text-align: center;padding-top: 10px;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{{ button_close }}</button>
+                    <input type="button" onclick="assignProducts()" class="btn btn-primary" value="{{ button_assign }}">
+                </div>
+            </div>
+        </div>
+    </div>
+    <button class="btn btn-info hide" id="showModalassign" data-toggle="modal" data-target="#assingOutSpl"><i class="fa fa-eye"></i></button><
+
+    <!-- Outlet/Supplier assing modal -->
+    <div id="massAssing" class="modal fade" role="dialog" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">{{ text_mass_assign }}</h4>
+                </div>
+                <div class="modal-body" style="padding-bottom: 45px;">
+                    <hr style="margin-top: 0;">
+                    <input type="hidden" value="" id="mass-assign-ids">
+                    <div class="row">
+                        <div class="col-md-12">
+                            {% for outlet in outlets %}
+                                <div class="form-check form-check-inline">
+                                    <label class="form-check-label">
+                                        <input type="radio" name="massoutlets" value="{{ outlet['outlet_id'] }}" class="form-check-input-styled outSplAssign" >
+                                        {{ outlet['name'] }}
+                                    </label>
+                                </div>
+                            {% endfor  %}
+                        </div>
+                    </div>
+                    <hr style="margin-bottom: 0;">
+                    <div class="assig-progress" style="text-align: center;padding-top: 10px;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{{ button_close }}</button>
+                    <input type="button" onclick="massAssign()" class="btn btn-primary" value="{{ button_assign }}">
+                </div>
+            </div>
+        </div>
+    </div>
+    <button class="btn btn-info hide" id="showModalmassassign" data-toggle="modal" data-target="#massAssing"><i class="fa fa-eye"></i></button>
+  <script type="text/javascript">
+
+  $('.form-check-input-styled').uniform();
+
+  $('#resetList').click(function () {
+        $(':input', '#filter')
+            .not(':button, :submit, :reset, :hidden')
+            .val('')
+            .prop('checked', false)
+            .prop('selected', false);
+
+        $('#filter').find('select').each(function () {
+            this.value = '';
+        }).trigger('change');
+
+        $('#filter').find('.noui-slider-primary').each(function () {
+            $(this).data('ionRangeSlider').reset();
+        });
+
+        table.on('preXhr.dt', function (e, settings, data) {
+            return $.extend(data, {filter: null});
+        });
+
+        table.ajax.reload();
+        /*$.ajax({
+            url: listLink,
+            method: 'get',
+            success: function (response) {
+                $('#product-grid').html(response);
+            }
+        });*/
+    });
+
+  $('body').on('click', '.generateBarcode', function () {
+    var thisthis = $(this);
+    var product_id = thisthis.attr('product-id');
+
+    $.ajax({
+      url: 'wkpos/products/barcode',
+      data: {product_id: product_id},
+      type: 'post',
+      dataType: 'json',
+      beforeSend: function () {
+        thisthis.attr('disabled', 'disabled').html('<i class="fa fa-spin fa-spinner"></i>');
+      },
+      success: function(json) {
+        thisthis.removeAttr('disabled').html('<i class="fa fa-barcode"></i>');
+        if (json['success']) {
+          thisthis.parent().parent().children('td:nth-child(8)').html(`<img style="max-height: 15px;" class="barcode_image" src="data:image/png;base64,${json['image']}">`);
+          thisthis.parent().html('<button type="button" class="btn btn-default active generateBarcode" title="{{ title_regenerate }}" product_id="'+product_id+'"><i class="fa fa-barcode"></i></button>');
+          $.toaster({
+              priority: 'success',
+              title: 'Notice',
+              message: json['success'],
+              timeout: 3000
+          });
+        }
+      },
+      error: function () {
+        location = 'wkpos/products';
+      }
+    });
+  });
+
+  function massAssign() {
+      var ot_id = $("input[name='massoutlets']:checked").val();
+      if(ot_id){
+          $.ajax({
+              url: 'wkpos/products/massAssign',
+              type: 'post',
+              data: {id:ot_id},
+              dataType: 'json',
+              beforeSend: function () {
+                  $('#massAssing').modal('toggle');
+                  $('#datatableGrid').before('<div class="text-center loading" style="position: absolute;width: 100%;height: 100%;"><img src="view/image/blue-loading-gif-transparent-9.gif"  style="width: 100px" /></div>');
+              },
+              success: function(json) {
+              },
+          }).done(function() {
+              $('.loading').remove();
+          });
+      }else{
+          $('#massAssing').modal('toggle');
+      }
+  }
+
+  var total_products = {{ product_total }}, number_inslot = {{ number_inslot }}, count_barcode = 0;
+  function massGenerate() {
+    //$('.progress').css('display', 'block');
+    //$('#generate-barcodes').addClass('disabled');
+    $.ajax({
+      url: 'wkpos/products/massGenerate',
+      type: 'post',
+      data: {count_barcode: count_barcode},
+      dataType: 'json',
+      beforeSend: function () {
+        $('.assig-progress').html('<i class="fa fa-spin fa-spinner"></i>');
+      },
+      success: function(json) {
+        if (typeof json['count'] != 'undefined') {
+          $('#progress-bar-success').removeClass('hide').html('<i class="fa fa-check-circle"></i>&nbsp;' + json['success'].replace('%s', count_barcode + json['count']) + '<button type="button" class="close" data-dismiss="alert">&times;</button>');
+          $('.progress-bar-success').css('width', ((count_barcode+number_inslot)/total_products)*100 + '%');
+          $('.progress-bar-success').attr('aria-valuenow', count_barcode+number_inslot);
+        }
+      },
+    }).done(function() {
+      $('.btn-mass-generate').attr('disabled', '').html("<i class='icon-barcode2'></i> {{ text_mass_generate }}");
+      if (count_barcode < total_products) {
+        count_barcode += number_inslot;
+          massGenerate();
+      } else {
+        $('.progress-bar-success').removeClass('active');
+        $('#generate-barcodes').removeClass('disabled');
+        location.reload();
+      }
+    });
+  }
+
+  function assignProducts() {
+    $('.progress').css('display', 'block');
+    $('#generate-barcodes').addClass('disabled');
+    var pids = $('#mass-assign-ids').val();
+
+    var oids_ = [];
+    $.each($("input[name='outlets']:checked"), function(){
+        oids_.push($(this).val());
+    });
+
+    var sids_ = [];
+    $.each($("input[name='suppliers']:checked"), function(){
+        sids_.push($(this).val());
+    });
+
+    if(oids_.length == 0 && sids_.length == 0){
+        $('.assig-progress').html('<span class="text-danger"><strong>{{ text_noselection }}</strong></span>');
+    }else {
+        $.ajax({
+            url: 'wkpos/products/assignOutSpl',
+            type: 'post',
+            data: {pids: pids, oids: oids_.join(), sids: sids_.join()},
+            dataType: 'json',
+            beforeSend: function () {
+                $('.assig-progress').html('<i class="fa fa-spin fa-spinner"></i>');
+            },
+            success: function(json) {
+                /*if (typeof json['count'] != 'undefined') {
+                    $('#progress-bar-success').removeClass('hide').html('<i class="fa fa-check-circle"></i>&nbsp;' + json['success'].replace('%s', count_barcode + json['count']) + '<button type="button" class="close" data-dismiss="alert">&times;</button>');
+                    $('.progress-bar-success').css('width', ((count_barcode+number_inslot)/total_products)*100 + '%');
+                    $('.progress-bar-success').attr('aria-valuenow', count_barcode+number_inslot);
+                }*/
+            },
+        }).done(function() {
+            $('.assig-progress').html('<span class="text-success"><strong>{{ text_success_ }}</strong></span>');
+        });
+    }
+
+}
+</script>
+
+<style type="text/css">
+  thead td a {
+    cursor: pointer;
+  }
+</style>
+{% endblock %}

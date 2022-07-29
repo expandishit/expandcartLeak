@@ -1,0 +1,170 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% set dualMenuEnabled = true %}
+
+{% block title %}
+{{ lang('md_heading_title') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+{{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+
+{% block headelements %}
+    {% include "includes/buttons_top.expand" %}
+{% endblock headelements %}
+
+{% block content %}
+<style>
+.sidebar-secondary{
+    display : none;
+}
+</style>
+<script type="text/javascript" src="view/assets/js/plugins/forms/styling/uniform.min.js"></script>
+<!-- Start Form -->
+<form id="form" class="form" action="{{ schemaAction }}" method="post" enctype="multipart/form-data">
+    <div class="col-md-12">
+        <!-- Advanced legend -->
+        <div class="panel panel-flat">
+            <div class="panel-body">
+                <fieldset>
+                    <legend class="text-semibold">
+                        <i class="fas fa-check-circle fa-lg position-left"></i>
+                        {{ lang('md_settings')|trim(':') }}
+                        <a class="control-arrow" data-toggle="collapse" data-target="#panel1">
+                            <i class="icon-circle-down2"></i>
+                        </a>
+                    </legend>
+                    <div class="collapse in" id="panel1" >
+                       <div class="row">
+                        <div class="col-md-12">
+
+                            <!-- form-group -->
+                            <div class="form-group" id="settings[md_status]-group" >
+                                <div class="col-md-6">
+                                    <label> {{ lang('entry_status') }} </label>
+                                    <span class="help-block"></span>
+                                </div>
+                                <div class="col-md-6">
+                                    <!-- Switchery -->
+                                   <div class="checkbox checkbox-switchery no-margin">
+                                       <label>
+                                           <input type="checkbox" onchange="changeStatus(this);" name="settings[md_status]" class="switchery" {{ minimum_deposit['settings']['md_status'] in ['1', 1, 'on'] ? 'checked' }}>
+                                           <span class="switchery-status">{{ minimum_deposit['settings']['md_status'] in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                       </label>
+                                   </div>
+                                   <!-- /Switchery -->
+                                 </div>
+                            </div> <br> <br>
+                            <!-- form-group -->
+
+                            <!-- form-group -->
+                            <div class="form-group" id="settings[md_allow_cash_on_delivery]-group" >
+                                <div class="col-md-6">
+                                    <label> {{ lang('entry_allow_cash_on_delivery') }} </label>
+                                    <span class="help-block"></span>
+                                </div>
+                                <div class="col-md-6">
+                                    <!-- Switchery -->
+                                   <div class="checkbox checkbox-switchery no-margin">
+                                       <label>
+                                           <input type="checkbox" onchange="changeStatus(this);" name="settings[md_allow_cash_on_delivery]" class="switchery" {{ minimum_deposit['settings']['md_allow_cash_on_delivery'] in ['1', 1, 'on'] ? 'checked' }}>
+                                           <span class="switchery-status">{{ minimum_deposit['settings']['md_allow_cash_on_delivery'] in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                       </label>
+                                   </div>
+                                   <!-- /Switchery -->
+                                 </div>
+                             </div> <br> <br>
+                                <div class="col-md-6">
+                                    <label class="display-block ">{{ lang('entry_status_deposit') }} </label>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group ">
+                                        <label class="display-block text-bold ">
+                                            <input type="radio" id="md_status_deposit_1"  class="styled" value="1" name="settings[md_status_deposit]"
+                                            {% if  minimum_deposit['settings']['md_status_deposit'] == 1 %} checked="checked" {% endif %}>
+                                            {{ lang('entry_custom_price') }}
+                                        </label>
+                                    </div>
+                                   <div class="form-group ">
+                                        <label class="display-block text-bold ">
+                                            <input type="radio" id="md_status_deposit_2" class="styled" value="2" name="settings[md_status_deposit]"
+                                            {% if  minimum_deposit['settings']['md_status_deposit'] == 2 %} checked="checked" {% endif %}>
+                                            {{ lang('entry_general_price') }}
+                                        </label>
+                                    </div>
+                                    <div id="generalPrice"  {% if  minimum_deposit['settings']['md_status_deposit'] == 1 %} style="display:none" {% endif %} >
+                                         <input type="text" class="form-control touchspinney "  name="settings[md_general_input_price]" value="{{ minimum_deposit['settings']['md_general_input_price'] ? minimum_deposit['settings']['md_general_input_price'] : 0 }}">
+                                    </div>
+                                </div>
+
+
+
+                            <input type="hidden" name="formType" value="settings" />
+
+                        </div>
+                        <!-- col-md-12 -->
+                        </div>
+                        <!-- row -->
+                    </div>
+                </fieldset>
+            </div>
+        </div>
+        <!-- /a legend -->
+    </div>
+</form>
+<!-- End Form -->
+
+<!-- Lower Buttons -->
+    {% include "includes/buttons_bottom.expand" %}
+    <!-- End Lower Buttons -->
+{% endblock content %}
+{% block scripts %}
+    {{ parent() }}
+    {% import _self as dtControls %}
+    <script>
+
+    function changeStatus(checkbox)
+    {
+        var self = $(checkbox);
+        var switch_status = self.siblings('.switchery-status');
+
+        if ( self.is(':checked') )
+        {
+            switch_status.html("{{ lang('text_enabled') }}");
+        }
+        else
+        {
+            switch_status.html("{{ lang('text_disabled') }}");
+        }
+    }
+
+    $(document).ready(function() {
+        $('select').select2();
+        $('.touchspinney').TouchSpin({
+            'postfix': '{{ currency_code }}',
+            min: 0,
+            max: 99999999999999999,
+            'decimals': 2,
+        });
+            $("input[type='radio']").change(function(){
+
+               if($(this).val()=="2")
+               {
+                  $("#generalPrice").show();
+               }
+               else
+               {
+                   $("#generalPrice").hide();
+               }
+
+            });
+    });
+    // Create Uniform checkbox
+        $(".styled").uniform({
+            radioClass: 'choice'
+        });
+</script>
+{% endblock scripts %}

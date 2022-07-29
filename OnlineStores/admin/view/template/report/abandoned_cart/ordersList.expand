@@ -1,0 +1,260 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% set dualMenuEnabled = false %}
+
+{% set bodyClasses = "has-detached-left" %}
+
+{% block title %}
+    {{ lang('heading_title') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+{% endblock headelements %}
+
+{% block content %}
+    <!-- Detached sidebar -->
+    <div class="sidebar-detached">
+        <div class="sidebar sidebar-default sidebar-separate">
+            <div class="sidebar-content">
+                <!-- Sidebar search -->
+                <div class="panel panel-white">
+                    <div class="panel-heading">
+                        <div class="panel-title text-semibold">
+                            <i class="icon-search4 text-size-base position-left"></i>
+                            {{ lang('abandoned_cart_heading_title') }}
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <form id="filter-abandoned-cart">
+                            {% if(multi_store_manager) %}
+                                <div class="form-group">
+                                    <label>{{ lang('entry_stores') }}</label>
+                                    <select data-placeholder="Select your stores"  multiple id="filter_stores" class="select"
+                                            name="filter_stores[]">
+                                        {% for stores_code in stores_codes %}
+                                            <option value="{{ stores_code.STORECODE }}">{{ stores_code.DOMAINNAME }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            {% endif %}
+                            <div class="form-group">
+                                <label>{{ lang('entry_date_start') }}</label>
+                                <input type="text" class="form-control daterange-basic"
+                                       value="{{ filter_date_start }} - {{ filter_date_end }}" id="date_all"
+                                       name="date_all">
+                            </div>
+
+                            <div class="form-group">
+                                <label>{{ lang('entry_status') }}</label>
+                                <select data-placeholder="Select your country" id="order_status" class="select"
+                                        name="filter_order_status_id">
+                                    <option value="-1">{{ lang('text_all_status') }}</option>
+                                    <option value="0">{{ lang('text_abandoned') }}</option>
+                                    {% for   order_status in order_statuses %}
+                                        {% if order_status.order_status_id == filter_order_status_id %}
+                                            <option value="{{ order_status.order_status_id }}"
+                                                    selected="selected">{{ order_status.name }}</option>
+                                        {% else %}
+                                            <option value="{{ order_status.order_status_id }}">{{ order_status.name }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>{{ lang('entry_group') }}</label>
+                                <select id="filter_group" class="select"
+                                        name="filter_group">
+                                    {% for group in groups %}
+                                        {% if group.value == filter_group %}
+                                            <option value="{{ group.value }}"
+                                                    selected="selected">{{ group.text }}</option>
+                                        {% else %}
+                                            <option value="{{ group.value }}">{{ group.text }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <button type="submit" class="btn bg-blue btn-block">
+                                <i class="icon-search4 text-size-base position-left"></i>
+                                {{ lang('button_filter') }}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <!-- /sidebar search -->
+            </div>
+        </div>
+    </div>
+    <!-- /detached sidebar -->
+
+    <!-- Detached content -->
+    <div class="container-detached">
+        <div class="content-detached">
+            <div class="panel panel-flat">
+                <table class="table datatable-basic" id="abandoned-orders">
+                    <thead>
+                    <tr>
+                        <th>{{ lang('column_order_id') }}</th>
+                        <th>{{ lang('column_customer') }}</th>
+                        <th>{{ lang('entry_email') }}</th>
+                        <th>{{ lang('column_total') }}</th>
+                        <th>{{ lang('text_emailed') }}</th>
+                        <th>{{ lang('column_status') }}</th>
+                        <th>{{ lang('column_date_added') }}</th>
+                        <th>{{ lang('column_date_modified') }}</th>
+                    </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+    </div>
+    <!-- /detached content -->
+
+
+    <script type="text/javascript">
+
+        var abandonedOrderTable;
+
+        var action = "{{ link('report/abandoned_cart/datatables?list=orders'~comming_from) }}";
+
+        $('.daterange-basic').daterangepicker({
+
+            "autoApply": true,
+            ranges: locales['drp_ranges'],
+            locale: locales['drp_locale'],
+            opens: locales['drp_direction']
+
+        });
+
+        $('.daterangepicker-inputs').addClass('hidden');
+
+        $(function () {
+            $.extend($.fn.dataTable.defaults, {
+                autoWidth: false,
+                columnDefs: [{
+                    orderable: false,
+                    width: '100px',
+                }],
+                dom: '<"datatable-header"fB><"datatable-scroll-wrap"t><"datatable-footer"lip>',
+                language: locales['dt_language'],
+                buttons: [
+                    {
+                        extend: 'excelHtml5',
+                        text: `<i class='icon-drawer-out'></i> {{ lang('entry_export_excel') }}`,
+                        className: 'btn btn-default',
+                    },
+                    {
+                        text: `<i class='icon-drawer-out'></i> {{ lang('entry_export_all') }}`,
+                        className: 'btn btn-default',
+                        action: function () {
+                            window.location.href = "{{ export_link }}";
+                        }
+                    }
+                ],
+                drawCallback: function () {
+                    $(this).find('tbody tr').slice(-3).find('.dropdown, .btn-group').addClass('dropup');
+                },
+                preDrawCallback: function () {
+                    $(this).find('tbody tr').slice(-3).find('.dropdown, .btn-group').removeClass('dropup');
+                }
+            });
+
+            abandonedOrderTable = $('#abandoned-orders').DataTable({
+                "processing": true,
+                "serverSide": true,
+                language: locales['dt_language'],
+                "ajax": {
+                    url: action,
+                    type: "post",
+                    error: function () {
+                        $("#reports-sales-error").html(" ");
+                        $("#reports-sales").append('<tbody id="reports-sales-error"><tr><th colspan="6">No data found in the server</th></tr></tbody>');
+                        $("#reports-sales_processing").css("display", "none");
+
+                    }
+                },
+                columns: [
+                    {
+                        data: "order_id",
+                        render: function (data, type, row) {
+                            return `{{ lang('text_order_number') }} ${row['order_id']}`;
+                        }
+                    },
+                    {
+                        data: 'customer',
+                        render: function (data, type, row) {
+                            if (parseInt(row['customer_id']) > 0) {
+                                return `${row['customer']}`;
+                            } else {
+                                return `<span>{{ lang('customer_not_in_db') }}</span>`;
+                            }
+                        }
+                    },
+                    {
+                        data: 'email',
+                        render: function (data, type, row) {
+                            return data != 0 ? data : '-';
+                        }
+                    },
+                    {
+                        data: "total",
+                        render: function (data, type, row) {
+                            return `<label class="label label-primary">${row['total']}</label>`;
+                        }
+                    },
+                    {
+                        data: "emailed",
+                        render: function (data, type, row) {
+                            return (
+                                data == 1 ?
+                                    `<label class="label label-success">{{ lang('text_yes') }}</label>` :
+                                    '<label class="label label-warning">{{ lang('text_no') }}</label>');
+                        }
+                    },
+                    {
+                        data: 'statusName',
+                        render: function (data, type, row) {
+                            return data == 0 || data == null ? '{{ lang('text_abandoned') }}' : data;
+                        }
+                    },
+                    {data: 'date_added'},
+                    {data: 'date_modified'},
+                ],
+            });
+
+
+            $("#filter-abandoned-cart").submit(function (e) {
+
+                e.preventDefault();
+
+                var $formData = {
+                    'date': $('#date_all').val(),
+                    'filter_group': $('#filter_group').val(),
+                    'order_status_id': $('#order_status').val(),
+                    {% if(multi_store_manager) %} 'filter_stores': $('#filter_stores').val(),{% endif %}
+
+                };
+
+                abandonedOrderTable.on('preXhr.dt', function (e, settings, data) {
+                    return $.extend(data, {filter: $formData});
+                });
+
+                abandonedOrderTable.ajax.reload();
+            });
+
+            $('.dataTables_length select').select2({
+                minimumResultsForSearch: Infinity,
+                width: 'auto'
+            });
+
+
+        });
+    </script>
+
+{% endblock content %}

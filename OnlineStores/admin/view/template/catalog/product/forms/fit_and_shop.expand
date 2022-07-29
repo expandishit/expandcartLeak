@@ -1,0 +1,146 @@
+<style>
+	#fit_and_shop_button_status{
+		color:red;
+	}
+</style>
+<div class="panel panel-flat">
+    <div class="panel-heading">
+        <h6 class="panel-title"><span class="text-bold">{{ lang('fit_and_shop_measurments') }}</span><a
+                    class="heading-elements-toggle"><i class="icon-more"></i></a></h6>
+        <div class="heading-elements not-collapsible">
+            <ul class="icons-list">
+                <li><a data-action="collapse" class=""></a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="panel-body">
+        <div class="switch-component mb-20" id="fit-status-group">
+            <div class="switch-inner">
+				<button id = 'fit_and_shop_test_btn' style = 'display:none'></button>
+                <span class="title">{{ lang('entry_status') }}</span>
+                <label class="switch-cover">
+                    <input type="checkbox" class="hide" onchange="changeStatus(this);" name="fit_status" {{ fit_status in ['1', 1, 'on'] ? 'checked' }}>
+                    <span class="switch-title switch-enabled">
+                        {{lang('text_disabled')}}
+                    </span>
+                    <span class="switch-title switch-disabled">
+                        {{lang('text_enabled')}}
+                    </span>
+                    <span class="switch-btn"></span>
+                </label>
+				<label id = 'fit_and_shop_button_status'>
+				</label>
+            </div>
+        </div>
+       <div class="form-group" id="fit-available-group">
+            <label for="measurments_categories" class="control-label">
+                {{ lang('measurments_categories') }}
+            </label>
+            <select type="text" class="form-control" id="fit_measurment_cat" name="fit_measurment_cat">
+                    <option value='0'>{{lang('please_select_option')}}</option>
+                    {% for cat in measurments_categories %}
+                        <option value="{{ cat['measurement_category_id'] }}"
+                                {{ fit_cat_id == cat['measurement_category_id'] ? 'selected' : '' }}>
+                            {{ cat['name'] }}
+                        </option>
+                    {% endfor %}
+            </select>
+            <span class="help-block"></span>
+        </div>
+        <div class="form-group" id="category_collections">
+            <label for="categories_collections_select" class="control-label">
+                {{ lang('categories_collections') }}
+            </label>
+            <select type="text" class="form-control" id="categories_collections_select" name="categories_collections_select">
+                <option value='0'>{{lang('please_select_option')}}</option>
+                {% for col in collections %}
+                    <option value="{{ col['code'] }}"
+                        {{ collection_sku == col['code'] ? 'selected' : '' }}>
+                            {{ col['title_en'] }}
+                    </option>
+                {% endfor %}
+                {% if show_collections %}
+                    <input type="hidden" name="measurment_category_product_id" value="{{product_fit_app_data['measurment_category_product_id']}}" />
+                {% endif %}
+            </select>
+            <span class="help-block"></span>
+        </div>
+    </div>
+</div>
+ <script src="https://app.fitandshop.me/fit/modules"></script>
+<script>
+    var fit_and_shop_get_collections_ajax_url = '{{ fit_and_shop_get_collections_ajax_url }}';
+    var show_collections = '{{ show_collections }}';
+	var fit_api_key = '{{ fit_and_shop_api_key }}';
+	
+		var fit_payload = {
+                sku: '', 
+                button_selector: 'fit_and_shop_test_btn',
+                api_key: fit_api_key 
+        };
+	  function fit_btn_check(){
+		fit_payload.sku = $('#categories_collections_select').val();
+		if(fit_payload.sku != 0)
+			$.ajax({
+				url:function1(),
+				success:function(){
+					function2();
+				}
+			});
+	  }
+	  function function1(){
+        	init_fit(fit_payload);
+        }
+
+        function function2(){
+        	 if($('#fit_and_shop_test_btn').html() == ''){ //button setup failed from fit & shop js
+        		$('#fit_and_shop_button_status').html('{{ lang("button_failed") }}');
+        	}
+			else{
+				$('#fit_and_shop_button_status').html('');
+			}
+        }
+		
+    // toggle availability date function
+    let showFit = function(element) {
+        if(element.is(':checked')) {
+            $('#fit-available-group').fadeIn(0);
+        } else {
+            $('#fit-available-group').fadeOut(0)
+        }
+    };
+    // toggle availability date in first render
+    showFit($('#fit-status-group input'));
+    // toggle availability date when availability status change
+    $('#fit-status-group input').change(function() {
+        showFit($(this));
+    });
+    $(document).ready(function(){
+        if(show_collections){
+            $('#category_collections').show();
+        }else{
+            $('#category_collections').hide();
+        }
+        $('#fit_measurment_cat').on('change', function (e) {
+            $.ajax({
+                type: "POST",
+                url: fit_and_shop_get_collections_ajax_url,
+                success: function (res) {
+                    if(show_collections){
+                        $('#categories_collections_select').html(res);
+                    }else{
+                        $('#categories_collections_select').append(res);
+                    }
+                },
+                complete: function() {
+                    jQuery('#category_collections').show();
+                }
+            });
+        });
+		$('#categories_collections_select').on('change', function (e) {
+			fit_btn_check();
+		});
+		fit_btn_check();
+    });
+	
+</script>

@@ -1,0 +1,210 @@
+{% import "controls/forms.expand" as forms %}
+{% set dualMenuEnabled = false %}
+<style type="text/css">
+.separator {display: flex;align-items: center;text-align: center; color: #999999;margin-bottom: 15px;}.separator::before, .separator::after {content: '';flex: 1;border-bottom: 1px solid #e8e8e8;}.separator::before {margin-right: .25em;}.separator::after {margin-left: .25em;}
+</style>
+{# Start Form #}
+<form id="form-asphalt" class="form" action="{{ link('shipping/asphalt/save', '' , 'SSL') }}" method="POST">
+  <div class="row">
+    {# Status #}
+    <div class="col-md-3">
+        <div class="panel panel-white">
+            <div class="panel-heading">
+                <h6 class="panel-title"><span class="text-bold">{{ lang('entry_status')|trim(':') }}</span></h6>
+                <div class="heading-elements not-collapsible">
+                    <ul class="icons-list">
+                        <li><a data-action="collapse" class=""></a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="collapse in" id="panel1">
+
+
+                    <div class="form-group col-md-12">
+                        <label class="control-label">{{ lang('entry_status') }}</label>
+                        <div class="checkbox checkbox-switchery">
+                            <label>
+                                <input type="checkbox" onchange="changeStatus(this);" name="asphalt[status]" class="switchery" {{ asphalt.status not in ['0', 0, 'off'] or asphalt.status is null ? 'checked' }}>
+                                <span class="switchery-status">{{ asphalt.status not in ['0', 0, 'off'] or asphalt.status is null ? lang('text_enabled') : lang('text_disabled') }}</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    {#<hr style="width: 100%; border: 1px solid #e8e8e8;">
+
+                     <div class="form-group col-md-12">
+                        <label class="control-label">{{ lang('entry_debugging_mode') }}</label>
+                        <div class="checkbox checkbox-switchery">
+                            <label>
+                                <input type="checkbox" onchange="changeStatus(this);" name="asphalt[debugging_mode]" class="switchery" {{ asphalt.debugging_mode not in ['0', 0, 'off'] or asphalt.debugging_mode is null ? 'checked' }}>
+                                <span class="switchery-status">{{ asphalt.debugging_mode not in ['0', 0, 'off'] or asphalt.debugging_mode is null ? lang('text_enabled') : lang('text_disabled') }}</span>
+                            </label>
+                        </div>
+                    </div> #}
+
+                </div>
+            </div>
+        </div>
+
+        <div class="panel panel-white">
+            <div class="panel-heading">
+                <h6 class="panel-title"><span class="text-bold">{{ lang('entry_contact_asphalt') }}</span></h6>
+                <div class="heading-elements not-collapsible">
+                    <ul class="icons-list">
+                        <li><a data-action="collapse" class=""></a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel-body">
+                <a href="https://asphalt-eg.com/contact" target="blank">
+                  <img style="width: 100%" src="view/image/shipping/asphalt.png">
+                </a>
+            </div>
+        </div>
+    </div>
+    {# End of Status #}
+
+
+
+    <div class="col-md-9">
+        <div class="panel panel-white">
+            <div class="panel-heading">
+                <h6 class="panel-title"><span class="text-bold">{{ lang('text_settings') }}</span></h6>
+                <div class="heading-elements not-collapsible">
+                    <ul class="icons-list">
+                        <li><a data-action="collapse" class=""></a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="collapse in" id="fields-panel">
+
+                    {# asphalt API Key #}
+                    <div class="form-group col-md-12">
+                        <label for="api_key" class="control-label">{{ lang('entry_api_key') }} <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="api_key" name="asphalt[api_key]" value="{{ asphalt.api_key }}">
+                        <span class="help-block"></span>
+                    </div>
+                    {# /asphalt API Key #}
+
+
+                    {# After Shipping Status #}
+                    <div class="form-group col-md-6">
+                        <label for="asphalt_after_creation_status" class="control-label">{{ lang('entry_after_creation_status') }}</label>
+                        <select name="asphalt[after_creation_status]" id="asphalt_after_creation_status" class="form-control">
+                            {% for order_status in order_statuses %}
+                                <option value="{{ order_status['order_status_id'] }}" {{ asphalt.after_creation_status == order_status['order_status_id'] ? 'selected' :'' }}>
+                                    {{ order_status['name'] }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <span class="help-block"></span>
+                    </div>
+                    {# /After Shipping Status #}
+
+
+                    {# Tax Classes #}
+                    <div class="form-group col-md-6">
+                        <label for="asphalt_tax_class_id" class="control-label">{{ lang('entry_tax_class') }}</label>
+                        <select name="asphalt[tax_class_id]" id="asphalt_tax_class_id" class="form-control">
+                            <option value="0">{{ lang('text_none') }}</option>
+                            {% for tax_class in tax_classes %}
+                                <option value="{{ tax_class['tax_class_id'] }}"
+                                        {{ asphalt.tax_class_id == tax_class['tax_class_id'] ? 'selected' : '' }}>
+                                    {{ tax_class['title'] }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <span class="help-block"></span>
+                        <span class="text-muted">{{ langempty('entry_tax_class_help') }}</span>
+                    </div>
+                    {# /Tax Classes #}
+
+                    <div class="form-group col-md-6">
+                        <label for="asphalt_geo_zone_id" class="control-label">{{ lang('entry_geo_zone') }}</label>
+                        <select name="asphalt[geo_zone_id]" id="asphalt_geo_zone_id" class="form-control">
+                            <option value="0">{{ lang('text_all_zones') }}</option>
+                            {% for geo_zone in geo_zones %}
+                                <option value="{{ geo_zone['geo_zone_id'] }}"
+                                        {{ asphalt.geo_zone_id == geo_zone['geo_zone_id'] ? 'selected' : '' }}>
+                                    {{ geo_zone['name'] }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <!-- /Geo Zone -->
+                
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Gateway Presentation Fields -->
+    <div class="col-md-9">
+        <div class="panel panel-white">
+            <div class="panel-heading">
+                <h6 class="panel-title"><span class="text-bold">{{ lang('entry_presentation') }}</span></h6>
+                <div class="heading-elements not-collapsible">
+                    <ul class="icons-list">
+                        <li><a data-action="collapse" class=""></a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="collapse in" id="fields-panel">
+
+                    {# Shipping Method Title #}
+                    <div class="col-md-12">
+                        <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                            <div class="tab-content">
+                                {% for lng in languages %}
+                                    <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}" id="asphalt_display_name_{{ lng['language_id'] }}">
+                                        <div class="form-group col-md-6">
+                                            <label for="asphalt_display_name" class="control-label">{{ lang('entry_display_name') ~ ' (' ~ lng['name'] ~ ')'}}</label>
+                                            <input type="text" class="form-control" id="asphalt_display_name" name="asphalt[display_name][{{ lng['language_id'] }}]" value="{{ asphalt['display_name'][lng['language_id']] }}" >
+                                            <span class="help-block">{{ lang('text_display_name_help') }}</span>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+
+                            <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                                {% for language in languages %}
+                                    <li class="{{ loop.first ? 'active' : '' }}">
+                                        <a href="#asphalt_display_name_{{ language['language_id'] }}" data-toggle="tab" aria-expanded="false">
+                                            <img src="view/image/flags/{{ language['image'] }}"
+                                                title="{{ language['name'] }}" class="pull-right">
+                                            <div> {{ language['name'] }}</div>
+                                        </a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    {# /Shipping Method Title #}
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Gateway Presentation -->
+
+
+  </div>
+</form>
+{# End Form #}
+
+
+
+<script type="text/javascript">
+
+    $('select').select2();
+
+    const changeStatus = checkbox => {
+        $(checkbox).siblings('.switchery-status').html( $(checkbox).is(':checked') ? "{{ lang('text_enabled') }}" : "{{ lang('text_disabled') }}" );
+    };
+
+</script>

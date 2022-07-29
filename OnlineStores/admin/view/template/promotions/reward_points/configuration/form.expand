@@ -1,0 +1,261 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% set dualMenuEnabled = true %}
+
+{% block title %}
+{{ lang('heading_title') }}
+<link rel="stylesheet" type="text/css" href="view/stylesheet/modules/expand_seo/custom.css?bn={{ BuildNumber }}"/>
+{% endblock title %}
+
+{% block breadcrumb %}
+{{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block secondarymenu %}
+    {% include 'promotions/reward_points/menu.expand' with {'expand': '#reward_points_pro', 'active': '#config'} %}
+{% endblock secondarymenu %}
+
+
+{% block headelements %}
+    {% include "includes/buttons_top.expand" %}
+{% endblock headelements %}
+
+
+{% block content %}
+
+<!-- Start Form -->
+<form id="form" class="form" action="{{ action }}" method="post">
+    <div class="col-md-6">
+        <div class="panel panel-flat">
+            <div class="panel-body">
+               <fieldset>
+                   <legend class="text-semibold">
+                       <i class="fas fa-check-circle fa-lg position-left"></i>
+                       {{ lang('tab_general')|trim(':') }}
+                       <a class="control-arrow" data-toggle="collapse" data-target="#panel1">
+                           <i class="icon-circle-down2"></i>
+                       </a>
+                   </legend>
+                   <div class="collapse in" id="panel1" >
+                        <div class="form-group" id="rwp_enabled_module-group">
+                            <label> {{ lang('text_opt_enabled_module') }} </label>
+                            <!-- Switchery -->
+                            <div class="checkbox checkbox-switchery">
+                                <label>
+                                    <input type="checkbox" onchange="changeStatus(this);" name="rwp_enabled_module" class="switchery" {{ rwp_enabled_module in ['1', 1, 'on'] ? 'checked' }}>
+                                    <span class="switchery-status">{{ rwp_enabled_module in [1, '1', 'on'] ? lang('text_yes') : lang('text_text_no') }}</span>
+                                </label>
+                            </div>
+                            <!-- /Switchery -->
+                            <span class="help-block"></span>
+                        </div>
+                        <div class="form-group" id="rwp-no-product-points-group">
+                            <label>{{ lang('allow_no_product_points_spending') }}</label>
+                            <!-- Switchery -->
+                            <div class="checkbox checkbox-switchery">
+                                <label>
+                                    <input type="checkbox" onchange="changeStatus(this);" name="allow_no_product_points_spending" class="switchery" {{ allow_no_product_points_spending in ['1', 1, 'on'] ? 'checked' }}>
+                                    <span class="switchery-status">{{ allow_no_product_points_spending in [1, '1', 'on'] ? lang('text_yes') : lang('text_no') }}</span>
+                                </label>
+                            </div>
+                            <!-- /Switchery -->
+                            <span class="help-block"></span>
+                        </div>
+                        <!-- form-group -->
+                        <div class="form-group" id="currency_exchange_rate-group">
+                            <label> {{ lang('text_point_exchange_rate') }}</label>
+                            <input class="form-control" id="currency_exchange_rate" name="currency_exchange_rate" value="{{currency_exchange_rate}}" />
+                            <span class="help-block">{{ lang('text_tip_exchange_rate') }}</span>
+                        </div>
+                        <!-- form-group -->
+                        <div class="form-group" id="update_based_order_status-group">
+                            <label for="status" class="control-label"> {{ lang('Update reward points when order status is') }} </label>
+                            <select id="update_based_order_status" multiple="multiple" name="update_based_order_status[]" >
+                            {% for order_status in order_statuses %}
+                                  <option value="{{ order_status["order_status_id"] }}" {% if order_status['order_status_id'] in update_based_order_status %} selected='selected' {% endif %} > {{ order_status["name"] }} </option>
+                            {% endfor %}
+                            </select>
+                            <span class="help-block"></span>
+                        </div>                        
+                        <!-- form-group -->
+                        <div class="form-group" id="update_based_order_status-group">
+                            <label for="status" class="control-label"> {{ lang('Update reward points deduction when order status is') }} </label>
+                            <select id="update_deduction_based_order_status" multiple="multiple" name="update_deduction_based_order_status[]" >
+                            {% for order_status in order_statuses %}
+                                  <option value="{{ order_status["order_status_id"] }}" {% if order_status['order_status_id'] in update_deduction_based_order_status %} selected='selected' {% endif %} > {{ order_status["name"] }} </option>
+                            {% endfor %}
+                            </select>
+                            <span class="help-block"></span>
+                        </div>
+                   </div> <!-- collapse -->
+                 </fieldset>
+            </div>
+        </div>
+        <!-- /a legend -->
+    </div>
+    <!-- col-md-6 -->
+    <div class="col-md-6">
+        <div class="panel panel-flat">
+            <div class="panel-body">
+               <fieldset>
+                   <legend class="text-semibold">
+                       <i class="fas fa-check-circle fa-lg position-left"></i>
+                       {{ lang('tab_display')|trim(':') }}
+                       <a class="control-arrow" data-toggle="collapse" data-target="#panel2">
+                           <i class="icon-circle-down2"></i>
+                       </a>
+                   </legend>
+                   <div class="collapse in" id="panel2" >
+                        <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                            <div class="tab-content">
+                                {% for lng in languages %}
+                                    <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}"
+                                         id="langTab{{ lng['language_id'] }}">
+                                        <div class="form-group"
+                                             id="name_{{ lng['language_id'] }}-group">
+                                            <label class="control-label">
+                                                {{ lang('text_unit_name_point') }} <span class="text-danger">*</span>
+                                            </label>
+                                            {% set lang= _context['text_points_' ~ lng['code']] %}
+                                            <input type="text" class="form-control"
+                                                   id="name_{{ lng['language_id'] }}"
+                                                   name="text_points_{{lng['code']}}"
+                                                   value="{{ lang }}"
+                                            >
+                                            <span class="help-block"></span>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+
+                            <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                                {% for language in languages %}
+                                    <li class="{{ loop.first ? 'active' : '' }}">
+                                        <a href="#langTab{{ language['language_id'] }}" data-toggle="tab"
+                                           aria-expanded="false">
+                                            <img src="view/image/flags/{{ language['image'] }}"
+                                                 title="{{ language['name'] }}" class="pull-right">
+                                            <div> {{ language['name'] }}</div>
+                                        </a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+
+                        </div>
+                        <div class="form-group" id="show_point_listing-group">
+                            <label> {{ lang('Show point on listing page') }} </label>
+                            <!-- Switchery -->
+                                <div class="checkbox checkbox-switchery">
+                                    <label>
+                                        <input type="checkbox" onchange="changeStatus(this);" name="show_point_listing" class="switchery" {{ show_point_listing in ['1', 1, 'on'] ? 'checked' }}>
+                                        <span class="switchery-status">{{ show_point_listing in [1, '1', 'on'] ? lang('text_yes') : lang('text_no') }}</span>
+                                    </label>
+                                </div>
+                            <!-- /Switchery -->
+                            <span class="help-block"></span>
+                        </div>
+                        <!-- form-group -->
+                        <div class="form-group" id="show_point_listing-group">
+                            <label> {{ lang('Show point on product detail page') }} </label>
+                            <!-- Switchery -->
+                                <div class="checkbox checkbox-switchery">
+                                    <label>
+                                        <input type="checkbox" onchange="changeStatus(this);" name="show_point_detail" class="switchery" {{ show_point_detail in ['1', 1, 'on'] ? 'checked' }}>
+                                        <span class="switchery-status">{{ show_point_detail in [1, '1', 'on'] ? lang('text_yes') : lang('text_no') }}</span>
+                                    </label>
+                                </div>
+                            <!-- /Switchery -->
+                            <span class="help-block"></span>
+                        </div>
+                   </div> <!-- collapse -->
+                 </fieldset>
+            </div>
+        </div>
+        <!-- /a legend -->
+    </div>
+    <!-- col-md-6 -->
+    <div class="col-md-6">
+        <div class="panel panel-flat">
+            <div class="panel-body">
+               <fieldset>
+                   <legend class="text-semibold">
+                       <i class="fas fa-check-circle fa-lg position-left"></i>
+                       {{ lang('Module Status')|trim(':') }}
+                       <a class="control-arrow" data-toggle="collapse" data-target="#panel3">
+                           <i class="icon-circle-down2"></i>
+                       </a>
+                       <span class="help-block">{{ lang('text_config_guide1') }}</span>
+                   </legend>
+                   <div class="collapse in" id="panel3" >
+                        <div class="form-group">
+                           <div class="col-md-5">
+                            <span>{{ lang('text_config_allow_earn') }} </span>
+                           </div>
+                           <div class="col-md-1">
+                            <div style="background: {{ extensions['earn_point']['status'] ? 'green' : 'red' }}; width: 15px;height: 15px"></div>
+                           </div>
+                           <div class="col-md-4">
+                               {{ lang('text_config_sort_order')}} <b> {{ extensions['earn_point']['sort_order'] }}</b>
+                           </div>
+                        </div>
+                        <div class="form-group" >
+                           <div class="col-md-5">
+                            <span>{{ lang('text_config_allow_redeem') }} </span>
+                           </div>
+                           <div class="col-md-1">
+                            <div style="background: <?php echo ($extensions['redeem_point']['status'] ? 'green' : 'red')?>; width: 15px;height: 15px"></div>
+                           </div>
+                           <div class="col-md-4">
+                               {{ lang('text_config_sort_order')}} <b> {{ extensions['redeem_point']['sort_order'] }}</b>
+                           </div>
+                        </div>
+                   </div> <!-- collapse -->
+                 </fieldset>
+            </div>
+        </div>
+        <!-- /a legend -->
+    </div>
+    <!-- /col-md-6 -->
+</form>
+<!-- End Form -->
+
+<!-- Lower Buttons -->
+<div class="row">
+    <div class="col-md-12 text-right">
+        <hr/>
+        <a type="button" class="btn btn-default" href="{{ cancel }}" > {{ lang('button_cancel') }}</a>
+        <button type="button" class="btn btn-primary" onclick="$('.form').submit();"><i class="far fa-save fa-lg position-left"></i> {{ lang('button_save') }}</button>
+    </div>
+</div>
+<!-- End Lower Buttons -->
+{% endblock content %}
+{% block scripts %}
+    {{ parent() }}
+    {% import _self as dtControls %}
+    <script>
+    $(document).ready(function() {
+
+         $('select').select2();
+        $('.touchspinney').TouchSpin({
+            'postfix': '{{ current_currency_code }}',
+            'decimals': 2,
+        });
+    });
+    function changeStatus(checkbox)
+    {
+        var self = $(checkbox);
+        var switch_status = self.siblings('.switchery-status');
+
+        if ( self.is(':checked') )
+        {
+            switch_status.html("{{ lang('text_yes') }}");
+        }
+        else
+        {
+            switch_status.html("{{ lang('text_no') }}");
+        }
+    }
+</script>
+
+{% endblock scripts %}

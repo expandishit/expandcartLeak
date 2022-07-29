@@ -1,0 +1,54 @@
+{# Selling Type #}
+<input type="hidden" name="curtain_seller[selling_type]" value="block">
+{# /Selling Type #}
+
+{# Room Width #}
+<div class="form-group col-md-12 col-lg-6">
+    <label for="curtain_seller_block_room_width_input">{{ lang('text_room_width') }}</label>
+    <input type="text" class="form-control" name="curtain_seller[room_width]" id="curtain_seller_block_room_width_input">
+</div>
+{# /Room Width #}
+
+{# Room Height #}
+<div class="form-group col-md-12 col-lg-6">
+    <label for="curtain_seller_block_room_height_input">{{ lang('text_room_height') }}</label>
+    <input type="text" class="form-control" name="curtain_seller[room_height]" id="curtain_seller_block_room_height_input">
+</div>
+{# /Room Height #}
+
+<script>
+    function calculateCurtainSellerCost(callback) {
+        let data = {
+            product_id: parseInt("{{ product_id }}"),
+            selling_type: "block",
+            block_index: $('select#curtain_seller_block_width_select').val(),
+            room_width: $('input#curtain_seller_block_room_width_input').val(),
+            room_height: $('input#curtain_seller_block_room_height_input').val()
+        };
+
+        var cost = 0.00;
+
+        $.ajax({
+            url: "{{ curtain_seller_calculate_cost_link }}",
+            type: "POST",
+            data: data,
+            success: function(resp) {
+                resp = JSON.parse(resp);
+                cost = resp.data.cost;
+                cost_display = resp.data.cost_display;
+                data.cost = cost;
+                data.cost_display = cost_display;
+
+                data.form_options = {
+                    room_height: data.room_height,
+                    room_width: data.room_width,
+                    selling_type: data.selling_type,
+                    room_final_width: resp.data.final_width,
+                    room_final_height: resp.data.final_height,
+                };
+
+                callback(data);
+            }
+        });
+    }
+</script>

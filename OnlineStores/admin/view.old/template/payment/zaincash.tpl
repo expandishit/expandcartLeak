@@ -1,0 +1,84 @@
+<?php echo $header; ?>
+<div id="content">
+  <ol class="breadcrumb">
+    <?php foreach ($breadcrumbs as $breadcrumb) { ?>
+    <?php if ($breadcrumb === end($breadcrumbs)) { ?>
+    <li class="active">
+      <?php } else { ?>
+    <li>
+      <?php } ?>
+      <a href="<?php echo $breadcrumb['href']; ?>">
+        <?php if ($breadcrumb === reset($breadcrumbs)) { ?>
+        <?php echo $breadcrumb['text']; ?>
+        <?php } else { ?>
+        <span><?php echo $breadcrumb['text']; ?></span>
+        <?php } ?>
+      </a>
+    </li>
+    <?php } ?>
+  </ol>
+  <?php if ($error_warning) { ?>
+  <script>
+    var notificationString = '<?php echo $error_warning; ?>';
+    var notificationType = 'warning';
+  </script>
+  <?php } ?>
+  <div class="box">
+    <div class="heading">
+      <h1><?php echo $heading_title; ?></h1>
+      <div class="buttons"><a onclick="$('#form').submit();" class="button btn btn-primary"><?php echo $button_save; ?></a><a href="<?php echo $cancel; ?>" class="button btn btn-primary"><?php echo $button_cancel; ?></a></div>
+    </div>
+    <div class="content">
+      <form action="<?php echo $action; ?>" method="post" enctype="multipart/form-data" id="form">
+        <table class="form">
+          <tr>
+            <td><?php echo $entry_text_merchantid; ?></td>
+            <td><input type="text" name="text_merchantid" value="<?php echo $text_merchantid; ?>" size="10" /></td>
+          </tr>
+           
+          <tr>
+            <td><?php echo $entry_text_merchantsecret; ?></td>
+            <td><input type="text" name="text_merchantsecret" value="<?php echo $text_merchantsecret; ?>" size="10" /></td>
+          </tr>
+           
+          <tr>
+            <td><?php echo $entry_text_merchantmsisdn; ?></td>
+            <td><input type="text" name="text_merchantmsisdn" value="<?php echo $text_merchantmsisdn; ?>" size="10" /></td>
+          </tr>
+           
+          <tr>
+            <td><?php echo $entry_text_isdollar; ?></td>
+            <td><input type="text" name="text_isdollar" value="<?php echo $text_isdollar; ?>" size="10" /></td>
+          </tr>
+           
+          <tr>
+            <td><?php echo $entry_text_dollarprice; ?></td>
+            <td><input type="text" name="text_dollarprice" value="<?php echo $text_dollarprice; ?>" size="10" /></td>
+          </tr>
+           
+          <tr>
+            <td><?php echo $entry_text_testcred; ?></td>
+            <td><input type="text" name="text_testcred" value="<?php echo $text_testcred; ?>" size="10" /></td>
+          </tr>
+
+          <tr>
+            <td><?php echo $entry_status; ?></td>
+            <td><select name="zaincash_status">
+                <?php if ($zaincash_status === "1") { ?>
+                  <option value="1" selected="selected"><?php echo $text_enabled; ?></option>
+                  <option value="0"><?php echo $text_disabled; ?></option>
+                <?php } elseif ($zaincash_status === "0") { ?>
+                  <option value="1"><?php echo $text_enabled; ?></option>
+                  <option value="0" selected="selected"><?php echo $text_disabled; ?></option>
+                <?php } else { ?>
+                  <option value="1" selected="selected"><?php echo $text_enabled; ?></option>
+                  <option value="0"><?php echo $text_disabled; ?></option>
+                <?php } ?>
+              </select></td>
+          </tr>
+        </table>
+      </form>
+    </div>
+  </div>
+</div>
+<?php echo $footer; ?>

@@ -1,0 +1,665 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% import 'controls/uploader.expand' as uploader %}
+
+{% block title %}
+    {{ lang('heading_title', 'module/popupwindow') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+    {% include "includes/buttons_top.expand" %}
+{% endblock headelements %}
+
+{% block content %}
+<form action="{{ action }}" class="form" method="post" enctype="multipart/form-data">
+  <div class="popups">
+    <!--£££££££££ Settings -->
+      <div class="panel panel-white">
+          <div class="panel-heading">
+              <h6 class="panel-title"><span class="text-bold">{{ text_settings }}</span></h6>
+              <div class="heading-elements not-collapsible">
+                  <ul class="icons-list">
+                      <li><a data-action="collapse" class=""></a></li>
+                  </ul>
+              </div>
+          </div>
+          <div class="panel-body">
+              <div class="collapse in" id="fields-panel">
+                     <div class="row">
+                        <!--Popup status-->
+                        <div class="col-md-4">
+                          <div class="form-group"  id="Enabled-group">
+                            <label class="control-label">
+                              {{ text_popup }} {{ text_status }}
+                              
+                            </label>
+                            <div class="checkbox checkbox-switchery no-margin">
+                              <label>
+                                    <input type="checkbox" onchange="changeStatus(this);" name="Enabled" class="switchery" {{ Enabled == 'yes' ? 'checked' }}>
+                                    <span class="switchery-status">
+                                      {% if Enabled == 'yes' %} {{ text_enabled }} {% else %} {{ text_disabled }} {% endif %}
+                                    </span>
+                              </label>
+                            </div>
+                            <span class="help-block"></span>
+                            <span class="text-muted">{{ text_enable_option }}</span>
+                          </div>
+                        </div>
+
+                        <div class="col-md-4">
+                          <div class="form-group" id="method-group">
+                            <label  class="control-label">
+                              {{ entry_popup_method }}
+                            </label>
+                            <select name="method" class="methodTypeSelect form-control selectBasic">
+                              <option value="0" {{ method == '0' ? 'selected=selected' }}>{{text_onhomepage}}</option>
+                              <option value="1" {{ method == '1' ? 'selected=selected' }}>{{text_allpages}}</option>
+                              <option value="2" {{ method == '2' ? 'selected=selected' }}>{{text_specificurls}}</option>
+                              <option value="3" {{ method == '3' ? 'selected=selected' }}>{{text_css}}</option>
+                           </select>
+                           <span class="help-block"></span>
+                            <span class="text-muted">{{text_method}}</span>
+                          </div>
+                        </div>
+                        <div class="col-md-4" id="impression-box">
+                           
+                           
+                             {{entry_impressions}}
+                             {% if impressions %}
+                                {% for p_impressions in impressions %}
+                                
+                                   {% if p_impressions['popup_id'] == popup_id %}
+                                      {{ p_impressions['impressions'] }}
+                                   {% endif %}
+                                {% endfor %}
+                              {% else %}
+                              {{ '0' }}
+                              {% endif %}
+                        </div>
+                     </div>
+                     <!--End Popup status-->
+
+                     <!--End Showing method-->
+                     <div class="row ">
+                        <div class="col-md-4">
+                          <div class="form-group" id="event-group">
+                               <label class="control-label">{{entry_showon}}</label>
+                               <select name="event" class="eventSelect form-control selectBasic">
+                                  <option value="0" {{ event == '0' ? 'selected=selected' }}>{{text_windowloadevent}}</option>
+                                  <option value="1" {{ event == '1' ? 'selected=selected' }}>{{text_pageloadevent}}</option>
+                                  <option value="2" {{ event == '2' ? 'selected=selected' }}>{{text_bodyclickevent}}</option>
+                                  <option value="3" {{ event == '3' ? 'selected=selected' }}>{{text_exitintent}}</option>
+                                  <option value="4" {{ event == '4' ? 'selected=selected' }}>{{text_scrollpercentageevent}}</option>
+                               </select>
+                               <span class="help-block"></span>
+                            <span class="text-muted">{{text_set_event}}</span>
+                           </div>
+                        </div>
+                        <div class="col-md-4 specURL">
+                          <div class="form-group" id="url-group">
+                               <label class="control-label">{{entry_urls}}</label>
+                               <textarea style="text-align: left; direction: ltr;" rows="5" placeholder="http://" type="text" class="form-control" name="url">{{ url }}</textarea>
+                               <span class="help-block"></span>
+                               <span class="text-muted">{{text_urls_wish_popup}}</span>
+                           </div>
+                        </div>
+                        <div class="col-md-4 excludeURL">
+                          <div class="form-group" id="excluded_urls-group">
+                               <label class="control-label">{{entry_excluded_urls}}</label>
+                               <textarea style="text-align: left; direction: ltr;" rows="5" placeholder="http://" type="text" class="form-control" name="excluded_urls">{{ excluded_urls }}</textarea>
+                               <span class="help-block"></span>
+                               <span class="text-muted">{{text_urls_wish_exclude}}</span>
+                           </div>
+                        </div>
+                        <div class="col-md-4 cssSelector">
+                          <div class="form-group" id="css_selector-group">
+                               <label class="control-label">{{entry_choose_css}}
+                                  
+                              </label>
+                               <input placeholder=".css" type="text" class="form-control" name="css_selector" value="{{ css_selector }}" />
+                               <span class="help-block"></span>
+                              <span class="text-muted">{{text_set_csss}}</span>
+                           </div>
+                        </div>
+                        <div class="col-md-4">
+                          <div class="form-group" id="time_interval-group">
+                               <label class="control-label">{{entry_hoursinterval}}</label>
+                              <div class="checkbox checkbox-switchery no-margin">
+                                <label>
+                                      <input type="checkbox" onchange="changeStatus(this);" name="time_interval" class="switchery timeIntervalSelect" {{ time_interval == '1' ? 'checked' }} data-checked='{{ time_interval }}' data-target='timeInterval'>
+                                      <span class="switchery-status">{% if time_interval == '1' %} {{text_enabled}} {% else %} {{text_disabled}} {% endif %}</span>
+                                </label>
+                              </div>
+
+                               <span class="help-block"></span>
+                               <span class="text-muted">{{text_hours_popup_show}}</span>
+                               <div class="timeInterval">
+                                        {{entry_starttime}}
+                                        <div class='input-group date'>
+                                            <input id="startTime" type='text' class="form-control startTime" name="start_time" value="{{ start_time }}"  />
+                                            <span class="input-group-addon"><span class="icon-watch2"></span>
+                                            </span>
+                                        </div>
+                                        {{entry_endtime}}
+                                        <div class='input-group date'>
+                                            <input type='text' id='endTime' class="form-control endTime" name="end_time" value="{{ end_time }}" />
+                                            <span class="input-group-addon"><span class="icon-watch2"></span>
+                                            </span>
+                                        </div>
+                                </div>
+                            </div>
+                        </div>
+                     </div>
+
+                     <!--End Showing method-->
+                     
+                     <div class="row ">
+                        <div class="col-md-4 percentageInput">
+                          <div class="form-group" id="scroll_percentage-group">
+                              <label class="control-label">{{text_scrollpercentage}} <span class="text-danger">*</span></label>
+                              <div class='input-group'>
+                                 <input type='number' min="1" class="form-control" name="scroll_percentage" value="{{ scroll_percentage }}" />
+                                 <span class="input-group-addon">%</span>
+                              </div>
+                              <span class="help-block"></span>
+                              <span class="text-muted">{{text_trigger_popup__scrolled}}</span>
+                          </div>
+                        </div>
+
+                        <div class="col-md-4">
+                          <div class="form-group" id="repeat-group">
+                               <label class="control-label">{{entry_repeat}}
+                               
+                              </label>
+                               <select name="repeat" class="form-control repeatSelect selectBasic">
+                                  <option value="0" {{ repeat == '0' ? 'selected=selected' }}>{{text_showalways}}</option>
+                                  <option value="1" {{ repeat == '1' ? 'selected=selected' }}>{{text_once_ession}}</option>
+                                  <option value="2" {{ repeat == '2' ? 'selected=selected' }}>{{text_show_xdays}}</option>
+                               </select>
+                               <span class="help-block"></span>
+                               <span class="text-muted">{{text_set_frequency}}</span>
+                               <div class="daysPicker">
+                                  <div class="input-group">
+                                     <input type="number" min="1" class="form-control" name="days" value="{{ days }}" />
+                                     <span class="input-group-addon">{{text_days}}</span>
+                                  </div>
+                               </div>
+                           </div>
+                        </div>
+
+                         <div class="col-md-4">
+                          <div class="form-group" id="date_interval-group">
+                               <label class="control-label">{{entry_dateinterval}}
+                               
+                              </label>
+                              <div class="checkbox checkbox-switchery no-margin">
+                                <label>
+                                      <input type="checkbox" onchange="changeStatus(this);" name="date_interval" class="switchery dateIntervalSelect" {{ date_interval == '1' ? 'checked' }} data-checked='{{ date_interval }}' data-target='dateInterval'>
+                                      <span class="switchery-status">
+                                        {% if date_interval == '1' %} {{ text_enabled }} {% else %} {{ text_disabled }} {% endif %}
+                                      </span>
+                                </label>
+                              </div>
+
+                               <span class="help-block"></span>
+                               <span class="text-muted">{{text_setdateinterval}}</span>
+                               <div class="dateInterval">
+                                    {{entry_startdate}}
+                                        <div class='input-group date'>
+                                           
+                                            <input type='text' class="form-control datepicker" name="start_date" placeholder="YYYY-MM-DD" value="{{ start_date }}" />
+                                            <span class="input-group-addon"><span class="icon-calendar22"></span>
+                                            </span>
+                                        </div>
+                                      {{entry_enddate}}
+                                        <div class='input-group date'>
+                                            <input type='text' class="form-control datepicker" name="end_date" placeholder="YYYY-MM-DD" value="{{ end_date }}" />
+                                            <span class="input-group-addon"><span class="icon-calendar22"></span>
+                                            </span>
+                                        </div>
+                                </div>
+                            </div>
+                        </div>
+                     </div>
+
+                     <br />
+                     <div class="row">
+                        <!-- Seconds interval-->
+                        <div class="col-md-4">
+                           <div class="form-group" id="seconds-group">
+                               <label class="control-label">{{entry_delay}}
+                                  
+                               </label>
+                               <div class="input-group">
+                                  <input type="number" min="0" class="form-control" name="seconds" value="{{ seconds }}" />
+                                  <span class="input-group-addon">{{text_secs}}</span>
+                               </div>
+                               <span class="help-block"></span>
+                               <span class="text-muted">{{text_show_xseconds}}</span>
+                           </div>
+                        </div>
+
+                        <!-- Prevent closing -->
+                        <div class="col-md-4">
+                          <div class="form-group" id="prevent_closing-group">
+                               <label class="control-label">{{entry_preventclosing}}
+                                  
+                               </label>
+                               <div class="checkbox checkbox-switchery no-margin">
+                                 <label>
+                                        <input type="checkbox" onchange="changeStatus(this);" name="prevent_closing" class="switchery " {{ prevent_closing == '1' ? 'checked' }}>
+                                        <span class="switchery-status">
+                                        {% if prevent_closing == '1' %} {{ text_enabled }} {% else %} {{ text_disabled }} {% endif %}
+                                        </span>
+                                  </label>
+                               </div>
+                               
+                               <span class="help-block"></span>
+                               <span class="text-muted">{{text_disable_closing}}</span>
+                           </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                        <!-- Customer Groups -->
+                        <div class="col-md-9">
+                           <h5><span class="required">*</span>{{text_customergroups}}</h5>
+                           <span class="help-block"></span>
+                            <span class="text-muted">{{text_choose_group}}</span>
+                        </div>
+                        <div class="col-md-6">
+                           <select name="customer_groups[]" id="" class="select" multiple>
+                                <option value="default" {{ 'default' in customerGroups ? 'selected'}}>{{ text_guest }}</option>
+
+                                {% for cg in custGroups %}
+                                    <option value="{{ cg['customer_group_id'] }}" {{ cg['customer_group_id'] in customerGroups ? 'selected' }}>{{ cg['name'] }}</option>
+                                {% endfor %}
+                            </select>
+                             <!-- <div class="checkbox">
+                                <label>
+                                <input type="checkbox" name="customerGroups_{{ custGroup['customer_group_id'] }}" {{ customerGroups[curr_id] == 'on' ? 'checked="checked"' }}/> {{ custGroup['name'] }}
+                                </label>
+                             </div> -->
+                        </div>
+                     </div>
+                     </div>
+                     
+                     <!--End Prevent closing -->
+                     <br />
+                     
+                     <!--End Customer Groups -->
+                     <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                                <div class="tab-content">
+                                    <h5>{{entry_multi_lingual}}</h5>
+                                    {% for lng in languages %}
+                                        <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}"
+                                             id="langTab{{ lng['language_id'] }}">
+                                            <div class="form-group" id="content_{{lng['language_id']}}-group">
+                                                <label class="control-label">
+                                                    {{entry_popupcontent}}
+                                                </label>
+                                                <textarea
+                                                        name="content_{{lng['language_id']}}"
+                                                        id="description_{{ lng['language_id'] }}"
+                                                        class="summernote"
+                                                >{{ content[lng['language_id']] }}</textarea>
+                                                <span class="help-block"></span>
+                                                <span class="text-muted">
+                                                    {{ langempty('entry_description_help') }}
+                                                </span>
+                                            </div>
+
+                                        </div>
+                                    {% endfor %}
+                                </div>
+
+                                <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                                    {% for language in languages %}
+                                        <li class="{{ loop.first ? 'active' : '' }}">
+                                            <a href="#langTab{{ language['language_id'] }}" data-toggle="tab"
+                                               aria-expanded="false">
+                                                <img src="view/image/flags/{{ language['image'] }}"
+                                                     title="{{ language['name'] }}" class="pull-right">
+                                                <div> {{ language['name'] }}</div>
+                                            </a>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+              </div>
+          </div>
+      </div>
+      <!--£££££££££ Appearance -->
+      <div class="panel panel-white">
+          <div class="panel-heading">
+              <h6 class="panel-title"><span class="text-bold">{{ text_appearance }}</span></h6>
+              <div class="heading-elements not-collapsible">
+                  <ul class="icons-list">
+                      <li><a data-action="collapse" class=""></a></li>
+                  </ul>
+              </div>
+          </div>
+          <div class="panel-body">
+              <div  class="collapse in" id="fields-panel2">
+                  <div class="row">
+                      <!--Popup width-->
+                      <div class="col-md-4">
+                          <div class="form-group" id="width-group">
+                              <label class="control-label">{{entry_width}}
+                                  
+                              </label>
+                              <div class="input-group">
+                                  <input id="width_input" placeholder="{{text_width}}" required="required" min="0" type="number" class="form-control" name="width" value="{{ width }}" />
+                                  <span class="input-group-addon">{{text_px}}</span>
+                              </div>
+                              <span class="help-block"></span>
+                              <span class="text-muted">{{text_define_width}}</span>
+                          </div>
+                      </div>
+
+                      <div class="col-md-4">
+                          <div class="form-group" id="height-group">
+                              <label class="control-label">{{entry_height}}
+                              
+                              </label>
+                              <div class="input-group">
+                                  <input id="height_input" placeholder="{{text_height}}" required="required" min="0" type="number" class="form-control" name="height" value="{{ height }}" />
+                                  <span class="input-group-addon">{{text_px}}</span>
+                              </div>
+                              <span class="help-block"></span>
+                              <span class="text-muted">{{text_define_height}}</span>
+                          </div>
+                      </div>
+                      <div class="col-md-4">
+                          <div class="form-group" id="animation-group">
+                              <label class="control-label">{{entry_animation}}
+                              
+                              </label>
+                              <select name="animation" class="form-control selectBasic">
+                              <option value="bounceIn" {{ animation == 'bounceIn' ? 'selected=selected' }}>bounceIn</option>
+                              <option value="bounceInDown" {{ animation == 'bounceInDown' ? 'selected=selected' }}>bounceInDown</option>
+                              <option value="bounceInLeft" {{ animation == 'bounceInLeft' ? 'selected=selected' }}>bounceInLeft</option>
+                              <option value="bounceInRight" {{ animation == 'bounceInRight' ? 'selected=selected' }}>bounceInRight</option>
+                              <option value="bounceInUp" {{ animation == 'bounceInUp' ? 'selected=selected' }}>bounceInUp</option>
+                              <option value="fadeIn" {{ animation == 'fadeIn' ? 'selected=selected' }}>fadeIn</option>
+                              <option value="fadeInDown" {{ animation == 'fadeInDown' ? 'selected=selected' }}>fadeInDown</option>
+                              <option value="fadeInDownBig" {{ animation == 'fadeInDownBig' ? 'selected=selected' }}>fadeInDownBig</option>
+                              <option value="fadeInLeft" {{ animation == 'fadeInLeft' ? 'selected=selected' }}>fadeInLeft</option>
+                              <option value="fadeInLeftBig" {{ animation == 'fadeInLeftBig' ? 'selected=selected' }}>fadeInLeftBig</option>
+                              <option value="fadeInRight" {{ animation == 'fadeInRight' ? 'selected=selected' }}>fadeInRight</option>
+                              <option value="fadeInRightBig" {{ animation == 'fadeInRightBig' ? 'selected=selected' }}>fadeInRightBig</option>
+                              <option value="fadeInUp" {{ animation == 'fadeInUp' ? 'selected=selected' }}>fadeInUp</option>
+                              <option value="fadeInUpBig" {{ animation == 'fadeInUpBig' ? 'selected=selected' }}>fadeInUpBig</option>
+                              <option value="rotateIn" {{ animation == 'rotateIn' ? 'selected=selected' }}>rotateIn</option>
+                              <option value="rotateInDownLeft" {{ animation == 'rotateInDownLeft' ? 'selected=selected' }}>rotateInDownLeft</option>
+                              <option value="rotateInDownRight" {{ animation == 'rotateInDownRight' ? 'selected=selected' }}>rotateInDownRight</option>
+                              <option value="rotateInUpLeft" {{ animation == 'rotateInUpLeft' ? 'selected=selected' }}>rotateInUpLeft</option>
+                              <option value="rotateInUpRight" {{ animation == 'rotateInUpRight' ? 'selected=selected' }}>rotateInUpRight</option>
+                              <option value="zoomIn" {{ animation == 'zoomIn' ? 'selected=selected' }}>zoomIn</option>
+                              <option value="zoomInDown" {{ animation == 'zoomInDown' ? 'selected=selected' }}>zoomInDown</option>
+                              <option value="zoomInLeft" {{ animation == 'zoomInLeft' ? 'selected=selected' }}>zoomInLeft</option>
+                              <option value="zoomInRight" {{ animation == 'zoomInRight' ? 'selected=selected' }}>zoomInRight</option>
+                              <option value="zoomInUp" {{ animation == 'zoomInUp' ? 'selected=selected' }}>zoomInUp</option>
+                              </select>
+                              <span class="help-block"></span>
+                            <span class="text-muted">{{text_choose_animation}}</span>
+                          </div>
+                      </div>
+                      
+                      
+                  </div>
+                  
+                   <div class="row">
+                      <div class="col-md-4">
+                          <div class="form-group" id="aspect_ratio-group">
+                              <label class="control-label">{{entry_fancyboxaspectratio}}
+                                  
+                              </label>
+                              <div class="checkbox checkbox-switchery no-margin">
+                                 <label>
+                                        <input type="checkbox" onchange="changeStatus(this);" name="aspect_ratio" class="switchery " {{ aspect_ratio == 'true' ? 'checked' }}>
+                                        <span class="switchery-status">
+                                          {% if aspect_ratio == 'true' %} {{text_enabled}} {% else %} {{text_disabled}} {% endif %}
+                                        </span>
+                                  </label>
+                               </div>
+                              <span class="help-block"></span>
+                              <span class="text-muted">{{text_enable_aspect}}</span>
+                          </div>
+                      </div>
+                      <div class="col-md-4">
+                          <div class="form-group" id="auto_resize-group">
+                              <label class="control-label">{{entry_fancyboxautoresize}}
+                                  
+                              </label>
+
+                              <div class="checkbox checkbox-switchery no-margin">
+                                 <label>
+                                        <input type="checkbox" onchange="changeStatus(this);" name="auto_resize" class="switchery "  {{ auto_resize == 'true' ? 'checked' }}>
+                                        <span class="switchery-status">
+                                          {% if auto_resize == 'true' %} {{text_enabled}} {% else %} {{text_disabled}} {% endif %}
+                                        </span>
+                                  </label>
+                               </div>
+                              <span class="help-block"></span>
+                              <span class="text-muted">{{text_enable_autoresize}}</span>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </div>
+  </div>
+</form>
+
+{% include "includes/buttons_bottom.expand" %}
+
+<script type="text/javascript">
+// Display & Hide the log tab
+$(function() {
+    var $typeSelector = $('#LogChecker');
+    var $toggleArea = $('#log_tab');
+     if ($typeSelector.val() === 'yes') {
+            $toggleArea.show(); 
+        }
+        else {
+            $toggleArea.hide(); 
+        }
+    $typeSelector.change(function(){
+        if ($typeSelector.val() === 'yes') {
+            $toggleArea.show(300); 
+        }
+        else {
+            $toggleArea.hide(300); 
+        }
+    });
+
+    // Time picker
+    $("#endTime, #startTime").AnyTime_picker({
+        format: "%H:%i"
+    });
+
+    $('.datepicker').pickadate({
+        'format': 'yyyy-mm-dd',
+        'formatSubmit': 'yyyy-mm-dd'
+    });
+});
+
+// Show the CKEditor
+
+
+// Selectors for discount
+function selectorsForPopups() {
+    //$(document).find('.popups').find('.startTime').timepicker();
+    //$(document).find('.popups').find('.endTime').timepicker();
+    //$(document).find('.popups').find('.startDate').datepicker({dateFormat: 'yy-mm-dd'});
+    //$(document).find('.popups').find('.endDate').datepicker({dateFormat: 'yy-mm-dd'});
+
+    $('.methodTypeSelect').each(function() {
+        if($(this).val() == 0) {
+            $(this).parents('.popups').find('.specURL').hide();
+            $(this).parents('.popups').find('.excludeURL').hide();
+            $(this).parents('.popups').find('.cssSelector').hide();
+            $(this).parents('.popups').find('.eventSelect').prop('disabled', false);
+        }
+        else if($(this).val() == 1) {
+            $(this).parents('.popups').find('.specURL').hide();
+            $(this).parents('.popups').find('.excludeURL').show();
+            $(this).parents('.popups').find('.cssSelector').hide();
+            $(this).parents('.popups').find('.eventSelect').prop('disabled', false);
+        }
+        else if($(this).val() == 2) {
+            $(this).parents('.popups').find('.specURL').show();
+            $(this).parents('.popups').find('.excludeURL').hide();
+            $(this).parents('.popups').find('.cssSelector').hide();
+            $(this).parents('.popups').find('.eventSelect').prop('disabled', false);
+        }
+        else if($(this).val() == 3) {
+            $(this).parents('.popups').find('.specURL').hide();
+            $(this).parents('.popups').find('.excludeURL').hide();
+            $(this).parents('.popups').find('.cssSelector').show();
+            $(this).parents('.popups').find('.eventSelect').prop('disabled', true);
+        }
+    });
+
+    $('.methodTypeSelect').on('change', function(e){ 
+        if($(this).val() == 0) {
+            $(this).parents('.popups').find('.specURL').hide(200);
+            $(this).parents('.popups').find('.excludeURL').hide(200);
+            $(this).parents('.popups').find('.cssSelector').hide(200);
+            $(this).parents('.popups').find('.eventSelect').prop('disabled', false);
+        }
+        else if($(this).val() == 1) {
+            $(this).parents('.popups').find('.specURL').hide(200);
+            $(this).parents('.popups').find('.excludeURL').show(200);
+            $(this).parents('.popups').find('.cssSelector').hide(200);
+            $(this).parents('.popups').find('.eventSelect').prop('disabled', false);
+        }
+        else if($(this).val() == 2) {
+            $(this).parents('.popups').find('.specURL').show(200);
+            $(this).parents('.popups').find('.excludeURL').hide(200);
+            $(this).parents('.popups').find('.cssSelector').hide(200);
+            $(this).parents('.popups').find('.eventSelect').prop('disabled', false);
+        }
+        else if($(this).val() == 3) {
+            $(this).parents('.popups').find('.specURL').hide(200);
+            $(this).parents('.popups').find('.excludeURL').hide(200);
+            $(this).parents('.popups').find('.cssSelector').show(200);
+            $(this).parents('.popups').find('.eventSelect').prop('disabled', true);
+        }
+    });
+
+    //console.log($('.timeIntervalSelect').attr('data-checked'));
+    if($('.timeIntervalSelect').attr('data-checked') == '0' ){ 
+      //console.log($('.timeIntervalSelect').attr('data-checked'));
+        $('.popups').find('.timeInterval').hide();
+    }
+    else {
+        $('.popups').find('.timeInterval').show();
+    }
+    
+
+    // $('.timeIntervalSelect').on('change', function(e){ 
+    //     if($(this).val() == 0) {
+    //         $(this).parents('.popups').find('.timeInterval').hide(200);
+    //     }
+    //     else {
+    //         $(this).parents('.popups').find('.timeInterval').show(200);
+    //     }
+    // });
+    if($('.dateIntervalSelect').attr('data-checked') == '0' ){ 
+      //console.log($('.timeIntervalSelect').attr('data-checked'));
+        $('.popups').find('.dateInterval').hide();
+    }
+    else {
+        $('.popups').find('.dateInterval').show();
+    }
+
+    // $('.dateIntervalSelect').each(function(e){ 
+    //     if($(this).val() == 0) {
+    //         $(this).parents('.popups').find('.dateInterval').hide();
+    //     }
+    //     else {
+    //         $(this).parents('.popups').find('.dateInterval').show();
+    //     }
+    // });
+
+    // $('.dateIntervalSelect').on('change', function(e){ 
+    //     if($(this).val() == 0) {
+    //         $(this).parents('.popups').find('.dateInterval').hide(200);
+    //     }
+    //     else {
+    //         $(this).parents('.popups').find('.dateInterval').show(200);
+    //     }
+    // });
+
+    $('.repeatSelect').each(function(e){ 
+        if($(this).val() == 2) {
+            $(this).parents('.popups').find('.daysPicker').show();
+        }
+        else {
+            $(this).parents('.popups').find('.daysPicker').hide();
+        }
+    });
+
+    $('.repeatSelect').on('change', function(e){ 
+        if($(this).val() == 2) {
+            $(this).parents('.popups').find('.daysPicker').show(200);
+        }
+        else {
+            $(this).parents('.popups').find('.daysPicker').hide(200);
+        }
+    });
+
+    $('.eventSelect').each(function(e){ 
+        if($(this).val() == 4) {
+            $(this).parents('.popups').find('.percentageInput').show();
+        }
+        else {
+            $(this).parents('.popups').find('.percentageInput').hide();
+        }
+    });
+
+    $('.eventSelect').on('change', function(e){ 
+        if($(this).val() == 4) {
+            $(this).parents('.popups').find('.percentageInput').show(200);
+        }
+        else {
+            $(this).parents('.popups').find('.percentageInput').hide(200);
+        }
+    });
+
+
+}
+
+// Initialize selector for discount
+$(function() {
+    selectorsForPopups();
+});
+
+function changeStatus(checkbox)
+{
+    var self = $(checkbox);
+    var switch_status = self.siblings('.switchery-status');
+    var targetAttr = self.attr('data-target');
+
+    if ( self.is(':checked') )
+    {
+        switch_status.html("{{ text_enabled }}");
+        if(targetAttr)
+          $('.popups').find('.'+targetAttr).show(200);
+    }
+    else
+    {
+        switch_status.html("{{ text_disabled }}");
+        if(targetAttr)
+          $('.popups').find('.'+targetAttr).hide(200);
+    }
+}
+</script>
+
+{% endblock %}

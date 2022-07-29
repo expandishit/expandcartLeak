@@ -1,0 +1,344 @@
+    {% extends "base.expand" %}
+    {% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+    {% import "controls/forms.expand" as forms %}
+    {% set dualMenuEnabled = true %}
+
+    {% block title %}
+        {{ lang('reserved_trips', 'module/trips') }}
+    {% endblock title %}
+
+    {% block breadcrumb %}
+        {{ breadcrumb(breadcrumbs) }}
+    {% endblock breadcrumb %}
+
+    {% block secondarymenu %}
+        {% if isMultiseller %}
+        {% include 'module/trips/menu.expand' with {'active': '#reserved_trips'} %}
+        {% endif %}
+    {% endblock secondarymenu %}
+
+    {% block headelements %}
+        {% include "includes/buttons_top.expand" %}
+    {% endblock headelements %}
+
+    {% block content %}
+    <style>
+        .dataTable tbody .select-checkbox:before{
+            margin-left: -6px !important;
+        }
+
+        #trips-datatable  > td.text-center > ul > li > ul
+
+        .datatable-scroll-wrap .dropdown.open .dropdown-menu ,.open > .dropdown-menu{
+            display: flex !important;
+        }
+        .datatable-scroll-wrap .dropdown.open .dropdown-menu li a {
+            display: flex !important;
+        }
+        #trips-datatable tbody tr:last-child{
+            border-collapse: collapse !important;
+            border-bottom: 1px solid #ddd !important;
+        }
+        #trips-datatable{
+            border-collapse: collapse;
+        }
+    </style>
+
+    <div class="row">
+    <div class="col-md-12">
+            <div class="tab-pane fade in active" id="gridView">
+            
+                <div class="panel panel-default">
+                <div class="navigation-tabs-wrapper">
+                    <ul class="navigation-tabs">
+                        <li class="{{ reserved_active ? 'active' }}">
+                            <a href="{{ link('module/trips/reserved_trips?status=1')}}">
+                                {{ lang('completed_trips') }}
+                            </a>
+                        </li>
+                        <li class=" {{ canceled_active ? 'active' }}">
+                            <a href="{{ link('module/trips/reserved_trips?status=2')}}">
+                                 {{ lang('canceled_trips') }}
+                            </a>
+                        </li>
+                       </ul>
+                </div>
+                    <div class="collapse in">
+                        <table id="trips-datatable" class="table table-hover datatable-highlight" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th></th>
+
+                                    <th style="min-width: 200px">{{ lang('column_reserved_trip_number') }} </th>
+                                    <th>{{ lang('column_rider') }}</th>
+                                    <th>{{ lang('column_trip') }}</th>
+                                    <th>{{ lang('column_driver') }}</th>
+                                    <th>{{ lang('column_from_date') }}</th>
+                                    <th>{{ lang('column_to_date') }}</th>
+                                    <th>{{ lang('column_seats_number') }}</th>
+                                    <th>{{ lang('column_destination') }}</th>
+                                    {% if canceled_active %}
+                                    <th>{{ lang('column_canceled_by') }}</th>
+                                    {% endif %}
+
+                                    <th></th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                </div>
+            </div>
+    </div>
+    </div>
+    {% endblock %}
+    {% block scripts %}
+    <script type="text/javascript">
+
+    var data = JSON.parse('{{ reserved_trips|json_encode|e('js') }}');
+   
+
+    $(document).ready(function () {
+
+        $.extend(true, $.fn.dataTable.defaults, {
+            autoWidth : false,
+            dom       : '<"datatable-header"fB><"datatable-scroll-wrap"t><"datatable-footer"lip>',
+            language  : locales['dt_language'],
+            lengthMenu: [[10, 25, 50, 100, 200], [10, 25, 50, 100, 200]]
+        });
+
+        var table = $('#trips-datatable').DataTable({
+
+            data: data,
+            // scrollX: true,
+
+            select: {
+                style: 'multi',
+                selector: 'td:first-child'
+            },
+
+            buttons: [
+                {
+                    text: "<i class='icon-trash'></i>",
+                    className: 'btn btn-default bulk-delete disabled',
+                    action: function (e, dt, node, config) {
+                        var selectedRows = dt.rows('.selected').data();
+                        var selectedIds = [];
+                        selectedRows.each(function (item) {
+                            selectedIds.push(item.order_id);
+                        });
+                        if (selectedIds.length > 0) {
+                            confirmMessage(function () {
+                                $.ajax({
+                                    url: '{{ link('sale/auction/delete') }}',
+                                    type: 'post',
+                                    data: {selected: selectedIds},
+                                    success: function (resp) {
+                                        var response = JSON.parse(resp);
+
+                                        if (response.success == '1')
+                                        {
+                                            notify('Success', 'success', response.success_msg);
+                                            dt.rows('.selected').remove().draw();
+                                        }
+                                        else
+                                        {
+                                            notify("{{ lang('error') }}", 'warning', response.error);
+                                        }
+                                    }
+                                });
+                            });
+                        }
+                    }
+                },
+                {
+                    extend: 'collection',
+                    text: '<i class="icon-drawer-out"></i>',
+                    className: 'btn btn-default btn-export',
+                    buttons: [
+                        {
+                            extend: 'copyHtml5',
+                            text: locales['buttons']['copy'],
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        },
+                        {
+                            extend: 'csvHtml5',
+                            text: locales['buttons']['export2csv'],
+                            fieldSeparator: ',',
+                            extension: '.csv',
+                            bom: "true",
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        },
+                        {
+                            extend: 'excelHtml5',
+                            text: locales['buttons']['export2excel'],
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        },
+                        {
+                            extend: 'pdfHtml5',
+                            text: locales['buttons']['export2pdf'],
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        }
+                    ]
+                },
+                {
+                    extend: 'colvis',
+                    text: '<i class="icon-grid3"></i>',
+                    className: 'btn btn-default btn-colvis',
+                    columns: [1,2,3, 4, 5, 6, 7, 8,9]
+                }
+            ],
+            order: [[1, "asc"]],
+            columns: [
+                {
+                    title: `<input type="checkbox" class="styled" id="toggleSelectAll">`,
+                    orderable: false,
+                    data: "order_id",
+                    width: "50px",
+                    // render: function(data, type, row) {
+                    //    return `<input type="checkbox" row-id="${row['order_id']}" class="select-checkbox">`;
+                    // }
+                },
+                {
+                    data: 'order_id',
+                    render: function (data, type, row) {
+                        return `<a class="text-semibold" href="{{ link('sale/order/info?order_id=') }}${row['order_id']}"> {{ lang('text_trip_number') }} {{ lang('text_trip_order_text') }}${row['order_id']}</a>`;
+                    }
+                },
+                 {
+                    data: 'customer',
+                    render: function (data, type, row) {
+                        return `<a target="_blank" href="{{ link('sale/customer/update?customer_id=')}}${row['customer_id']}">${row['customer']}</a>`;
+                    }
+                },
+                {
+                    data: 'trip_name',
+                    render: function (data, type, row) {
+                        return `<a target="_blank" href="{{ link('catalog/product/update?product_id=')}}${row['product_id']}">${row['trip_name']}</a>`;
+                    }
+                },
+                {
+                    data: 'driver',
+                    render: function (data, type, row) {
+                        return `<a target="_blank" href="{{ link('multiseller/seller/update?seller_id=')}}${row['seller_id']}">${row['driver']}</a>`;
+                    }
+                },
+                {data: 'from_date'},
+                {data: 'to_date'},
+                {data: 'seats_num'},
+                {data: 'destination'},
+                {% if canceled_active %}
+                {data: 'canceld_by'},
+                {% endif %}
+            ],
+            columnDefs: [
+                {
+                    orderable: false,
+                    className: 'select-checkbox',
+                    targets: 0
+                },
+
+                {
+                    orderable: true,
+                    className: 'sortable',
+                    
+                    targets: [1, 2, 3, 4, 5, 6, 7, 8,9]
+                },
+                {   {% if canceled_active %}
+                    targets: 10,
+                    {% else %}
+                    targets: 9,
+                    {% endif %}
+                    render: function (data, type, row) {
+                        return `<ul class="icons-list pull-right">
+                                <li class="dropdown">
+                                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                        <i class="icon-menu9"></i>
+                                    </a>
+                                    <ul class="dropdown-menu dropdown-menu-right" style="z-index:9999;">
+                                        <li><a class='removeItem' data-rowid="` + row['order_id'] + `"><i class='icon-trash'></i> ${locales['button_delete']}</a></li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        `;
+                    }
+                }
+            ],
+        });
+
+        $(".bulk-delete").attr({
+            "data-popup": "tooltip",
+            "title": locales['button_delete']
+        });
+        $(".btn-export").attr({
+            "data-popup": "tooltip",
+            "title": locales['button_export']
+        });
+        $(".btn-colvis").attr({
+            "data-popup": "tooltip",
+            "title": locales['button_colvis']
+        });
+
+        $('[data-popup="tooltip"]').tooltip();
+
+        $(".styled, .multiselect-container input").uniform({
+            radioClass: 'choice'
+        });
+
+        $('select').select2({
+            minimumResultsForSearch: Infinity,
+            width: 'auto'
+        });
+
+        table.on('select', function (e, objDT, type, indexes) {
+            if (table.rows('.selected').any()) $(".bulk-delete").removeClass('disabled');
+            else $(".bulk-delete").addClass('disabled');
+        }).on('deselect', function (e, objDT, type, indexes) {
+            if (table.rows('.selected').any()) $(".bulk-delete").removeClass('disabled');
+            else $(".bulk-delete").addClass('disabled');
+        }).on('search.dt', function (e, objDT) {
+            if (table.rows('.selected').any()) $(".bulk-delete").removeClass('disabled');
+            else $(".bulk-delete").addClass('disabled');
+        });
+
+        $('#toggleSelectAll').click(function () {
+            var checkbox = this;
+            if (checkbox.checked == true) {
+                table.rows().select();
+            } else {
+                table.rows().deselect();
+            }
+        });
+
+        $('.removeItem').click(function () {
+
+            var that = $(this);
+            var rowId = that.data('rowid');
+
+            confirmMessage(function () {
+                ajax("{{ link("sale/order/dtDelete'") }}", {id: [rowId]}, function (res) {
+                    var response = JSON.parse(res);
+
+                    if (response.success == '1')
+                    {
+                        table.row(that.parents('tr')).remove().draw();
+                        notify('Success', 'success', response.success_msg);
+                    }
+                    else
+                    {
+                        notify("{{ lang('error') }}", 'warning', response.error);
+                    }
+                });
+            });
+        });
+    });
+
+        </script>
+    {% endblock %}

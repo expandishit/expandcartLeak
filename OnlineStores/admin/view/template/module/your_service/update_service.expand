@@ -1,0 +1,85 @@
+{% extends "base.expand" %}
+
+{% set dualMenuEnabled = true %}
+
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+
+{% block title %}
+    {{ lang('ys_title') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block secondarymenu %}
+    {% include 'module/your_service/menu.expand' with {'active': '#settings'} %}
+{% endblock secondarymenu %}
+
+{% block headelements %}
+    {% include "includes/buttons_top.expand" with {'cancel': links['cancel']} %}
+{% endblock headelements %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="panel panel-white">
+            <div class="panel-heading">
+                <h6 class="panel-title"><span class="text-bold">{{ lang('ys_update_service') }}</span></h6>
+                <div class="heading-elements not-collapsible">
+                    <ul class="icons-list">
+                        <li><a data-action="collapse" class=""></a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel-body">
+                <form method="post" action="{{ form_link }}" class="form">
+                    {% if service_id is defined %}
+                        <input type="hidden" name="service_id" value="{{ service_id }}"/>
+                    {% endif %}
+                    <div class="form-group">
+                        <label>{{ lang('ys_service_name') }}</label>
+                        <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                            <div class="tab-content">
+                                {% for lng in languages %}
+                                    <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}" id="langTab{{ lng['language_id'] }}">
+                                        <input name="service[name][{{ lng['language_id'] }}]" class="form-control" value="{{ service['name'][lng['language_id']] is defined ? service['name'][lng['language_id']] : "" }}">
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                                {% for language in languages %}
+                                    <li class="{{ loop.first ? 'active' : '' }}">
+                                        <a href="#langTab{{ language['language_id'] }}" data-toggle="tab"
+                                            aria-expanded="false">
+                                            <img src="view/image/flags/{{ language['image'] }}" title="{{ language['name'] }}" class="pull-right">
+                                            <div> {{ language['name'] }}</div>
+                                        </a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    {% if service_id is defined %}
+                        {% if service.parent == 0 %}
+                        <div class="form-group">
+                            <label>{{ lang('ys_sub_services') }}</label>
+                            <select name="service[sub_services][]" class="form-control" multiple>
+                                {% for ys_service in services %}
+                                    <option value="{{ ys_service.ys_service_id }}" {{ ys_service.ys_service_id in service.sub_services ? 'selected' }}>{{ ys_service.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% endif %}
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+$(document).ready(function() {
+    $('select').select2();
+});
+</script>
+{% endblock content %}

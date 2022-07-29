@@ -1,0 +1,21 @@
+<?php
+// Heading
+$_['heading_title']     = 'Kupon Raporu'; 
+
+// Column
+$_['column_name']       = 'Kupon Adı'; 
+$_['column_code']       = 'Kod'; 
+$_['column_orders']     = 'Emirler'; 
+$_['column_total']      = 'Toplam'; 
+$_['column_action']     = 'Aksiyon'; 
+
+// Entry
+$_['entry_date_start']  = 'Baslangıç tarihi'; 
+$_['entry_date_end']    = 'Bitiş Tarihi'; 
+$_['entry_export_excel']  = 'Excel dosyasına aktar'; 
+$_['entry_stores']  = 'Mağazalar'; 
+$_['entry_affiliate']  = 'Bağlı Kuruluş'; 
+
+$_['text_orders']  = 'Sipariş Ayrıntıları'; 
+
+?>

@@ -1,0 +1,321 @@
+
+  {% if not google_map_api_key %}
+  <div class="alert alert-warning">
+      <i class="fa fa-info-circle"></i>
+      Please Provide with Google API Key from here: <a href="{{ checkout_app_link }}">{{ lang('text_google_api') }}</a>
+  </div>
+  {% endif %}
+  <!-- Start Form -->
+  <form class="form" action="{{ link('shipping/fds') }}">
+      <div class="row">
+          <!-- Status -->
+          <div class="col-md-3">
+              <div class="panel panel-white">
+                  <div class="panel-heading">
+                      <h6 class="panel-title"><span class="text-bold">{{ lang('entry_status')|trim(':') }}</span></h6>
+                      <div class="heading-elements not-collapsible">
+                          <ul class="icons-list">
+                              <li><a data-action="collapse" class=""></a></li>
+                          </ul>
+                      </div>
+                  </div>
+                  <div class="panel-body">
+                      <div class="collapse in" id="panel1">
+                          <div class="form-group" id="status-group">
+                              <label class="control-label">{{ lang('entry_status') }}</label>
+                              <div class="checkbox checkbox-switchery">
+                                  <label>
+                                      <input type="checkbox" onchange="changeStatus(this);" name="fds[status]" class="switchery" {{ fds['status'] not in ['0', 0, 'off'] or fds['status'] is null ? 'checked' }}>
+                                      <span class="switchery-status">{{ fds['status'] not in ['0', 0, 'off'] or fds['status'] is null ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                  </label>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+          <!-- End of Status -->
+
+          <!-- Fields -->
+          <div class="col-md-9">
+              <div class="panel panel-white">
+                  <div class="panel-heading">
+                      <h6 class="panel-title"><span class="text-bold">{{ lang('head_global_settings') }}</span></h6>
+                      <div class="heading-elements not-collapsible">
+                          <ul class="icons-list">
+                              <li><a data-action="collapse" class=""></a></li>
+                          </ul>
+                      </div>
+                  </div>
+                  <div class="panel-body">
+                      <div class="collapse in" id="panel2">
+
+                          <!-- <div class="form-group col-md-6" id="apikey-group">
+                              <label for="apikey" class="control-label">{{ lang('entry_apikey') }}</label>
+                              <input type="text" class="form-control" id="apikey" name="fds[apikey]"
+                                      value="{{ fds['apikey'] }}">
+                          </div>
+
+                          <div class="form-group col-md-6" id="apisecret-group">
+                              <label for="apisecret" class="control-label">{{ lang('entry_apisecret') }}</label>
+                              <input type="text" class="form-control" id="apisecret" name="fds[apisecret]"
+                                      value="{{ fds['apisecret'] }}">
+                          </div> -->
+
+                          <div class="form-group col-md-12" id="token-group">
+                              <label for="token" class="control-label">{{ lang('entry_token') }}</label>
+                              <input type="text" class="form-control" id="token" name="fds[token]"
+                                      value="{{ fds['token'] }}">
+                          </div>
+
+                          <div class="form-group col-md-6" id="cost-group">
+                              <label for="cost" class="control-label">{{ lang('entry_cost') }}</label>
+                              <input type="text" class="form-control touchspinney" id="cost" name="fds[cost]"
+                                      value="{{ fds['cost'] }}">
+                          </div>
+
+
+                          <div class="form-group col-md-6" id="tax_class_id-group">
+                              <label for="tax_class_id"
+                                      class="control-label">{{ lang('entry_tax_class') }}</label>
+                              <select name="fds[tax_class_id]" id="tax_class_id" class="form-control">
+                                  <option value="0">{{ lang('text_none') }}</option>
+                                  {% for tax_class in tax_classes %}
+                                      <option value="{{ tax_class['tax_class_id'] }}"
+                                              {{ fds['tax_class_id'] == tax_class['tax_class_id'] ? 'selected' : '' }}>
+                                          {{ tax_class['title'] }}
+                                      </option>
+                                  {% endfor %}
+                              </select>
+                              <span class="help-block"></span>
+                              <span class="text-muted">{{ langempty('entry_tax_class_help') }}</span>
+                          </div>
+
+                          <div class="form-group col-md-12" id="geo_zone_id-group">
+                              <label for="geo_zone_id" class="control-label">{{ lang('entry_geo_zone') }}</label>
+                              <select name="fds[geo_zone_id]" id="geo_zone_id" class="form-control">
+                                  <option value="0">{{ lang('text_all_zones') }}</option>
+                                  {% for geo_zone in geo_zones %}
+                                      <option value="{{ geo_zone['geo_zone_id'] }}"
+                                              {{ fds['geo_zone_id'] == geo_zone['geo_zone_id'] ? 'selected' : '' }}>
+                                          {{ geo_zone['name'] }}
+                                      </option>
+                                  {% endfor %}
+                              </select>
+                          </div>
+                          <!-- /Geo Zone -->
+
+                          <!-- Google location -->
+                          <hr/>
+                          <div class="form-group col-md-12" id="tax_class_id-group">
+                              <label for="cost" class="control-label">{{ lang('entry_location') }}</label>
+                              <input type="text" class="form-control" id="fds_location" name="fds[location]"
+                                      value="{{ fds['location'] }}">
+                                  <div id="map" style="height: 400px"></div>
+                              <span class="help-block"></span>
+                              <span class="text-muted">{{ lang('entry_location_help') }}</span>
+                          </div>
+
+                          <div class="form-group col-md-6" id="tax_class_id-group">
+                              <label for="cost" class="control-label">{{ lang('entry_lat') }}</label>
+                              <input type="text" class="form-control" id="fds_lat" name="fds[lat]"
+                                      value="{{ fds['lat'] }}">
+                          </div>
+
+                          <div class="form-group col-md-6" id="geo_zone_id-group">
+                              <label for="cost" class="control-label">{{ lang('entry_lng') }}</label>
+                              <input type="text" class="form-control" id="fds_lng" name="fds[lng]"
+                                      value="{{ fds['lng'] }}">
+                          </div>
+                          <div style="clear: both;"></div>
+                          
+                          
+                          
+                          <!-- /Google location -->
+                      </div>
+                  </div>
+              </div>
+          </div>
+          <!-- End of Fields -->
+      </div>
+
+  </form>
+  <!-- End Form -->
+
+  <script src="https://maps.googleapis.com/maps/api/js?key={{ google_map_api_key }}&libraries=places&callback=initAutocomplete" async defer></script>  
+  <script>
+
+  /* Google MAp */
+    var sessionedLng =  document.getElementById("fds_lng").value ; 
+    var sessionedLat = document.getElementById("fds_lat").value;
+
+    function getCurrentUserPos(){
+
+      $coord = {lat: 0 , lng: 0};
+
+      if(sessionedLng &&  sessionedLat ){
+
+        $coord = {lat: parseFloat(sessionedLat) , lng: parseFloat( sessionedLng) };
+
+      }
+
+
+      if (navigator.geolocation) { //check if geolocation is available
+                              
+              navigator.geolocation.getCurrentPosition(function(position){
+
+                if( position.coords.latitude  ){
+
+                  $coord = {lat: position.coords.latitude , lng: position.coords.longitude };
+
+                }
+
+              });   
+          
+          }
+
+        return $coord;
+
+    }
+    //-----------------------------------------------------------------------
+
+    var userPostionLatLng = getCurrentUserPos();
+
+    function initAutocomplete() {
+
+      var mapId = "map";
+    
+      var map = new google.maps.Map(document.getElementById(mapId), {
+        center: userPostionLatLng,
+        zoom: 13,
+        mapTypeId: 'roadmap'
+      });
+
+      // Create the search box and link it to the UI element.
+
+      var inputId = "fds_location";
+
+      var input = document.getElementById(inputId);
+
+      var searchBox = new google.maps.places.SearchBox(input);
+      
+      map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+
+      // Bias the SearchBox results towards current map's viewport.
+      map.addListener('bounds_changed', function() {
+        searchBox.setBounds(map.getBounds());
+      });
+
+      var markers = [];
+      // Listen for the event fired when the user selects a prediction and retrieve
+      // more details for that place.
+      searchBox.addListener('places_changed', function() {
+        
+        var places = searchBox.getPlaces();
+
+        if (places.length == 0) {
+          return;
+        }
+
+        document.getElementById("fds_lng").value = places[0].geometry.location.lng(); 
+        document.getElementById("fds_lat").value = places[0].geometry.location.lat();
+        
+        // Clear out the old markers.
+        markers.forEach(function(marker) {
+          marker.setMap(null);
+        });
+        markers = [];
+
+        // For each place, get the icon, name and location.
+        var bounds = new google.maps.LatLngBounds();
+        places.forEach(function(place) {
+          if (!place.geometry) {
+            console.log("Returned place contains no geometry");
+            return;
+          }
+          var icon = {
+            url: place.icon,
+            size: new google.maps.Size(71, 71),
+            origin: new google.maps.Point(0, 0),
+            anchor: new google.maps.Point(17, 34),
+            scaledSize: new google.maps.Size(25, 25)
+          };
+
+          // Create a marker for each place.
+          markers.push(new google.maps.Marker({
+            map: map,
+            icon: icon,
+            title: place.name,
+            position: place.geometry.location
+          }));
+
+
+          
+
+
+
+          if (place.geometry.viewport) {
+            // Only geocodes have viewport.
+            bounds.union(place.geometry.viewport);
+          } else {
+            bounds.extend(place.geometry.location);
+          }
+        });
+
+
+
+
+
+      var marker = new google.maps.Marker({
+        position: userPostionLatLng,
+        map: map,
+        title: 'Click to zoom'
+      });
+
+
+        map.addListener('click', function() {
+          // 3 seconds after the center of the map has changed, pan back to the
+          // marker.
+          window.setTimeout(function() {
+            
+            map.setCenter(marker.getPosition());
+            //map.panTo(marker.getPosition());
+          
+          }, 3000);
+        });
+
+        marker.addListener('click', function() {
+          map.setZoom(8);
+          map.setCenter(marker.getPosition());
+        }); 
+        
+        map.fitBounds(bounds);
+
+
+      });
+    }
+  /**************/
+  $('.touchspinney').TouchSpin({
+      decimals: 2,
+      max: Number.MAX_VALUE
+  });
+
+  function changeStatus(checkbox)
+  {
+      var self = $(checkbox);
+      var switch_status = self.siblings('.switchery-status');
+
+      if ( self.is(':checked') )
+      {
+          switch_status.html("{{ lang('text_enabled') }}");
+      }
+      else
+      {
+          switch_status.html("{{ lang('text_disabled') }}");
+      }
+  }
+  
+      $('select').select2({
+          minimumResultsForSearch: 3
+      });
+  </script>

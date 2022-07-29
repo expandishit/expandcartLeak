@@ -1,0 +1,195 @@
+
+<style>
+    .loader {
+
+        /*position: relative;*/
+        /*left: 40%;*/
+        /*top: 50%;*/
+        position: relative;
+        left: 40%;
+        border: 16px solid #f3f3f3;
+        border-radius: 50%;
+        border-top: 16px solid #3498db;
+        width: 60px;
+        height: 60px;
+        -webkit-animation: spin 2s linear infinite; /* Safari */
+        animation: spin 2s linear infinite;
+    }
+
+    /* Safari */
+    @-webkit-keyframes spin {
+        0% { -webkit-transform: rotate(0deg); }
+        100% { -webkit-transform: rotate(360deg); }
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .paypalBtn{
+        position: relative;
+        z-index: 0;
+    }
+</style>
+
+<script src='{{ paypal_endpoint_js }}'
+        data-partner-attribution-id = "ExpandCart_Cart_MEA"
+        intent = "capture"
+        commit = "true"
+        data-namespace = 'PayPalSdk'></script>
+
+<script type="text/javascript">
+    $( document ).ready(function() {
+
+
+        window.onload =  function () {
+            $('#pp_express_load').fadeOut();
+            //setTimeout(async function () {
+                PayPalSdk.Buttons({
+                    createOrder:  function () {
+                        var options = {};
+
+                         $(".product-add-form input[type='text'][name!='quantity'], .product-add-form input[type='radio']:checked, .product-add-form input[type='checkbox']:checked, .product-add-form select, .product-add-form textarea, #minimum_deposit_customer_price,#minimum_deposit_price").each(function(e) {
+
+                            if($(this).attr("name") != "undefined") {
+
+                                options[$(this).attr("name").replace( /\D+/g, '')] = $(this).val();
+                            }
+                        });
+
+                        return fetch('index.php?route=payment/paypal/createOrder', {
+                            method: 'post',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                "quantity": $(".product-add-form input[type='text'][name='quantity']").val(),
+                                "product_id": "{{ product_id }}",
+                                "option":  options,
+
+                            }),
+                        }).then(function (res) {
+                            return res.json();
+                        }).then(function (data) {
+
+                            if(data["error"] != null) {
+
+                                $.each(data['error'], function (index, error) {
+                                    if(index == "quantity" || index == "warning") {
+                                        $('#notification').html('<br><div class="alert alert-warning alert-dismissible" style="display: none;" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>' + error + '</div>');
+
+                                        $('.alert-warning').fadeIn('slow');
+
+                                        $('html, body').animate({scrollTop: 0}, 'slow');
+                                        return;
+
+                                    } else {
+
+                                        for (errorKeyName in error) {
+
+
+                                            $('#notification').html('<br><div class="alert alert-warning alert-dismissible" style="display: none;" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>' + error[errorKeyName] + '</div>');
+
+                                            $('.alert-warning').fadeIn('slow');
+
+                                            $('html, body').animate({scrollTop: 0}, 'slow');
+                                        }
+                                    }
+                                });
+
+                                if(data["redirect"] != null) {
+                                    window.location.href = data["redirect"];
+                                }
+                                return;
+
+                            } else if(!data.id) {
+                                var errorMessage = (data.details[0].value ) ? data.details[0].value + ": " : "";
+
+                                errorMessage += data.details[0].description;
+
+                                if(data.details[0].field.indexOf("national_number") != -1) {
+                                    errorMessage = "phone number is not in correct format";
+                                }
+
+                                $("#button-cart").before("<span class='btn-danger paypal-error' style='display: block; margin-bottom: 5px;'>" + errorMessage + "</span>")
+                                return;
+                            }
+                            return data.id; // Use the same key name for order ID on the client and server
+                        });
+
+                    },
+                    onApprove: function (data, actions) {
+                        if($(".loader").length == 0) {
+                            $("#pp-checkout-button").after("<div class='loader'></div>");
+
+                        }
+                        return fetch('index.php?route=payment/paypal/approveOrder', {
+                            method: 'POST',
+                            headers: {
+                                'content-type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                orderID: data.orderID
+                            })
+                        }).then(function (res) {
+                            return res.json();
+                        }).then(function (res) {
+                            if(res.details != null && res.details.details != null) {
+                                var errorDetail = Array.isArray(res.details.details) && res.details.details[0];
+
+                                if (errorDetail && errorDetail.issue === 'INSTRUMENT_DECLINED') {
+                                    return actions.restart(); // Recoverable state, per:
+                                    // https://developer.paypal.com/docs/checkout/integration-features/funding-failure/
+                                } else {
+                                    location.href = res.redirectTo;
+                                }
+                            } else {
+
+                                location.href = res.redirectTo;
+
+                            }
+                        });
+                    },
+                    onCancel: function (data) {
+
+                        if(window.location.href.indexOf("product") != -1) {
+
+                            var options = {};
+
+                            $(".product-add-form input[type='radio']:checked, .product-add-form input[type='checkbox']:checked, .product-add-form select, .product-add-form textarea, #minimum_deposit_customer_price,#minimum_deposit_price").each(function(e) {
+
+                                if($(this).attr("name") != "undefined") {
+
+                                    options[$(this).attr("name").replace( /\D+/g, '')] = $(this).val();
+                                }
+                            });
+
+                            return fetch('index.php?route=payment/paypal/removeProduct', {
+                                method: 'post',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    "quantity": $(".product-add-form input[type='text']").val(),
+                                    "product_id": "{{ product_id }}",
+                                    "option": options,
+
+                                })
+                            });
+
+                        }
+
+
+                    },
+                    style: {
+                        size: 'responsive',
+                        shape: 'rect',
+                        layout: 'horizontal',
+                        color: '{{ paypal_button_color }}',
+                        tagline: false
+                    }
+                }).render('#pp-checkout-button');
+          //  }, 3000);
+        };
+    });
+</script>

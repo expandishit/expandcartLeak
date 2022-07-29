@@ -1,0 +1,283 @@
+<div id="row" class="container">
+    <!-- Breadcrumbs -->
+    <div class="breadcrumbs">
+        <div class="container">
+            <div class="row">
+                <div class="col-xs-12">
+                    <ul>
+                        {% for breadcrumb in breadcrumbs %} {% if loop.last %}
+                        <li>
+                            <strong>{{ breadcrumb['text'] }}</strong>
+                        </li>
+                        {% else %}
+                        <li class="home">
+                            <a title="Go to Home Page" href="{{ breadcrumb['href'] }}">{{ breadcrumb['text'] }}</a>
+                            <span>&raquo;</span>
+                        </li>
+                        {% endif %} {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Breadcrumbs End -->
+    <br>
+
+    <div class="page-title-base">
+        <h1 class="title-base">{{ lang('heading_title') }}</h1>
+    </div>
+
+    <div class="wishlist-item table-responsive">
+
+        <table class="col-md-12">
+            <thead>
+                <tr>
+                    <th class="">{{ lang('text_order_detail') }}</th>
+                    <th class=""></th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr>
+                    <td class="col-md-6">
+                        {% if invoice_no %}
+                        <b>{{ lang('text_invoice_no') }}</b> {{ invoice_no }}
+                        <br /> {% endif %}
+                        <b>{{ lang('text_order_id') }}</b> #{{ order_id }}
+                        <br />
+                        <b>{{ lang('text_date_added') }}</b> {{ date_added }}<br />
+                        {% if custom_fields['confirm'] %}
+                            {% for cfd in custom_fields['confirm'] %}
+                                <b>{{ cfd['field_title'] }}</b>: {{ cfd['value'] }}<br />
+                            {% endfor %}
+                        {% endif %}
+                    </td>
+                    <td class="col-md-6">
+                        {% if payment_method %}
+                        <b>{{ lang('text_payment_method') }}</b> {{ payment_method }}
+                        <br /> {% endif %}
+                        {% if shipping_method %}
+                            <b>{{ lang('text_shipping_method') }}</b> {{ shipping_method }} <br>
+                            {% if awb_url is defined and awb_url != "" %}
+                                <a href="{{ awb_url }}" target="_blank" class="btn btn-primary btn-xs">{{ lang('text_print_awb') }}</a>
+                            {% endif %}
+                        {% endif %}
+                        {% if(delivery_slot) %}
+                            <br><b>{{ lang('text_delivery_day') }} :</b>{{ order_delivery_slot['day_name'] }}<br>
+                            <b>{{ lang('text_delivery_date') }} :</b>{{ order_delivery_slot['delivery_date'] }}<br>
+                            <b class="slot-float-right">{{ lang('text_delivery_slot') }} :</b><span class="slot-dir-left">{{ order_delivery_slot['slot_description'] }}</span>
+
+                        {% endif %}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+
+        <table class="col-md-12" style="margin-top: 40px;">
+            <thead>
+                <tr>
+                    <th>{{ lang('text_payment_address') }}</th>
+                    {% if shipping_address %}
+                    <th>{{ lang('text_shipping_address') }}</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>{{ payment_address }}
+                        {% if custom_fields['payment_address'] %}
+                            {% for pfd in custom_fields['payment_address'] %}
+                                <br/><br/>
+                                <b>{{ pfd['field_title'] }}</b>: {{ pfd['value'] }}
+                            {% endfor %}
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if shipping_address %}
+                            {{ shipping_address }}
+                        {% endif %}
+                        {% if custom_fields['shipping_address'] %}
+                            <br/><br/>
+                            {% for sfd in custom_fields['shipping_address'] %}
+                                <b>{{ sfd['field_title'] }}</b>: {{ sfd['value'] }}
+                            {% endfor %}
+                        {% endif %}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+
+        <table class="table table-bordered cart_summary" style="margin-top: 40px;">
+            <thead>
+                <tr>
+                    <th>{{lang('image')}}</th>
+                    <th>{{ column_name }}</th>
+        
+                    {% if show_videos_links %}
+                    <th class="left">{{ lang('column_url') }}</th>
+                    {% endif %}
+
+                    <th>{{ lang('column_model') }}</th>
+                    <th>{{ lang('column_quantity') }}</th>
+                    <th>{{ lang('column_price') }}</th>
+                    <th>{{ lang('column_total') }}</th>
+                    <th>-</th>
+                </tr>
+            </thead>
+            <tbody>
+             {% if seller_based %}
+             {{ include('default/template/account/order_info_order_products.expand') }}
+             {% else %}
+                {% for product in products %}
+                <tr>
+                    <td class="left">
+                        <img src="{{ product['image'] }}" alt="">
+                    </td>
+                    <td>{{ product['name'] }}
+                        {% for option in product['option'] %}
+                        <br /> &nbsp;
+                        <small> - {{ option['name'] }}: {{ option['value'] }}</small>
+                        {% endfor %}
+                        
+                        {% if product['rentData'] %}
+                        <div>
+                            {{ lang('product_for_rent_from') }}
+                            <br> {{ product['rentData']['range']['from'] }} {{ lang('product_for_rent_to') }} {{ product['rentData']['range']['to']
+                            }} {{ lang('product_for_rent_for') }} {{ product['rentData']['diff'] }} {{ lang('text_day') }}
+                        </div>
+                        {% endif %}
+                    </td>
+                    {% if show_videos_links  %}
+                    <td class="left"><a href="{{ product['external_video_url'] }}">{{ product['external_video_url'] }}</a></td>
+                    {% endif %}
+
+                    <td>{{ product['model'] }}</td>
+                    <td>{{ product['quantity'] }}</td>
+                    <td>{{ product['price'] }}</td>
+                    <td>{{ product['total'] }}</td>
+                    <td>
+                    {% if returned_products is defined and product['product_id'] in returned_products|keys %}
+                        {{ lang( return_type ~  'ed_text') }} {{ returned_products[product['product_id']] }}
+                    {% elseif return_limit is defined %}
+                        {{ lang( return_type ~ '_limit') }}
+                    {% else %}
+                        <a class="" href="{{ product['return'] }}" title="{{ lang('button_' ~ return_type) }}"><i class="fa fa-trash"></i></a>
+                    {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+                  {% endif %}
+                {% for voucher in vouchers %}
+                <tr>
+                    <td>{{ voucher['description'] }}</td>
+                    <td></td>
+                    <td>1</td>
+                    <td>{{ voucher['amount'] }}</td>
+                    <td>{{ voucher['amount'] }}</td>
+                    {% if products %}
+                    <td></td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+
+            <tfoot>
+                {% for total in totals %}
+                <tr class="cart-subtotal">
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td>{{ total['text'] }}</td>
+                    <td>
+                        <b>{{ total['title'] }}:</b>
+                    </td>
+                    {% if products %}
+                    <td colspan="2"></td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tfoot>
+        </table>
+
+        {% if comment %}
+        <table class="table col-md-12">
+            <thead>
+                <tr>
+                    <th>{{ lang('text_comment') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>{{ comment }}</td>
+                </tr>
+            </tbody>
+        </table>
+        {% endif %}
+
+        <br><br><br><br>
+        {% if histories %}
+        <div class="page-title-base">
+            <h1 class="title-base">{{ lang('text_history') }}</h1>
+        </div>
+
+        {% if track_url %}
+        <br>
+        <a href="{{ track_url }}" class="button" target="_blank">{{ lang('text_tracking_aramex') }}</a>
+        <br>
+        <br>
+        {% endif %}
+
+
+        {% if awb_no %}
+	    
+        <div>
+        
+            <a href="https://zajilship.com/traking_shipment_detail/{{ awb_no }}" class="btn btn-primary button" target="_blank">Track zajil Shipment</a>
+        
+        </div>
+	    
+        {% endif %}
+
+        {% if shipping_tracking_url|length %}
+            <br>
+            <a href="{{ shipping_tracking_url }}" class="btn btn-success" target="_blank">{{ lang('text_shipping_tracking') }}</a>
+            <br>
+            <br>
+        {% endif %}
+	
+
+
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>{{ lang('column_date_added') }}</th>
+                    <th>{{ lang('column_status') }}</th>
+                    <th>{{ lang('column_comment') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for history in histories %}
+                <tr>
+                    <td>{{ history['date_added'] }}</td>
+                    <td>{{ history['status'] }}</td>
+                    <td>{{ history['comment'] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="">
+                <a href="{{ link('account/account', '', 'SSL') }}" class="link">{{ lang('button_back') }}</a>
+            </div>
+        </div>
+    </div>
+</div>

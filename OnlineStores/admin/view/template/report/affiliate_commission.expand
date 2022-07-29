@@ -1,0 +1,237 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% set dualMenuEnabled = false %}
+
+{% set bodyClasses = "has-detached-left" %}
+
+{% block title %}
+    {{ lang('heading_title') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+{% endblock headelements %}
+
+{% block content %}
+    <!-- Detached sidebar -->
+    <div class="sidebar-detached">
+        <div class="sidebar sidebar-default sidebar-separate">
+            <div class="sidebar-content">
+                <!-- Sidebar search -->
+                <div class="panel panel-white">
+                    <div class="panel-heading">
+                        <div class="panel-title text-semibold">
+                            <i class="icon-search4 text-size-base position-left"></i>
+                            {{ heading_title }}
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <form id="filter_report_sales">
+                            {% if(multi_store_manager) %}
+                                <div class="form-group">
+                                    <label>{{ entry_stores }}</label>
+                                    <select data-placeholder="Select your stores"  multiple id="filter_stores" class="select"
+                                            name="filter_stores[]">
+                                        {% for stores_code in stores_codes %}
+                                            <option value="{{ stores_code.STORECODE }}">{{ stores_code.DOMAINNAME }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            {% endif %}
+                            <div class="form-group">
+                                <label>{{ entry_date_start }}</label>
+                                <input type="text" class="form-control daterange-basic"
+                                       value="{{ filter_date_start }} - {{ filter_date_end }}" id="date_all"
+                                       name="date_all">
+                            </div>
+                            <button type="submit" class="btn bg-blue btn-block">
+                                <i class="icon-search4 text-size-base position-left"></i>
+                                {{ button_filter }}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <!-- /sidebar search -->
+            </div>
+        </div>
+    </div>
+    <!-- /detached sidebar -->
+
+    <!-- Detached content -->
+    <div class="container-detached">
+        <div class="content-detached">
+            <div class="panel panel-flat">
+                <div class="features-table-container basic-btns rounded">
+                    <table class="table datatable-basic" id="reports-sales">
+                        <thead>
+                        <tr>
+                            <th>{{ column_affiliate }}</th>
+                            <th>{{ column_email }}</th>
+                            <th>{{ column_status }}</th>
+                            <th>{{ column_commission }}</th>
+                            <th>{{ column_orders }}</th>
+                            <th>{{ column_total }}</th>
+                            <th>{{ column_action }}</th>
+                        </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- /detached content -->
+
+    <script type="text/javascript">
+
+
+        var action = "{{ action }}" ;
+        //==================================================== Basic Date picker date range ================================
+        $('.daterange-basic').daterangepicker({
+
+            "autoApply": true,
+            // applyClass: 'bg-slate-600',
+            // cancelClass: 'btn-default',
+            ranges: locales['drp_ranges'],
+            locale: locales['drp_locale'],
+             opens: locales['drp_direction']
+
+
+        });
+
+        $('.daterangepicker-inputs').addClass('hidden');
+        //==================================================== Basic Date picker date range ================================
+        //==================================================== Basic datatable ================================
+        $(function () {
+            $.extend($.fn.dataTable.defaults, {
+                autoWidth: false,
+                columnDefs: [{
+                    orderable: false,
+                    width: '100px',
+                }],
+                dom: '<"datatable-header"fB><"datatable-scroll-wrap"t><"datatable-footer"lip>',
+                
+                language: {
+                    ...locales['dt_language'],
+                    search: ''
+                },
+                buttons: [
+                    {
+                        extend: 'excelHtml5',
+                        text: `{% if base.currentplan == "53" and base.platform_version >= base.current_version %}<i class="fas fa-lock gray-lock"></i>{% else %}<i class='icon-drawer-out'></i>{% endif %} {{ lang('entry_export_excel') }}`,
+                        className: `btn btn-default {% if base.currentplan == "53" and base.platform_version >= base.current_version %}plan-lock-btn disabled{% endif %}`,
+                    },                    
+                    {
+                        text: `{% if base.currentplan == "53" and base.platform_version >= base.current_version %}<i class="fas fa-lock gray-lock"></i>{% else %}<i class='icon-drawer-out'></i>{% endif %} {{ lang('entry_export_all') }}`,
+                        className: `btn btn-default {% if base.currentplan == "53" and base.platform_version >= base.current_version %}plan-lock-btn disabled{% endif %}`,
+                        action: function () {
+                            window.location.href = "{{ export_link }}";
+                        }
+                    }
+                ],
+                drawCallback: function () {
+                    $(this).find('tbody tr').slice(-3).find('.dropdown, .btn-group').addClass('dropup');
+                },
+                preDrawCallback: function () {
+                    $(this).find('tbody tr').slice(-3).find('.dropdown, .btn-group').removeClass('dropup');
+                }
+            });
+
+            var table =  $('.datatable-basic').DataTable({
+                "processing": true,
+                "serverSide": true,
+                
+                language: {
+                    ...locales['dt_language'],
+                    search: ''
+                },
+                "ajax": {
+                    url: action, // json datasource
+                    type: "post",  // method  , by default get
+                    error: function () {  // error handling
+                        $("#reports-sales-error").html(" ");
+                        $("#reports-sales").append('<tbody id="reports-sales-error"><tr><th colspan="6">No data found in the server</th></tr></tbody>');
+                        $("#reports-sales_processing").css("display", "none");
+
+                    }
+                },
+                "columnDefs": [ {
+                    "targets": -1,
+                    "data": null,
+                    "orderable": false,
+                    "defaultContent": '<button class=\'btn btn-primary\'><i class=\'fa fa-edit position-left\'></i>{{ edit_button_text }}</button>'
+                } ]
+            });
+
+
+            $('#reports-sales tbody').on( 'click', 'button', function () {
+                var data = table.row( $(this).parents('tr') ).data();
+                // alert( data[4]['text'] +"'s salary is: "+ data[4]['href'] );
+                window.location.href = data[6]['href'];
+            } );
+
+
+            //==================================================== Basic datatable ================================
+
+            // ===================================================   submit form  ==================================
+
+            $("#filter_report_sales").submit(function (e) {
+
+
+                var table = $('.datatable-basic').DataTable({
+                    "destroy": true,
+                    "processing": true,
+                    "serverSide": true,
+                    
+                language: {
+                    ...locales['dt_language'],
+                    search: ''
+                },
+                    "ajax": {
+                        url: action, // json datasource
+                        type: "post",  // method  , by default get
+                        data: {
+                            'date': $('#date_all').val(),
+                            {% if(multi_store_manager) %} 'filter_stores': $('#filter_stores').val(),{% endif %}
+
+
+                        },
+                        error: function () {  // error handling
+                            $("#reports-sales-error").html(" ");
+                            $("#reports-sales").append('<tbody id="reports-sales-error"><tr><th colspan="6">No data found in the server</th></tr></tbody>');
+                            $("#reports-sales_processing").css("display", "none");
+
+                        }
+                    },
+                    "columnDefs": [ {
+                        "targets": -1,
+                        "data": null,
+                        "orderable": false,
+                        "defaultContent": '<button class=\'btn btn-primary\'><i class=\'fa fa-edit position-left\'></i>{{ edit_button_text }}</button>'
+                    } ]
+                });
+
+
+
+
+                $('#reports-sales tbody').on( 'click', 'button', function () {
+                    var data = table.row( $(this).parents('tr') ).data();
+                    // alert( data[4]['text'] +"'s salary is: "+ data[4]['href'] );
+                    window.location.href = data[6]['href'];
+                } );
+
+                console.log($('#filter_report_sales').serialize());
+
+                e.preventDefault(); // avoid to execute the actual submit of the form.
+            });
+
+
+        });
+    </script>
+
+
+
+{% endblock content %}

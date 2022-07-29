@@ -1,0 +1,1247 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% set dualMenuEnabled = true %}
+
+{% block title %}
+    {{ lang('heading_title', 'module/mega_filter') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block secondarymenu %}
+    {% include 'module/mega_filter_menu.expand' with {'expand': '#mega_filter', 'active': '#layout'} %}
+{% endblock secondarymenu %}
+
+{% block headelements %}
+    {% include "includes/buttons_top.expand" %}
+{% endblock headelements %}
+
+{% block content %}
+<form action="{{ action_save_data }}?mf_id={{ layout_id }}" class="form" method="post" enctype="multipart/form-data">
+	<div class="panel panel-white">
+          <div class="panel-heading">
+              <h6 class="panel-title"><span class="text-bold">{{ text_settings }}</span></h6>
+              <div class="heading-elements not-collapsible">
+                  <ul class="icons-list">
+                      <li><a data-action="collapse" class=""></a></li>
+                  </ul>
+              </div>
+          </div>
+          <div class="panel-body">
+              <div class="collapse in" id="fields-panel">
+              	<div class="row">
+              		<div class="col-md-12">
+                      <div class="form-group" id="name-0-group">
+                           <label class="control-label">{{entry_name}}</label>
+                           <input type="text" value="{{ modules[layout_id]['name'] }}" name="mega_filter_module[name]" class="form-control" id="name-0">
+							<input type="hidden" value="{{ layout_id }}" name="mega_filter_module[id]" class="" id="layout-0">
+                           <span class="help-block"></span>
+                           <span class="text-muted"></span>
+                       </div>
+                    </div>
+              	</div>
+              	<div class="row">
+              		<div class="tabbable nav-tabs-vertical nav-tabs-right col-md-12">
+                        <div class="tab-content">
+                            {% for lng in languages %}
+                                <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}"
+                                     id="langTab{{ lng['language_id'] }}">
+                                    <div class="form-group" id="content_{{lng['language_id']}}-group">
+                                    	<label class="control-label">
+                                            {{entry_title}}
+                                        </label>
+                                    	<input type="text" value="{{ modules[layout_id]['title'][lng['language_id']] }}" name="{{ 'mega_filter_module[title][' ~ lng['language_id'] ~ ']'}}" class="form-control">
+                                        <span class="help-block"></span>
+                                        <span class="text-muted"></span>
+                                    </div>
+
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                            {% for language in languages %}
+                                <li class="{{ loop.first ? 'active' : '' }}">
+                                    <a href="#langTab{{ language['language_id'] }}" data-toggle="tab"
+                                       aria-expanded="false">
+                                        <img src="view/image/flags/{{ language['image'] }}"
+                                             title="{{ language['name'] }}" class="pull-right">
+                                        <div> {{ language['name'] }}</div>
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+              	</div>
+              	<div class="row">
+              		<div class="col-md-6">
+	                      <div class="form-group">
+	                      	<div class="col-md-5">
+								<label><span >{{entry_layout}}</span></label>
+								<span class="help-block"></span>
+	                        	<span class="text-muted">{{text_checkbox_guide}}</span>
+							</div>
+							<div class="col-md-7 well well-sm checkbox-container" style='height: 165px;overflow: auto'>	
+                                {% for layout in layouts %}
+									{% set lyt_id = layout['layout_id'] %}   
+                                  <div class="checkbox">
+                                      <label>
+                                            <input type="checkbox" class="styled" name="{{ 'mega_filter_module[layout_id]['~ lyt_id ~']'}}" value="{{ lyt_id }}" {% if lyt_id in modules[layout_id]['layout_id'] %} checked="checked" {% endif %}  />
+                                            {{ layout['name'] }}
+                                      </label>
+                                  </div>
+                                 {% endfor %}
+								
+                            </div>
+						</div>
+	              	</div>
+              	<div class="col-md-6">
+                        <!-- Customer Groups -->
+                        <div class="col-md-9">
+                           <h5>{{entry_customer_groups}}</h5>
+                           <span class="help-block"></span>
+                            <span class="text-muted">{{text_checkbox_guide}}</span>
+                        </div>
+                        <div class="col-md-3">
+
+                            {% for custGroup in customerGroups %} 
+                             {% set curr_id = custGroup['customer_group_id'] %}     
+                             <div class="checkbox">
+                                <label>
+                                <input class="styled customer-group" type="checkbox" value="{{ curr_id }}"
+                                {% if curr_id in modules[layout_id]['customer_groups'] %} checked="checked" {% endif %}/> {{ custGroup['name'] }}
+                                </label>
+                             </div>
+                             {% endfor %}
+                        </div>
+                     </div>
+                </div>
+
+                <div class="row">
+                	<div class="col-md-6">
+                      <div class="form-group" id="mega_filter_module_display_options_as-group">
+                           <label class="control-label">{{entry_display_options_as}}</label>
+                           <select name="mega_filter_module[display_options_as]" class="form-control selectBasic">
+                              <option value="" selected="selected">---</option>
+								<option value="inline_horizontal" {{ modules[layout_id]['display_options_as'] == 'inline_horizontal' ? 'selected="selected"' }} >{{text_display_as_inline_horizontal}}</option>
+								<option value="modern_horizontal" {{ modules[layout_id]['display_options_as'] == 'modern_horizontal' ? 'selected="selected"' }}>{{text_display_as_modern_horizontal}}</option>
+                           </select>
+                           <span class="help-block"></span>
+                           <span class="text-muted"></span>
+                       </div>
+                    </div>
+                    <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="control-label">{{entry_status}}</label>
+                              	<div class="checkbox checkbox-switchery no-margin">
+									<label>
+										<input type="checkbox" onchange="changeStatus(this);" name="mega_filter_module[status]" class="switchery dateIntervalSelect" {{ modules[layout_id]['status'] == '1' ? 'checked' }} data-checked='{{ date_interval }}'>
+										<span class="switchery-status">
+											{% if modules[layout_id]['status'] == '1' %} {{text_enabled}} {% else %} {{text_disabled}} {% endif %}
+										</span>
+									</label>
+                              	</div>
+                               <span class="help-block"></span>
+                               <span class="text-muted"></span>
+                            </div>
+                	</div>
+                </div>
+
+								<div id="tab-0-settings" class="tab-pane active">
+									<table >
+									<tbody>
+										<!-- <tr>
+											<td>Layout:<span class="help">If empty its available for all</span></td>
+											<td data-name="layout">
+												<div>
+													<div class="scrollbox">
+														{% for layout in layouts %}
+															{% set lyt_id = layout['layout_id'] %}   
+															<div>
+								                            	<input type="checkbox" value="{{ lyt_id }}" name="{{ 'mega_filter_module[layout_id]['~ lyt_id ~']'}}" {{ modules[layout_id]['layout_id'][lyt_id] == 1 ? 'checked="checked"' }}> {{ layout['name'] }}
+								                            </div>
+							                            {% endfor %}
+													</div>
+													<a onclick="jQuery(this).parent().find(':checkbox').attr('checked', true).trigger('change');">Select All</a> / <a onclick="jQuery(this).parent().find(':checkbox').attr('checked', false).trigger('change');">Unselect All
+													</a>
+												</div>
+												</td>
+											</tr> 
+											<tr id="category_id-input-0" data-name="layout-1" style="display: none;">
+												<td>{{entry_show_in_categories}}<span class="help">{{text_autocomplete}}</span></td>
+												<td data-name="category-name">
+													<input type="text" value="" name="category-name" autocomplete="off" class="ui-autocomplete-input">
+													<input type="checkbox" value="1" name="mega_filter_module[category_id_with_childs]" style="margin: 0 5px; vertical-align:middle;">{{text_apply_also_to_childs}}
+												</td>
+											</tr>
+											<tr id="category_id-list-0" data-name="category-list" style="display: none;">
+												<td><span class="help">{{text_checkbox_guide}}</span></td>
+												<td><div><div class="scrollbox"></div></div></td>
+											</tr>
+											<tr id="category_id-hide-input-0" data-name="category-hide-input" style="display: none;">
+												<td>Hide in categories:<span class="help">{{text_autocomplete}}</span></td>
+												<td data-name="category-hide-name">
+													<input type="text" value="" name="category-hide-name" autocomplete="off" class="ui-autocomplete-input">
+													<input type="checkbox" value="1" name="mega_filter_module[hide_category_id_with_childs]" style="margin: 0 5px; vertical-align:middle;">Apply also to childs
+												</td>
+											</tr>
+											<tr id="category_id-hide-list-0" data-name="category-hide-list" style="display: none;">
+												<td><span class="help">{{ text_checkbox_guide }}</span></td>
+												<td><div><div class="scrollbox"></div></div>
+												</td>
+											</tr>
+											<tr style="display: none;">
+												<td>Store:</td>
+												<td data-name="store-id">
+													<div>
+														<div class="scrollbox">
+															<div class="even">
+																<input type="checkbox" value="" name="mega_filter_module[store_id][]" id="store_id-0" style="vertical-align: middle; margin: 0;"> اسم متجرك <b>(Default)</b>
+															</div>
+														</div>
+														<a onclick="jQuery(this).parent().find(':checkbox').attr('checked', true).trigger('change');">Select All</a> / <a onclick="jQuery(this).parent().find(':checkbox').attr('checked', false).trigger('change');">Unselect All</a>
+													</div>
+												</td>
+											</tr>-->
+
+										</tbody>
+									</table>
+								</div>
+
+								<div id="tab-0-filters" class="tab-pane" style="display: none;"><div class="pull-left input-group mf-filter" style="padding:5px"><input type="text" class="form-control pull-left input-sm" placeholder="Filter Group Name" style="width:200px"><span class="input-group-btn pull-left"><button type="button" class="btn btn-primary btn-sm"><i class="glyphicon glyphicon-search"></i></button></span></div><a href="#" data-load-type="filters" class="btn btn-xs btn-danger" style="float:right; margin: 4px 0;" data-loaded="1"><i class="glyphicon glyphicon-trash"></i> Reset to default values</a><div class="clearfix"></div><div class="cnt">
+									<div style="padding:5px">
+										Display filters based on category: 
+										<div class="btn-group"><label class="btn btn-primary btn-xs"><input type="radio" name="mega_filter_module[filters][based_on_category]" value="1" style="display: none;">{{text_yes}}</label><label class="btn btn-primary btn-xs active"><input type="radio" name="mega_filter_module[filters][based_on_category]" checked="checked" value="0" style="display: none;">{{text_no}}</label></div>	</div>
+
+								<table class="table table-hover filters" id="0_mf-filters-table">
+									<thead>
+										<tr>
+											<th class="text-center">
+												<input type="checkbox" class="check-all" style="float:left;"> {{text_filter_name}}			</th>
+											<th class="text-left" width="100">{{text_enabled}}</th>
+											<th class="text-left" width="300">{{text_display_as_type}}</th>
+											<th class="text-center" width="160">{{text_collapsed_by_default}}</th>
+											<th class="text-center" width="180">{{text_display_list_of_items}}</th>
+											<th class="text-center" width="180">{{text_sort_order_values}}</th>
+											<th class="text-left" width="60">{{text_sort_order}}</th>
+										</tr>
+									</thead>
+									<tbody>
+											</tbody>
+								</table>
+
+								<div class="pagination">
+									</div>
+
+								<script type="text/javascript">		
+									jQuery('#0_mf-filters-table input[type=checkbox][class=check-all]').change(function(){
+										var s = jQuery(this).is(':checked');
+										
+										jQuery('input[name^="mega_filter_module[filters]["][name*="][enabled]"][type="radio"]').each(function(){
+											var val = $(this).val();
+											
+											$(this).prop('checked', val==s);
+											$(this).parent()[val==s?'addClass':'removeClass']('active');
+										});
+									});
+								</script></div>
+							</div>
+						
+			</div>
+	</div>
+</div>
+
+
+      <!--£££££££££ Base Attribute -->
+      <div class="panel panel-white">
+          <div class="panel-heading">
+              <h6 class="panel-title"><span class="text-bold">{{ tab_base_attributes }}</span></h6>
+              <div class="heading-elements not-collapsible">
+                  <ul class="icons-list">
+                      <li><a data-action="collapse" class=""></a></li>
+                  </ul>
+              </div>
+          </div>
+          <div class="panel-body" style="padding: 0">
+              <div id="tab-0-base-attributes" class="tab-pane">
+						<div class="clearfix"></div>
+						<div class="cnt" style="overflow-x: auto;">
+							<table class="table table-hover">
+								<thead>
+									<tr>
+										<th class="left">{{ text_attribute_name }}</th>
+										<th class="center" width="80">{{ text_enabled}}</th>
+										<th class="center" width="80">{{ text_sort_order }}</th>
+										<th class="center" width="180">{{ text_display_as_type }}</th>
+										<th class="center" width="145">{{ text_display_list_of_items }}</th>
+										<th class="left">{{ text_settings }}</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr>
+										<td>{{attrib_search}}</td>
+										<td class="center">
+											<div class="checkbox checkbox-switchery no-margin">
+                              				<label>
+												<input type="checkbox" onchange="changeStatus(this);" name="mega_filter_module[base_attribs][search][enabled]" class="switchery" {{ modules[layout_id]['base_attribs']['search']['enabled'] == 1 ? 'checked' }}>
+			                                    <span class="switchery-status">
+			                                      {% if modules[layout_id]['base_attribs']['search']['enabled'] == 1 %} {{ text_enabled }} {% else %} {{ text_disabled }} {% endif %}
+			                                    </span>
+			                                </label>
+											</div>			
+										</td>
+										<td class="center">
+											<input class="form-control" type="text" name="mega_filter_module[base_attribs][search][sort_order]" value="{{ modules[layout_id]['base_attribs']['search']['sort_order'] }}" size="3">
+										</td>
+										<td class="center">
+											-
+										</td>
+										<td class="center">
+											-
+										</td>
+										<td class="left">
+
+											<div class="form-group">
+							                    <input class="styled2" id="0_attribs_search_collapsed_a" type="radio" name="mega_filter_module[base_attribs][search][collapsed]" value="" {{ modules[layout_id]['base_attribs']['search']['collapsed'] == '' ? 'checked="checked"' }}>
+												<label for="0_attribs_search_collapsed_a">{{text_show_header}}</label>
+												<br/>
+												<input class="styled2" id="0_attribs_search_collapsed_b" type="radio" name="mega_filter_module[base_attribs][search][collapsed]" value="1" {{ modules[layout_id]['base_attribs']['search']['collapsed'] == '1' ? 'checked="checked"' }}>
+												<label for="0_attribs_search_collapsed_b">{{ lang('text_collapsed_by_default_and_show_header') }}</label>
+												<br/>
+												<input class="styled2" id="0_attribs_search_collapsed_c" type="radio" name="mega_filter_module[base_attribs][search][collapsed]" value="hide_header" {{ modules[layout_id]['base_attribs']['search']['collapsed'] == 'hide_header' ? 'checked="checked"' }}>
+												<label for="0_attribs_search_collapsed_c">{{text_hide_header}}</label>
+							                 </div>
+
+											<div class="form-group" id="name-0-group">
+					                           <label class="control-label">{{text_with_delay_help}}</label>
+					                           <input type="text" name="mega_filter_module[base_attribs][search][refresh_delay]" value="{{ modules[layout_id]['base_attribs']['search']['refresh_delay'] }}" class="form-control" id="name-0">
+					                           <span class="help-block"></span>
+					                           <span class="text-muted">{{ lang('text_milliseconds') }} ( -1 Disabled )</span>
+					                       </div>
+											
+											<div class="form-group">
+				                              <label class="control-label">{{ lang('text_show_button_search') }}:</label>
+				                              <div class="checkbox checkbox-switchery no-margin">
+				                                <label>
+													<input type="checkbox" onchange="changeStatus(this);" name="mega_filter_module[base_attribs][search][button]" class="switchery" {{ modules[layout_id]['base_attribs']['search']['button'] == 1 ? 'checked' }}>
+				                                    <span class="switchery-status">
+				                                      {% if modules[layout_id]['base_attribs']['search']['button'] == 1 %} {{ text_enabled }} {% else %} {{ text_disabled }} {% endif %}
+				                                    </span>
+				                                </label>
+				                              </div>
+				                               <span class="help-block"></span>
+				                               <span class="text-muted"></span>
+				                            </div>
+										</td>
+									</tr>
+									<tr>
+										<td>
+											{{attrib_price}}
+										</td>
+										<td class="center">
+											<div class="checkbox checkbox-switchery no-margin">
+                              				<label>
+												<input type="checkbox" onchange="changeStatus(this);" name="mega_filter_module[base_attribs][price][enabled]" class="switchery" {{ modules[layout_id]['base_attribs']['price']['enabled'] == 1 ? 'checked' }}>
+			                                    <span class="switchery-status">
+			                                      {% if modules[layout_id]['base_attribs']['price']['enabled'] == 1 %} {{ text_enabled }} {% else %} {{ text_disabled }} {% endif %}
+			                                    </span>
+			                                </label>
+											</div>				
+										</td>
+										<td class="center">
+											<input class="form-control" type="text" name="mega_filter_module[base_attribs][price][sort_order]" value="{{ modules[layout_id]['base_attribs']['price']['sort_order'] }}" size="3">
+										</td>
+										<td class="center">
+											-
+										</td>
+										<td class="center">
+											-
+										</td>
+										<td class="left">
+
+											<div class="form-group">
+							                    <label class="control-label">
+							                    {{text_collapsed_by_default}}
+							                    </label>
+							                    <br/>
+							                    <input  class="styled2" type="radio" name="mega_filter_module[base_attribs][price][collapsed]" value="1" {{ modules[layout_id]['base_attribs']['price']['collapsed'] == 1 ? 'checked="checked"' }}>&nbsp;{{text_yes}}&nbsp;&nbsp;&nbsp;
+												<input  class="styled2" type="radio" name="mega_filter_module[base_attribs][price][collapsed]" value="0" {{ modules[layout_id]['base_attribs']['price']['collapsed'] == 0 ? 'checked="checked"' }}>&nbsp;{{ text_no }}&nbsp;&nbsp;&nbsp;
+												<input  class="styled2" type="radio" name="mega_filter_module[base_attribs][price][collapsed]" value="pc" {{ modules[layout_id]['base_attribs']['price']['collapsed'] == 'pc' ? 'checked="checked"' }}>&nbsp;{{text_pc}}&nbsp;&nbsp;&nbsp;
+												<input  class="styled2" type="radio" name="mega_filter_module[base_attribs][price][collapsed]" value="mobile" {{ modules[layout_id]['base_attribs']['price']['collapsed'] == 'mobile' ? 'checked="checked"' }}>&nbsp;{{ text_mobile }}
+							                    <span class="help-block"></span>
+							                    <span class="text-muted"></span>
+							                 </div>
+										</td>
+									</tr>
+									<tr>
+										<td>
+											{{attrib_manufacturers}}
+										</td>
+										<td class="center">
+											<div class="checkbox checkbox-switchery no-margin">
+                              				<label>
+												<input type="checkbox" onchange="changeStatus(this);" name="mega_filter_module[base_attribs][manufacturers][enabled]" class="switchery" {{ modules[layout_id]['base_attribs']['manufacturers']['enabled'] == 1 ? 'checked' }}>
+			                                    <span class="switchery-status">
+			                                      {% if modules[layout_id]['base_attribs']['manufacturers']['enabled'] == 1 %} {{ text_enabled }} {% else %} {{ text_disabled }} {% endif %}
+			                                    </span>
+			                                </label>
+											</div>				
+										</td>
+										<td class="center">
+											<input class="form-control" type="text" name="mega_filter_module[base_attribs][manufacturers][sort_order]" value="{{ modules[layout_id]['base_attribs']['manufacturers']['sort_order'] }}" size="3">
+										</td>
+										<td class="center">
+											<select class="form-control selectBasic" name="mega_filter_module[base_attribs][manufacturers][display_list_of_items]">
+												<option value="" selected="selected">{{text_by_default}}</option>
+												<option value="scroll" {{ modules[layout_id]['base_attribs']['manufacturers']['display_list_of_items'] == 'scroll' ? 'selected="selected"' }}>{{text_with_scroll}}</option>
+												<option value="button_more" {{ modules[layout_id]['base_attribs']['manufacturers']['display_list_of_items'] == 'button_more' ? 'selected="selected"' }}>{{text_with_button_more}}</option>
+											</select>
+										</td>
+										<td class="center">
+											<select class="form-control selectBasic" name="mega_filter_module[base_attribs][manufacturers][display_as_type]">
+												<option value="checkbox" {{ modules[layout_id]['base_attribs']['manufacturers']['display_as_type'] == 'checkbox' ? 'selected="selected"' }}>{{text_type_checkbox}}</option>
+												<option value="radio" {{ modules[layout_id]['base_attribs']['manufacturers']['display_as_type'] == 'radio' ? 'selected="selected"' }}>{{text_type_radio}}</option>
+												<option value="select" {{ modules[layout_id]['base_attribs']['manufacturers']['display_as_type'] == 'select' ? 'selected="selected"' }}>{{text_type_select}}</option>
+												<option value="image_list_checkbox" {{ modules[layout_id]['base_attribs']['manufacturers']['display_as_type'] == 'image_list_checkbox' ? 'selected="selected"' }}>{{text_type_image_list_checkbox}}</option>
+												<option value="image_list_radio" {{ modules[layout_id]['base_attribs']['manufacturers']['display_as_type'] == 'image_list_radio' ? 'selected="selected"' }}>{{text_type_image_list_radio}}</option>
+												<option value="image" {{ modules[layout_id]['base_attribs']['manufacturers']['display_as_type'] == 'image' ? 'selected="selected"' }}>{{text_type_image}}</option>
+											</select>
+										</td>
+										<td class="left">
+
+											<div class="form-group">
+							                    <label class="control-label">
+							                    {{text_collapsed_by_default}}
+							                    </label>
+							                    <br/>
+							                    <input  class="styled2" type="radio" name="mega_filter_module[base_attribs][manufacturers][collapsed]" value="1" {{ modules[layout_id]['base_attribs']['manufacturers']['collapsed'] == 1 ? 'checked="checked"' }}>&nbsp;{{text_yes}}&nbsp;&nbsp;&nbsp;
+												<input  class="styled2" type="radio" name="mega_filter_module[base_attribs][manufacturers][collapsed]" value="0" {{ modules[layout_id]['base_attribs']['manufacturers']['collapsed'] == 0 ? 'checked="checked"' }}>&nbsp;{{ text_no }}&nbsp;&nbsp;&nbsp;
+												<input  class="styled2" type="radio" name="mega_filter_module[base_attribs][manufacturers][collapsed]" value="pc" {{ modules[layout_id]['base_attribs']['manufacturers']['collapsed'] == 'pc' ? 'checked="checked"' }}>&nbsp;{{text_pc}}&nbsp;&nbsp;&nbsp;
+												<input  class="styled2" type="radio" name="mega_filter_module[base_attribs][manufacturers][collapsed]" value="mobile" {{ modules[layout_id]['base_attribs']['manufacturers']['collapsed'] == 'mobile' ? 'checked="checked"' }}>&nbsp;{{ text_mobile }}
+							                    <span class="help-block"></span>
+							                    <span class="text-muted"></span>
+							                 </div>
+
+											<select name="mega_filter_module[base_attribs][manufacturers][display_live_filter]" class="form-control selectBasic">
+												<option value="" selected="selected">{{text_display_live_filter}} {{text_by_default}}</option>
+												<option value="1" {{ modules[layout_id]['base_attribs']['manufacturers']['display_live_filter'] == 1 ? 'selected="selected"' }}>{{text_display_live_filter}} - {{text_yes}}</option>
+												<option value="-1" {{ modules[layout_id]['base_attribs']['manufacturers']['display_live_filter'] == '-1' ? 'selected="selected"' }}>{{text_display_live_filter}} - {{text_no}}</option>
+											</select>
+										</td>
+									</tr>
+									<tr>
+										<td>
+											{{attrib_stock_status}}			
+										</td>
+										<td class="center">
+											<div class="checkbox checkbox-switchery no-margin">
+                              				<label>
+												<input type="checkbox" onchange="changeStatus(this);" name="mega_filter_module[base_attribs][stock_status][enabled]" class="switchery" {{ modules[layout_id]['base_attribs']['stock_status']['enabled'] == 1 ? 'checked' }}>
+			                                    <span class="switchery-status">
+			                                      {% if modules[layout_id]['base_attribs']['stock_status']['enabled'] == 1 %} {{ text_enabled }} {% else %} {{ text_disabled }} {% endif %}
+			                                    </span>
+			                                </label>
+											</div>			
+										</td>
+										<td class="center">
+											<input class="form-control" type="text" name="mega_filter_module[base_attribs][stock_status][sort_order]" value="{{ modules[layout_id]['base_attribs']['stock_status']['sort_order'] }}" size="3">
+										</td>
+										<td class="center">
+											<select class="form-control selectBasic" name="mega_filter_module[base_attribs][stock_status][display_list_of_items]">
+												<option value="" selected="selected">{{text_by_default}}</option>
+												<option value="scroll" {{ modules[layout_id]['base_attribs']['stock_status']['display_list_of_items'] == 'scroll' ? 'selected="selected"' }}>{{text_with_scroll}}</option>
+												<option value="button_more" {{ modules[layout_id]['base_attribs']['stock_status']['display_list_of_items'] == 'button_more' ? 'selected="selected"' }}>{{text_with_button_more}}</option>
+											</select>
+										</td>
+										<td class="center">
+											<select class="form-control selectBasic" name="mega_filter_module[base_attribs][stock_status][display_as_type]">
+												<option value="checkbox" {{ modules[layout_id]['base_attribs']['stock_status']['display_as_type'] == 'checkbox' ? 'selected="selected"' }}>{{text_type_checkbox}}</option>
+												<option value="radio" {{ modules[layout_id]['base_attribs']['stock_status']['display_as_type'] == 'radio' ? 'selected="selected"' }}>{{text_type_radio}}</option>
+												<option value="select" {{ modules[layout_id]['base_attribs']['stock_status']['display_as_type'] == 'select' ? 'selected="selected"' }}>{{text_type_select}}</option>
+											</select>
+										</td>
+										<td class="left">
+
+											<div class="form-group">
+							                    <label class="control-label">
+							                    {{text_collapsed_by_default}}
+							                    </label>
+							                    <br/>
+							                    <input  class="styled2" type="radio" name="mega_filter_module[base_attribs][stock_status][collapsed]" value="1" {{ modules[layout_id]['base_attribs']['stock_status']['collapsed'] == 1 ? 'checked="checked"' }}>&nbsp;{{text_yes}}&nbsp;&nbsp;&nbsp;
+												<input  class="styled2" type="radio" name="mega_filter_module[base_attribs][stock_status][collapsed]" value="0" {{ modules[layout_id]['base_attribs']['stock_status']['collapsed'] == 0 ? 'checked="checked"' }}>&nbsp;{{ text_no }}&nbsp;&nbsp;&nbsp;
+												<input  class="styled2" type="radio" name="mega_filter_module[base_attribs][stock_status][collapsed]" value="pc" {{ modules[layout_id]['base_attribs']['stock_status']['collapsed'] == 'pc' ? 'checked="checked"' }}>&nbsp;{{text_pc}}&nbsp;&nbsp;&nbsp;
+												<input  class="styled2" type="radio" name="mega_filter_module[base_attribs][stock_status][collapsed]" value="mobile" {{ modules[layout_id]['base_attribs']['stock_status']['collapsed'] == 'mobile' ? 'checked="checked"' }}>&nbsp;{{ text_mobile }}
+							                    <span class="help-block"></span>
+							                    <span class="text-muted"></span>
+							                 </div>
+										</td>
+									</tr>
+									<tr>
+										<td>
+											{{attrib_rating}}			
+										</td>
+										<td class="center">
+											<div class="checkbox checkbox-switchery no-margin">
+                              				<label>
+												<input type="checkbox" onchange="changeStatus(this);" name="mega_filter_module[base_attribs][rating][enabled]" class="switchery" {{ modules[layout_id]['base_attribs']['rating']['enabled'] == 1 ? 'checked' }}>
+			                                    <span class="switchery-status">
+			                                      {% if modules[layout_id]['base_attribs']['rating']['enabled'] == 1 %} {{ text_enabled }} {% else %} {{ text_disabled }} {% endif %}
+			                                    </span>
+			                                </label>
+											</div>			
+										</td>
+										<td class="center">
+											<input class="form-control" type="text" name="mega_filter_module[base_attribs][rating][sort_order]" value="{{ modules[layout_id]['base_attribs']['rating']['sort_order'] }}" size="3">
+										</td>
+										<td class="center">
+											-
+										</td>
+										<td class="center">
+											-
+										</td>
+										<td class="left">
+
+											<div class="form-group">
+							                    <label class="control-label">
+							                    {{text_collapsed_by_default}}
+							                    </label>
+							                    <br/>
+							                    <input  class="styled2" type="radio" name="mega_filter_module[base_attribs][rating][collapsed]" value="1" {{ modules[layout_id]['base_attribs']['rating']['collapsed'] == 1 ? 'checked="checked"' }}>&nbsp;{{text_yes}}&nbsp;&nbsp;&nbsp;
+												<input  class="styled2" type="radio" name="mega_filter_module[base_attribs][rating][collapsed]" value="0" {{ modules[layout_id]['base_attribs']['rating']['collapsed'] == 0 ? 'checked="checked"' }}>&nbsp;{{ text_no }}&nbsp;&nbsp;&nbsp;
+												<input  class="styled2" type="radio" name="mega_filter_module[base_attribs][rating][collapsed]" value="pc" {{ modules[layout_id]['base_attribs']['rating']['collapsed'] == 'pc' ? 'checked="checked"' }}>&nbsp;{{text_pc}}&nbsp;&nbsp;&nbsp;
+												<input  class="styled2" type="radio" name="mega_filter_module[base_attribs][rating][collapsed]" value="mobile" {{ modules[layout_id]['base_attribs']['rating']['collapsed'] == 'mobile' ? 'checked="checked"' }}>&nbsp;{{ text_mobile }}
+							                    <span class="help-block"></span>
+							                    <span class="text-muted"></span>
+							                 </div>
+										</td>
+									</tr>
+								</tbody>
+							</table>
+					</div>
+					</div>
+          </div>
+      </div>
+
+      <!--£££££££££ Attribute -->
+	{% if advanced_product_attributes_status %}
+      <div class="panel panel-white">
+          <div class="panel-heading">
+              <h6 class="panel-title"><span class="text-bold">{{ tab_attributes }}</span></h6>
+              <div class="heading-elements not-collapsible">
+                  <ul class="icons-list">
+                      <li><a data-action="collapse" class=""></a></li>
+                  </ul>
+              </div>
+          </div>
+          <div class="panel-body" style="overflow-x: auto;">
+              
+			<table class="table table-hover" id="AttTableGrid">
+				<thead>
+					<tr>
+						<th class="text-center" width="250">
+							{{text_group}}			
+						</th>
+						<th width="60" class="text-center">{{text_sort_order}}</th>
+						<th class="text-left">{{text_attribute_name}}</th>
+						<th class="text-left" width="90">{{text_enabled}}</th>
+						<th class="text-center" width="270">{{text_display_as_type}}</th>
+						<th class="text-center" width="160">{{text_collapsed_by_default}}</th>
+						<th class="text-center" width="180">{{text_display_list_of_items}}</th>
+						<th class="text-center" width="150">{{text_sort_order_values}}</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for key, attrib in modules[layout_id]['attribs'] %}
+						<tr>
+						<td>{{modules[layout_id]['attribs'][key]['attribute_group']}}
+							<input class="form-control" type="hidden" name="{{ 'mega_filter_module[attribs][' ~ key ~ '][attribute_id]'}}" value="{{ modules[layout_id]['attribs'][key]['attribute_id'] }}" size="3">
+							<input class="form-control" type="hidden" name="{{ 'mega_filter_module[attribs][' ~ key ~ '][attribute_group]'}}" value="{{ modules[layout_id]['attribs'][key]['attribute_group'] }}" size="3">
+							<input class="form-control" type="hidden" name="{{ 'mega_filter_module[attribs][' ~ key ~ '][attribute_group_id]'}}" value="{{ modules[layout_id]['attribs'][key]['attribute_group_id'] }}" size="3">						
+						</td>
+						<td>
+							<input class="form-control" type="text" name="{{ 'mega_filter_module[attribs][' ~ key ~ '][sort_order]' }}" value="{{ modules[layout_id]['attribs'][key]['sort_order'] }}" size="3">
+						</td>
+						<td>{{modules[layout_id]['attribs'][key]['name']}}
+							<input class="form-control" type="hidden" name="{{ 'mega_filter_module[attribs][' ~ key ~ '][name]'}}" value="{{ modules[layout_id]['attribs'][key]['name'] }}" size="3">
+						</td>
+						<td>
+							<div class="checkbox checkbox-switchery no-margin">
+							<label>
+								<input type="checkbox" onchange="changeStatus(this);" name="{{ 'mega_filter_module[attribs][' ~ key ~ '][enabled]'}}" class="switchery" {{ modules[layout_id]['attribs'][key]['enabled'] == 1 ? 'checked' }}>
+								<span class="switchery-status">
+									{% if modules[layout_id]['attribs'][key]['enabled'] == 1 %} {{ text_enabled }} {% else %} {{ text_disabled }} {% endif %}
+								</span>
+							</label>
+							</div>	
+						</td>
+						
+						<td>
+							<select class="form-control selectBasic" name="{{ 'mega_filter_module[attribs][' ~ key ~ '][type]'}}">
+										<option value="checkbox" {{ modules[layout_id]['attribs'][key]['type'] == 'checkbox' ? 'selected="selected"' }}>{{text_type_checkbox}}</option>
+										<option value="radio" {{ modules[layout_id]['attribs'][key]['type'] == 'radio' ? 'selected="selected"' }}>{{text_type_radio}}</option>
+										<option value="select" {{ modules[layout_id]['attribs'][key]['type'] == 'select' ? 'selected="selected"' }}>
+									{{text_type_select}}								</option>
+										<option value="image" {{ modules[layout_id]['attribs'][key]['type'] == 'image' ? 'selected="selected"' }}>
+									{{text_type_image}}								</option>
+										<option value="image_list_radio" {{ modules[layout_id]['attribs'][key]['type'] == 'image_list_radio' ? 'selected="selected"' }}>
+									{{text_type_image_list_radio}}								</option>
+										<option value="image_list_checkbox" {{ modules[layout_id]['attribs'][key]['type'] == 'image_list_checkbox' ? 'selected="selected"' }}>
+									{{text_type_image_list_checkbox}}							</option>
+										<option value="slider" {{ modules[layout_id]['attribs'][key]['type'] == 'slider' ? 'selected="selected"' }}>
+									{{text_type_slider}}								</option>
+									</select>
+									<br>
+									<select class="form-control selectBasic" name="{{ 'mega_filter_module[attribs][' ~ key ~ '][display_live_filter]'}}">
+										<option value="" {{ modules[layout_id]['attribs'][key]['display_live_filter'] == '' ? 'selected="selected"' }}>{{text_display_live_filter}} {{text_by_default}}</option>
+										<option value="1" {{ modules[layout_id]['attribs'][key]['display_live_filter'] == '1' ? 'selected="selected"' }}>{{text_display_live_filter}} - {{text_yes}}</option>
+										<option value="-1" {{ modules[layout_id]['attribs'][key]['display_live_filter'] == '-1' ? 'selected="selected"' }}>{{text_display_live_filter}} - {{text_no}}</option>
+									</select>
+						</td>
+						<td>
+							<div class="form-group">
+					                    <input  class="styled2" type="radio" name="{{ 'mega_filter_module[attribs][' ~ key ~ '][collapsed]'}}" value="1" {{ modules[layout_id]['attribs'][key]['collapsed'] == 1 ? 'checked="checked"' }}>&nbsp;{{text_yes}}<br/>
+										<input  class="styled2" type="radio" name="{{ 'mega_filter_module[attribs][' ~ key ~ '][collapsed]'}}" value="0" {{ modules[layout_id]['attribs'][key]['collapsed'] == 0 ? 'checked="checked"' }}>&nbsp;{{text_no}}<br/>
+										<input  class="styled2" type="radio" name="{{ 'mega_filter_module[attribs][' ~ key ~ '][collapsed]'}}" value="pc" {{ modules[layout_id]['attribs'][key]['collapsed'] == 'pc' ? 'checked="checked"' }}>&nbsp;{{text_pc}}<br/>
+										<input  class="styled2" type="radio" name="{{ 'mega_filter_module[attribs][' ~ key ~ '][collapsed]'}}" value="mobile" {{ modules[layout_id]['attribs'][key]['collapsed'] == 'mobile' ? 'checked="checked"' }}>&nbsp;{{ text_mobile }}
+					                    <span class="help-block"></span>
+					                    <span class="text-muted"></span>
+					                 </div>
+						</td>
+						<td>
+							<select class="form-control selectBasic" name="{{ 'mega_filter_module[attribs][' ~ key ~ '][display_list_of_items]'}}">
+										<option value="" selected="selected">{{text_by_default}}</option>
+										<option value="scroll" {{ modules[layout_id]['attribs'][key]['display_list_of_items'] == 'scroll' ? 'selected="selected"' }}>{{text_with_scroll}}</option>
+										<option value="button_more" {{ modules[layout_id]['attribs'][key]['display_list_of_items'] == 'button_more' ? 'selected="selected"' }}>{{text_with_button_more}}</option>
+									</select>
+						</td>
+						<td>
+							<select class="form-control selectBasic" name="{{ 'mega_filter_module[attribs][' ~ key ~ '][sort_order_values]'}}">
+										<option value="" selected="selected">{{text_by_default}}</option>
+										<option value="string_asc" {{ modules[layout_id]['attribs'][key]['sort_order_values'] == 'string_asc' ? 'selected="selected"' }}>{{text_string_asc}}</option>
+										<option value="string_desc" {{ modules[layout_id]['attribs'][key]['sort_order_values'] == 'string_desc' ? 'selected="selected"' }}>{{text_string_desc}}</option>
+										<option value="numeric_asc" {{ modules[layout_id]['attribs'][key]['sort_order_values'] == 'numeric_asc' ? 'selected="selected"' }}>{{text_numeric_asc}}</option>
+										<option value="numeric_desc" {{ modules[layout_id]['attribs'][key]['sort_order_values'] == 'numeric_desc' ? 'selected="selected"' }}>{{text_numeric_desc}}</option>						</select>
+						</td>
+					{% endfor %}
+					</tr>
+				</tbody>
+			</table>
+
+			<div class="pagination">
+				</div>
+
+			<script type="text/javascript">		
+				jQuery('#0_mf-attribs-table input[type=checkbox][class=check-all]').change(function(){
+					var s = jQuery(this).is(':checked');
+					
+					jQuery('#0_mf-attribs-table input[type=checkbox][data-group]').attr('checked',s).trigger('change');
+				});
+				
+				jQuery('#0_mf-attribs-table input[type=checkbox][data-group]').change(function(){
+					var s = jQuery(this).is(':checked'),
+						group = jQuery(this).attr('data-group');
+						
+					jQuery('input[name^="mega_filter_module[attribs][' + group + '][items]["][name*="][enabled]"][type="radio"]').each(function(){
+						var val = $(this).val();
+						
+						$(this).prop('checked', val==s);
+						$(this).parent()[val==s?'addClass':'removeClass']('active');
+					});
+				});
+			</script>
+				
+          </div>
+      </div>
+	{% endif %}
+      <!--£££££££££ Options -->
+      <div class="panel panel-white">
+          <div class="panel-heading">
+              <h6 class="panel-title"><span class="text-bold">{{ tab_options }}</span></h6>
+              <div class="heading-elements not-collapsible">
+                  <ul class="icons-list">
+                      <li><a data-action="collapse" class=""></a></li>
+                  </ul>
+              </div>
+          </div>
+          <div class="panel-body">
+              <div id="tab-0-options" class="tab-pane">
+				<div class="cnt" style="overflow-x: auto;">
+					<table class="table table-hover" id="OptionsDataGrid">
+						<thead>
+							<tr>
+								<th class="text-center" style="width: auto;">{{text_option_name}}</th>
+								<th class="text-left" width="90">{{text_enabled}}</th>
+								<th class="text-left" width="250">{{text_display_as_type}}</th>
+								<th class="text-center" width="160">{{text_collapsed_by_default}}</th>
+								<th class="text-center" width="180">{{text_display_list_of_items}}</th>
+								<th class="text-center" width="180">{{text_sort_order_values}}</th>
+								<th class="text-left" width="100">{{entry_sort_order}}</th>
+							</tr>
+						</thead>
+						<tbody>
+							{% for key, option in modules[layout_id]['options'] %}
+							<tr>
+								<td style="width: auto;">{{modules[layout_id]['options'][key]['name']}}
+									<input class="form-control" type="hidden" name="{{ 'mega_filter_module[options][' ~ key ~ '][name]'}}" value="{{ modules[layout_id]['options'][key]['name'] }}" size="3">
+									<input class="form-control" type="hidden" name="{{ 'mega_filter_module[options][' ~ key ~ '][option_id]'}}" value="{{ modules[layout_id]['options'][key]['option_id'] }}" size="3">
+								</td>
+								<td>
+
+									<div class="checkbox checkbox-switchery no-margin">
+                      				<label>
+										<input type="checkbox" onchange="changeStatus(this);" name="{{ 'mega_filter_module[options][' ~ key ~ '][enabled]'}}" class="switchery" {{ modules[layout_id]['options'][key]['enabled'] == 1 ? 'checked' }}>
+	                                    <span class="switchery-status">
+	                                      {% if modules[layout_id]['options'][key]['enabled'] == 1 %} {{ text_enabled }} {% else %} {{ text_disabled }} {% endif %}
+	                                    </span>
+	                                </label>
+									</div>	
+								</td>
+								<td>
+								<select class="form-control selectBasic" name="{{ 'mega_filter_module[options][' ~ key ~ '][type]'}}">
+										<option value="checkbox" {{ modules[layout_id]['options'][key]['type'] == 'checkbox' ? 'selected="selected"' }}>{{text_type_checkbox}}</option>
+										<option value="radio" {{ modules[layout_id]['options'][key]['type'] == 'radio' ? 'selected="selected"' }}>{{text_type_radio}}</option>
+										<option value="select" {{ modules[layout_id]['options'][key]['type'] == 'select' ? 'selected="selected"' }}>
+									{{text_type_select}}								</option>
+										<option value="image" {{ modules[layout_id]['options'][key]['type'] == 'image' ? 'selected="selected"' }}>
+									{{text_type_image}}								</option>
+										<option value="image_list_radio" {{ modules[layout_id]['options'][key]['type'] == 'image_list_radio' ? 'selected="selected"' }}>
+									{{text_type_image_list_radio}}								</option>
+										<option value="image_list_checkbox" {{ modules[layout_id]['options'][key]['type'] == 'image_list_checkbox' ? 'selected="selected"' }}>
+									{{text_type_image_list_checkbox}}							</option>
+										<option value="slider" {{ modules[layout_id]['options'][key]['type'] == 'slider' ? 'selected="selected"' }}>
+									{{text_type_slider}}								</option>
+									</select>
+									<br>
+									<select class="form-control selectBasic" name="{{ 'mega_filter_module[options][' ~ key ~ '][display_live_filter]'}}">
+										<option value="" {{ modules[layout_id]['options'][key]['display_live_filter'] == '' ? 'selected="selected"' }}>{{text_display_live_filter}} {{text_by_default}}</option>
+										<option value="1" {{ modules[layout_id]['options'][key]['display_live_filter'] == '1' ? 'selected="selected"' }}>{{text_display_live_filter}} - {{text_yes}}</option>
+										<option value="-1" {{ modules[layout_id]['options'][key]['display_live_filter'] == '-1' ? 'selected="selected"' }}>{{text_display_live_filter}} - {{text_no}}</option>
+									</select>
+								</td>
+								<td style="width:140px;">
+
+									<div class="form-group">
+					                    <input  class="styled2" type="radio" name="{{ 'mega_filter_module[options][' ~ key ~ '][collapsed]'}}" value="1" {{ modules[layout_id]['options'][key]['collapsed'] == 1 ? 'checked="checked"' }}>&nbsp;{{text_yes}}<br/>
+										<input  class="styled2" type="radio" name="{{ 'mega_filter_module[options][' ~ key ~ '][collapsed]'}}" value="0" {{ modules[layout_id]['options'][key]['collapsed'] == 0 ? 'checked="checked"' }}>&nbsp;{{text_no}}<br/>
+										<input  class="styled2" type="radio" name="{{ 'mega_filter_module[options][' ~ key ~ '][collapsed]'}}" value="pc" {{ modules[layout_id]['options'][key]['collapsed'] == 'pc' ? 'checked="checked"' }}>&nbsp;{{text_pc}}<br/>
+										<input  class="styled2" type="radio" name="{{ 'mega_filter_module[options][' ~ key ~ '][collapsed]'}}" value="mobile" {{ modules[layout_id]['options'][key]['collapsed'] == 'mobile' ? 'checked="checked"' }}>&nbsp;{{ text_mobile }}
+					                    <span class="help-block"></span>
+					                    <span class="text-muted"></span>
+					                 </div>
+								</td>
+								<td style="width:140px; text-align: center;">
+									<select class="form-control selectBasic" name="{{ 'mega_filter_module[options][' ~ key ~ '][display_list_of_items]'}}">
+										<option value="" selected="selected">{{text_by_default}}</option>
+										<option value="scroll" {{ modules[layout_id]['options'][key]['display_list_of_items'] == 'scroll' ? 'selected="selected"' }}>{{text_with_scroll}}</option>
+										<option value="button_more" {{ modules[layout_id]['options'][key]['display_list_of_items'] == 'button_more' ? 'selected="selected"' }}>{{text_with_button_more}}</option>
+									</select>
+								</td>
+								<td style="width:140px; text-align: center;">
+									<select class="form-control selectBasic" name="{{ 'mega_filter_module[options][' ~ key ~ '][sort_order_values]'}}">
+										<option value="" selected="selected">{{text_by_default}}</option>
+										<option value="string_asc" {{ modules[layout_id]['options'][key]['sort_order_values'] == 'string_asc' ? 'selected="selected"' }}>{{text_string_asc}}</option>
+										<option value="string_desc" {{ modules[layout_id]['options'][key]['sort_order_values'] == 'string_desc' ? 'selected="selected"' }}>{{text_string_desc}}</option>
+										<option value="numeric_asc" {{ modules[layout_id]['options'][key]['sort_order_values'] == 'numeric_asc' ? 'selected="selected"' }}>{{text_numeric_asc}}</option>
+										<option value="numeric_desc" {{ modules[layout_id]['options'][key]['sort_order_values'] == 'numeric_desc' ? 'selected="selected"' }}>{{text_numeric_desc}}</option>						</select>
+								</td>
+								<td style="width:90px; text-align: center;">
+									<input class="form-control" type="text" name="{{ 'mega_filter_module[options][' ~ key ~ '][sort_order]'}}" value="{{ modules[layout_id]['options'][key]['sort_order'] }}" style="min-width: 60px">
+								</td>
+							</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				</div>
+			</div>
+          </div>
+      </div>
+
+      <!--£££££££££ Categories -->
+      <div class="panel panel-white">
+          <div class="panel-heading">
+              <h6 class="panel-title"><span class="text-bold">{{ tab_categories }}</span></h6>
+              <div class="heading-elements not-collapsible">
+                  <ul class="icons-list">
+                      <li><a data-action="collapse" class=""></a></li>
+                  </ul>
+              </div>
+          </div>
+          <div class="panel-body">
+              <div class="tab-pane">
+	              	<div class="pull-right" style="padding-bottom: 15px">
+	              		
+	              		<button type="button" data-type="related" class="btn btn-success btn-labeled btn-xs" onclick="addRelated()"><b><i class="icon-plus3"></i></b> {{text_add_related}}</button>
+
+	              		<button type="button" data-type="tree" class="btn btn-success btn-labeled btn-xs" onclick="addTree()"><b><i class="icon-plus3"></i></b> {{text_add_tree}}</button>
+	              	</div>
+
+	              	<div style="clear: both;"></div>
+
+	              	<div class="alert alert-warning alert-styled-right" style="display: none;">
+						<button type="button" class="close" onclick="hideAlert()"><span>×</span><span class="sr-only">Close</span></button>
+						<span class="text-semibold">Warning!</span> You can't add more thane one tree.
+				    </div>
+
+	              	<div class="categories_cnt">
+	              	{% set category_row = 0 %}
+	              	{% for key,category in modules[layout_id]['categories'] %}
+	              		{% if(category['type'] == 'tree') %}
+	              		<div  id='category_{{ key }}'>
+		              		<div class="row">
+		              			<div class="col-md-12" style="border-bottom: 1px solid #d9d9d9;border-top: 1px solid #d9d9d9;background:#f8f8f8;">
+			              			<div class="pull-left col-md-11">
+			              				<div class="tabbable nav-tabs-vertical nav-tabs-right">
+					                        <div class="tab-content">
+					                            {% for lng in languages %}
+					                                <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}"
+					                                     id="langTab{{ lng['language_id'] }}">
+					                                    <div class="form-group" id="content_{{lng['language_id']}}-group">
+					                                    	<label class="control-label">
+					                                            #{{text_tree}}
+					                                        </label>
+					                                    	<input type="text" value="{{ category['name'][lng['language_id']] }}" name="{{ 'mega_filter_module[categories][' ~ key ~ '][name][' ~ lng['language_id'] ~ ']' }}" class="form-control" style="width:300px; margin: 0px 3px 0 0;" placeholder="Categories"> 
+					                                        <span class="help-block"></span>
+					                                        <span class="text-muted"></span>
+					                                    </div>
+
+					                                </div>
+					                            {% endfor %}
+					                        </div>
+					                        <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+					                            {% for language in languages %}
+					                                <li class="{{ loop.first ? 'active' : '' }}">
+					                                    <a href="#langTab{{ language['language_id'] }}" data-toggle="tab"
+					                                       aria-expanded="false">
+					                                        <img src="view/image/flags/{{ language['image'] }}"
+					                                             title="{{ language['name'] }}" class="pull-right">
+					                                        <div> {{ language['name'] }}</div>
+					                                    </a>
+					                                </li>
+					                            {% endfor %}
+					                        </ul>
+					                    </div>
+		      						</div>
+		      						<div class="pull-right" style="padding:5px">
+		      							<a href="javascript://" onclick="removeCategory('{{ key }}')" class="text-danger-600 pull-right col-md-1"><i class="icon-trash"></i></a>
+		      						</div>
+		      						<div style="clear: both;"></div>
+	      						</div>
+	      						<div style="clear: both;"></div>
+		              		</div>
+		              		<div class="row"  style="padding-top: 15px">
+		              			<div class="col-md-6">
+		              				<div class="form-group">
+					                    <label class="control-label">
+					                    {{text_collapsed_by_default}}
+					                    </label>
+					                    <br/>
+					                    <input  class="styled2" type="radio" name="{{ 'mega_filter_module[categories][' ~ key ~ '][collapsed]' }}" value="1" {{ category['collapsed'] == 1 ? 'checked="checked"' }}>&nbsp;{{text_yes}}&nbsp;&nbsp;&nbsp;
+										<input  class="styled2" type="radio" name="{{ 'mega_filter_module[categories][' ~ key ~ '][collapsed]' }}" value="0" {{ category['collapsed'] == 0 ? 'checked="checked"' }}>&nbsp;{{ text_no }}&nbsp;&nbsp;&nbsp;
+										<input  class="styled2" type="radio" name="{{ 'mega_filter_module[categories][' ~ key ~ '][collapsed]' }}" value="pc" {{ category['collapsed'] == 'pc' ? 'checked="checked"' }}>&nbsp;{{text_pc}}&nbsp;&nbsp;&nbsp;
+										<input  class="styled2" type="radio" name="{{ 'mega_filter_module[categories][' ~ key ~ '][collapsed]' }}" value="mobile" {{ category['collapsed'] == 'mobile' ? 'checked="checked"' }}>&nbsp;{{ text_mobile }}
+					                    <span class="help-block"></span>
+					                    <span class="text-muted"></span>
+					                 </div>
+		              			</div>
+		              			<div class="col-md-6">
+					                <div class="form-group">
+					                     <label class="control-label">
+					                      {{entry_sort_order}}
+					                     </label>
+					                        <input class="form-control" type="text" value="{{ category['sort_order'] }}" name="{{ 'mega_filter_module[categories][' ~ key ~ '][sort_order]' }}" size="3">
+		              						<input type="hidden" id="tree" value="{{ category['type'] }}" name="{{ 'mega_filter_module[categories][' ~ key ~ '][type]' }}">
+					                     <span class="help-block"></span>
+					                    <span class="text-muted"></span>
+					                 </div>
+					              </div>
+		              		</div>
+	              		</div>
+	              		{% else %}
+	              		<div  id='category_{{ key }}'>
+		              		<div class="row">
+		              			<div class="col-md-12" style="border-bottom: 1px solid #d9d9d9;border-top: 1px solid #d9d9d9;background:#f8f8f8;">
+			              			<div class="pull-left col-md-11">
+			              				<div class="tabbable nav-tabs-vertical nav-tabs-right">
+					                        <div class="tab-content">
+					                            {% for lng in languages %}
+					                                <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}"
+					                                     id="langTab{{ lng['language_id'] }}">
+					                                    <div class="form-group" id="content_{{lng['language_id']}}-group">
+					                                    	<label class="control-label">
+					                                            #{{text_related}}
+					                                        </label>
+					                                    	<input type="text" value="{{ category['name'][lng['language_id']] }}" name="{{ 'mega_filter_module[categories][' ~ key ~ '][name][' ~ lng['language_id'] ~ ']' }}" class="form-control" style="width:300px; margin: 0px 3px 0 0;" placeholder="Categories"> 
+					                                        <span class="help-block"></span>
+					                                        <span class="text-muted"></span>
+					                                    </div>
+
+					                                </div>
+					                            {% endfor %}
+					                        </div>
+					                        <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+					                            {% for language in languages %}
+					                                <li class="{{ loop.first ? 'active' : '' }}">
+					                                    <a href="#langTab{{ language['language_id'] }}" data-toggle="tab"
+					                                       aria-expanded="false">
+					                                        <img src="view/image/flags/{{ language['image'] }}"
+					                                             title="{{ language['name'] }}" class="pull-right">
+					                                        <div> {{ language['name'] }}</div>
+					                                    </a>
+					                                </li>
+					                            {% endfor %}
+					                        </ul>
+					                    </div>
+		      						</div>
+		      						<div class="pull-right" style="padding:5px">
+		      							<a href="javascript://" onclick="removeCategory('{{ key }}')" class="text-danger-600 pull-right col-md-1"><i class="icon-trash"></i></a>
+		      						</div>
+		      						<div style="clear: both;"></div>
+	      						</div>
+	      						<div style="clear: both;"></div>
+		              		</div>
+		              		<div class="row" style="padding-top: 15px">
+		              			<div class="col-md-6">
+		              				<div class="form-group">
+					                    <label class="control-label">
+					                    {{entry_root_category}}<span class="help">{{text_autocomplete}}</span>
+					                    </label>
+					                    <br/>
+					                    <input  class="styled2" type="radio" name="{{ 'mega_filter_module[categories][' ~ key ~ '][root_category_type]' }}" value="top_category" style="margin: 0; vertical-align: middle;" id="root-cat-type-{{ key }}-a" {{ category['root_category_type'] == 'top_category' ? 'checked="checked"' }}> 
+	              						<label for="root-cat-type-{{ key }}-a" style="margin-right:10px" >{{text_top_category}}</label>
+
+	              						<input  class="styled2" type="radio"  name="{{ 'mega_filter_module[categories][' ~ key ~ '][root_category_type]' }}" value="by_url" style="margin: 0; vertical-align: middle;" id="root-cat-type-{{ key }}-b" {{ category['root_category_type'] == 'by_url' ? 'checked="checked"' }}>
+	              						 <label for="root-cat-type-{{ key }}-b" style="margin-right:10px">{{text_current_category}}</label>
+	              						 <br/>
+	              						 <input  class="styled2" type="radio" name="{{ 'mega_filter_module[categories][' ~ key ~ '][root_category_type]' }}" value="default_category" style="margin: 0; vertical-align: middle;" id="root-cat-type-{{ key }}-c" {{ category['root_category_type'] == 'default_category' ? 'checked="checked"' }}> 
+	              						 <label for="root-cat-type-{{ key }}-c" style="margin-right:10px">{{text_or_select_category}}</label>
+	              						 <br>
+
+	              						 <select class="autocomplete form-control categories-autocomplete"
+				                                name="{{ 'mega_filter_module[categories][' ~ key ~ '][root_category_id]' }}">
+				                                <option value="{{ product_categories[key]['category_id'] }}" selected>{{ product_categories[key]['name'] }}</option>
+				                        </select>
+
+	              						 <!--<input type="text" value="{{ category['root_category_id'] }}" class="form-control ui-autocomplete-input" autocomplete="on" disabled="disabled">
+	              						  <input type="hidden" value="" name="{{ 'mega_filter_module[categories][' ~ key ~ '][root_category_id]' }}"> -->
+					                </div>
+					            </div>
+					            <div class="col-md-6">
+					                <div class="form-group">
+					                     <label class="control-label">
+					                      {{entry_sort_order}}
+					                     </label>
+					                        <input class="form-control" type="text" value="{{ category['sort_order'] }}" name="{{ 'mega_filter_module[categories][' ~ key ~ '][sort_order]' }}" size="3">
+		              						<input type="hidden" value="{{ category['type'] }}" name="{{ 'mega_filter_module[categories][' ~ key ~ '][type]' }}">
+					                     <span class="help-block"></span>
+					                    <span class="text-muted"></span>
+					                 </div>
+					              </div>
+		              		</div>
+		              		<div class="row">
+		              			<div class="col-md-12 levels_{{ key }}">
+		              				{% set levels_count = 0 %}
+      								{% for keyLevels, level in category['levels'] %}
+      								<div class="levels_{{ key }}_{{ keyLevels }} tabbable nav-tabs-vertical nav-tabs-right" style="border-top: 1px dashed #beb6b6;">
+	              						<div class="tab-content">
+				                            {% for lng in languages %}
+				                                <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}"
+				                                     id="langTab{{key}}{{keyLevels}}{{ lng['language_id'] }}">
+				                                    <div class="form-group" id="content_{{lng['language_id']}}-group">
+				                                    	<label class="control-label">
+				                                            {{entry_level_name}}
+				                                        </label>
+				                                    	<input type="text" value="{{ level[lng['language_id']] }}" name="{{ 'mega_filter_module[categories][' ~ key ~ '][levels][' ~ keyLevels ~ '][' ~ lng['language_id'] ~ ']' }}" class="form-control" style="width:300px; margin: 0px 3px 0 0;" placeholder="Categories"> 
+				                                        <span class="help-block"></span>
+				                                        <span class="text-muted"></span>
+				                                    </div>
+
+				                                </div>
+				                            {% endfor %}
+				                        </div>
+
+	              						<ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+				                            {% for language in languages %}
+				                                <li class="{{ loop.first ? 'active' : '' }}">
+				                                    <a href="#langTab{{key}}{{keyLevels}}{{ language['language_id'] }}" data-toggle="tab"
+				                                       aria-expanded="false">
+				                                        <img src="view/image/flags/{{ language['image'] }}"
+				                                             title="{{ language['name'] }}" class="pull-right">
+				                                        <div> {{ language['name'] }}</div>
+				                                    </a>
+				                                </li>
+				                            {% endfor %}
+				                        </ul>
+				                    </div>
+				                    {% set levels_count = keyLevels + 1  %}
+				                    {% endfor %}
+				                    <input type="hidden" id="levels_{{ key }}_count" value="{{ levels_count }}">
+		              			</div>
+		              			<div style="text-align: right;">
+			              			<a href="javascript://" onclick="addLevel('{{ key }}')" class="btn btn-success btn-labeled btn-xs"><b><i class="icon-plus3"></i></b>{{text_add_level}}</a>
+			              		</div>
+		              		</div>
+		              		<div class="row" style="border-top: 1px solid #ddd;margin-top: 15px;padding-top: 15px;">
+		              			<div class="col-md-4">
+		              				<div class="form-group">
+					                    <label class="control-label">
+					                    {{text_auto_levels}}
+					                    </label>
+					                    <br/>
+      									<input class="styled2" type="radio" name="{{ 'mega_filter_module[categories][' ~ key ~ '][auto_levels]' }}" value="1" {{ category['auto_levels'] == 1 ? 'checked="checked"' }}>&nbsp;{{text_yes}}&nbsp;&nbsp;&nbsp;
+      									<input class="styled2" type="radio" name="{{ 'mega_filter_module[categories][' ~ key ~ '][auto_levels]' }}" value="0" {{ category['auto_levels'] == 0 ? 'checked="checked"' }}>&nbsp;{{ text_no }}&nbsp;&nbsp;&nbsp;
+					                    <span class="help-block"></span>
+					                    <span class="text-muted"></span>
+					                 </div>
+		              			</div>
+		              			<div class="col-md-4">
+		              				<div class="form-group">
+					                    <label class="control-label">
+					                    {{entry_show_button}}
+					                    </label>
+					                    <br/>
+      									<input class="styled2" type="radio" name="{{ 'mega_filter_module[categories][' ~ key ~ '][show_button]' }}" value="1" {{ category['show_button'] == 1 ? 'checked="checked"' }}>&nbsp;{{text_yes}}&nbsp;&nbsp;&nbsp;
+      									<input class="styled2" type="radio" name="{{ 'mega_filter_module[categories][' ~ key ~ '][show_button]' }}" value="0" {{ category['show_button'] == 0 ? 'checked="checked"' }}>&nbsp;{{ text_no }}&nbsp;&nbsp;&nbsp;
+					                    <span class="help-block"></span>
+					                    <span class="text-muted"></span>
+					                 </div>
+		              			</div>
+		              			<div class="col-md-4">
+		              				<div class="form-group">
+					                    <label class="control-label">
+					                    {{text_collapsed_by_default}}
+					                    </label>
+					                    <br/>
+					                    <input  class="styled2" type="radio" name="{{ 'mega_filter_module[categories][' ~ key ~ '][collapsed]' }}" value="1" {{ category['collapsed'] == 1 ? 'checked="checked"' }}>&nbsp;{{text_yes}}&nbsp;&nbsp;&nbsp;
+										<input  class="styled2" type="radio" name="{{ 'mega_filter_module[categories][' ~ key ~ '][collapsed]' }}" value="0" {{ category['collapsed'] == 0 ? 'checked="checked"' }}>&nbsp;{{ text_no }}&nbsp;&nbsp;&nbsp;
+										<input  class="styled2" type="radio" name="{{ 'mega_filter_module[categories][' ~ key ~ '][collapsed]' }}" value="pc" {{ category['collapsed'] == 'pc' ? 'checked="checked"' }}>&nbsp;{{text_pc}}&nbsp;&nbsp;&nbsp;
+										<input  class="styled2" type="radio" name="{{ 'mega_filter_module[categories][' ~ key ~ '][collapsed]' }}" value="mobile" {{ category['collapsed'] == 'mobile' ? 'checked="checked"' }}>&nbsp;{{ text_mobile }}
+					                    <span class="help-block"></span>
+					                    <span class="text-muted"></span>
+					                 </div>
+		              			</div>
+		              		</div>
+		              	</div>
+	              		{% endif %}
+	              		{% set category_row = key + 1 %}
+	              	{% endfor %}
+	              	<input type="hidden" id="categories_count" value="{{ category_row }}">
+	              	</div>
+          		</div>
+          </div>
+      </div>
+</form>
+
+{% include "includes/buttons_bottom.expand" %}
+
+<script type="text/javascript">
+
+var links = {};
+
+links['autocomplete'] = '{{ link('catalog/product/lookup') }}';
+links['categories_autocomplete'] = '{{ link('catalog/category/autocomplete') }}';
+links['downloads_autocomplete'] = '{{ link('catalog/download/autocomplete') }}';
+links['products_autocomplete'] = '{{ link('catalog/product/autocomplete') }}';
+links['manufacturers_autocomplete'] = '{{ link('catalog/manufacturer/autocomplete') }}';
+links['options_autocomplete'] = '{{ link('catalog/option/autocomplete') }}';
+links['attributes_autocomplete'] = '{{ link('catalog/attribute/autocomplete') }}';
+
+function addLevel(lvl) {
+	let active = '';
+	let lvl_count = $('#levels_'+lvl+'_count').val();
+
+    let tpl = '<div class="levels_'+ lvl +'_'+lvl_count+' tabbable nav-tabs-vertical nav-tabs-right" style="border-top: 1px dashed #beb6b6;"><div class="tab-content">';
+    {% for lng in languages %}
+    	{% if loop.first %}
+    		active = 'active';
+    	{% endif %}
+    tpl += '<div class="tab-pane has-padding '+ active +'" id="langTab'+lvl+lvl_count+'{{ lng['language_id'] }}"><div class="form-group" id="content_{{ lng['language_id'] }}-group"><label class="control-label">{{entry_level_name}} ({{ lng['name'] }})</label><input type="text" value="" name="mega_filter_module[categories]['+ lvl +'][levels][' + lvl_count + '][{{ lng['language_id'] }}]" class="form-control" style="width:300px; margin: 0px 3px 0 0;" placeholder="Categories"><span class="help-block"></span><span class="text-muted"></span></div></div>';
+	{% endfor %}
+	tpl += '</div>';
+	// tpl += '</div><ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">';
+	// {% for language in languages %}
+	// 	{% if loop.first %}
+ //    		active = 'active';
+ //    	{% endif %}
+	// tpl += '<li class="'+ active +'"><a href="#langTab'+lvl+lvl_count+'{{ language['language_id'] }}" data-toggle="tab" aria-expanded="false"><img src="view/image/flags/{{ language['image'] }}" title="{{ language['name'] }}" class="pull-right"><div> {{ language['name'] }}</div></a></li>';					                                
+	// {% endfor %}
+	// tpl += '</ul></div>';
+
+    $('.levels_'+lvl).append(tpl);
+    $('#levels_'+lvl+'_count').val(lvl_count - -1); 
+}
+
+function addRelated(){
+	let cats_count = $('#categories_count').val();
+	let tpl = '<div  id="category_'+cats_count+'"><div class="row"><div class="col-md-12" style="border-bottom: 1px solid #d9d9d9;border-top: 1px solid #d9d9d9;background: #f8f8f8;"><div class="pull-left col-md-11"><div class="tabbable nav-tabs-vertical nav-tabs-right"><div class="tab-content">';
+    {% for lng in languages %}
+    	{% if loop.first %}
+    		active = 'active';
+    	{% endif %}
+    tpl += '<div class="tab-pane has-padding '+active+'" id="langTab{{ lng['language_id'] }}"><div class="form-group" id="content_{{lng['language_id']}}-group"><label class="control-label">#{{text_related}} ({{ lng['name'] }})</label><input type="text" value="" name="mega_filter_module[categories][' +cats_count+ '][name][{{lng['language_id']}}]" class="form-control" style="width:300px; margin: 0px 3px 0 0;" placeholder="Categories"><span class="help-block"></span><span class="text-muted"></span></div></div>';
+	{% endfor %}
+	tpl += '</div></div></div><div class="pull-right" style="padding:5px"><a href="javascript://" onclick="removeCategory('+cats_count+')" class="text-danger-600 pull-right col-md-1"><i class="icon-trash"></i></a></div><div style="clear: both;"></div></div><div style="clear: both;"></div></div>';
+
+	tpl += '<div class="row" style="padding-top: 15px"><div class="col-md-6"><div class="form-group"><label class="control-label">{{entry_root_category}}: <span class="help">({{text_autocomplete}})</span></label><br/><input  class="styled2" type="radio" name="mega_filter_module[categories][' +cats_count+ '][root_category_type]" value="top_category" style="margin: 0; vertical-align: middle;" id="root-cat-type-' +cats_count+ '-a"><label for="root-cat-type-' +cats_count+ '-a" style="margin-right:10px">&nbsp;{{text_top_category}}</label><input  class="styled2" type="radio"  name="mega_filter_module[categories][' +cats_count+ '][root_category_type]" value="by_url" style="margin: 0; vertical-align: middle;" id="root-cat-type-' +cats_count+ '-b"><label for="root-cat-type-' +cats_count+ '-b" style="margin-right:10px">&nbsp;{{text_current_category}}</label><br/><input  class="styled2" type="radio" name="mega_filter_module[categories][' +cats_count+ '][root_category_type]" value="default_category" style="margin: 0; vertical-align: middle;" id="root-cat-type-' +cats_count+ '-c"><label for="root-cat-type-' +cats_count+ '-c" style="margin-right:10px">&nbsp;{{text_or_select_category}}</label><br><select class="autocomplete form-control categories-autocomplete" name="mega_filter_module[categories][' +cats_count+ '][root_category_id]"> </select></div></div><div class="col-md-6"><div class="form-group"><label class="control-label">{{text_sort_order}}: </label><br/><br/><input class="form-control" type="text" value="" name="mega_filter_module[categories][' +cats_count+ '][sort_order]" size="3"><input type="hidden" value="related" name="mega_filter_module[categories][' +cats_count+ '][type]"><span class="help-block"></span><span class="text-muted"></span></div></div></div>';
+
+	tpl += '<div class="row"><div class="col-md-12 levels_'+cats_count+'"><input type="hidden" id="levels_'+cats_count+'_count" value="0"></div><div style="text-align: right;"><a href="javascript://" onclick="addLevel('+cats_count+')" class="btn btn-success btn-labeled btn-xs"><b><i class="icon-plus3"></i></b>Add level</a></div></div>';
+
+	tpl += '<div class="row" style="border-top: 1px solid #ddd;margin-top: 15px;padding-top: 15px;"><div class="col-md-4"><div class="form-group"><label class="control-label">{{text_auto_levels}}: </label><br/><input class="styled2" type="radio" name="mega_filter_module[categories][' +cats_count+ '][auto_levels]" value="1">&nbsp;{{text_yes}}&nbsp;&nbsp;&nbsp;<input class="styled2" type="radio" name="mega_filter_module[categories][' +cats_count+ '][auto_levels]" value="0">&nbsp;{{ text_no }}&nbsp;&nbsp;&nbsp;<span class="help-block"></span><span class="text-muted"></span></div></div><div class="col-md-4"><div class="form-group"><label class="control-label">{{entry_show_button}}: </label><br/><input class="styled2" type="radio" name="mega_filter_module[categories][' +cats_count+ '][show_button]" value="1">&nbsp;{{text_yes}}&nbsp;&nbsp;&nbsp;<input class="styled2" type="radio" name="mega_filter_module[categories][' +cats_count+ '][show_button]" value="0">&nbsp;{{ text_no }}&nbsp;&nbsp;&nbsp;<span class="help-block"></span><span class="text-muted"></span></div></div><div class="col-md-4"><div class="form-group"><label class="control-label">{{text_collapsed_by_default}}</label><br/><input  class="styled2" type="radio" name="mega_filter_module[categories][' +cats_count+ '][collapsed]" value="1">&nbsp;{{text_yes}}&nbsp;&nbsp;&nbsp;<input  class="styled2" type="radio" name="mega_filter_module[categories][' +cats_count+ '][collapsed]" value="0">&nbsp;{{ text_no }}&nbsp;&nbsp;&nbsp;<input  class="styled2" type="radio" name="mega_filter_module[categories][' +cats_count+ '][collapsed]" value="pc">&nbsp;{{text_pc}}&nbsp;&nbsp;&nbsp;<input  class="styled2" type="radio" name="mega_filter_module[categories][' +cats_count+ '][collapsed]" value="mobile">&nbsp;{{ text_mobile }}<span class="help-block"></span><span class="text-muted"></span></div></div></div>';
+
+	$('.categories_cnt').append(tpl);
+	$('#categories_count').val(cats_count - -1); 
+	$("html, body").animate({ scrollTop: $(document).height() }, 1000);
+	callAutocompelete();
+	$(".styled2").uniform({
+        radioClass: 'choice'
+    });
+}
+
+function hideAlert(){
+	$('.alert').fadeOut(200);
+}
+function addTree(){
+	if( $('#tree').length ){
+		$('.alert').fadeIn(200);
+	}else{
+		let cats_count = $('#categories_count').val();
+		let tpl = '<div  id="category_'+cats_count+'"><div class="row"><div class="col-md-12" style="border-bottom: 1px solid #d9d9d9;border-top: 1px solid #d9d9d9;background: #f8f8f8;"><div class="pull-left col-md-11"><div class="tabbable nav-tabs-vertical nav-tabs-right"><div class="tab-content">';
+	    {% for lng in languages %}
+	    	{% if loop.first %}
+	    		active = 'active';
+	    	{% endif %}
+	    tpl += '<div class="tab-pane has-padding '+active+'" id="langTab{{ lng['language_id'] }}"><div class="form-group" id="content_{{lng['language_id']}}-group"><label class="control-label">#{{text_tree}} ({{ lng['name'] }})</label><input type="text" value="" name="mega_filter_module[categories][' +cats_count+ '][name][{{lng['language_id']}}]" class="form-control" style="width:300px; margin: 0px 3px 0 0;" placeholder="Categories"><span class="help-block"></span><span class="text-muted"></span></div></div>';
+		{% endfor %}
+		tpl += '</div></div></div><div class="pull-right" style="padding:5px"><a href="javascript://" onclick="removeCategory('+cats_count+')" class="text-danger-600 pull-right col-md-1"><i class="icon-trash"></i></a></div><div style="clear: both;"></div></div><div style="clear: both;"></div></div>';
+
+		tpl += '<div class="row"  style="padding-top: 15px"><div class="col-md-6">	<div class="form-group"><label class="control-label">{{text_collapsed_by_default}}</label><br/><input  class="styled2" type="radio" name="mega_filter_module[categories][' +cats_count+ '][collapsed]" value="1">&nbsp;{{text_yes}}&nbsp;&nbsp;&nbsp;<input  class="styled2" type="radio" name="mega_filter_module[categories]['+cats_count+'][collapsed]" value="0">&nbsp;{{ text_no }}&nbsp;&nbsp;&nbsp;<input  class="styled2" type="radio" name="mega_filter_module[categories][' +cats_count+ '][collapsed]" value="pc">&nbsp;{{text_pc}}&nbsp;&nbsp;&nbsp;<input  class="styled2" type="radio" name="mega_filter_module[categories][' +cats_count+ '][collapsed]" value="mobile">&nbsp;{{ text_mobile }}<span class="help-block"></span><span class="text-muted"></span></div></div><div class="col-md-6"><div class="form-group"><label class="control-label">{{text_sort_order}}: </label><input class="form-control" type="text" value="" name="mega_filter_module[categories][' +cats_count+ '][sort_order]" size="3"><input type="hidden" id="tree" value="tree" name="mega_filter_module[categories][' +cats_count+ '][type]"> <span class="help-block"></span><span class="text-muted"></span></div></div></div></div>';
+
+		$('.categories_cnt').append(tpl);
+    	$('#categories_count').val(cats_count - -1); 
+    	$("html, body").animate({ scrollTop: $(document).height() }, 1000);
+    	$(".styled2").uniform({
+	        radioClass: 'choice'
+	    });
+	}
+}
+
+function removeCategory(k){
+	confirmMessage(function () {
+        $('#category_'+k).remove();
+		$('.form').submit(); 
+    });
+}
+
+$('.form').submit(function(event){
+	//Overriding system default behavior in app.js
+	//Get all checked customer groups, then add them to a hidden array to send it with the form
+	$('.customer-group:checked').each(function () {	 
+	    $('<input>').attr({
+	    	type: 'hidden',
+	    	value: $(this).val(),
+	    	name: 'mega_filter_module[customer_groups][]',
+	    }).appendTo($(this));
+    });
+});
+
+function changeStatus(checkbox)
+{
+    var self = $(checkbox);
+    var switch_status = self.siblings('.switchery-status');
+
+    if ( self.is(':checked') )
+    {
+        switch_status.html("{{ text_enabled }}");
+    }
+    else
+    {
+        switch_status.html("{{ text_disabled }}");
+    }
+}
+
+// Events for the Add and Remove buttons
+$(document).ready(function() {
+    $('#AttTableGrid').DataTable({
+		pageLength: 10,
+        columnDefs: [{ 
+            orderable: false,
+            targets: [ 0,2,3,4,5,6 ]
+        }],
+        dom: '<"datatable-header"fl><"datatable-scroll-wrap"t><"datatable-footer"ip>',
+        language: {
+            search: '<span>' + locales['filter'] + ':</span> _INPUT_',
+            searchPlaceholder: locales['filter_placeholder'],
+            lengthMenu: '<span>' + locales['show'] + ':</span> _MENU_',
+            paginate: {'next': '&rarr;', 'previous': '&larr;'}
+        }
+
+    });
+
+    $('#OptionsDataGrid').DataTable({
+		pageLength: 10,
+        columnDefs: [{ 
+            orderable: false,
+            targets: [ 1,2,3,4,5,6]
+        }],
+        dom: '<"datatable-header"fl><"datatable-scroll-wrap"t><"datatable-footer"ip>',
+        language: {
+            search: '<span>' + locales['filter'] + ':</span> _INPUT_',
+            searchPlaceholder: locales['filter_placeholder'],
+            lengthMenu: '<span>' + locales['show'] + ':</span> _MENU_',
+            paginate: {'next': '&rarr;', 'previous': '&larr;'}
+        }
+
+    });
+
+    $('#AttTableGrid_wrapper select, OptionsDataGrid_wrapper select').select2({
+        minimumResultsForSearch: Infinity,
+        width: 'auto'
+    });
+
+    $( ".multiselect-container input" ).each(function() {
+     let nm = 'mega_filter_module[layout_id]['+$( this ).val()+']';
+	 $(this).attr('name', nm);
+	});
+
+	callAutocompelete();
+
+});
+
+function callAutocompelete(){
+	$(".categories-autocomplete").select2({
+        tokenSeparators: [','],
+        closeOnSelect: true,
+        ajax: {
+            url: links['categories_autocomplete'],
+            dataType: 'json',
+            type: 'GET',
+            delay: 250,
+            data: function (params) {
+                return {
+                    filter_name: params.term
+                };
+            },
+            processResults: function (data) {
+                return {
+                    results: $.map(data, function (item, index) {
+                        return {
+                            id: item.category_id,
+                            text: item.name
+                        }
+                    })
+                };
+            },
+            cache: true
+        }
+    });
+}
+
+$(function() {
+    $(".styled2").uniform({
+        radioClass: 'choice'
+    });
+});
+</script>
+{% endblock %}

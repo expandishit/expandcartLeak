@@ -1,0 +1,144 @@
+<div class="panel panel-flat">
+    <div class="panel-heading">
+        <h6 class="panel-title">
+            <div class="title">
+                <span>
+                    <span class="text-bold" id="discount_title">
+                        {{ lang('tab_special_discount') }}
+                        {% if discounts_limit_reached %}
+                            <span class="locked-label">
+                                <i class="fas fa-lock"></i>
+                                {{lang('text_upgrade')}}
+                            </span>
+                        {% endif %}
+                    </span>
+                    <span class="sub-text">{{ lang('tab_discount_cap') }}</span>
+                </span>
+            </div>
+            <a class="heading-elements-toggle"><i class="icon-more"></i></a>
+        </h6>
+        <div class="heading-elements not-collapsible">
+            <ul class="icons-list">
+                <li><a data-action="collapse" class=""></a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="panel-body discount-table">
+        <div class="content-group-sm">
+            <a  class="button btn btn-primary {{discounts_limit_reached ? 'plan-lock-btn' : ''}}" id="add_discount">{{ lang('button_add_special_discount') }}</a>
+        </div>
+    <div class="datatable-scroll-wrap pb-20">
+        <table class="table datatable-show-all table-framed dataTable table-hover datatable-highlight {{product_specials_discounts|length < 1 ? 'hidden' : '' }}" id="specialDiscountsTable">
+                    <thead>
+                    <tr>
+                        <th>{{ lang('entry_customer_group') }}</th>
+                        <th>{{ lang('entry_quantity') }}</th>
+                        <th>{{ lang('entry_priority') }}</th>
+                        <th>{{ lang('entry_price') }}</th>
+                        <th>{{ lang('entry_date_start') }}</th>
+                        <th>{{ lang('entry_date_end') }}</th>
+                        {% if dedicatedDomains['status'] == true %}
+                            <th width="20%">{{ lang('domain_name') }}</th>
+                        {% endif %}
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% set specialDiscountKey = 0 %}
+                    {% for key, value in product_specials_discounts %}
+                        <tr id="special-discount-row{{ key }}" {{discount_price ? 'data-type="quick_discount"' : ''}}>
+                            <td>
+                                <select name="product_special_discount[{{ key }}][customer_group_id]">
+                                    {% for cg in customer_groups %}
+                                        <option value="{{ cg['customer_group_id'] }}"
+                                                {{ value['customer_group_id'] == cg['customer_group_id'] ?
+                                                'selected' : '' }}>
+                                            {{ cg['name'] }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <td>
+                                <input type="text" name="product_special_discount[{{ key }}][quantity]"
+                                       value="{{ value['quantity'] }}"
+                                       class="specialDiscountQuantity"
+                                       size="6"/>
+                            </td>
+                            <td>
+                                <input type="text" name="product_special_discount[{{ key }}][priority]"
+                                       value="{{ value['priority'] }}" class="discount-touchspin" size="2"/>
+                            </td>
+                            <td>
+							
+                                <input type="text" name="product_special_discount[{{ key }}][price]"
+                                       value="{{ value['price'] }}" class="{{  dedicatedDomains['status'] == true ? 'touchspin-money-nopostfix' : 'touchspin-money' }}" size="6">
+                                <input type="hidden" name="product_special_discount[{{ key }}][quick_discount]"
+                                       value="{{ discount_price ? 1 : 0 }}" class="hide" size="6">
+                            </td>
+                            <td>
+                                <input type="text" name="product_special_discount[{{ key }}][date_start]"
+                                       class="form-control datepickerdynamic" value="{{ value['date_start'] == '0000-00-00' or value['date_start'] is null ? '' : value['date_start'] }}"/>
+                            </td>
+                            <td>
+                                <input type="text" name="product_special_discount[{{ key }}][date_end]"
+                                       class="form-control datepickerdynamic" value="{{ value['date_end'] == '0000-00-00' or value['date_end'] is null ? '' : value['date_end'] }}"/>
+                            </td>
+                            {% if dedicatedDomains['status'] == true %}
+                                <td>
+                                    {{ value['domain_name'] }}
+                                    <input type="hidden" value="{{ value['dedicated_domains'] }}"
+                                           name="product_special_discount[{{ key }}][dedicated_domains]">
+                                </td>
+                            {% endif %}
+                            <td>
+                                <!--- EC-32749-Mass Update App improvement: These inputs added as a
+                                hidden until we add the dropdowns to select the discount type and value like the mass update App --->
+                                 <input hidden type="text" name="product_special_discount[{{ key }}][discount_type]" value="{{ value['discount_type'] }}"/>
+                                 <input hidden type="text" name="product_special_discount[{{ key }}][discount_value]" value="{{ value['discount_value'] }}"/>
+                            </td>
+                            <td>
+                                <a onclick="$('#special-discount-row{{ key }}').remove();"
+                                   class="button btn btn-danger"><i class="icon-trash"></i></a>
+                            </td>
+                        </tr>
+                        {% set specialDiscountKey = specialDiscountKey + 1 %}
+                    {% endfor %}
+                    </tbody>
+                </table>
+    </div></div>
+</div>
+
+{% block scripts %}
+    <script>
+        var specialDiscountKey = '{{ specialDiscountKey }}';
+
+        $('.specialDiscountQuantity').TouchSpin({
+            min: 1,
+            max: 999999,
+            initval: 1,
+        });
+
+        $('.discount-touchspin').TouchSpin({
+            min: 1,
+            max: 999999,
+            initval: 1,
+        });
+
+        locales['drp_locale']['format'] = 'YYYY-MM-DD';
+
+        $('.date-available').daterangepicker({
+            autoApply: true,
+            ranges: locales['drp_ranges'],
+            locale: locales['drp_locale'],
+            opens: locales['drp_direction'] 
+        }, function (start, end, label) {
+            $(this.element).parents('td').find('.date-available-start').val(start.format('YYYY-MM-DD'));
+            $(this.element).parents('td').find('.date-available-end').val(end.format('YYYY-MM-DD'));
+        });
+
+        $(".datepickerdynamic").datepicker({
+            showButtonPanel: true,
+            dateFormat: "yy-mm-dd"
+        });
+    </script>
+{% endblock scripts %}

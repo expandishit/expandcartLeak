@@ -1,0 +1,332 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% set dualMenuEnabled = false %}
+
+{% set bodyClasses = "has-detached-left" %}
+
+{% block title %}
+    {{ lang('heading_title') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+    <button type="button" class="btn btn-primary" id="reset"><i class="far fa-save fa-lg position-left"></i> {{ lang('button_reset') }}</button>
+{% endblock headelements %}
+
+{% block content %}
+
+    <style>
+        .select2-search__field{width:100% !important;}
+
+    </style>
+    <!-- Detached sidebar -->
+    <div class="sidebar-detached">
+        <div class="sidebar sidebar-default sidebar-separate">
+            <div class="sidebar-content">
+                <!-- Sidebar search -->
+                <div class="panel panel-white">
+                    <div class="panel-heading">
+                        <div class="panel-title text-semibold">
+                            <i class="icon-search4 text-size-base position-left"></i>
+                            {{ lang('text_products') }}
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <form id="filter_report_sales">
+                            <div class="form-group">
+
+                                    <select  id="products-products"
+                                             name="product_id"
+                                             class="form-control select2"
+                                             style="width: 100%;" data-placeholder="Select a State">
+
+                                    <option value="">{{ lang('select_a_product') }}</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn bg-blue btn-block">
+                                <i class="icon-search4 text-size-base position-left"></i>
+                                {{ lang('filter') }}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <!-- /sidebar search -->
+            </div>
+        </div>
+    </div>
+    <!-- /detached sidebar -->
+    <div class="container-detached">
+        <div class="content-detached">
+            <div class="panel panel-flat">
+                <div class="features-table-container basic-btns rounded">
+                    <table class="table datatable-basic" id="live-products">
+                        <thead>
+                        <tr>
+                            <th>{{ lang('category_name') }}</th>
+                            <th>{{ lang('product_name') }}</th>
+                            <th>{{ lang('product_quantity') }}</th>
+                            <th>{{ lang('option') }}</th>
+                            <th>{{ lang('option_quantity') }}</th>
+
+                        </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript" src="view/assets/js/plugins/forms/selects/select2.min.js"></script>
+    <script type="text/javascript" src="view/assets/js/plugins/tables/datatables/extensions/select.min.js"></script>
+{#    <script src="view/javascript/pages/sale/order_form.js?bn={{ BuildNumber }}"></script>#}
+
+<script type="text/javascript">
+    var listProducts = '{{ link("report/products_quantities/list") }}';
+
+    $(function () {
+        $.extend($.fn.dataTable.defaults, {
+            autoWidth: false,
+            columnDefs: [{
+                orderable: false,
+                width: '100px',
+            }],
+            dom: '<"datatable-header"fB><"datatable-scroll-wrap"t><"datatable-footer"lip>',
+            
+                language: {
+                    ...locales['dt_language'],
+                    search: ''
+                },
+            buttons: [
+                {
+                    extend: 'excelHtml5',
+                    text: `{% if base.currentplan == "53" and base.platform_version >= base.current_version %}<i class="fas fa-lock gray-lock"></i>{% else %}<i class='icon-drawer-out'></i>{% endif %} {{ lang('entry_export_excel') }}`,
+                    className: `btn btn-default {% if base.currentplan == "53" and base.platform_version >= base.current_version %}plan-lock-btn disabled{% endif %}`,
+                    action: function (e, dt, node, config)
+                    {
+                        window.location.href = "tool/w_export_tool/exportOptionsQuantitiesReport";
+                    }
+                },
+            ],
+            drawCallback: function () {
+                $(this).find('tbody tr').slice(-3).find('.dropdown, .btn-group').addClass('dropup');
+            },
+            preDrawCallback: function () {
+                $(this).find('tbody tr').slice(-3).find('.dropdown, .btn-group').removeClass('dropup');
+            }
+        });
+
+        $('#live-products').DataTable({
+            "processing": true,
+            "serverSide": true,
+            
+                language: {
+                    ...locales['dt_language'],
+                    search: ''
+                },
+            "ajax": {
+                url: listProducts,
+                type: "post",
+                error: function () {
+                    $("#reports-sales-error").html(" ");
+                    $("#reports-sales").append('<tbody id="reports-sales-error"><tr><th colspan="6">No data found in the server</th></tr></tbody>');
+                    $("#reports-sales_processing").css("display", "none");
+
+                }
+            },
+            columns: [
+                {data: 'categories_names'},
+                {data: 'name'},
+                {data: 'product_quantity'},
+                {
+                    orderable: false,
+                    data: "0",
+                    width: "",
+                    render: function (data, type, row) {
+                        html =" ";
+                        html  =html + row.fn +" ";
+                        html  =html + row.ln  +" ";
+                        return ` ${html}`;
+                    }
+                },
+                {data: 'quantity'},
+            ],
+        });
+
+
+        $("#filter_report_sales").submit(function (e) {
+            e.preventDefault(); // avoid to execute the actual submit of the form.
+            $('#live-products').DataTable({
+                destroy: true,
+                "processing": true,
+                "serverSide": true,
+                
+                language: {
+                    ...locales['dt_language'],
+                    search: ''
+                },
+                "ajax": {
+                    url: listProducts +"?" +$('#filter_report_sales').serialize(),
+                    type: "post",
+                    error: function () {
+                        $("#reports-sales-error").html(" ");
+                        $("#reports-sales").append('<tbody id="reports-sales-error"><tr><th colspan="6">No data found in the server</th></tr></tbody>');
+                        $("#reports-sales_processing").css("display", "none");
+
+                    }
+                },
+                columns: [
+                    {data: 'categories_names'},
+                    {data: 'name'},
+                    {data: 'product_quantity'},
+                    {
+                        orderable: false,
+                        data: "0",
+                        width: "",
+                        render: function (data, type, row) {
+                            html =" ";
+                            html  =html + row.fn +" ";
+                            html  =html + row.ln  +" ";
+                            return ` ${html}`;
+
+                        }
+                    },
+                    {data: 'quantity'},
+                ],
+            });
+
+        });
+
+        var intervalId;
+        $(window).focus(function () {
+            if (!intervalId)
+                intervalId = setInterval(() => {
+                  //  table.ajax.reload();
+                }, 2000);
+        });
+
+        $(window).blur(function () {
+            clearInterval(intervalId);
+            intervalId = 0;
+        });
+    });
+
+
+
+    // products select .
+
+    link = '{{ link('catalog/product/autocomplete?filter_name=&limit=30') }}';
+
+    function format(item) {
+        return $(`<span><img class='flag' src='${item.image}' height="30"/> ${item.name}</span>`);
+    }
+
+    function formatSelection (item) {
+        return item.name;
+    }
+
+    $('#products-products').select2({
+        ajax: {
+            url: link,
+            dataType: 'json',
+            processResults:
+                function (data, params) {
+                    return {
+                        results: $.map(data, function (item, index) {
+                            return {
+                                id: item.product_id,
+                                product_id: item.product_id,
+                                name: item.name,
+                                option: item.option,
+                                model: item.model,
+                                price: item.price,
+                                total: item.total,
+                                image: item.image,
+                                discount_price: item.discount_price,
+                                discount_quantity: item.discount_quantity
+                            }
+                        })
+                    };
+                }
+            ,
+            cache: true
+        },
+        templateResult: format,
+        templateSelection: formatSelection,
+    });
+
+    function reloadProductsSelect() {
+       $('#products-products').select2('destroy');
+
+        let groupId = 0;
+        if (isNaN(parseInt($('#customer_group_id_hidden').val())) == false) {
+            groupId = $('#customer_group_id_hidden').val();
+        }
+
+        function format(item) {
+            return $(`<span><img class='flag' src='${item.image}' height="30"/> ${item.name}</span>`);
+        }
+
+        function formatSelection (item) {
+            if (item.id==""){
+                return 'Select Product';
+            }
+            return item.name;
+        }
+        link = '{{ link('catalog/product/autocomplete?filter_name=&limit=30') }}';
+
+        $('#products-products').select2({
+            placeholder: "Select a State",
+            allowClear: true,
+            ajax: {
+                url: link,
+                data:
+                    function (params) {
+                        return {
+                            filter_name: params.term,
+                            filter_status: 1,
+                            customer_group_id: groupId
+                        };
+                    },
+                dataType: 'json',
+                processResults:
+                    function (data, params) {
+                        return {
+                            results: $.map(data, function (item, index) {
+                                return {
+                                    id: item.product_id,
+                                    // text: item.name,
+                                    product_id: item.product_id,
+                                    name: item.name,
+                                    option: item.option,
+                                    model: item.model,
+                                    price: item.price,
+                                    total: item.total,
+                                    image: item.image,
+                                    discount_price: item.discount_price,
+                                    discount_quantity: item.discount_quantity
+                                }
+                            })
+                        };
+                    }
+
+                ,
+                cache: true
+            },
+            templateResult: format,
+            templateSelection: formatSelection,
+        });
+    }
+
+    reloadProductsSelect();
+
+    $(function () {
+
+    });
+
+
+</script>
+
+{% endblock content %}

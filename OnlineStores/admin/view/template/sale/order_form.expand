@@ -1,0 +1,874 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+
+{% block title %}
+    {{ lang('heading_title', 'sale/order') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block secondarymenu %}
+{% endblock secondarymenu %}
+
+{% block content %}
+
+    {% if request.get['from_merge'] == 'yes' %}
+        <div class="alert alert-info">
+            {{ lang('redirected_from_merge_message') }}
+        </div>
+    {% endif %}
+
+    <div class="alert alert-danger" style="display: none;" id="errors-fallback"></div>
+
+    <!-- Saving state -->
+    <div class="panel panel-white">
+        <!--
+    <div class="form-group" id="config_title-group">
+            <label class="control-label">label <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="config_title" name="config_title" value="{{ config_title }}" placeholder="{{ langempty('config_title_ph') }}">
+            <span class="help-block"></span>
+            <span class="text-muted"></span>
+        </div>
+     -->
+
+        <form class="steps-state-saving form" action="{{ action }}" id="orderForm" method="POST">
+            <div class="text-center loading" style="position: absolute;width: 100%;height: 100%;z-index: 111;display: none"><img src="view/image/blue-loading-gif-transparent-9.gif"  style="width: 100px" /></div>
+            <input type="hidden" name="formSource" value="dashboard" />
+            <input type="hidden" name="order_id" value="{{ order_id }}">
+
+            <h6><i class="icon-user position-left"></i>{{ lang('tab_customer') }}</h6>
+            <fieldset>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group" id="">
+                            <label class="control-label">{{ lang('entry_customer') }}</label>
+                            <div class="input-group">
+                                <select name="customer" id="customer-customer" class="form-control">
+                                    <option value="">{{ lang('text_select') }}</option>
+                                    {#{% for customer in all_customers %}
+                                    <option data-customer-id="{{ customer['customer_id'] }}" data-cg-id="{{ customer['customer_group_id'] }}" value="{{ customer['customer_id'] }}" {{ order['order_id'] == customer['customer_id'] ? 'selected' }}>{{ customer['name'] }}</option>
+                                {% endfor %}#}
+                                </select>
+                                <span class="input-group-btn">
+                                <button class="btn btn-danger clearCustomer"
+                                        type="button">X</button>
+                            </span>
+                            </div>
+                            <span class="help-block">{{ lang('form_customer_help') }}</span>
+                            <span class="text-muted"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label class="control-label" for="firstname">{{ lang('entry_firstname') }} <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="firstname" name="firstname" value="{{ firstname }}">
+
+                                            <input id="customer_id_hidden" type="hidden" name="customer_id" value="{{ customer_id }}">
+                                            <input id="customer_group_id_hidden" type="hidden" name="customer_group_id" value="{{ customer_group_id }}">
+
+                                            <span class="help-block"></span>
+                                            <span class="text-muted"></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label class="control-label">{{ lang('entry_lastname') }} </label>
+                                            <input type="text" class="form-control" id="lastname" name="lastname" value="{{ lastname }}">
+                                            <span class="help-block"></span>
+                                            <span class="text-muted"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group" id="">
+                                    <label class="control-label">{{ lang('entry_customer_group') }} </label>
+                                    <select class="form-control" id="customer_group_id" name="customer_group_id">
+                                        {% for cg in customer_groups %}
+
+                                            <option value="{{ cg['customer_group_id'] }}" {{ cg['customer_group_id'] == customer_group_id ? 'selected' : (cg['customer_group_id'] == 1 ? 'selected') }}>{{ cg['name'] }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <span class="help-block"></span>
+                                    <span class="text-muted"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label class="control-label">{{ lang('lbl_gift') }} </label>
+                                    <div class="checkbox checkbox-switchery">
+                                        <label>
+                                            <input id="rewardCheck" type="checkbox" onchange="changeStatus(this)" name="gift_product" class="switchery-after" {{ gift_product == 1 ? 'checked' }}>
+                                            <span class="switchery-status">{{ gift_product == 1 ? lang('text_a_gift_product') : lang('text_not_a_gift') }}</span>
+                                        </label>
+                                    </div>
+                                    <span class="help-block"></span>
+                                    <span class="text-muted"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="control-label" for="email">{{ lang('entry_email') }} {% if not register_login_by_phone_number %} <span class="text-danger">*</span>{% endif %}</label>
+                                    <input type="text" class="form-control" id="email" name="email" value="{{ email }}">
+                                    <span class="help-block"></span>
+                                    <span class="text-muted"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label class="control-label" for="telephone">{{ lang('entry_telephone') }} <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="telephone" name="telephone" value="{{ telephone }}">
+                                    <span class="help-block"></span>
+                                    <span class="text-muted"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label class="control-label" for="fax">{{ lang('entry_fax') }} </label>
+                                    <input type="text" class="form-control" id="fax" name="fax" value="{{ fax }}">
+                                    <span class="help-block"></span>
+                                    <span class="text-muted"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+            <h6><i class="icon-coins position-left"></i>{{ lang('tab_payment') }}</h6>
+            <fieldset>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group" id="">
+                            <label class="control-label">{{ lang('entry_address') }}</label>
+                            <select type="text" class="form-control" id="payment_address" name="payment_address">
+                                <option value="">{{ lang('text_select') }}</option>
+                                {% for address in addresses %}
+                                    <option value="{{ address['address_id'] }}">{{ address['firstname'] }} {{ address['lastname'] }} , {{ address['address_1'] }} {{ address['city'] }} , {{ address['country'] }}</option>
+                                {% endfor %}
+                            </select>
+                            <span class="help-block">{{ lang('form_address_help') }}</span>
+                            <span class="text-muted"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="control-label" for="payment_address_1">{{ lang('entry_address_1') }}</label>
+                                    <input type="text" class="form-control" id="payment_address_1" name="payment_address_1" value="{{ payment_address_1 }}">
+                                    <span class="help-block"></span>
+                                    <span class="text-muted"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label class="control-label" for="payment_address_2">{{ lang('entry_address_2') }} </label>
+                                    <input type="text" class="form-control" id="payment_address_2" name="payment_address_2" value="{{ payment_address_2 }}">
+                                    <span class="help-block"></span>
+                                    <span class="text-muted"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label class="control-label">{{ lang('entry_country') }} <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="payment_country_id" name="payment_country_id">
+                                        {% for country in countries %}
+                                            <option value="{{ country['country_id'] }}" {{ country['country_id'] == payment_country_id ? 'selected' }}>{{ country['name'] }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <span class="help-block"></span>
+                                    <span class="text-muted"></span>
+                                </div>
+                                <div class="form-group" id="">
+                                    <label class="control-label" for="payment_zone_id">{{ lang('entry_zone') }} <span class="text-danger">*</span></label>
+                                    <select type="text" class="form-control" id="payment_zone_id" name="payment_zone_id" value="{{ payment_zone_id }}"></select>
+                                    <span class="help-block"></span>
+                                    <span class="text-muted"></span>
+                                </div>
+                                <div class="form-group" id="">
+                                    <label class="control-label">{{ lang('entry_city') }}</label>
+                                    {#<select type="text" class="form-control" id="payment_city" name="payment_city"></select>#}
+                                    <input type="text" class="form-control" id="payment_city" name="payment_city"
+                                           value="{{ payment_city }}" />
+                                    <span class="help-block"></span>
+                                    <span class="text-muted"></span>
+                                </div>
+
+                                <div class="form-group" style="display:none;">
+                                    <label class="control-label" for="payment_tax_id">{{ lang('entry_tax_id') }}</label>
+                                    <input type="text" class="form-control" id="payment_tax_id" name="payment_tax_id" value="{{ payment_tax_id }}">
+                                    <span class="help-block"></span>
+                                    <span class="text-muted"></span>
+                                </div>
+
+                                <div class="form-group" id="">
+                                    <label class="control-label" for="payment_postcode">{{ lang('entry_postcode') }} </label>
+                                    <input type="text" class="form-control" id="payment_postcode" name="payment_postcode" value="{{ payment_postcode }}">
+                                    <span class="help-block"></span>
+                                    <span class="text-muted"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label class="control-label" for="payment_firstname">{{ lang('entry_firstname') }} <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="payment_firstname" name="payment_firstname" value="{{ payment_firstname }}">
+                                            <span class="help-block"></span>
+                                            <span class="text-muted"></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label class="control-label" for="payment_lastname">{{ lang('entry_lastname') }}</label>
+                                            <input type="text" class="form-control" id="payment_lastname" name="payment_lastname" value="{{ payment_lastname }}">
+                                            <span class="help-block"></span>
+                                            <span class="text-muted"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label class="control-label" for="payment_company">{{ lang('entry_company') }}</label>
+                                            <input type="text" class="form-control" id="payment_company" name="payment_company" value="{{ payment_company }}">
+                                            <span class="help-block"></span>
+                                            <span class="text-muted"></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6" style="display:none;">
+                                        <div class="form-group" id="">
+                                            <label class="control-label" for="payment_company_id">{{ lang('entry_company_id') }} <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="payment_company_id" name="payment_company_id" value="{{ payment_company_id }}">
+                                            <span class="help-block"></span>
+                                            <span class="text-muted"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group" id="">
+                                    <label class="control-label" for="payment_telephone">{{ lang('text_payment_telephone') }} <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="payment_telephone" name="payment_telephone" value="{{ payment_telephone }}">
+                                    <span class="help-block"></span>
+                                    <span class="text-muted"></span>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+            <h6><i class="icon-truck position-left"></i>{{ lang('tab_shipping') }}</h6>
+            <fieldset>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label">{{ lang('entry_address') }}</label>
+                            <select type="text" class="form-control" id="shipping_address" name="shipping_address">
+                                <option value="">{{ lang('text_select') }}</option>
+                                {% for address in addresses %}
+                                    <option value="{{ address['address_id'] }}" {{ address['address_id'] == shipping_address ? : 'selected' }}>{{ address['firstname'] }} {{ address['lastname'] }} , {{ address['address_1'] }} {{ address['city'] }} , {{ address['country'] }}</option>
+                                {% endfor %}
+                            </select>
+                            <span class="help-block">{{ lang('form_address_help') }}</span>
+                            <span class="text-muted"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group" id="">
+                                    <label class="control-label" for="shipping_address_1">{{ lang('entry_address_1') }}</label>
+                                    <input type="text" class="form-control" id="shipping_address_1" name="shipping_address_1" value="{{ shipping_address_1 }}">
+                                    <span class="help-block"></span>
+                                    <span class="text-muted"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label class="control-label" for="shipping_address_2">{{ lang('entry_address_2') }} </label>
+                                    <input type="text" class="form-control" id="shipping_address_2" name="shipping_address_2" value="{{ shipping_address_2 }}">
+                                    <span class="help-block"></span>
+                                    <span class="text-muted"></span>
+                                </div>
+                                <div class="form-group" id="">
+                                    <label class="control-label">{{ lang('entry_country') }} <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="shipping_country_id" name="shipping_country_id">
+                                        {% for country in countries %}
+                                            <option value="{{ country['country_id'] }}" {{ country['country_id'] == shipping_country_id ? 'selected' }}>{{ country['name'] }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <span class="help-block"></span>
+                                    <span class="text-muted"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label class="control-label">{{ lang('entry_zone') }} <span class="text-danger">*</span></label>
+                                    <select type="text" class="form-control" id="shipping_zone_id" name="shipping_zone_id"></select>
+                                    {#<input type="text" class="form-control" id="shipping_zone_id" name="shipping_zone_id" value="1006"></input>#}
+                                    <span class="help-block"></span>
+                                    <span class="text-muted"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label class="control-label">{{ lang('text_area') }} <span class="text-danger">*</span></label>
+                                    <select type="text" class="form-control" id="shipping_area_id" name="shipping_area_id"></select>
+                                    <span class="help-block"></span>
+                                    <span class="text-muted"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label class="control-label">{{ lang('entry_city') }}</label>
+                                    {#<select type="text" class="form-control" id="shipping_city" name="shipping_city"></select>#}
+                                    <input type="text" class="form-control" id="shipping_city" name="shipping_city"
+                                           value="{{ shipping_city }}" />
+                                    <span class="help-block"></span>
+                                    <span class="text-muted"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label class="control-label" for="shipping_postcode">{{ lang('entry_postcode') }} </label>
+                                    <input type="text" class="form-control" id="shipping_postcode" name="shipping_postcode" value="{{ shipping_postcode }}">
+                                    <span class="help-block"></span>
+                                    <span class="text-muted"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label class="control-label" for="shipping_firstname">{{ lang('entry_firstname') }} <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="shipping_firstname" name="shipping_firstname" value="{{ shipping_firstname }}">
+                                            <span class="help-block"></span>
+                                            <span class="text-muted"></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label class="control-label" for="shipping_lastname">{{ lang('entry_lastname') }}</label>
+                                            <input type="text" class="form-control" id="shipping_lastname" name="shipping_lastname" value="{{ shipping_lastname }}">
+                                            <span class="help-block"></span>
+                                            <span class="text-muted"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="form-group" id="">
+                                            <label class="control-label" for="shipping_company">{{ lang('entry_company') }}</label>
+                                            <input type="text" class="form-control" id="shipping_company" name="shipping_company" value="{{ shipping_company}}">
+                                            <span class="help-block"></span>
+                                            <span class="text-muted"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="form-group" id="">
+                                            <label class="control-label" for="delivery_info">{{ lang('delivery_info') }}</label>
+                                            <textarea class="form-control" name="delivery_info" id="delivery_info" cols="30" rows="4">{{ delivery_info }}</textarea>
+                                            <span class="help-block"></span>
+                                            <span class="text-muted"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </fieldset>
+
+            <h6><i class="icon-basket position-left"></i>{{ lang('tab_products') }}</h6>
+            <fieldset>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label">{{ lang('tab_products') }}</label>
+                            <select class="form-control" id="products-products" name="products-products">
+                                <option value="-1">{{ lang('select_a_product') }}</option>
+                            </select>
+                            <span class="help-block">{{ lang('form_products_help') }}</span>
+                            <span class="text-muted"></span>
+                        </div>
+
+                        <div class="form-group" id="options-container"></div>
+
+                        <div class="form-group" id="div-quantity" style="display: none;">
+                            <label class="control-label">{{ lang('entry_quantity') }}</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control text-center" value="1" id="products-quantity" readonly>
+                                <div class="input-group-btn">
+                                    <a href="#" class="btn bg-teal" id="products-add-product"><i class="icon-cart-add position-left"></i>{{ lang('btn_add') }}</a>
+                                </div>
+                            </div>
+                            <!-- <input type="text" class="form-control" id="" name="" value="" placeholder="">
+                            <span class="help-block"></span>
+                            <span class="text-muted"></span> -->
+                        </div>
+                        <div id="error_product_or_quantity" class="alert alert-danger" style="display: none">{{ lang('error_product_or_quantity') }}</div>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="table-responsive content-group">
+                            <table class="table table-framed" id="products-grid">
+                                <thead>
+                                <tr>
+                                    <th colspan="2">{{ lang('column_product') }}</th>
+                                    <th>{{ lang('column_model') }}</th>
+                                    <th>{{ lang('column_quantity') }}</th>
+                                    <th>{{ lang('column_price') }}</th>
+                                    <th style="display: none;">{{ lang('column_total') }}</th>
+                                    <th></th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for pKey, op in order_products %}
+                                    <tr id="{{ op['product_id'] }}" {{ op['added_by_user_type'] == 'admin' ? 'style="background: rgb(226, 241, 239)"' : '' }}>
+                                        <td class="no-padding-right" style="width: 45px;">
+                                            <a href="#">
+                                                <img src="{{ op['image'] }}" height="60" class="product-thumb">
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <a href="#" class="text-semibold product-name">{{ op['name'] }}</a>
+                                            <div class="product-options">
+                                                {% for oKey, option in op['option'] %}
+
+                                                    - <small data-name="{{ option['name'] }}" data-id="{{ option['product_option_value_id'] }}" class="optionValue">{{ option['name'] }}: {{ option['value'] }}</small><br />
+                                                    <input type="hidden"
+                                                           name="order_product[{{ pKey }}][order_option][{{ oKey }}][order_option_id]"
+                                                           value="{{ option['order_option_id'] }}"/>
+                                                    <input type="hidden"
+                                                           name="order_product[{{ pKey }}][order_option][{{ oKey }}][product_option_id]"
+                                                           value="{{ option['product_option_id'] }}"/>
+                                                    <input type="hidden"
+                                                           name="order_product[{{ pKey }}][order_option][{{ oKey }}][product_option_value_id]"
+                                                           value="{{ option['product_option_value_id'] }}"/>
+                                                    <input type="hidden"
+                                                           name="order_product[{{ pKey }}][order_option][{{ oKey }}][name]"
+                                                           value="{{ option['name'] }}"/>
+                                                    <input type="hidden"
+                                                           name="order_product[{{ pKey }}][order_option][{{ oKey }}][value]"
+                                                           value="{{ option['value'] }}"/>
+                                                    <input type="hidden"
+                                                           name="order_product[{{ pKey }}][order_option][{{ oKey }}][type]"
+                                                           value="{{ option['type'] }}" />
+                                                {% endfor %}
+                                                {% if op['printingDocument'] %}
+                                                    <div>
+                                                        - <small>{{ lang('text_pages_num') }}: {{ op['printingDocument']['print_pages'] }}</small><br/>
+                                                        <input type="hidden"
+                                                               name="order_product[{{ pKey }}][order_option]['print_pages']"
+                                                               value="{{ op['printingDocument']['print_pages'] }}"/>
+                                                        {% if op['printingDocument']['print_cover_name'] %}
+                                                            - <small>{{ lang('text_cover') }}: {{ op['printingDocument']['print_cover_name'] }}</small><br/>
+                                                            <input type="hidden"
+                                                                   name="order_product[{{ pKey }}][order_option]['print_cover']"
+                                                                   value="{{ op['printingDocument']['print_cover'] }}"/>
+                                                        {% endif %}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="hide product-downloads">
+                                                {% for dKey, download in op['download'] %}
+                                                    <input type="hidden"
+                                                           name="order_product[{{ pKey }}][order_download][{{ dKey }}][order_download_id]"
+                                                           value="{{ download['order_download_id'] }}"/>
+                                                    <input type="hidden"
+                                                           name="order_product[{{ pKey }}][order_download][{{ dKey }}][name]"
+                                                           value="{{ download['name'] }}"/>
+                                                    <input type="hidden"
+                                                           name="order_product[{{ pKey }}][order_download][{{ dKey }}][filename]"
+                                                           value="{{ download['filename'] }}"/>
+                                                    <input type="hidden"
+                                                           name="order_product[{{ pKey }}][order_download][{{ dKey }}][mask]"
+                                                           value="{{ download['mask'] }}"/>
+                                                    <input type="hidden"
+                                                           name="order_product[{{ pKey }}][order_download][{{ dKey }}][remaining]"
+                                                           value="{{ download['remaining'] }}"/>
+                                                {% endfor %}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <h6 class="no-margin text-semibold product-model">{{ op['model'] }}</h6>
+                                        </td>
+                                        <td>
+                                            <h6 class="no-margin text-semibold product-quantity">
+                                                {{ op['quantity'] }}
+                                            </h6>
+                                        </td>
+                                        <td>
+                                            <label class="label label-primary product-price">{{ op['price'] }}</label>
+                                        </td>
+                                        <td style="display: none;">
+                                            <label class="label label-primary product-total">
+                                                {{ op['total'] }}
+                                            </label>
+                                        </td>
+                                        <td style="white-space:nowrap;">
+                                            <button
+                                                    {% if config('config_soft_delete_status') != 0 %}
+                                                        onclick='opDelete("{{ pKey }}","{{ op['order_product_id'] }}","soft");
+                                                                $(this).parents("tr").remove();'
+                                                        title="{{lang('text_soft_delete')}}"
+                                                    {% else %}
+                                                        onclick='opDelete("{{ pKey }}","{{ op['order_product_id'] }}","hard");
+                                                                $(this).parents("tr").remove();'
+                                                    {% endif %}
+                                                    class="btn btn-danger products-remove-product" data-prod-id="{{ op['product_id'] }}">
+                                                <i class="icon-trash-alt"></i>
+                                            </button>
+                                            <!-- soft delete -->
+                                            <input type="hidden" name="order_product[{{pKey}}][delete_status]" value="not_deleted" class="delete_status" id="soft{{pKey}}"/>
+                                            <!-- /. soft delete -->
+                                            <div class="productInputs">
+                                                <input type="hidden" name="order_product[{{ pKey }}][order_product_id]" value="{{ op['order_product_id'] }}" class="order_product_id"/>
+                                                <input type="hidden" name="order_product[{{ pKey }}][product_id]"
+                                                       value="{{ op['product_id'] }}" class="product_id"/>
+
+                                                <input id="order_product_name" type="hidden" name="order_product[{{ pKey }}][name]"
+                                                       value="{{ op['name'] }}" class="name"/>
+                                                <input type="hidden" name="order_product[{{ pKey }}][product_status]"
+                                                       value="{{ op['product_status'] }}" class="product_status"/>
+                                                <input type="hidden" name="order_product[{{ pKey }}][total]"
+                                                       value="{{ op['total'] }}" class="total"/>
+                                                <input type="hidden" name="order_product[{{ pKey }}][tax]"
+                                                       value="{{ op['tax'] }}" class="tax"/>
+                                                <input type="hidden" name="order_product[{{ pKey }}][reward]"
+                                                       value="{{ op['reward'] }}" class="reward"/>
+                                                <input type="hidden" name="order_product[{{ pKey }}][price]"
+                                                       value="{{ op['price'] }}" class="price"/>
+                                                <input type="hidden" name="order_product[{{ pKey }}][quantity]"
+                                                       value="{{ op['quantity'] }}" class="quantity"/>
+                                                <input type="hidden" name="order_product[{{ pKey }}][model]"
+                                                       value="{{ op['model'] }}" class="model"/>
+                                                <input type="hidden" name="order_product[{{ pKey }}][added_by_user_type]"
+                                                       value="{{ op['added_by_user_type'] }}" class="added_by_user_type"/>
+                                                <input type="hidden" name="order_product[{{ pKey }}][old]"
+                                                       value="1" class="old"/>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                {% if voucher_themes %}
+                    <hr>
+
+                    <h6>{{ lang('lbl_add_voucher') }}</h6>
+                    <br>
+                    <div class="row">
+                        {% if order_vouchers %}
+                            <div class="col-md-4">
+                                <table class="table table-framed">
+                                    <thead>
+                                    <tr>
+                                        <th>{{ lang('column_product') }}</th>
+                                        <th>{{ lang('column_model') }}</th>
+                                        <th>{{ lang('column_quantity') }}</th>
+                                        <th>{{ lang('column_price') }}</th>
+                                        <th>{{ lang('column_total') }}</th>
+                                        <th></th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for ov in order_vouchers %}
+                                        <tr>
+                                            <td>
+                                                <a href="#" class="text-semibold">{{ ov['description'] }}</a>
+                                            </td>
+                                            <td>
+                                                <h6 class="no-margin text-semibold">{{ ov['model'] }}</h6>
+                                            </td>
+                                            <td>{{ ov['quantity'] }}</td>
+                                            <td>{{ ov['price'] }}</td>
+                                            <td>{{ ov['total'] }}</td>
+                                            <td>
+                                                <a href="#" class="btn btn-danger"><i class="icon-trash-alt"></i></a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% endif %}
+
+                        <div class="col-md-{{ order_vouchers ? 8 : 12}}">
+                            <div class="row">
+
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label class="control-label" for="to_name">{{ lang('entry_to_name') }}</label>
+                                        <input type="text" class="form-control" id="to_name" name="to_name" value="{{ to_name }}">
+                                        <span class="help-block"></span>
+                                        <span class="text-muted"></span>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label class="control-label" for="to_email">{{ lang('entry_to_email') }}</label>
+                                        <input type="text" class="form-control" id="to_email" name="to_email" value="{{ to_email }}">
+                                        <span class="help-block"></span>
+                                        <span class="text-muted"></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label class="control-label" for="from_name">{{ lang('entry_from_name') }}</label>
+                                        <input type="text" class="form-control" id="from_name" name="from_name" value="{{ from_name }}">
+                                        <span class="help-block"></span>
+                                        <span class="text-muted"></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group" id="from_email">
+                                        <label class="control-label" for="from_email">{{ lang('entry_from_email') }}</label>
+                                        <input type="text" class="form-control" id="from_email" name="from_email" value="{{ from_email }}">
+                                        <span class="help-block"></span>
+                                        <span class="text-muted"></span>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <div class="form-group" id="">
+                                        <label class="control-label" for="voucher_theme_id">{{ lang('entry_theme') }}</label>
+                                        <select class="form-control" id="voucher_theme_id" name="voucher_theme_id">
+                                            {% for voucher_theme in voucher_themes %}
+                                                <option value="{{ voucher_theme['voucher_theme_id']}}">{{ voucher_theme['name'] }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <span class="help-block"></span>
+                                        <span class="text-muted"></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group" id="">
+                                        <label class="control-label" for="amount">{{ lang('entry_amount') }}</label>
+                                        <input type="text" class="form-control touchspinney" id="amount" name="amount" value="{{ amount ?: 1 }}">
+                                        <span class="help-block"></span>
+                                        <span class="text-muted"></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-group" id="">
+                                        <label class="control-label" for="message">{{ lang('entry_message') }}</label>
+                                        <textarea type="text" class="form-control" rows="3" id="message" name="message">{{ message }}</textarea>
+                                        <span class="help-block"></span>
+                                        <span class="text-muted"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </fieldset>
+
+            <h6><i class="icon-cash4 position-left"></i>{{ lang('lbl_checkout_details') }}</h6>
+            <fieldset>
+                <div class="row">
+                    <div class="col-md-6">
+                        <!-- <table class="table table-borderless table-xs content-group-sm">
+                        <tbody>
+                            {% for total in order_totals %}
+                                {% if total['code'] == 'total' %}
+                                    <tr class="bg-success">
+                                        <td>{{ total['title'] }}</td>
+                                        <td class="text-right">
+                                            <span class="pull-right orderTotalValue">{{ total['value'] }}</span>
+                                        </td>
+                                {% else %}
+                                    <tr>
+                                        <td>{{ total['title'] }}</td>
+                                        <td class="text-right">
+                                            <span class="pull-right orderTotalValue">{{ total['value'] }}</span>
+                                        </td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table> -->
+                        <table class="table table-framed" id="total-products">
+                            <thead>
+                            <tr>
+                                <th>{{ lang('column_product') }}</th>
+                                <th>{{ lang('column_model') }}</th>
+                                <th>{{ lang('column_quantity') }}</th>
+                                <th>{{ lang('column_price') }}</th>
+                                <th>{{ lang('column_total') }}</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {#{% for prod in order_products %}
+                                <tr>
+                                    <td>
+                                        <a href="#" class="text-semibold">{{ prod['name'] }}</a>
+                                    </td>
+                                    <td>{{ prod['model'] }}</td>
+                                    <td>{{ prod['quantity'] }}</td>
+                                    <td>
+                                        <h6 class="no-margin text-semibold">{{ prod['price'] }}</h6>
+                                    </td>
+                                    <td>
+                                        <h6 class="no-margin text-semibold">{{ prod['total'] }}</h6>
+                                    </td>
+                                </tr>
+                            {% endfor %}#}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="control-label">{{ lang('entry_shipping') }} <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="shipping" name="shipping">
+                                    </select>
+                                    <input type="hidden" name="shipping_method" value="{{ shipping_method }}" />
+                                    <input type="hidden" name="shipping_code" value="{{ shipping_code }}" />
+
+                                    <span class="help-block"></span>
+                                    <span class="text-muted"></span>
+                                </div>
+                                <div class="form-group" id="">
+                                    <label class="control-label">{{ lang('entry_payment') }} <span class="text-danger">*</span> </label>
+                                    <select class="form-control" id="payment" name="payment">
+                                        {% for pm in payment_methods %}
+                                            <option value="{{ pm['code'] }}" {{ payment_code == pm['code'] ? 'selected' }}>{{ pm['name'] }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <input type="hidden" name="payment_method" value="{{ payment_method }}" />
+                                    <input type="hidden" name="payment_code" value="{{ payment_code }}" />
+                                    <span class="help-block"></span>
+                                    <span class="text-muted"></span>
+                                </div>
+                                <div class="form-group" id="">
+                                    <label class="control-label" for="coupon">{{ lang('entry_coupon') }} </label>
+                                    <input type="text" class="form-control" id="coupon" name="coupon" value="{{ coupon }}">
+                                    <span class="help-block"></span>
+                                    <span class="text-muted"></span>
+                                </div>
+                                <div class="form-group" id="">
+                                    <label class="control-label" id="voucher">{{ lang('entry_voucher') }}</label>
+                                    <input type="text" class="form-control" id="voucher" name="voucher" value="{{ voucher }}">
+                                    <span class="help-block"></span>
+                                    <span class="text-muted"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="control-label" for="order_status_id">{{ lang('entry_order_status') }}</label>
+                                    <select class="form-control" id="order_status_id" name="order_status_id">
+                                        {% for os in order_statuses %}
+                                            <option value="{{ os['order_status_id'] }}" {{ order_status_id == os['order_status_id'] ? 'selected' }}>{{ os['name'] }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <span class="help-block"></span>
+                                    <span class="text-muted"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label class="control-label">{{ lang('entry_affiliate') }} </label>
+                                    <select class="form-control" id="affiliate" name="affiliate_id">
+                                        <option selected>{{ lang('select_affiliate') }}</option>
+                                        {% for affiliate in affiliates %}
+                                            <option value="{{ affiliate.affiliate_id }}">{{ affiliate.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <span class="help-block"></span>
+                                    <span class="text-muted"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label class="control-label" for="reward">{{ lang('entry_reward') }} </label>
+                                    <input type="text" class="form-control" id="reward" name="reward" value="{{ reward }}">
+                                    <span class="help-block"></span>
+                                    <span class="text-muted"></span>
+                                </div>
+
+                                {#  add customer order points start #}
+                                {% if rewardPointsPro == 1 %}
+                                    {# this input using to add customer points manually when create order #}
+                                    <div class="form-group" id="orderPointsDiv" style="display:none">
+                                        <label class="control-label" for="orderPoints">{{ lang('entry_order_points') }} </label>
+                                        <input type="text" class="form-control" id="orderPoints" name="orderPoints" >
+                                        <span class="help-block"></span>
+                                        <span class="text-muted"></span>
+                                    </div>
+                                    {#  add customer order points end #}
+                                {% endif %}
+                                <span id="rewardPointCheck" data-check-result="{{ rewardPointsPro }}"></span>
+                                <div class="form-group" id="">
+                                    <label class="control-label" id="comment">{{ lang('entry_comment') }}</label>
+                                    <textarea type="text" class="form-control" rows="3" id="comment" name="comment">{{ comment | replace({"<br>" : "\n"}) }}</textarea>
+                                    <span class="help-block"></span>
+                                    <span class="text-muted"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </fieldset>
+
+        </form>
+    </div>
+    <!-- /saving state -->
+
+    <script>
+
+        function opDelete(pKey,order_product_id,type) {
+            $('<input>').attr({
+                type: 'hidden',
+                name: 'order_product['+pKey+'][order_product_id]',
+                value: order_product_id,
+            }).appendTo('form');
+
+            // add soft_delete_status hidden input with value 1
+            $('<input>').attr({
+                type: 'hidden',
+                name: 'order_product['+pKey+'][delete_status]',
+                value: type,
+            }).appendTo('form');
+
+        }
+
+        function changeStatus(checkbox)
+        {
+            var self = $(checkbox);
+            var switch_status = self.siblings('.switchery-status');
+
+            if ( self.is(':checked') )
+            {
+                switch_status.html("{{ lang('text_a_gift_product') }}");
+            }
+            else
+            {
+                switch_status.html("{{ lang('text_not_a_gift') }}");
+            }
+        }
+    </script>
+
+
+    <script>
+        var links = values = {};
+
+        links['customerAutocomplete'] = '{{ link('sale/customer/autocomplete?filter_name=&limit=30') }}';
+        links['productsAutocomplete'] = '{{ link('catalog/product/autocomplete?filter_name=&limit=30') }}';
+        links['validate'] = '{{ link('sale/order/validate?order_id='~ order_id ~'&target=') }}';
+        links['getCustomerInfo'] = '{{ link('sale/order/getCustomerInfo') }}';
+        links['catalog_url'] = '{{ catalog_url }}';
+
+        locales['text_select'] = '{{ lang('text_select') }}';
+
+        locales['btn_next'] = '{{ lang('btn_next') }}';
+        locales['btn_previous'] = '{{ lang('btn_previous') }}';
+        locales['btn_finish'] = '{{ lang('btn_finish') }}';
+
+        locales['column_product'] = '{{ lang('column_product') }}';
+        locales['column_model'] = '{{ lang('column_model') }}';
+        locales['column_quantity'] = '{{ lang('column_quantity') }}';
+        locales['column_price'] = '{{ lang('column_price') }}';
+        locales['column_total'] = '{{ lang('column_total') }}';
+
+        values['payment_zone_id'] = "{{ payment_zone_id }}";
+
+        values['payment_area_id'] = "{{ payment_area_id != '' ? payment_area_id : shipping_area_id}}";
+    </script>
+
+    <script src="view/javascript/pages/sale/order_form.js?bn={{ BuildNumber }}&sp_v=1.2"></script>
+
+{% endblock content %}

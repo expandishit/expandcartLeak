@@ -1,0 +1,576 @@
+<?php
+
+class ControllerFlashBlogCategory extends Controller
+{
+
+    private $category;
+
+    private function init($models)
+    {
+        foreach ($models as $model) {
+            $this->load->model($model);
+            $object = explode('/', $model);
+            $object = end($object);
+            $model = str_replace('/', '_', $model);
+            $this->$object = $this->{"model_" . $model};
+        }
+
+        if (isset($this->session->data['errors'])) {
+            $this->data['error_warning'] = implode('</br >', $this->session->data['errors']);
+
+            unset($this->session->data['errors']);
+        }
+
+        if (isset($this->session->data['success'])) {
+            $this->data['success'] = $this->session->data['success'];
+
+            unset($this->session->data['success']);
+        }
+
+        $this->language->load('flash_blog/flash_blog');
+    }
+
+    public function index()
+    {
+
+        $this->init([
+            'flash_blog/category'
+        ]);
+
+        $this->document->setTitle(
+            $this->language->get('flash_blog_heading_title') .
+            ' :: ' .
+            $this->language->get('heading_view_categories')
+        );
+
+        $this->data['breadcrumbs'] = array();
+
+        $this->data['breadcrumbs'][] = array(
+            'text' => $this->language->get('text_home'),
+            'href' => $this->url->link('common/home', 'token=' . $this->session->data['token'], 'SSL'),
+            'separator' => false
+        );
+
+        $this->data['breadcrumbs'][] = array(
+            'text' => $this->language->get('flash_blog_heading_title'),
+            'href' => $this->url->link('flash_blog/home', 'token=' . $this->session->data['token'], 'SSL'),
+            'separator' => ' :: '
+        );
+
+        $this->data['categories'] = $this->category->getCategories();
+
+        $this->data['links'] = [
+            'home' => $this->url->link(
+                'flash_blog/home', 'token=' . $this->session->data['token'], 'SSL'
+            ),
+            'newCategory' => $this->url->link(
+                'flash_blog/category/insert', 'token=' . $this->session->data['token'], 'SSL'
+            ),
+            'viewCategory' => $this->url->link(
+                'flash_blog/category/view', 'token=' . $this->session->data['token'], 'SSL'
+            ),
+            'editCategory' => $this->url->link(
+                'flash_blog/category/edit', 'token=' . $this->session->data['token'], 'SSL'
+            ),
+            'deleteCategory' => $this->url->link(
+                'flash_blog/category/remove', 'token=' . $this->session->data['token'], 'SSL'
+            ),
+        ];
+
+        $this->template = 'flash_blog/category/list.tpl';
+        $this->children = array(
+            'common/header',
+            'common/footer'
+        );
+
+        $this->response->setOutput($this->render());
+    }
+
+    public function insert()
+    {
+        $this->init([
+            'flash_blog/category',
+            'tool/image',
+        ]);
+
+        $this->document->setTitle(
+            $this->language->get('flash_blog_heading_title') .
+            ' :: ' .
+            $this->language->get('heading_new_category')
+        );
+
+        $this->data['breadcrumbs'] = array();
+
+        $this->data['breadcrumbs'][] = array(
+            'text' => $this->language->get('text_home'),
+            'href' => $this->url->link('common/home', 'token=' . $this->session->data['token'], 'SSL'),
+            'separator' => false
+        );
+
+        $this->data['breadcrumbs'][] = array(
+            'text' => $this->language->get('flash_blog_heading_title'),
+            'href' => $this->url->link('flash_blog/home', 'token=' . $this->session->data['token'], 'SSL'),
+            'separator' => ' :: '
+        );
+
+        $this->data['breadcrumbs'][] = array(
+            'text' => $this->language->get('heading_view_categories'),
+            'href' => $this->url->link('flash_blog/category', 'token=' . $this->session->data['token'], 'SSL'),
+            'separator' => ' :: '
+        );
+
+        $this->data['links'] = [
+            'settings' => $this->url->link(
+                'flash_blog/settings', 'token=' . $this->session->data['token'], 'SSL'
+            ),
+            'categories' => $this->url->link(
+                'flash_blog/category', 'token=' . $this->session->data['token'], 'SSL'
+            ),
+            'submitCategory' => $this->url->link(
+                'flash_blog/category/submit', 'token=' . $this->session->data['token'], 'SSL'
+            ),
+            'deleteCategory' => $this->url->link(
+                'flash_blog/category/remove', 'token=' . $this->session->data['token'], 'SSL'
+            ),
+        ];
+
+        if (isset($this->request->get['category_id'])) {
+            $this->data['links']['submitCategory'] = $this->url->link(
+                'flash_blog/category/submit',
+                'token=' . $this->session->data['token'] . '&category_id=' . $this->request->get['category_id'],
+                'SSL'
+            );
+        }
+
+        $this->load->model('localisation/language');
+
+        $this->data['languages'] = $this->model_localisation_language->getLanguages();
+
+        if (isset($this->session->data['flash'])) {
+            $category = $this->session->data['flash']['data']['category'];
+            $categoryDescription = $this->session->data['flash']['data']['category_description'];
+            $this->data['category_thump'] = $this->image->resize($category['category_image'], 150, 150);
+            unset($this->session->data['flash']);
+        } else {
+            $category = [
+                'category_status' => null, 'category_image' => null, 'sort_order' => null
+            ];
+            foreach ($this->data['languages'] as $id => $language) {
+                $categoryDescription[$language['language_id']] = [
+                    'name' => null, 'description' => null, 'meta_description' => null, 'meta_keywords' => null
+                ];
+            }
+            $this->data['category_thump'] = $this->image->resize('no_image.jpg', 150, 150);
+        }
+
+        $this->data['description'] = $categoryDescription;
+        $this->data['category'] = $category;
+
+        $this->template = 'flash_blog/category/create.tpl';
+        $this->children = array(
+            'common/header',
+            'common/footer'
+        );
+
+        $this->response->setOutput($this->render());
+    }
+
+    public function edit()
+    {
+        $categoryId = (isset($this->request->get['category_id']) ? $this->request->get['category_id'] : null);
+
+        if (!$categoryId) {
+            $this->session->data['errors'] = [$this->language->get('error_not_set_id')];
+
+            $this->redirect(
+                $this->url->link(
+                    'flash_blog/category',
+                    'token=' . $this->session->data['token'], 'SSL'
+                )
+            );
+        }
+
+        $this->init([
+            'flash_blog/category',
+            'tool/image',
+        ]);
+
+        $this->document->setTitle(
+            $this->language->get('flash_blog_heading_title') .
+            ' :: ' .
+            $this->language->get('heading_edit_category')
+        );
+
+        $this->data['breadcrumbs'] = array();
+
+        $this->data['breadcrumbs'][] = array(
+            'text' => $this->language->get('text_home'),
+            'href' => $this->url->link('common/home', 'token=' . $this->session->data['token'], 'SSL'),
+            'separator' => false
+        );
+
+        $this->data['breadcrumbs'][] = array(
+            'text' => $this->language->get('flash_blog_heading_title'),
+            'href' => $this->url->link('flash_blog/home', 'token=' . $this->session->data['token'], 'SSL'),
+            'separator' => ' :: '
+        );
+
+        $this->data['breadcrumbs'][] = array(
+            'text' => $this->language->get('heading_view_categories'),
+            'href' => $this->url->link('flash_blog/category', 'token=' . $this->session->data['token'], 'SSL'),
+            'separator' => ' :: '
+        );
+
+        $this->data['links'] = [
+            'settings' => $this->url->link(
+                'flash_blog/settings', 'token=' . $this->session->data['token'], 'SSL'
+            ),
+            'categories' => $this->url->link(
+                'flash_blog/category', 'token=' . $this->session->data['token'], 'SSL'
+            ),
+            'submitCategory' => $this->url->link(
+                'flash_blog/category/submit',
+                'token=' . $this->session->data['token'] . '&category_id=' . $categoryId,
+                'SSL'
+            ),
+            'deleteCategory' => $this->url->link(
+                'flash_blog/category/remove', 'token=' . $this->session->data['token'], 'SSL'
+            ),
+        ];
+
+        $this->load->model('localisation/language');
+
+        $this->data['languages'] = $this->model_localisation_language->getLanguages();
+
+        if (isset($this->session->data['flash'])) {
+            $category = $this->session->data['flash']['data']['category'];
+            $categoryDescription = $this->session->data['flash']['data']['category_description'];
+            unset($this->session->data['flash']);
+        } else {
+            $category = $this->data['category'] = $this->category->getCategoryById($categoryId);
+            $categoryDescription = $this->category->getCategoryDescriptionByCategoryId($categoryId);
+        }
+
+        $this->data['description'] = $categoryDescription;
+        $this->data['category'] = $category;
+
+        $this->data['categoryId'] = $categoryId;
+
+        if ($category['parent_id'] != 0) {
+            $this->data['links']['categories'] = $this->url->link(
+                'flash_blog/category/view',
+                'token=' . $this->session->data['token'] . '&category_id=' . $category['parent_id'],
+                'SSL'
+            );
+        }
+
+        if (!empty($category) && $category['category_image'] && file_exists(DIR_IMAGE . $category['category_image'])) {
+            $this->data['category_thump'] = $this->image->resize($category['category_image'], 150, 150);
+        } else {
+            $this->data['category_thump'] = $this->image->resize('no_image.jpg', 150, 150);
+        }
+
+        $this->template = 'flash_blog/category/edit.tpl';
+        $this->children = array(
+            'common/header',
+            'common/footer'
+        );
+
+        $this->response->setOutput($this->render());
+    }
+
+    public function view()
+    {
+        $categoryId = (isset($this->request->get['category_id']) ? $this->request->get['category_id'] : null);
+
+        if (!$categoryId) {
+            $this->session->data['errors'] = [$this->language->get('error_not_set_id')];
+
+            $this->redirect(
+                $this->url->link(
+                    'flash_blog/category',
+                    'token=' . $this->session->data['token'], 'SSL'
+                )
+            );
+        }
+
+        $this->init([
+            'flash_blog/category',
+            'flash_blog/post',
+        ]);
+
+        $this->document->setTitle(
+            $this->language->get('flash_blog_heading_title') .
+            ' :: ' .
+            $this->language->get('heading_edit_category')
+        );
+
+        $this->data['breadcrumbs'] = array();
+
+        $this->data['breadcrumbs'][] = array(
+            'text' => $this->language->get('text_home'),
+            'href' => $this->url->link('common/home', 'token=' . $this->session->data['token'], 'SSL'),
+            'separator' => false
+        );
+
+        $this->data['breadcrumbs'][] = array(
+            'text' => $this->language->get('flash_blog_heading_title'),
+            'href' => $this->url->link('flash_blog/home', 'token=' . $this->session->data['token'], 'SSL'),
+            'separator' => ' :: '
+        );
+
+        $this->data['breadcrumbs'][] = array(
+            'text' => $this->language->get('heading_view_categories'),
+            'href' => $this->url->link('flash_blog/category', 'token=' . $this->session->data['token'], 'SSL'),
+            'separator' => ' :: '
+        );
+
+        $category = $this->category->getCategoryById($categoryId);
+
+        $this->data['links'] = [
+            'categories' => $this->url->link(
+                'flash_blog/category', 'token=' . $this->session->data['token'], 'SSL'
+            ),
+            'newCategory' => $this->url->link(
+                'flash_blog/category/insert',
+                'token=' . $this->session->data['token'] . '&category_id=' . $categoryId,
+                'SSL'
+            ),
+            'editCategory' => $this->url->link(
+                'flash_blog/category/edit',
+                'token=' . $this->session->data['token'] . '&category_id=' . $categoryId,
+                'SSL'
+            ),
+            'viewCategory' => $this->url->link(
+                'flash_blog/category/view',
+                'token=' . $this->session->data['token'] . '&category_id=' . $categoryId,
+                'SSL'
+            ),
+            'editSubCategory' => $this->url->link(
+                'flash_blog/category/edit',
+                'token=' . $this->session->data['token'] . '&parent=' . $categoryId,
+                'SSL'
+            ),
+            'deleteCategory' => $this->url->link(
+                'flash_blog/category/remove', 'token=' . $this->session->data['token'], 'SSL'
+            ),
+            'newPost' => $this->url->link(
+                'flash_blog/post/create',
+                'token=' . $this->session->data['token'] . '&category_id=' . $categoryId,
+                'SSL'
+            ),
+            'viewPost' => $this->url->link(
+                'flash_blog/post/show',
+                'token=' . $this->session->data['token'] . '&category_id=' . $categoryId,
+                'SSL'
+            ),
+            'editPost' => $this->url->link(
+                'flash_blog/post/edit',
+                'token=' . $this->session->data['token'] . '&category_id=' . $categoryId,
+                'SSL'
+            ),
+            'deletePost' => $this->url->link(
+                'flash_blog/post/delete',
+                'token=' . $this->session->data['token'] . '&category_id=' . $categoryId,
+                'SSL'
+            ),
+        ];
+
+        if ($category['parent_id'] != 0) {
+            $this->data['links']['categories'] = $this->url->link(
+                'flash_blog/category/view',
+                'token=' . $this->session->data['token'] . '&category_id=' . $category['parent_id'],
+                'SSL'
+            );
+        }
+
+        $this->data['subCategories'] = $this->category->getCategoriesByParent($categoryId);
+        $this->data['categoryPosts'] = $this->post->getPostsByCategoryId($categoryId);
+
+        $this->data['categoryId'] = $categoryId;
+
+        $this->template = 'flash_blog/category/view.tpl';
+        $this->children = array(
+            'common/header',
+            'common/footer'
+        );
+
+        $this->response->setOutput($this->render());
+    }
+
+    public function submit()
+    {
+        $actionType = $this->request->post['actionType'];
+
+        if (!isset($actionType)) {
+
+        }
+
+        $category = $this->request->post['category'];
+
+        if (!isset($category['sort_order']) || empty($category['sort_order'])) {
+            $category['sort_order'] = 0;
+        }
+
+        $categoryDescription = $this->request->post['category_description'];
+
+        $this->init([
+            'flash_blog/category'
+        ]);
+
+        if ($actionType == 'create') {
+
+            if (!$this->category->validate(['category' => $category, 'description' => $categoryDescription])) {
+
+                $this->session->data['errors'] = $this->category->errors;
+
+                $this->session->data['flash']['data']['category'] = $category;
+                $this->session->data['flash']['data']['category_description'] = $categoryDescription;
+
+                $this->redirect(
+                    $this->url->link(
+                        'flash_blog/category/insert',
+                        'token=' . $this->session->data['token'], 'SSL'
+                    )
+                );
+            }
+
+            if (isset($this->request->get['category_id'])) {
+                $category['parent_id'] = $this->request->get['category_id'];
+            }
+
+            $lastId = $this->category->insertCategory($category);
+
+            $this->category->insertCategoryDescription($lastId, $categoryDescription);
+
+            $this->session->data['success'] = $this->language->get('message_new_category_inserted');
+
+            $this->redirect(
+                $this->url->link(
+                    'flash_blog/category/edit',
+                    'token=' . $this->session->data['token'] . '&category_id=' . $lastId,
+                    'SSL'
+                )
+            );
+
+        } else if ($actionType == 'update') {
+
+            $categoryId = (isset($this->request->post['categoryId']) ? $this->request->post['categoryId'] : null);
+
+            if (!isset($categoryId) || ($categoryId != $this->request->get['category_id'])) {
+                $this->session->data['errors'] = [$this->language->get('error_not_set_id')];
+
+                $this->redirect(
+                    $this->url->link(
+                        'flash_blog/category',
+                        'token=' . $this->session->data['token'], 'SSL'
+                    )
+                );
+            }
+
+            if (!$this->category->validate(['category' => $category, 'description' => $categoryDescription])) {
+
+                $this->session->data['errors'] = $this->category->errors;
+
+                $this->session->data['flash']['data']['category'] = $category;
+                $this->session->data['flash']['data']['category_description'] = $categoryDescription;
+
+                $this->redirect(
+                    $this->url->link(
+                        'flash_blog/category/edit',
+                        'token=' . $this->session->data['token'] . '&category_id=' . $categoryId,
+                        'SSL'
+                    )
+                );
+            }
+
+            $categoryToBeUpdated = $this->category->getCategoryById($categoryId);
+
+            if (!$categoryToBeUpdated) {
+                $this->session->data['errors'] = [$this->language->get('error_not_set_id')];
+
+                $this->redirect(
+                    $this->url->link(
+                        'flash_blog/category',
+                        'token=' . $this->session->data['token'], 'SSL'
+                    )
+                );
+            }
+
+            $this->category->updateCategory($categoryId, $category);
+
+            $this->category->updateCategoryDescription($categoryId, $categoryDescription);
+
+            $this->session->data['success'] = $this->language->get('message_category_edited_successfully');
+
+            $this->redirect(
+                $this->url->link(
+                    'flash_blog/category/edit',
+                    'token=' . $this->session->data['token'] . '&category_id=' . $categoryId,
+                    'SSL'
+                )
+            );
+
+        }
+    }
+
+    public function remove()
+    {
+        $categoryId = (isset($this->request->get['category_id']) ? $this->request->get['category_id'] : null);
+
+        if (!$categoryId) {
+            $this->session->data['errors'] = [$this->language->get('error_not_set_id')];
+
+            $this->redirect(
+                $this->url->link(
+                    'flash_blog/category',
+                    'token=' . $this->session->data['token'], 'SSL'
+                )
+            );
+        }
+
+        $this->init([
+            'flash_blog/category',
+//            'flash_blog/post',
+        ]);
+
+        $category = $this->category->getCategoryById($categoryId);
+
+        if (!$category) {
+            $this->session->data['errors'] = [$this->language->get('error_not_set_id')];
+
+            $this->redirect(
+                $this->url->link(
+                    'flash_blog/category',
+                    'token=' . $this->session->data['token'], 'SSL'
+                )
+            );
+        }
+
+        $this->category->deleteCategory($categoryId);
+
+        $this->category->deleteCategoryDescription($categoryId);
+
+        /**
+         * TODO
+         * instead of performing deleting blogs, view template to make sure if delete blogs
+         * or move it to another category
+         */
+
+//        $this->blog->deleteBlogsByCategoryId($categoryId);
+
+        /**
+         * TODO
+         * remove child categories
+         */
+
+        $this->session->data['success'] = $this->language->get('message_category_deleted_successfully');
+
+        $this->redirect(
+            $this->url->link(
+                'flash_blog/category',
+                'token=' . $this->session->data['token'], 'SSL'
+            )
+        );
+    }
+}

@@ -1,0 +1,32 @@
+<div class="alert alert-danger align-items-center alert--invalid error--area" role="alert" style="display:{{shipping_methods|length == 0 ? 'flex' : 'none!important'}}">
+    <i class="fas fa-exclamation-triangle"></i>
+    <p class="input--invalid-msg">{{ shipping_methods|length == 0 ? no_shipping_msg : '' }}</p>
+</div>
+{% if delivery_slot_status %}
+    {{ include('souq/template/quickcheckout/delivery_slot.expand') }}
+{% endif %}
+{% for method in shipping_methods %}
+    {% if not method.error %}
+        {% for quote in method.quote %}
+
+            <div class="shipping__saved-address">
+                <div class="saved-address-container">
+                    <label class="saved-address__control">
+                        <input class="form-check-input" type="radio" name="shipping_method" value="{{ quote['code'] }}"
+                            {% if quote.code == shipping_method.code %} checked {% endif %}
+                            data-validate="validate" data-presence="1" 
+                                data-presence-msg="{{lang('required_input_shipping_method', 'checkout/checkoutv2', true)}}"
+                            onchange="checkout.handleOnChangeShippingMethod();" autocomplete="off"
+                            >
+                        <p class="saved-address__main-title">{{ quote['title'] }}</p>
+                        <span class="saved-address__emphasis">{{ quote['text'] }}</span>
+                    </label>
+                </div>
+            </div>
+            
+        {% endfor %}
+    {% else %}
+        <div class="error alert alert-danger">{{ method.error }}</div>
+    {% endif %}
+{% endfor %}
+

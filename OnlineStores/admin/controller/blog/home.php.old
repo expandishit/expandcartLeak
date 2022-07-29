@@ -1,0 +1,94 @@
+<?php
+
+class ControllerFlashBlogHome extends Controller
+{
+    private function init($models)
+    {
+        foreach ($models as $model) {
+            $this->load->model($model);
+            $object = explode('/', $model);
+            $object = end($object);
+            $model = str_replace('/', '_', $model);
+            $this->$object = $this->{"model_" . $model};
+        }
+
+        if (isset($this->session->data['errors'])) {
+            $this->data['error_warning'] = implode('</br >', $this->session->data['errors']);
+
+            unset($this->session->data['errors']);
+        }
+
+        if (isset($this->session->data['success'])) {
+            $this->data['success'] = $this->session->data['success'];
+
+            unset($this->session->data['success']);
+        }
+
+        $this->language->load('flash_blog/flash_blog');
+    }
+
+    public function index()
+    {
+        $this->language->load('flash_blog/flash_blog');
+
+        $this->document->setTitle($this->language->get('flash_blog_heading_title'));
+
+        $data['breadcrumbs'] = array();
+
+        $data['breadcrumbs'][] = array(
+            'text'      => $this->language->get('text_home'),
+            'href'      => $this->url->link('common/home', 'token=' . $this->session->data['token'], 'SSL'),
+            'separator' => false
+        );
+
+        $data['breadcrumbs'][] = array(
+            'text'      => $this->language->get('flash_blog_heading_title'),
+            'href'      => $this->url->link('flash_blog/home', 'token=' . $this->session->data['token'], 'SSL'),
+            'separator' => ' :: '
+        );
+
+        $this->template = 'flash_blog/home.tpl';
+
+        $this->children = array(
+            'common/header',
+            'common/footer',
+        );
+
+        $data['links'] = [
+            'settings' => $this->url->link(
+                'flash_blog/settings', 'token=' . $this->session->data['token'], 'SSL'
+            ),
+            'categories' => $this->url->link(
+                'flash_blog/category', 'token=' . $this->session->data['token'], 'SSL'
+            ),
+            'latestBlogs' => $this->url->link(
+                'flash_blog/latestBlogs', 'token=' . $this->session->data['token'], 'SSL'
+            ),
+            'latestComments' => $this->url->link(
+                'flash_blog/latestComments', 'token=' . $this->session->data['token'], 'SSL'
+            ),
+        ];
+
+        $this->data = $data;
+
+        $this->response->setOutput($this->render());
+    }
+
+    public function install()
+    {
+        $this->init([
+            'flash_blog/settings'
+        ]);
+
+        $this->settings->install();
+    }
+
+    public function uninstall()
+    {
+        $this->init([
+            'flash_blog/settings'
+        ]);
+
+        $this->settings->uninstall();
+    }
+}

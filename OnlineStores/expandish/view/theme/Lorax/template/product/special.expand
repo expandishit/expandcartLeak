@@ -1,0 +1,299 @@
+{{ script('js/jquery/jquery.total-storage.min.js') }}
+{% set mfSettings = config(mega_filter_settings) %}
+{% if mfSettings %}
+    {% if mfilter_json %}
+    <div id="mfilter-json" style="display:none">{{ mfilter_json|base64_encode }}</div>
+    {% endif %}
+    <div id="mfilter-content-container">
+{% endif %}
+
+
+{# Satrt :: Breadcrumbs #}
+<div class="tm-section breadcamb-area bg-gray-light">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="breadcamb-wrap">
+                    <div class="breadcamb-current">
+                        <h4>{{ lang('heading_title') }}</h4>
+                    </div>
+                    <div class="breadcamb-links">
+                        <ul>
+                            {% for breadcrumb in breadcrumbs %}
+                            {% if loop.last %}
+                                <li>{{ breadcrumb['text'] }}</li>
+                            {% else %}
+                            <li>
+                                <a href="{{ breadcrumb['href'] }}">{{ breadcrumb['text'] }}</a>
+                            </li>
+                            {% endif %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{# End :: Breadcrumbs #}
+
+
+{# Notification Div #}
+<div id="notification"></div>
+            <!-- Start category page area -->
+            <div class="tm-section bg-white category-page-area pt-80">
+                <div class="container">
+                    <div class="row">
+                        {# Sidebar #}
+                        <div class="col-md-3 col-lg-3 col-sm-4 col-xs-12">
+                        </div>
+
+                        {# Start :: Products Content #}
+                        <div class="col-md-9 col-lg-9 col-sm-8 col-xs-12">
+                            <div class="cp-right-sidebar">
+
+                                {# Start :: Filter Bar #}
+                                <div class="cp-right-info">
+                                    <div class="cp-right-view">
+                                        <h5 class="cp-right-label">View</h5>   
+                                        <ul class="cp-view-styles" role="tablist">
+                                            <li role="presentation" class="active">
+                                                <a href="#grid-view" data-toggle="tab">
+                                                    <i class="fa fa-th-large"></i>
+                                                </a>
+                                            </li>
+                                            <li role="presentation">
+                                                <a href="#list-view" data-toggle="tab">
+                                                    <i class="fa fa-list"></i>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <div class="cp-right-sorting">
+                                        <select onchange="location = this.value;" class="selectpicker input-price" data-live-search="true" data-width="100%" data-toggle="tooltip">
+                                            {% for sortst in sorts %}
+                                                {% if sortst.value == sort ~ '-' ~ order %}
+                                                    <option value="{{ sortst.href }}" selected="selected">{{ sortst.text }}</option>
+                                                {% else %}
+                                                    <option value="{{ sortst.href }}">{{ sortst.text }}</option>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                {# End :: Filter Bar #}
+
+                                {# Start :: Get Products #}
+                                <div class="cp-right-products">
+                                    <div class="tab-content">
+
+                                        {# Start :: Grid View #}
+                                        <div  id="grid-view" class="tab-pane fade in active" role="tabpanel">
+                                            <div class="row">
+                                            {% for product in products %}
+                                                <div class="col-md-4 col-sm-6 col-lg-4 col-xs-12">
+                                                    <div class="single-product">
+                                                        <div class="product-thumb">
+                                                            <a href="{{ product.href }}">
+                                                                <img class="front-img" src="{{ product.thumb }}" alt="img" >
+                                                                <img class="back-img" src="{{ product.thumb_swap ? product.thumb_swap : product.thumb }}" alt="img" >
+                                                            </a>
+                                                        </div>
+                                                        <div class="product-info">
+                                                            <div class="pro-title">
+                                                                {% if config('show_brands') %}
+                                                                    <a href="{{ product.manufacturer_href }}">{{ product.manufacturer }}</a>
+                                                                {% endif %}
+                                                                <h4><a href="{{ product.href }}">{{ product.name|slice(0, 39) }}</a></h4>
+                                                            </div>
+                                                            <div class="pro-price-ratting">
+                                                                    <div class="price-box">
+                                                                        {% if ('-1' in product.price) or ('-1' in product.special) %}
+                                                                           <ins><span class="clickable price" onclick="contact_us('{{ product.product_id }}');">{{ lang('button_req_quote') }}</span></ins>
+                                                                           <div id="enquiry-{{ product.product_id }}"  style="display:none">{{ product.name }}:</div>
+                                                                        {% elseif product.special %}
+                                                                            <del><span class="price">{{ product.price }}</span></del>
+                                                                            <span class="price">{{ product.special }}</span>
+                                                                        {% else %}
+                                                                            <span class="price">{{ product.price }}</span>
+                                                                        {% endif %}
+                                                                    </div>
+                                                                <div class="ratting-box">
+                                                                    <ul>
+                                                                        {% if product.rating == 0 %}
+                                                                        <li><span class="yes"><i class="fa fa-star-o"></i></i></span></li>
+                                                                        <li><span class="yes"><i class="fa fa-star-o"></i></i></span></li>
+                                                                        <li><span class="yes"><i class="fa fa-star-o"></i></i></span></li>
+                                                                        <li><span class="yes"><i class="fa fa-star-o"></i></i></span></li>
+                                                                        <li><span class="yes"><i class="fa fa-star-o"></i></i></span></li>
+                                                                        {% elseif product.rating == 1 %}
+                                                                        <li><span class="yes"><i class="fa fa-star"></i></i></span></li>
+                                                                        <li><span class="yes"><i class="fa fa-star-o"></i></i></span></li>
+                                                                        <li><span class="yes"><i class="fa fa-star-o"></i></i></span></li>
+                                                                        <li><span class="yes"><i class="fa fa-star-o"></i></i></span></li>
+                                                                        <li><span class="yes"><i class="fa fa-star-o"></i></i></span></li>
+                                                                        {% elseif product.rating == 2 %}
+                                                                        <li><span class="yes"><i class="fa fa-star"></i></i></span></li>
+                                                                        <li><span class="yes"><i class="fa fa-star"></i></i></span></li>
+                                                                        <li><span class="yes"><i class="fa fa-star-o"></i></i></span></li>
+                                                                        <li><span class="yes"><i class="fa fa-star-o"></i></i></span></li>
+                                                                        <li><span class="yes"><i class="fa fa-star-o"></i></i></span></li>
+                                                                        {% elseif product.rating == 3 %}
+                                                                        <li><span class="yes"><i class="fa fa-star"></i></i></span></li>
+                                                                        <li><span class="yes"><i class="fa fa-star"></i></i></span></li>
+                                                                        <li><span class="yes"><i class="fa fa-star"></i></i></span></li>
+                                                                        <li><span class="yes"><i class="fa fa-star-o"></i></i></span></li>
+                                                                        <li><span class="yes"><i class="fa fa-star-o"></i></i></span></li>
+                                                                        {% elseif product.rating == 4 %}
+                                                                        <li><span class="yes"><i class="fa fa-star"></i></i></span></li>
+                                                                        <li><span class="yes"><i class="fa fa-star"></i></i></span></li>
+                                                                        <li><span class="yes"><i class="fa fa-star"></i></i></span></li>
+                                                                        <li><span class="yes"><i class="fa fa-star"></i></i></span></li>
+                                                                        <li><span class="yes"><i class="fa fa-star-o"></i></i></span></li>
+                                                                        {% else %}
+                                                                        <li><span class="yes"><i class="fa fa-star"></i></span>
+                                                                        <li><span class="yes"><i class="fa fa-star"></i></span>
+                                                                        <li><span class="yes"><i class="fa fa-star"></i></span>
+                                                                        <li><span class="yes"><i class="fa fa-star"></i></span>
+                                                                        <li><span class="yes"><i class="fa fa-star"></i></span>
+                                                                        {% endif %}
+                                                                    </ul>
+                                                                </div>
+                                                            </div>
+                                                            <div class="product-action">
+                                                                {% if ('-1' in product.price) or ('-1' in product.special) %}
+                                                                 {% else %}
+                                                                    <a onclick="addToCart({{ product.product_id }}); return false;" class="pro-btn add-to-cart">{{ lang('button_cart') }}</a>
+                                                                 {% endif %}
+                                                                <a onclick="addToWishList({{ product.product_id }}); return false;" class="pro-btn"><span class="lnr lnr-heart"></span></a>
+                                                                <a onclick="addToCompare({{ product.product_id }}); return false;" class="pro-btn"><span class="lnr lnr-magnifier"></span></a>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            {% endfor %}
+                                            </div>
+                                        </div>
+                                        {# End :: Grid View #}
+
+                                        {# Start :: List View #}
+                                        <div  id="list-view" class="tab-pane fade" role="tabpanel">
+                                            <div class="row">
+
+                                                {% for product in products %}
+                                                <div class="col-md-12 col-sm-12 col-lg-12 col-xs-12">
+                                                    <div class="single-product full-width-list">
+                                                        <div class="product-thumb">
+                                                                <a href="{{ product.href }}">
+                                                                    <img class="front-img" src="{{ product.thumb }}" alt="img" >
+                                                                    <img class="back-img" src="{{ product.thumb_swap ? product.thumb_swap : product.thumb }}" alt="img" >
+                                                                </a>
+                                                        </div>
+                                                        <div class="product-info">
+                                                            <div class="pro-title">
+                                                                    {% if config('show_brands') %}
+                                                                        <a href="{{ product.manufacturer_href }}">{{ product.manufacturer }}</a>
+                                                                    {% endif %}
+                                                                    <h4><a href="{{ product.href }}">{{ product.name }}</a></h4>
+                                                            </div>
+                                                            <div class="pro-price-ratting">
+                                                                <div class="ratting-box">
+                                                                    <ul>
+                                                                            {% if product.rating == 0 %}
+                                                                            <li><span class="yes"><i class="fa fa-star-o"></i></i></span></li>
+                                                                            <li><span class="yes"><i class="fa fa-star-o"></i></i></span></li>
+                                                                            <li><span class="yes"><i class="fa fa-star-o"></i></i></span></li>
+                                                                            <li><span class="yes"><i class="fa fa-star-o"></i></i></span></li>
+                                                                            <li><span class="yes"><i class="fa fa-star-o"></i></i></span></li>
+                                                                            {% elseif product.rating == 1 %}
+                                                                            <li><span class="yes"><i class="fa fa-star"></i></i></span></li>
+                                                                            <li><span class="yes"><i class="fa fa-star-o"></i></i></span></li>
+                                                                            <li><span class="yes"><i class="fa fa-star-o"></i></i></span></li>
+                                                                            <li><span class="yes"><i class="fa fa-star-o"></i></i></span></li>
+                                                                            <li><span class="yes"><i class="fa fa-star-o"></i></i></span></li>
+                                                                            {% elseif product.rating == 2 %}
+                                                                            <li><span class="yes"><i class="fa fa-star"></i></i></span></li>
+                                                                            <li><span class="yes"><i class="fa fa-star"></i></i></span></li>
+                                                                            <li><span class="yes"><i class="fa fa-star-o"></i></i></span></li>
+                                                                            <li><span class="yes"><i class="fa fa-star-o"></i></i></span></li>
+                                                                            <li><span class="yes"><i class="fa fa-star-o"></i></i></span></li>
+                                                                            {% elseif product.rating == 3 %}
+                                                                            <li><span class="yes"><i class="fa fa-star"></i></i></span></li>
+                                                                            <li><span class="yes"><i class="fa fa-star"></i></i></span></li>
+                                                                            <li><span class="yes"><i class="fa fa-star"></i></i></span></li>
+                                                                            <li><span class="yes"><i class="fa fa-star-o"></i></i></span></li>
+                                                                            <li><span class="yes"><i class="fa fa-star-o"></i></i></span></li>
+                                                                            {% elseif product.rating == 4 %}
+                                                                            <li><span class="yes"><i class="fa fa-star"></i></i></span></li>
+                                                                            <li><span class="yes"><i class="fa fa-star"></i></i></span></li>
+                                                                            <li><span class="yes"><i class="fa fa-star"></i></i></span></li>
+                                                                            <li><span class="yes"><i class="fa fa-star"></i></i></span></li>
+                                                                            <li><span class="yes"><i class="fa fa-star-o"></i></i></span></li>
+                                                                            {% else %}
+                                                                            <li><span class="yes"><i class="fa fa-star"></i></span>
+                                                                            <li><span class="yes"><i class="fa fa-star"></i></span>
+                                                                            <li><span class="yes"><i class="fa fa-star"></i></span>
+                                                                            <li><span class="yes"><i class="fa fa-star"></i></span>
+                                                                            <li><span class="yes"><i class="fa fa-star"></i></span>
+                                                                            {% endif %}
+                                                                    </ul>
+                                                                </div>
+                                                                <div class="price-box">
+                                                                    {% if ('-1' in product.price) or ('-1' in product.special) %}
+                                                                    <ins><span class="clickable price" onclick="contact_us('{{ product.product_id }}');">{{ lang('button_req_quote') }}</span></ins>
+                                                                       <div id="enquiry-{{ product.product_id }}"  style="display:none">{{ product.name }}:</div>
+                                                                    {% elseif product.special %}
+                                                                        <del><span class="price">{{ product.price }}</span></del>&nbsp;&nbsp;
+                                                                        <span class="price">{{ product.special }}</span>
+                                                                    {% else %}
+                                                                        <span class="price">{{ product.price }}</span>
+                                                                    {% endif %}
+                                                                </div>
+                                                            </div>
+                                                            <div class="tm-single-product-available">
+                                                                <h5>{{ lang('text_stock') }}: <span>{{ product.quantity > 0 ? product.quantity : product.stock_status }}</span></h5>
+                                                            </div>
+                                                            <p>{{ product.description|slice(0, 199) }}</p>
+                                                            <div class="product-action">
+                                                                {% if ('-1' in product.price) or ('-1' in product.special) %}
+                                                                 {% else %}
+                                                                 <a onclick="addToCart({{ product.product_id }}); return false;" class="pro-btn add-to-cart">{{ lang('button_cart') }}</a>
+                                                                 {% endif %}
+                                                                <a onclick="addToWishList({{ product.product_id }}); return false;" class="pro-btn"><span class="lnr lnr-heart"></span></a>
+                                                                <a onclick="addToCompare({{ product.product_id }}); return false;" class="pro-btn"><span class="lnr lnr-magnifier"></span></a>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {% endfor %}
+                                                          
+                                            </div>
+                                        </div>
+                                         {# End :: List View #}
+
+                                    </div>
+                                </div>
+                                {# End :: Get Products #}
+
+                                {# Start :: pagination area #}
+                                <div class="tm-pagination-area pb-80">
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <div class="tm-pagination-inner text-center">
+                                                <ul class="tm-pagination">
+                                                    {{ pagination }}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {# End :: pagination area #} 
+
+                            </div>
+                        </div>
+                        {# End :: Products Content #}
+
+                    </div>
+                </div>
+            </div>
+            <!-- End category page area -->

@@ -1,0 +1,277 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% import 'controls/uploader.expand' as uploader %}
+{% set dualMenuEnabled = true %}
+
+{% block title %}
+    {{ lang('prize_draw_heading_title', 'module/prize_draw') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block secondarymenu %}
+    {% include 'module/prize_draw/prize_draw_menu.expand' with {'expand': '#prize_draw', 'active': '#prizes'} %}
+{% endblock secondarymenu %}
+
+{% block headelements %}
+    <a class="btn btn-info btn-labeled" href="{{ link('module/prize_draw/customer_code') }}?prize_id={{ prize_id }}" target="_blank"><b><i class="icon-printer"></i></b>{{ lang('button_print_codes') }}</a>
+{% endblock headelements %}
+
+{% block content %}
+    {% if prize_id %}
+        <div class="panel panel-default" style="margin-bottom: 5px;">
+            <ul class="nav nav-tabs nav-tabs-highlight nav-justified nav-tabs-top top-divided" style="margin-bottom: 0">
+                <li><a href="{{ link('module/prize_draw/update') }}?prize_id={{ prize_id }}">{{ lang('tab_general') }}</a></li>
+                <li  class="active"><a href="{{ link('module/prize_draw/customers') }}?prize_id={{ prize_id }}">{{ lang('tab_customers') }}</a></li>
+            </ul>
+        </div>
+    {% endif %}
+
+  <div class="tab-content" style="padding-left: 0">
+      <div class="panel panel-default">
+          <div class="collapse in">
+              <table id="datatableGrid" class="table table-hover datatable-highlight">
+                  <thead>
+                  <tr>
+                      <th></th>
+                      <th>{{ lang('column_order_id') }}</th>
+                      <th>{{ lang('column_product') }}</th>
+                      <th>{{ lang('column_name') }}</th>
+                      <th>{{ lang('column_email') }}</th>
+                      <th>{{ lang('column_phone') }}</th>
+                      <th>{{ lang('column_date') }}</th>
+                      <th>{{ lang('column_code') }}</th>
+                      <th></th>
+                  </tr>
+                  </thead>
+              </table>
+          </div>
+      </div>
+  </div>
+
+{% endblock %}
+
+{% block scripts %}
+
+    {{ parent() }}
+
+    {% import _self as dtControls %}
+
+    <script>
+        var table;
+        var prize_id = {{ prize_id }};
+        var text_print = "{{ lang('text_print_code') }}";
+
+        $(document).ready(function () {
+            $.extend($.fn.dataTable.defaults, {
+                autoWidth: false,
+                dom: '<"datatable-header"fB><"datatable-scroll"t><"datatable-footer"lip>',
+                language: locales['dt_language'],
+                lengthMenu: [[10, 25, 50, 100, 200], [10, 25, 50, 100, 200]]
+            });
+
+            // Reorder events
+            table = $('#datatableGrid').DataTable({
+                language: locales['dt_language'],
+                select: {
+                    style: 'multi',
+                    selector: 'td:first-child'
+                },
+                "ajax": {
+                    url: '{{ link('module/prize_draw/dtCstHandler') }}',
+                    type: "post",
+                    data:{prize_id:prize_id},
+                    error: function (e,m,l) {
+                        $(".datatables_country-error").html("");
+                        $("#datatables_country").append('<tbody class="datatables_country-error"><tr><th colspan="3">No data found in the server</th></tr></tbody>');
+                        $("#datatables_country_processing").css("display", "none");
+                    }
+                },
+                buttons: [
+                    /*{
+                        text: "<i class='icon-trash'></i>",
+                        className: 'btn btn-default bulk-delete disabled',
+                        action: function (e, dt, node, config) {
+                            var selectedRows = dt.rows('.selected').data();
+                            var selectedIds = [];
+                            selectedRows.each(function (item) {
+                                selectedIds.push(item.id);
+                            });
+                            if (selectedIds.length > 0) {
+                                confirmMessage(function () {
+                                    $.ajax({
+                                        url: '{{ link('module/prize_draw/dtDelete') }}',
+                                        type: 'post',
+                                        data: {id: selectedIds},
+                                        success: function (resp) {
+                                            var response = JSON.parse(resp);
+
+                                            if (response.success == '1')
+                                            {
+                                                notify('Success', 'success', response.success_msg);
+                                                dt.rows('.selected').remove().draw();
+                                            }
+                                            else
+                                            {
+                                                notify('error', 'warning', response.error);
+                                                reloadDT();
+                                            }
+                                        }
+                                    });
+                                });
+                            }
+                        }
+                    },*/
+                    {
+                        extend: 'colvis',
+                        text: '<i class="icon-grid3"></i>',
+                        className: 'btn btn-default btn-colvis',
+                        columns: [1,2,3,6]
+                    }
+                ],
+                order: [[1, "asc"]],
+                columns: [
+                    {
+                        title: `<input type="checkbox" class="styled" id="toggleSelectAll">`,
+                        orderable: false,
+                        data: "id",
+                        width: "50px"
+                    },
+                    {
+                        data: 'order_id',
+                        render: function (data, type, row) {
+                            return `<a href='{{ link("sale/order/info?order_id=") }}`+ row['order_id'] +`' target='_blank'># ${row['order_id']}</a>`;
+                        }
+                    },
+                    {
+                        data: 'product',
+                        render: function (data, type, row) {
+                            return `<a href='{{ link("catalog/product/update?product_id=") }}`+ row['product_id'] +`' target='_blank'>${row['product']}</a>`;
+                        }
+                    },
+                    {
+                        data: 'name',
+                        render: function (data, type, row) {
+                            return `<a href='{{ link("sale/customer/update?customer_id=") }}`+ row['customer_id'] +`'>${row['name']}</a>`;
+                        }
+                    },
+                    {data: 'email'},
+                    {data: 'phone'},
+                    {data: 'created_at'},
+                    {data: 'code'}
+                ],
+                columnDefs: [
+                    {
+                        orderable: false,
+                        className: 'select-checkbox',
+                        targets: 0
+                    },
+                    {
+                        width: '30%',
+                        targets: [3]
+                    },
+                    {
+                        sortable: false,
+                        searchable: false,
+                        targets: [4]
+                    },
+                    {
+                        sortable: false,
+                        searchable: false,
+                        targets: [5]
+                    },
+                    {
+                        targets: 8,
+                        render: function (data, type, row) {
+                            return `<ul class="icons-list pull-right">
+                                    <li class="dropdown">
+                                        <a href='{{ link("module/prize_draw/customer_code") }}?id=`+ row['id'] +`' target='_blank' title='`+ text_print +`'><i class='icon-printer'></i></a>
+                                    </li>
+                                </ul>
+                            `;
+                        }
+                    }
+                ],
+            });
+
+            $(".bulk-delete").attr({
+                "data-popup": "tooltip",
+                "title": locales['button_delete']
+            });
+
+            $(".btn-colvis").attr({
+                "data-popup": "tooltip",
+                "title": locales['button_colvis']
+            });
+
+            $('[data-popup="tooltip"]').tooltip();
+
+            $(".styled, .multiselect-container input").uniform({
+                radioClass: 'choice'
+            });
+
+            $('select').select2({
+                minimumResultsForSearch: Infinity,
+                width: 'auto'
+            });
+
+            table.on('select', function (e, objDT, type, indexes) {
+                if (table.rows('.selected').any()) $(".btn-mass-edit").removeClass('disabled');
+                else $(".btn-mass-edit").addClass('disabled');
+
+                if (table.rows('.selected').any()) $(".bulk-delete").removeClass('disabled');
+                else $(".bulk-delete").addClass('disabled');
+            }).on('deselect', function (e, objDT, type, indexes) {
+                if (table.rows('.selected').any()) $(".btn-mass-edit").removeClass('disabled');
+                else $(".btn-mass-edit").addClass('disabled');
+
+                if (table.rows('.selected').any()) $(".bulk-delete").removeClass('disabled');
+                else $(".bulk-delete").addClass('disabled');
+            }).on('search.dt', function (e, objDT) {
+                if (table.rows('.selected').any()) $(".btn-mass-edit").removeClass('disabled');
+                else $(".btn-mass-edit").addClass('disabled');
+
+                if (table.rows('.selected').any()) $(".bulk-delete").removeClass('disabled');
+                else $(".bulk-delete").addClass('disabled');
+            });
+
+            $('#toggleSelectAll').click(function () {
+                var checkbox = this;
+                if (checkbox.checked == true) {
+                    table.rows().select();
+                } else {
+                    table.rows().deselect();
+                }
+            });
+
+            $('.removeItem').click(function () {
+
+                var that = $(this);
+                var rowId = that.data('rowid');
+
+                confirmMessage(function () {
+                    ajax("{{ link("module/prize_draw/dtDelete") }}", {selected: [rowId]}, function (res) {
+                        var response = JSON.parse(res);
+
+                        if (response.success == '1')
+                        {
+                            table.row(that.parents('tr')).remove().draw();
+                            notify('Success', 'success', response.success_msg);
+                        }
+                        else
+                        {
+                            notify('error', 'warning', response.error);
+                        }
+                    });
+                });
+            });
+        });
+
+        function reloadDT() {
+            table.ajax.reload();
+        }
+    </script>
+{% endblock scripts %}

@@ -1,0 +1,134 @@
+{# test #}
+{% extends "base.expand" %}
+
+{% block headelements %}
+    {% set btn_text = '' %}
+    {% set platform = '' %}
+    {% if currentMobileApps != false %}
+        {% if currentMobileApps|length == 1 %}
+            {% for app in currentMobileApps %}
+                {% if 'Android' in app['description'] %}
+                    {% set btn_text = lang('btn_get_ios_app') %}
+                    {% set platform = 'Android' %}
+                {% else %}
+                    {% set btn_text = lang('btn_get_android_app') %}
+                    {% set platform = 'IOS' %}
+                {% endif %}
+            {% endfor %}
+            <button class="btn bg-blue" {{ isTrial == '1' ? 'data-toggle="modal" data-target="#modal_default"' : 'data-toggle="modal" data-target="#modal_platforms"' }}>
+                {{ btn_text }}
+            </button>
+        {% else %}
+            {% set platform = 'Android, IOS' %}
+        {% endif %}
+        <a href="{{ link('module/mobile/notifications') }}" class="btn bg-blue">{{ lang('notifications_center') }}</a>
+    {% else %}
+        {% set platform ='' %}
+    {% endif %}
+
+    <a href="{{ link('meditor/meditor/template') }}" class="btn bg-info">
+        <i class="fas fa-list fa-lg position-left"></i> {{ lang('mobile_templates') }}
+    </a>
+    {#<a href="{{ link('meditor/meditor/reloadtheme') }}" class="btn bg-warning btn-ladda btn-ladda-spinner top-save-button" data-style="zoom-in">
+        <i class="fas fa-sync-alt fa-lg position-left"></i> {{ lang('reload_theme') }}
+    </a>#}
+    <ul class="breadcrumb-elements not-collapsible">
+        <li><a onclick="return false;" class="display-block">{{ lang('current_installed_mob_app') }}: <strong
+                        class="text-bold">{{ platform }}</strong></a></li>
+    </ul>
+</button>
+{% endblock headelements %}
+
+{% block content %} 
+<script>
+  window['langcode'] = '{{ langcode }}';
+</script>
+<style>
+    @import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+    .checkbox .checker, .checkbox-inline .checker{
+        position: initial !important;
+    }
+</style>
+{% include 'meditor/index.html' %}
+{% if currentMobileApps != false %}
+    {% if currentMobileApps|length == 1 %}
+        <div id="modal_platforms" class="modal fade">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h5 class="modal-title" id="modal_quantity_title">{{ lang('please_select_platforms') }}</h5>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="row">
+                            {% for app in currentMobileApps %}
+                                {% if 'Android' in app['description'] %}
+                                    <div class="col-md-12 cursor-pointer platform" style="text-align: center; padding: 35px;">
+                                        <span class="cursor-pointer">
+                                            <i class="fab fa-apple fa-10x center-block"></i>
+                                            <div class="checkbox">
+                                                <label>
+                                                    <input type="checkbox" class="styled" name="ios" value="{{ price }}" />
+                                                    {{ lang('text_ios') }}<br>({{ price != 0 ? '$' ~ price : lang('text_free') }})
+                                                </label>
+                                            </div>
+                                        </span>
+                                    </div>
+                                {% else %}
+                                    <div class="col-md-12 platform cursor-pointer" style="text-align: center; padding: 35px;">
+                                        <span class="cursor-pointer">
+                                            <i class="fab fa-android fa-10x center-block" style="color: #A4C639;"></i>
+                                            <div class="checkbox">
+                                                <label>
+                                                    <input type="checkbox" class="styled" name="android" value="{{ price }}" />
+                                                    {{ lang('text_android') }}<br>({{ price != 0 ? '$' ~ price : lang('text_free') }})
+                                                </label>
+                                            </div>
+                                        </span>
+                                    </div>
+                        
+                                {% endif %}
+                            {% endfor %}
+                           
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <span id="totalpricedisabled"></span>
+                        <a href="#" target="_blank" id="btnbuy" class="btn btn-primary disabled">{{ lang('text_buy') }}</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{% endif %}
+<script>
+var totalPrice = 0;
+var buyLink = '';
+$('input[type="checkbox"]').change(function(event) {
+
+    var checkedPlatforms = $('input[type="checkbox"]:checked');
+    if(checkedPlatforms.length == 1) {
+        buyLink = checkedPlatforms.attr('name') == 'android' ? '{{ buylink['android'] }}' : '{{ buylink['ios'] }}';
+    } else {
+        buyLink = '';
+    }
+
+    var checkbox = event.target;
+    if (checkbox.checked) {
+        totalPrice += parseInt(checkbox.value);
+    } else {
+        totalPrice -= parseInt(checkbox.value);
+    }
+    //$('#totalprice').empty();
+    $('#totalprice').text(totalPrice != 0 ? '($' + totalPrice + ')' : '(free)');
+    if((totalPrice > 0 || {{ product_id }} == 8) && $('input[type="checkbox"]').is(':checked')) {
+        $('#btnbuy').removeClass('disabled');
+    } else {
+        $('#btnbuy').addClass('disabled');
+    }
+
+    $('#btnbuy').attr('href', buyLink);
+});
+</script>
+{% endblock content %}

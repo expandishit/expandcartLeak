@@ -1,0 +1,139 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% import 'controls/uploader.expand' as uploader %}
+
+{% block title %}
+    {{ lang('heading_title', 'module/popupwindow') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+    <a onclick="addNewPopUp()" class="btn btn-success btn-labeled btn-xs"><b><i class="icon-plus3"></i></b>{{ add_popup }}</a>
+{% endblock headelements %}
+
+{% block content %}
+<form action="{{ action }}" class="form" method="post" enctype="multipart/form-data">
+    <div class="panel panel-flat">
+          <table class="table table-hover datatable-pagination"  id='datatableGrid'>
+            <thead>
+              <tr>
+                <th class="left">{{ popup_title }}</th>
+                <th class="left">{{ popup_enabled }}</th>
+                <th class="left">{{ popup_width }}</th>
+                <th class="left">{{ popup_height }}</th>
+                <th class="text-center"></th>
+              </tr>
+            </thead>
+            <tbody class="popup-list">
+              {% set module_row = 1 %}
+              {% if moduleData['PopupWindow'] %}
+                  
+                  {% for popup in moduleData['PopupWindow'] %}
+                  <tr id="popup_{{ popup['id'] }}">
+                    
+                    <td class="left">
+                        <a href="{{ link('module/popupwindow/update?popup_id=' ~ popup['id']) }}">{{ popup_title }} {{ popup['id'] }}</a>
+                    </td>
+                    <td class="left">
+                        {{ popup['Enabled'] }}
+                    </td>
+                    <td class="left">
+                        {{ popup['width'] }}
+                    </td>
+                    <td class="left">
+                        {{ popup['height'] }}
+                    </td>
+                    
+                    <td class="text-center" style="width: 15%">
+                      
+                      <ul class="icons-list pull-right">
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                <i class="icon-menu9"></i>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-right">
+                                <li><a href="module/popupwindow/update?popup_id={{ popup['id'] }}"><i class="icon-pencil7"></i> {{ lang('text_edit') }}</a></li>
+                                <li><a onclick="removePopUp('{{ popup['id'] }}')" data-rowid="368"><i class="icon-trash"></i> {{ lang('button_delete') }}</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                    </td>
+                  </tr>
+                  {% endfor %}
+              {% else %}
+              <tr id='noresults'>
+                <td class="center" colspan="4">{{ text_no_results }}</td>
+              </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        {% if moduleData['PopupWindow'] %}
+            {% for popup in moduleData['PopupWindow'] %}
+                <input type="hidden" id="popupInput_{{ popup['id'] }}" name="ids[{{ popup['id'] }}]" value="{{ popup['id'] }}" />
+                {% if popup['id'] > module_row %}
+                    {% set module_row = popup['id'] %}
+                {% endif %}
+            {% endfor %}
+            {% set module_row = module_row + 1 %}
+        {% endif %}
+    </div>
+    <!-- <form action="<?php //echo $action; ?>" method="post" enctype="multipart/form-data" id="form">
+        <div id="control_panel">
+            <?php //require_once(DIR_APPLICATION.'view/template/module/popupwindow/tab_controlpanel.php'); ?></div>
+    </form> -->
+    </form>
+<script type="text/javascript">
+// Add PopUp
+var count = {{ module_row }};
+function addNewPopUp() {
+    var tpl     = '<tr id="popup_'+ count +'">';
+    tpl     += '<td class="left"><a href="{{ link('module/popupwindow/update?popup_id=')}}' + count +'">{{ popup_title }} '+ count +'</td><td class="left">no</td><td class="left">500</td><td class="left">500</td>';
+    tpl     += '<td class="text-center"  style="width: 15%"><ul class="icons-list pull-right"><li class="dropdown"><a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="icon-menu9"></i></a><ul class="dropdown-menu dropdown-menu-right"><li>';
+    tpl     += '<a href="module/popupwindow/update?popup_id='+ count +'"><i class="icon-pencil7"></i> ' + locales['button_edit'] + '</a>';
+    tpl     += '</li><li>';
+    tpl     += '<a onclick="removePopUp('+ count +')" data-rowid="368"><i class="icon-trash"></i> ' + locales['button_delete'] + '</a></li></ul></li></ul>';
+    tpl     += '<input type="hidden" id="popupInput_'+ count +'" name="ids['+ count +']" value="'+ count +'" />';
+    tpl     += '</td></tr>';
+    
+    $('.popup-list').append(tpl);
+    $('.form').append('<input class="to_be_removed" type="hidden" name="to_be_edited" value="' + count + '">');
+    $('.form').append('<input class="to_be_removed" type="hidden" name="to_be_redirected" value="' + count + '">');
+    $('#noresults').remove();
+    count++;
+    $('.form').submit();
+    $('.to_be_removed').remove();
+}
+
+// Remove PopUp
+function removePopUp(id) {
+    confirmMessage(function () {
+        $('#popup_'+id).remove();
+        $('#popupInput_'+id).remove();
+        $('.form').submit();
+    });
+}
+
+// Events for the Add and Remove buttons
+$(document).ready(function() {
+    $('#datatableGrid').DataTable({
+        columnDefs: [{ 
+            orderable: false,
+            targets: [ 4 ]
+        }],
+        dom: '<"datatable-header"fl><"datatable-scroll-wrap"t><"datatable-footer"ip>',
+        language: locales['dt_language']
+
+    });
+
+    $('#datatableGrid_wrapper select').select2({
+        minimumResultsForSearch: Infinity,
+        width: 'auto'
+    });
+});
+</script>
+
+{% endblock %}

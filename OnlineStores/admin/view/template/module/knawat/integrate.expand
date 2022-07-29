@@ -1,0 +1,138 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block title %}
+    {{ lang('heading_title') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+
+{% block content %}
+
+<style>
+    .content-wrapper {
+        background-color: #f8f9ff;
+    }
+
+    .page-header-default {
+        background-color: transparent;
+    }
+
+    .page-header-content+.breadcrumb-line {
+        border: 0;
+    }
+
+    .page-header {
+        margin: 0 60px;
+    }
+
+    .breadcrumb-line {
+        /* border-bottom: 1px solid #e0ddef !important; */
+        margin: 0 32px;
+        border-top: 0;
+        margin-bottom: 30px !important;
+    }
+
+
+    @media (max-width: 768px) {
+        .page-header {
+            margin: 0;
+        }
+    }
+</style>
+    <div class="container-size-center">
+        {% if has_errors == 1 %}
+            <div class="alert alert-danger">
+                <strong>ERROR! </strong>
+                <br> {{lang('text_something_went_wrong')}}
+            </div>
+        {% endif %}
+        <div class="text-center">
+            <img src="view/image/marketplace/knawat.jpg" alt="icon" width="36" height="36" style="object-fit: cover;border-radius: 5px;">
+            <img src="view/assets/images/whatsapp/double.png" alt="icon" class="mr-10 ml-10">
+            <img src="view/assets/images/whatsapp/WhatsApp_expandcart.png" alt="icon">
+        </div>
+        <h6 class="bold mb-20 mt-20 text-center">{{lang('text_connect_knawat')}}</h6>
+        <div class="panel">
+            <div class="panel-body">
+                <h6 class="m-bold mb-5">{{lang('text_setup_knawat')}}</h6>
+                <p class="font-14 mb-25">{{lang('text_setup_knawat_desc')}} </p>
+
+                <h6 class="m-bold mt-20 mb-5">{{lang('text_setup_knawat_2')}}</h6>
+                <p class="font-14 mb-25">{{lang('text_setup_knawat_2_desc')}}</p>
+
+                <div class="form-group mt-10">
+                    <div class="input-group">
+                        <input type="text"  class="form-control" value="{{ base.STORECODE }}" disabled readonly />
+                        <span class="input-group-addon gen-token" onclick="copyStoreCode()"><a>{{lang('entry_copy')}}</a></span>
+                    </div>
+                </div>
+
+                <h6 class="m-bold mb-5">{{lang('text_or_click')}}</h6>
+
+
+                <div class="activate-controls">
+                    <button class="btn btn-primary w-100" id="installKnawat">{{lang('text_btn_connect')}}</button>
+                </div>
+            </div>
+        </div>
+        <div class="text-center m-bold">
+            {{lang('text_learn')}} <a href="https://support.expandcart.com/knawat-dropshipping-app" target="_blank" >{{lang('text_how_work')}}</a>
+        </div>
+    </div>
+
+
+    <script>
+        var checkInstallingFlag = false;
+        var knawatPopUp = null;
+        $('#installKnawat').click(function() {
+            //close popup if exist
+            if(knawatPopUp)
+                knawatPopUp.close();
+
+            let storeCode = "{{ constant('STORECODE') }}".toLowerCase();
+            let knawatInstallStoreUri = `https://app.knawat.com/store/create/expandcart2?ref=expandcart&store=https://${storeCode}.expandcart.com/`;
+            knawatPopUp = window.open(knawatInstallStoreUri,'knawat','height=600,width=600')
+            knawatPopUp.focus();
+
+            //check if app installed then close popup redirect to setting page
+            if(!checkInstallingFlag){
+                setInterval(checkIfInstalled,3000);
+            }
+
+        });
+
+
+        function copyStoreCode(){
+            const el = document.createElement('textarea');
+            el.value = "{{ constant('STORECODE') }}".toLowerCase();
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+
+        }
+
+        function checkIfInstalled(){
+            $.ajax({
+                url: "{{ check_installing_url }}",
+                dataType: 'JSON',
+                method: 'POST',
+                success: function (response) {
+                    if (response.success == 1){
+                        if(knawatPopUp)
+                            knawatPopUp.close();
+                        location.reload();
+                    }
+
+                }
+            });
+        }
+
+    </script>
+
+{% endblock content %}

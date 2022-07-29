@@ -1,0 +1,265 @@
+<!-- Quick Checkout v4.2 by Dreamvention.com quickcheckout/cart.tpl -->
+<style>
+    .qc.qc-popup {
+        width: {{ settings['general']['cart_image_size']['width'] }}px;
+        height: {{ settings['general']['cart_image_size']['height'] }}px;
+    }
+</style>
+<div id="cart_wrap">
+    <div class="cart_view ">
+            {% if error %}
+                {% for error_message in error %}
+                    <div class="error alert alert-danger">{{ error_message }}</div>
+                {% endfor %}
+            {% endif %}
+
+            {% if show_qantity_error %}
+                <div class="alert alert-warning alert-dismissible" role="alert">
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    {{ lang('error_quantity_stock') }}
+                </div>
+            {% endif %}
+
+                <div class="backTo">
+                    <svg class="cart-view__close" id="close_3_" data-name="close (3)" xmlns="http://www.w3.org/2000/svg" width="12.743" height="12.743" viewBox="0 0 12.743 12.743">
+                        <path id="Path_67" data-name="Path 67" d="M12.417,10.674,2.43.687a1.114,1.114,0,0,0-1.577,0l-.526.526a1.115,1.115,0,0,0,0,1.577l9.987,9.987a1.115,1.115,0,0,0,1.577,0l.526-.526a1.114,1.114,0,0,0,0-1.577Zm0,0" transform="translate(0 -0.36)" fill="#b4afd3"/>
+                        <path id="Path_68" data-name="Path 68" d="M10.314.688.327,10.675a1.115,1.115,0,0,0,0,1.577l.526.526a1.115,1.115,0,0,0,1.577,0l9.988-9.986a1.114,1.114,0,0,0,0-1.577L11.891.689a1.115,1.115,0,0,0-1.577,0Zm0,0" transform="translate(0 -0.362)" fill="#b4afd3"/>
+                    </svg>
+                    <p class="product-cart-view">{{ lang('text_order_summary')|format(products_count) }}</p>
+                </div>
+
+                {% if not is_logged %}
+                    <div class="alert alert-warning mb-30"><i class="fa fa-info-circle"></i> {{ lang('not_logged_in_warning')}} </div>
+                {% endif %}
+
+                {% set products_list = groupProducts(products, 'warehouse', warehouses) %}
+                    {% for idx, productArr in products_list %}
+                    <div class="products">
+                        {% for product in productArr %}
+                            {% if warehouses %}
+                                <div>
+                                    <strong>{{ lang('warehouse') }} {{ idx == -1 ? lang('other_warehouse') : wrs_names[idx] }}</strong>
+                                </div>
+                            {% endif %}
+                            <div class="media">
+                                <img src="{{ product['thumb'] }}" alt="">
+                                <div class="media-body">
+                                    <h5 class="mt-0">{{ product['name'] }} {% if not product['stock'] %}<span class="out-of-stock">***</span>{% endif %}</h5>
+                                    {% for option in product['option'] %}
+                                        <div> &nbsp;<small> - {{ option['name'] }}: {{ option['value'] }}</small> </div>
+                                    {% endfor %}
+
+                                    {% if product['main_price'] %}
+                                        <div>
+                                            - <small>{{ lang('main_price') }} : {{ product['main_price'] }} </small><br/>
+                                        </div>
+                                    {% endif %}
+                                    {% if product['remaining_amount'] %}
+                                        <div>
+                                            - <small>{{ lang('remaining_amount') }} : {{ product['remaining_amount'] }} </small><br/>
+                                        </div>
+                                    {% endif %}
+                                    {% if product['rentData'] %}
+                                        <div>
+                                            {{ lang('product_for_rent_from') }}
+                                            {{ product['rentData']['range']['from'] }}
+                                            {{ lang('product_for_rent_to') }}
+                                            {{ product['rentData']['range']['to'] }}
+                                            {{ lang('product_for_rent_for') }}
+                                            {{ product['rentData']['diff'] }}
+                                            {{ lang('text_day') }}
+                                        </div>
+                                    {% endif %}
+                                    {% if product['pricePerMeterData'] %}
+                                        <div>
+                                            {% if product['pricePerMeterData']['skirtings_status']  == 1 %}
+                                            &nbsp;<small> - <small>{{ lang('text_skirtings') }}: {{ product['pricePerMeterData']['skirtings'] }} {{ lang('text_meter') }}</small><br/>
+                                                {% endif %}
+                                                {% if product['pricePerMeterData']['metalprofile_status']  == 1 %}
+                                                &nbsp;<small> - <small>{{ lang('text_metalprofiles') }}: {{ product['pricePerMeterData']['metalProfiles'] }} {{ lang('text_meter') }}</small><br/>
+                                                    {% endif %}
+                                                    &nbsp;<small> - {{ lang('text_quantity') }}: {{ product['pricePerMeterData']['underlaymen'] }} {{ lang('text_meter') }}
+                                                        {% if product['pricePerMeterData']['main_unit'] == '2' %}
+                                                            <span style="font-size: 10px;vertical-align: top;">2</span>
+                                                        {% endif %}
+                                                    </small><br/>
+
+                                        </div>
+                                    {% endif %}
+                                    {% if product['printingDocument'] %}
+                                        <div>
+                                            - <small>{{ lang('text_pages_num') }}: {{ product['printingDocument']['print_pages'] }}</small><br/>
+
+                                            {% if product['printingDocument']['print_cover_name'] %}
+                                                - <small>{{ lang('text_cover') }}: {{ product['printingDocument']['print_cover_name'] }}</small><br/>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+                                    <div class="qc-name-model {% if not data['columns']['model'] %}qc-hide{% endif %}"><span class="title">{{ column_model }}:</span> <span class="text">{{ product['model'] }}</span></div>
+                                    <div class="qc-name-price {% if not data['columns']['price'] or (config('config_customer_price') and not is_logged) %}qc-hide{% endif %}">
+                                        <span class="text">
+                                            {% if is_logged %} {{ product['price'] }} {% endif %}
+                                        </span>
+                                    </div>
+                                    {% if is_logged %}
+                                        {{ product['total'] }} ({{ product['quantity'] }} X {{ product['price'] }})
+                                    {% else %}
+                                        {{ product['quantity'] }} X $$
+                                    {% endif %}
+
+                                </div>
+                            </div>
+                        {% endfor %}
+                        {% if warehouses %}
+                            <div><p class="lead font-15">{{ lang('shipping_cost') }} {{ combined_wrs_costs[idx] }}</p></div>
+                        {% if wrs_duration[idx] %}
+                                <div><p class="lead font-15">{{ lang('shipping_duration') }} {{ wrs_duration[idx] }} {{ lang('shipping_days') }}</p></div>
+                        {% endif %}
+                    {% endif %}
+                    </div>
+                    
+                {% endfor %}
+
+                {% for itemvoucher in vouchers %}
+                        <div class="qc-name {% if not data['columns']['image'] %}qc-hide{% endif %}"></div>
+                        <div class="qc-name {% if not data['columns']['name'] %}qc-hide{% endif %} ">{{ itemvoucher['description'] }}</div>
+                        <div class="qc-model {% if not data['columns']['model'] %}qc-hide{% endif %} "></div>
+                        <div class="qc-quantity {% if not data['columns']['quantity'] %}qc-hide{% endif %} ">{{ itemvoucher['quantity'] }}</div>
+                        <div class="qc-price {% if (not data['columns']['price'] or (config('config_customer_price') and not is_logged)) %}qc-hide{% endif %} ">{{ itemvoucher['amount'] }}</div>
+                        <div class="qc-total {% if (not data['columns']['total'] or (config('config_customer_price') and not is_logged)) %}qc-hide{% endif %} ">{{ itemvoucher['amount'] }}</div>
+                {% endfor %}
+
+                <!-- Subscription Item -->
+                {% if subscription is defined and subscription is not empty %}
+                        <div class="qc-name"><a href="{{ link('checkout/cart/removeSubscriptionPlan') }}">X</a></div>
+                        <div class="qc-name {% if not data['columns']['name'] %}qc-hide{% endif %} ">{{ subscription['title'] }}</div>
+                        <div class="qc-model {% if not data['columns']['model'] %}qc-hide{% endif %} "></div>
+                        <div class="qc-quantity {% if not data['columns']['quantity'] %}qc-hide{% endif %} ">1</div>
+                        <div class="qc-price {% if (not data['columns']['price'] or (config('config_customer_price') and not is_logged)) %}qc-hide{% endif %} ">{{ subscription['amount'] }}</div>
+                        <div class="qc-total {% if (not data['columns']['total'] or (config('config_customer_price') and not is_logged)) %}qc-hide{% endif %} ">{{ subscription['amount'] }}</div>
+                {% endif %}
+                <div class="order_summary">
+
+                        <!--<div class="col-12 px-0 d-flex align-items-center">
+                        
+                        <label class="font-12" for="voucher">{{ lang('text_voucher') }}</label>
+                        <div class="summaray__control">
+                            <input type="text"  value="{{ voucher ? voucher : '' }}"  class="form-control form-control-lg border-right-0" name="voucher" id="voucher"  placeholder="{{ lang('text_use_voucher') }}">
+                            <button class="primary-btn mt-0" id="confirm_voucher">{{ lang('text_apply') }}</button>
+                        </div>
+                        </div>-->
+                        {# Coupon #}
+                        <div class="col-12 px-0">
+                                <label class="font-12 d-block order_summary__shipping order-color" for="points">{{ lang('haveDiscount') }}</label>
+                            <div class="summary__hide">
+                                <div class="summaray__control input-group">
+                                    <input class="input-reward input--shipping" type="text"  class="form-control form-control-lg border-right-0"  name="coupon" id="coupon" placeholder="{{ lang('enter_discount_code') }}">
+                                    <button class="primary-btn mt-0 confirm-coupon" id="confirm_coupon">
+                                        {{ lang('text_apply') }}
+                                    </button>
+                                    <div class="valid-feedback"></div>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% if reward_app %}
+                            <div class="col-12 px-0">
+                                <label class="font-12 d-block order-color" for="points">{{ lang('text_points') }}</label>
+                                <div class="summary__hide">
+                                    <div class="summaray__control input-group">
+                                        <button class="btn-minus">-</button>
+                                        <input class="input-reward input-reward__number" type="number" min='0' value="0" class="form-control form-control-lg border-right-0" value="{{ reward ? reward : ''}}" name="reward" id="reward" placeholder="{{ text_use_reward }}">
+                                        <button class="btn-plus">+</button>
+                                        <button class="primary-btn mt-0 reward__confirm" id="confirm_reward">
+                                            {{ lang('text_apply') }}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="validate_success">
+                                {% if reward_success %}
+                                    <div class="text-success" >{{ reward_success }}</div>
+                                {% endif %}
+
+                                {% if reward_error %}
+                                    <div class="text-error reward__error">{{ reward_error }}</div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <ul class="price">
+                        {% set mobile_summery_holder = 0 %}
+                        {% for total in totals %}
+                            {% if is_logged %}
+                                <li class="d-flex justify-content-xl-between"><span>{{ total['title'] }}</span><span>{{ total['text'] }}</span></li>
+                                {% if total['code'] == 'total' %}
+                                    {% set mobile_summery_holder = total['text'] %}
+                                {% endif %}
+                            {% endif %}
+                        {% endfor %}
+
+                    </ul>
+
+                 
+                    
+    </div>
+
+
+    
+
+</div>
+
+<script>
+    
+    $('.coupon a').click(function (){
+        $('.have-coupon').slideToggle();
+    });
+    $('.order-color').click(function (){
+        $(this).next().slideToggle(function (){
+          $(this).stop(1000);
+        });
+    });
+    /* make apply btn disapled until user write a value  */
+    var shipingInput = $('.input--shipping');
+    shipingInput.on('keyup', function(e) {
+        if($(this).val().trim() == ''){
+           $('.confirm-coupon').addClass('disabled');
+        } else {
+            $('.confirm-coupon').removeClass('disabled');
+        }
+    });
+    if(shipingInput.val() == ''){
+           $('.confirm-coupon').addClass('disabled');
+        } else{
+            $('.confirm-coupon').removeClass('disabled');
+        }
+    
+    $('.btn-plus, .btn-minus').on('click', function(e) {
+        const isNegative = $(e.target).closest('.btn-minus').is('.btn-minus');
+        const input = $(e.target).closest('.input-group').find('input');
+        if (input.is('input')) {
+            input[0][isNegative ? 'stepDown' : 'stepUp']()
+        }
+        if(input.val() == 0){
+           $('.reward__confirm').addClass('disabled');
+        } else{
+            $('.reward__confirm').removeClass('disabled');
+        }
+    });
+    if($('#quickcheckout .input-reward__number').val() == 0){
+            $('.reward__confirm').addClass('disabled');
+        } else{
+            $('.reward__confirm').removeClass('disabled');
+        }
+    $('#quickcheckout .input-reward__number').on('input', function(e) {
+        if($(this).val() == 0){
+            $('.reward__confirm').addClass('disabled');
+        } else{
+            $('.reward__confirm').removeClass('disabled');
+        }
+    });
+    $(function() {
+        $("#mobile_summery_holder").html("{{ mobile_summery_holder }}");
+    });
+</script>

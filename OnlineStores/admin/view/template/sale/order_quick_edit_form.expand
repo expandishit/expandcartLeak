@@ -1,0 +1,287 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% set dualMenuEnabled = false %}
+
+{% block title %}
+    {{ lang('heading_title', 'sale/order') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+    <a class="btn btn-success"  onclick="addInputItem()" >
+        <i class="fas fa-plus"></i> {{ lang('item_add') }}
+    </a>
+    <a href="{{ cancel }}" class="btn btn-default">{{ lang('button_cancel') }}</a>
+    <a class="btn btn-primary btn-ladda btn-ladda-spinner bottom-save-button" onclick="$('.form').submit();">
+        <i class="far fa-save fa-lg position-left"></i>{{ lang('button_save') }}
+    </a>
+
+
+{% endblock headelements %}
+
+{% block secondarymenu %}
+{% endblock secondarymenu %}
+
+{% block content %}
+
+
+<div class="alert alert-danger" style="display: none;" id="errors-fallback"></div>
+
+<!-- Saving state -->
+<div class="panel panel-white">
+
+    <div class="row">
+        <form class="form" action="{{ action }}" id="orderForm" method="POST">
+        
+        <input type="hidden" name="order_id" value="{{ order_id }}">
+        <input type="hidden" name="order_currency" value="{{ order_currency }}">
+        <input type="hidden" name="payment_country_id" value="{{ payment_country_id }}">
+        <input type="hidden" name="payment_zone_id" value="{{ payment_zone_id }}">
+             <div class="col-md-12">
+
+                    <table class="table table-framed" id="total-products">
+                        <thead>
+                            <tr>
+                                <th>{{ lang('column_product') }}</th>
+                                <th>{{ lang('column_model') }}</th>
+                                <th>{{ lang('column_quantity') }}</th>
+                                <th>{{ lang('column_price') }}</th>
+                                <th>{{ lang('column_total') }}</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pKey,prod in order_products %}
+                                <tr class="product_tr">
+                                    <td>
+                                        <a href="#" class="text-semibold">{{ prod['name'] }}</a>
+                                    </td>
+                                    <td>{{ prod['model'] }}</td>
+                                    <td><input type="text" class="form-control text-center products-quantity" onchange="calculateOrderData(this)" onkeyup="calculateOrderData(this)" name="order_product[{{ pKey }}][quantity]" value="{{  prod['quantity'] }}" ></td>
+                                    <td>
+                                        <input type="text" class="form-control text-center product_price products-price"  onchange="calculateOrderDataPrice(this)" onkeyup="calculateOrderDataPrice(this)" name="order_product[{{ pKey }}][price]"  value="{{ prod['price'] }}">  {#{{ order_currency }}#}
+                                    </td>
+                                    <td class="product_total" data-total="{{ prod['total'] }}">
+                                        {{ prod['total'] ~ order_currency }}
+                                    </td>
+
+                                    <td class="text-right ">
+                                        <button class="btn btn-danger products-remove-product ">
+                                            <i class="icon-trash-alt"></i>
+                                        </button>
+                                    </td>
+                                    {% for oKey, option in prod['option'] %}
+                                        <input type="hidden"
+                                                name="order_product[{{ pKey }}][order_option][{{ oKey }}][order_option_id]"
+                                                value="{{ option['order_option_id'] }}"/>
+                                        <input type="hidden"
+                                                name="order_product[{{ pKey }}][order_option][{{ oKey }}][product_option_id]"
+                                                value="{{ option['product_option_id'] }}"/>
+                                        <input type="hidden"
+                                                name="order_product[{{ pKey }}][order_option][{{ oKey }}][product_option_value_id]"
+                                                value="{{ option['product_option_value_id'] }}"/>
+                                        <input type="hidden"
+                                                name="order_product[{{ pKey }}][order_option][{{ oKey }}][name]"
+                                                value="{{ option['name'] }}"/>
+                                        <input type="hidden"
+                                                name="order_product[{{ pKey }}][order_option][{{ oKey }}][value]"
+                                                value="{{ option['value'] }}"/>
+                                        <input type="hidden"
+                                                name="order_product[{{ pKey }}][order_option][{{ oKey }}][type]"
+                                                value="{{ option['type'] }}" />
+                                    {% endfor %}
+                                    <input type="hidden" name="order_product[{{ pKey }}][order_product_id]" value="{{ prod['order_product_id'] }}" class="order_product_id">
+                                    <input type="hidden" name="order_product[{{ pKey }}][product_id]" value="{{ prod['product_id'] }}" class="product_id">
+                                    <input type="hidden" name="order_product[{{ pKey }}][name]" value="{{ prod['name'] }}" class="name">
+                                    <input type="hidden" value="{{ prod['total'] }}" name="order_product[{{ pKey }}][total]" class="order_product_total_amount" >
+                                    <input type="hidden" name="order_product[{{ pKey }}][tax]" value="{{ prod['tax'] }}" class="tax">
+                                    <input type="hidden" name="order_product[{{ pKey }}][reward]" value="{{ prod['reward'] }}" class="reward">
+                                    <input type="hidden" name="order_product[{{ pKey }}][model]" value="{{ prod['model'] }}" class="model">
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+                    </table>
+                </div>
+            <div class="col-md-12">
+                <table class="table table-borderless table-xs content-group-sm">
+                    <tbody>
+
+                    {% for total in totals %}
+                            {% if total['code'] ==  'sub_total' or total['code'] ==  'total' %}
+                             <tr class="{{ total['code'] ==  'total' ? "total_tr" }} ">
+                                <td class=""> {{ total['title'] }}</td>
+                                <td class="text-right " colspan="2">
+                                    <span {{ total['code'] ==  'total' ? " data-order_total_amount='"~total['value']~"' " }} class="pull-right {{ total['code'] == 'sub_total' ? 'order_products_total_amount' : 'order_total_amount'}}">{{ total['value'] }}</span>
+                                </td>
+                             </tr>
+
+                            {% else %}
+                                <tr class="">
+                                    <td class=""> {{ total['title'] }}</td>
+                                    <td class="text-right " colspan="2">
+                                        <span class="pull-right">{{ total['value'] }}</span>
+                                        <input name="" value="{{ total['code'] == 'off_factor' ? -total['value']: total['value']}}" data-item_value="{{ total['code'] == 'off_factor' ? -total['value']: total['value']}}" type="hidden" class="{{ total['code'] not in   ['earn_point' , 'earn_reward'] ? "item_value" : " "}}">
+
+                                    </td>
+                                </tr>
+                                <input type="hidden" class="sub_total_input" value="{{ order_products_total_amount }}" />
+                            {% endif %}
+                    {% endfor %}
+
+                    </tbody>
+                </table>
+            </div>
+
+
+    </form>
+
+    </div>
+
+</div>
+    <div class="row">
+        <div class="col-md-12 text-right">
+            <hr/>
+            <a href="{{ links['cancel'] }}" class="btn btn-default">{{ lang('button_cancel') }}</a>
+            <a class="btn btn-primary btn-ladda btn-ladda-spinner bottom-save-button" onclick="$('.form').submit();">
+                <i class="far fa-save fa-lg position-left"></i>{{ lang('button_save') }}
+            </a>
+        </div>
+    </div>
+<!-- /saving state -->
+    <script>
+        var totalOrderProductsValue = {{ order_products_total_amount }};
+        var order_currency = "{{ order_currency }}";
+        var order_total_amount = $(".order_total_amount").attr("data-order_total_amount");
+
+
+        $("body").on("change",".item_value",function(){
+            var old_value = !isNaN( parseFloat($(this).attr("data-item_value")) ) ? parseFloat($(this).attr("data-item_value")) : 0;
+            var new_value = !isNaN( parseFloat($(this).val()) ) ? parseFloat($(this).val()) : 0;
+            if(old_value > new_value){
+                var newAmount = +order_total_amount - (+old_value - +new_value);
+            }else{
+                var newAmount = +order_total_amount + (+new_value - +old_value);
+            }
+            $(this).attr("data-item_value",new_value);
+            $(".order_total_amount").html( newAmount.toFixed(2) + " " + order_currency );
+            order_total_amount = newAmount;
+        });
+
+
+        function get_order_item_total(){
+            var item_vlaue = 0;
+            $(".item_value").each(function() {
+                if(!isNaN(parseFloat(this.value))){
+                    item_vlaue += parseFloat(this.value);
+                }
+            });
+            return item_vlaue;
+        }
+
+        $("body").on("click",".removeItem",function(){
+
+            $(this).parents('tr').remove();
+            var itam_value = $(this).closest('.orderItems').find('.item_value').val();
+            if(!empty(itam_value)) {
+                var newAmount = +order_total_amount - itam_value;
+                $(".order_total_amount").html(newAmount.toFixed(2) + " " + order_currency);
+                order_total_amount = newAmount;
+            }
+
+        });
+
+        $("body").on("click",".products-remove-product",function(){
+            $(this).parents('tr').remove();
+            var sub_total = parseFloat($(".sub_total_input").val());
+            var product_total_value = $(this).parents('tr').find('.order_product_total_amount').val();
+            var newAmount = +order_total_amount - product_total_value;
+            var newSubTotal = (+sub_total - product_total_value);
+            $(".order_total_amount").html( newAmount.toFixed(2) + " " + order_currency );
+
+            $(".sub_total_input").val(newSubTotal.toFixed(2));
+            $(".order_products_total_amount").html(newSubTotal.toFixed(2) + " " + order_currency);
+            order_total_amount = newAmount;
+
+        });
+
+        function addInputItem(){
+            var html = '<tr class="orderItems"><td><input name="custom_title[]" value="" class="form-control"></td>';
+                html += '<td class="text-right"><span class="pull-right"><input name="custom_value[]"  data-item_value="0" value="" class="form-control  text-center products-price item_value"></span>';
+                html += '<td class="text-right "><button class="btn btn-danger products-remove-product removeItem">';
+                html += '<i class="icon-trash-alt"></i></button></td></tr>';
+            $(".total_tr").before(html);
+            $('.products-price').TouchSpin({
+                max: Infinity,
+                min: -Infinity,
+                step: 0.01,
+                decimals: 2
+            });
+        }
+        function calculateOrderData(self){
+            var currency = order_currency;
+            var quantity = $(self).val();
+            var price =  $(self).closest('.product_tr').find('.product_price').val();
+            var price = !isNaN( parseFloat(price) ) ? parseFloat(price) : 0;
+            var totalProduct = ( quantity *   price);
+            var oldValue = $(self).closest('.product_tr').find('.product_total').attr("data-total");
+            $(self).closest('.product_tr').find('.product_total').html(totalProduct.toFixed(2) + " " +currency).attr("data-total",totalProduct);
+            if(totalProduct > oldValue){
+                var calculateOrderTotal = totalOrderProductsValue + (totalProduct - oldValue);
+            }else{
+                var calculateOrderTotal = totalOrderProductsValue - ( oldValue - totalProduct);
+            }
+            var items_amount = get_order_item_total();
+            order_total_amount = (+calculateOrderTotal +items_amount);
+            $(self).closest('.product_tr').find('.order_product_total_amount').val(totalProduct.toFixed(2));
+            $(".sub_total_input").val(calculateOrderTotal.toFixed(2));
+            $(".order_products_total_amount").html(calculateOrderTotal.toFixed(2) + " " + currency);
+            $(".order_total_amount").html(order_total_amount.toFixed(2)  + " " + currency );
+            totalOrderProductsValue = calculateOrderTotal;
+        }
+        function calculateOrderDataPrice(self){
+            var currency = order_currency;
+            var price = $(self).val();
+            var quantity =  $(self).closest('.product_tr').find('.products-quantity').val();
+            var price = !isNaN( parseFloat(price) ) ? parseFloat(price) : 0;
+            var totalProduct = ( quantity *   price);
+            var oldValue = $(self).closest('.product_tr').find('.product_total').attr("data-total");
+            $(self).closest('.product_tr').find('.product_total').html(totalProduct.toFixed(2) + " " +currency).attr("data-total",totalProduct);
+            if(totalProduct > oldValue){
+                var calculateOrderTotal = totalOrderProductsValue + (totalProduct - oldValue);
+
+            }else{
+                var calculateOrderTotal = totalOrderProductsValue - ( oldValue - totalProduct);
+            }
+            var items_amount = get_order_item_total();
+            order_total_amount = (+calculateOrderTotal +items_amount);
+            $(self).closest('.product_tr').find('.order_product_total_amount').val(totalProduct.toFixed(2));
+            $(".sub_total_input").val(calculateOrderTotal.toFixed(2));
+            $(".order_products_total_amount").html(+calculateOrderTotal.toFixed(2)  + " " + currency );
+            $(".order_total_amount").html(order_total_amount.toFixed(2)  + " " + currency );
+            totalOrderProductsValue = calculateOrderTotal;
+        }
+
+        $('.touchspinney').TouchSpin();
+        $('.products-quantity').TouchSpin({
+            max: Infinity,
+            min: -Infinity,
+        });
+
+        $('.products-price').TouchSpin({
+            max: Infinity,
+            step: 0.01,
+            decimals: 2,
+            min: -Infinity,
+        });
+
+    </script>
+
+
+
+{% endblock content %}

@@ -1,0 +1,356 @@
+{% set dualMenuEnabled = false %}
+
+{% set errorClass = 'has-error has-feedback' %}
+
+<style>
+    .scrollbox {
+        border-radius: 3px;
+        background-clip: padding-box;
+        border-color: #e7ebee;
+        border-width: 2px;
+        box-shadow: none;
+        font-size: 13px;
+        border-style: solid;
+        padding: 6px 10px;
+        margin-top: 5px;
+        height: 150px;
+        overflow: auto;
+    }
+</style>
+
+<!-- Fieldset legend -->
+<div class="row">
+
+    <form action="{{ link('shipping/ups') }}" method="post" class="form">
+
+        <div class="col-md-12">
+            <!-- Advanced legend -->
+            <div class="panel panel-white">
+                <div class="panel-heading">
+                    <h6 class="panel-title"><span class="text-bold">{{ lang('head_global_settings')|trim(':') }}</span></h6>
+                    <div class="heading-elements not-collapsible">
+                        <ul class="icons-list">
+                            <li><a data-action="collapse" class=""></a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="collapse in" id="panel1">
+                        <div class="form-group col-md-6">
+                            <label>{{ lang('entry_status') }}</label>
+                            <!-- Switchery -->
+                            <div class="checkbox checkbox-switchery">
+                                <label>
+                                    <input type="checkbox" onchange="changeStatus(this);" name="ups_status" class="switchery" {{ ups_status not in [0, '0', 'off'] or ups_status is null ? 'checked' }}>
+                                    <span class="switchery-status">{{ ups_status not in [0, '0', 'off'] or ups_status is null ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                </label>
+                            </div>
+                            <!-- /Switchery -->
+                        </div>
+
+                        <div class="form-group col-md-6">
+                            <label>{{ lang('entry_test') }}</label>
+                            <!-- Switchery -->
+                            <div class="checkbox checkbox-switchery">
+                                <label>
+                                    <input type="checkbox" onchange="changeStatus(this);" name="ups_test" class="switchery" {{ ups_test not in [0, '0', 'off'] ? 'checked' }}>
+                                    <span class="switchery-status">{{ ups_test not in [0, '0', 'off'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                </label>
+                            </div>
+                            <!-- /Switchery -->
+                        </div>
+
+                        <div class="clearfix"></div>
+
+                        <div class="form-group col-md-12" id="ups_key-group">
+                            <label class="control-label">
+                                {{ lang('entry_key') }} <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" name="ups_key" class="form-control"
+                                    value="{{ ups_key }}"/>
+                            <span class="help-block"></span>
+                        </div>
+
+                        <div class="clearfix"></div>
+
+                        <div class="form-group col-md-6" id="ups_username-group">
+                            <label class="control-label">
+                                {{ lang('entry_username') }} <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" name="ups_username" class="form-control"
+                                    value="{{ ups_username }}"/>
+                            <span class="help-block"></span>
+                        </div>
+
+                        <div class="form-group col-md-6" id="ups_password-group">
+                            <label class="control-label">
+                                {{ lang('entry_password') }} <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" name="ups_password" class="form-control"
+                                    value="{{ ups_password }}">
+                            <span class="help-block"></span>
+                        </div>
+
+                        <div class="clearfix"></div>
+
+                        <div class="form-group col-md-6">
+                            <label>{{ lang('entry_pickup') }}</label>
+                            <select class="select" name="ups_pickup">
+                                {% for pickup in pickups %}
+                                    <option value="{{ pickup['value'] }}"
+                                            {{ pickup['value'] == ups_pickup ? 'selected'}}>
+                                        {{ pickup['text'] }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group col-md-6">
+                            <label>{{ lang('entry_packaging') }}</label>
+                            <select class="select" name="ups_packaging">
+                                {% for pkg in packages %}
+                                    <option value="{{ pkg['value'] }}"
+                                            {{ pkg['value'] == ups_packaging ? 'selected' }}>
+                                        {{ pkg['text'] }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="clearfix"></div>
+
+                        <div class="form-group col-md-12">
+                            <label>{{ lang('entry_classification') }}</label>
+                            <select class="select" name="ups_classification">
+                                {% for cls in classifications %}
+                                    <option value="{{ cls['value'] }}"
+                                            {{ cls['value'] == ups_classification ? 'selected' }}>
+                                        {{ cls['text'] }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="clearfix"></div>
+
+                        <div class="form-group col-md-6">
+                            <label>{{ lang('entry_origin') }}</label>
+                            <select class="select" name="ups_origin">
+                                {% for origin in origins %}
+                                    <option value="{{ origin['value'] }}"
+                                            {{ origin['value'] == ups_origin ? 'selected' }}>
+                                        {{ origin['text'] }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group col-md-6" id="ups_city-group">
+                            <label class="control-label">
+                                {{ lang('entry_city') }} <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" name="ups_city" class="form-control"
+                                    value="{{ ups_city }}"/>
+                            <span class="help-block"></span>
+                        </div>
+
+                        <div class="clearfix"></div>
+
+                        <div class="form-group col-md-6" id="ups_state-group">
+                            <label class="control-label">
+                                {{ lang('entry_state') }} <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" name="ups_state" class="form-control"
+                                    value="{{ ups_state }}"/>
+                            <span class="help-block"></span>
+                        </div>
+
+                        <div class="form-group col-md-6" id="ups_country-group">
+                            <label class="control-label">
+                                {{ lang('entry_country') }} <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" name="ups_country" class="form-control"
+                                    value="{{ ups_country }}"/>
+                            <span class="help-block"></span>
+                        </div>
+
+                        <div class="clearfix"></div>
+
+                        <div class="form-group col-md-6" id="ups_postcode-group">
+                            <label class="control-label">
+                                {{ lang('entry_postcode') }} <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" name="ups_postcode" class="form-control"
+                                    value="{{ ups_postcode }}">
+                            <span class="help-block"></span>
+                        </div>
+
+                        <div class="form-group col-md-6">
+                            <label>{{ lang('entry_quote_type') }}</label>
+                            <select class="select" name="ups_quote_type">
+                                {% for qtype in quote_types %}
+                                    <option value="{{ qtype['value'] }}"
+                                            {{ qtype['value'] == ups_quote_type ? 'selected' }}>
+                                        {{ qtype['text'] }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="clearfix"></div>
+
+                        <div class="form-group col-md-12">
+                            <label>{{ lang('entry_service') }}</label>
+                            <div class="scrollbox" id="service">
+                                {% for key,zone in services %}
+                                    <div id="{{ key }}">
+                                        {% for sKey,service in zone %}
+                                            <div class="checkbox">
+                                                <label>
+                                                    <input type="checkbox" name="{{ sKey }}" value="1"
+                                                            value="{{ service['value'] }}" class="styled"
+                                                            {{ (activeServices[sKey]) ? 'checked' }}
+                                                    >
+                                                    {{ lang(service) }}
+                                                </label>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="clearfix"></div>
+
+                        <div class="form-group col-md-6">
+                            <label>{{ lang('entry_insurance') }}</label>
+                            <!-- Switchery -->
+                            <div class="checkbox checkbox-switchery">
+                                <label>
+                                    <input type="checkbox" onchange="changeStatus(this);" name="ups_insurance" class="switchery" {{ ups_insurance not in [0, '0', 'off'] ? 'checked' }}>
+                                    <span class="switchery-status">{{ ups_insurance not in [0, '0', 'off'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                </label>
+                            </div>
+                            <!-- /Switchery -->
+                        </div>
+
+                        <div class="form-group col-md-6">
+                            <label>{{ lang('entry_display_weight') }}</label>
+                            <!-- Switchery -->
+                            <div class="checkbox checkbox-switchery">
+                                <label>
+                                    <input type="checkbox" onchange="changeStatus(this);" name="ups_display_weight" class="switchery" {{ ups_display_weight not in [0, '0', 'off'] ? 'checked' }}>
+                                    <span class="switchery-status">{{ ups_display_weight not in [0, '0', 'off'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                </label>
+                            </div>
+                            <!-- /Switchery -->
+                        </div>
+
+                        <div class="clearfix"></div>
+
+                        <div class="form-group col-md-6">
+                            <label>{{ lang('entry_weight_class') }}</label>
+                            <select class="select" name="ups_weight_class_id">
+                                {% for wcls in weight_classes %}
+                                    <option value="{{ wcls['weight_class_id'] }}"
+                                            {{ wcls['weight_class_id'] == ups_weight_class_id ? 'selected' }}>
+                                        {{ wcls['title'] }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group col-md-6">
+                            <label>{{ lang('entry_length_class') }}</label>
+                            <select class="select" name="ups_length_class_id">
+                                {% for lcls in length_classes %}
+                                    <option value="{{ lcls['length_class_id'] }}"
+                                            {{ lcls['length_class_id'] == ups_length_class_id ? 'selected' }}>
+                                        {{ lcls['title'] }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="clearfix"></div>
+                            <div class="col-md-12">
+                            <label class="control-label"> {{ lang('entry_dimension') }} <span class="text-danger">*</span> </label>
+
+                            <div class="form-group col-md-4" id="ups_length-group">
+                                <input type="text" name="ups_length" class="form-control" value="{{ ups_length }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <div class="form-group col-md-4" id="ups_width-group">
+                                <input type="text" name="ups_width" class="form-control" value="{{ ups_width }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <div class="form-group col-md-4" id="ups_height-group">
+                                <input type="text" name="ups_height" class="form-control" value="{{ ups_height }}">
+                                <span class="help-block"></span>
+                            </div>
+                        </div>
+
+                        <div class="clearfix"></div>
+
+                        <div class="form-group col-md-6">
+                            <label>{{ lang('entry_tax_class') }}</label>
+                            <select class="select" name="ups_tax_class_id">
+                                <option value="0">{{ lang('text_none') }}</option>
+                                {% for tax_class in tax_classes %}
+                                    <option value="{{ tax_class['tax_class_id'] }}"
+                                            {{ tax_class['tax_class_id'] == ups_tax_class_id ? 'selected="selected"' : '' }}>
+                                        {{ tax_class['title'] }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group col-md-6">
+                            <label>{{ lang('entry_geo_zone') }}</label>
+                            <select class="select" name="ups_geo_zone_id">
+                                <option value="0">{{ lang('text_all_zones') }}</option>
+                                {% for geo_zone in geo_zones %}
+                                    <option value="{{ geo_zone['geo_zone_id'] }}"
+                                            {{ geo_zone['geo_zone_id'] == ups_geo_zone_id ? 'selected="selected"' : '' }}>
+                                        {{ geo_zone['name'] }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- /a legend -->
+        </div>
+    </form>
+
+
+    <script>
+        // Default initialization
+        $('.select').select2({
+            minimumResultsForSearch: Infinity
+        });
+
+        $('select[name=\'ups_origin\']').bind('change', function () {
+            $('#service > div').hide();
+
+            $('#' + this.value).show();
+        });
+
+        $('select[name=\'ups_origin\']').trigger('change');
+
+        function changeStatus(checkbox)
+        {
+            var self = $(checkbox);
+            var switch_status = self.siblings('.switchery-status');
+
+            if ( self.is(':checked') )
+            {
+                switch_status.html("{{ lang('text_enabled') }}");
+            }
+            else
+            {
+                switch_status.html("{{ lang('text_disabled') }}");
+            }
+        }
+    </script>

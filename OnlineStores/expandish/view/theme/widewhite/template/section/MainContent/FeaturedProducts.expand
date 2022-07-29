@@ -1,0 +1,90 @@
+<!-- featured products -->
+{% set products_per_item = 2 %}
+
+{% if fields.FeaturedProducts_Type.field_value == 'LatestProducts' %}
+	{% set FeaturedProducts = getLatestProducts(fields['FeaturedProducts_Limit']['field_value'], 595, 738) %}
+
+{% elseif fields.FeaturedProducts_Type.field_value == 'BestSellerProducts' %}
+	{% set FeaturedProducts = getBestSellerProducts(fields['FeaturedProducts_Limit']['field_value'], 595, 738) %}
+
+{% elseif fields.FeaturedProducts_Type.field_value == 'SpecialProducts' %}
+	{% set FeaturedProducts = getSpecialProducts(fields['FeaturedProducts_Limit']['field_value'], 595, 738) %}
+
+{% endif %}
+
+
+<div class="container" id="section-{{ section_id }}">
+	<div class="product-box5">
+		<div class="title-box5">
+			<h2 class="title18">{{ fields.FeaturedProducts_Title.field_value }}</h2>
+		</div>
+		<div class="tab-content">
+			<div id="new" class="tab-pane active">
+				<div class="product-slider5">
+					<div class="wrap-item arrow-style3" data-navigation="true" data-pagination="false" data-itemscustom="[[0,1],[480,2],[980,3],[1200,4]]">
+
+						{% for item_products in FeaturedProducts|batch(products_per_item, 'NO-ITEM') %}
+						<div class="item">
+							{% for product in item_products if not (product == 'NO-ITEM') %}
+							<div class="item-product none-shadow">
+								<div class="product-thumb">
+									<a href="{{ product.href }}" class="product-thumb-link"><img class="img-responsive" src="{{ product.thumb }}" alt=""></a>
+
+									<div class="product-extra-link">
+										<a href="#" class="compare-link" onclick="addToCompare({{ product.product_id }}, 1); return false;"><i class="fa fa-file-o" aria-hidden="true"></i></a>
+										{% if ('-1' in product.price) or ('-1' in product.special) %}
+											<a href="#" class="addcart-link" onclick="contact_us('{{ product.product_id }}');"><i class="fa fa-opencart" aria-hidden="true"></i></a>
+										{% else %}
+										  {% if customer.isCustomerAllowedToAdd_cart and ( config('config_hide_add_to_cart') != 1 or product.quantity >0 )  %}
+											<a href="#" class="addcart-link" onclick="addToCart({{ product.product_id }}, 1); return false;"><i class="fa fa-opencart" aria-hidden="true"></i></a>
+										{% endif %}
+										{% endif %}
+										<a href="#" class="wishlist-link" onclick="addToWishList({{ product.product_id }}); return false;"><i class="fa fa-heart-o" aria-hidden="true"></i></a>
+									</div>
+
+									<a href="{{ product.href }}" class="quickview-link"><i class="fa fa-search" aria-hidden="true"></i></a>
+									<div class="product-rate">
+										<div class="product-rating" style="width:100%"></div>
+									</div>
+
+									{% if product.saving < 100 %}
+									<span class="product-label new-label">-{{ product.saving }}%</span>
+									{% endif %}
+
+								</div>
+								<div class="product-info">
+									{% if config('show_brands') %}
+									<h3 class="product-title"><a href="{{ product.manufacturer_href }}">{{ product.manufacturer }}</a></h3>
+									{% endif %}
+									<h3 class="product-title"><a href="{{ product.href }}">{{ product.name }}</a></h3>
+									<div class="product-price">
+										{% if ('-1' in product.price) or ('-1' in product.special) %}
+                                    	    <ins><span class="clickable" onclick="contact_us('{{ product.product_id }}');">{{ lang('button_req_quote') }}</span></ins>
+                                    	    <div id="enquiry-{{ product.product_id }}"  style="display:none">{{ product.name }}:</div>
+                                    	{% elseif product.special %}
+                                    	    <del><span>{{ product.price }}</span></del>
+                                    	    <ins><span>{{ product.special }}</span></ins>
+                                    	{% else %}
+                                    	    <ins><span>{{ product.price }}</span><ins>
+                                    	{% endif %}
+									</div>
+
+									{# Stock Status Lable #}
+									{% set statuses = config("config_stock_status_display_badge") %}
+									{% if product.quantity <= 0 and product.stock_status_id in statuses %}
+										<h5><span class="label label-default">{{ product.stock_status }}</span></h5>
+									{% endif %}
+                  
+								</div>
+							</div>
+							{% endfor %}
+						</div>
+						<!-- End Item -->
+						{% endfor %}
+					</div>
+				</div>
+			</div>
+			<!-- End Tab -->
+		</div>
+	</div>
+</div>

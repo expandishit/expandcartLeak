@@ -1,0 +1,211 @@
+{# <h1>{{ print_r(tracking_info) }}</h1> #}
+<style type="text/css">
+</style>
+
+
+<div id="container">
+	<div class="row">
+		
+		{# Form #}
+		<div class="col-md-12 mt-2 mb-5">
+			<h3 class="text-center mb-4">{{ lang('text_track_order') }}</h3>
+			<form class="tracking-form">
+				<div class="row">
+					<div class="col-md-3 col-sm-3 col-xs-4 control first-input-column p-0">
+						<input type="text" placeholder="{{lang('text_track_number')}}" id="order_id" name="order_id" value="{{tracking_info.order_info.order_id}}">
+					</div>
+					
+					<div class="col-md-3 col-sm-3 col-xs-4 control p-0">
+						<input type="text" placeholder="{{lang('text_phone_number')}}" id="order_phone" name="phone_number" value="{{tracking_info.order_info.telephone}}">
+					</div>
+					
+					<div class="col-md-1 col-sm-1 col-xs-1 control p-0">
+						<button>
+							<i class="fa fa-search"></i>
+						</button>
+					</div>
+					<ul class="col-md-12" style="color: red; padding:10px;" id="errors"></ul>
+
+				</div>
+			</form>
+		</div>
+
+
+		{# Result #}
+		<div class="col-md-12 text-center">
+			<h3 id="no_found_message"></h3>
+			<div id="result" style="display:none;">
+				<h1 id="display_order_id" class="mb-5"></h1>
+				
+				<div class="graph">
+					<ul class="list-stages">
+						{% set history = 'history' %}
+						{% for status in order_tracking_status %}
+						<li class="list-item {{ history }}">
+							<span></span>
+							<a  class="" href="#" onclick="return false;"></a>
+							<p>{{ status.name }}</p>
+						</li>
+							{% if status.id == tracking_info.order_info.order_status_id %}
+								{%  set history = '' %}
+							{% endif %}
+						{% endfor %}
+					</ul>
+				</div>
+
+				<div class="result-details" style="">
+					<div id="order_info"></div>
+					
+					<div id="shipping_url" class="mb-4"></div>
+			
+					<div>
+				        <table id="statuses_table">
+				        	<caption></caption>
+				            <thead>
+				            	<tr>
+					              <th class="th">{{ lang('date') }}</th>
+					              <th class="th">{{ lang('time') }}</th>
+					              <th class="th">{{ lang('status') }}</th>
+					              <th class="th">{{ lang('comment') }}</th>
+				          		</tr>
+				          	</thead>
+				            <tbody>
+				          	</tbody>
+				      	</table>
+				    </div>
+
+    			</div>
+
+			</div>
+		</div>
+	</div>
+</div>
+<script type="text/javascript">
+	$(document).ready(function(){
+	   let tracking_info = JSON.parse('{{ tracking_info|json_encode|escape("js") }}');
+	   fillView(tracking_info);
+
+
+	   function fillView(tracking_info){
+	   			   	// console.log(tracking_info);
+	   			   	// console.log(tracking_info.order_info.order_id === undefined);
+
+	   		if(!tracking_info || tracking_info.length === 0) {
+
+    			$('#no_found_message').html('{{ lang("text_No_order_found") }}');
+    			return;
+    		}
+		   			   	
+		   	$('#display_order_id').html('{{ lang("text_order_number") }}' + tracking_info.order_info.order_id);
+		   	
+		   	//Check Shipping Tracking URL
+		   	if( tracking_info.order_info.shipping_tracking_url ){
+		   		// $('#shipping_url').show();
+		   		$('#shipping_url').html('<span>{{lang("text_shipping_url")}}</span><a href="'+ tracking_info.order_info.shipping_tracking_url +'" target="_blank">Shipping Tracking Link</a>' + '<br/>');
+		   	}
+		   	else{
+		   		$('#shipping_url').html('');
+		   		// $('#shipping_url').hide();
+		   	}
+		   	//END Check Shipping Tracking URL
+
+		   	$('#order_info').html(
+		   		'<span>{{lang("text_name")}}</span>' + tracking_info.order_info.name + '<br/>'+
+		   		'<span>{{lang("text_phone")}}</span>' + tracking_info.order_info.telephone + '<br/>'+
+		   		'<span>{{lang("text_email")}}</span>' + tracking_info.order_info.email + '<br/>'
+		   	);
+
+		   	//Check if their is statuses
+		   	/*<ul class="list-statues">
+						{% set history = 'history' %}
+						{% for status in order_tracking_status %}
+						<li class="list-item {{ history }}">
+							<span></span>
+							<a  class="" href="#" onclick="return false;"></a>
+							<p>{{ status.name }}</p>
+						</li>
+							{% if status.id == tracking_info.order_info.order_status_id %}
+								{%  set history = '' %}
+							{% endif %}
+						{% endfor %}
+					</ul>*/
+		   	if(tracking_info.show_graph == true){
+		   		$('.list-statues li').remove();
+		   		let history = 'history';
+		   		for(let i = 0; i < tracking_info.order_tracking_status ; i++){
+		   			$('.list-statues').append('<li class="list-item '+ history +'">' +
+		   				'<span></span>'+
+		   				'<a  class="" href="#" onclick="return false;"></a>' +
+						'<p>' + tracking_info.order_tracking_status[i].name + '</p>'+
+						'</li>');
+		   			if(tracking_info.order_tracking_status[i].id === tracking_info.order_info.order_status_id)
+		   				history = '';
+		   		}
+		   		$('.graph').show();	
+		   	}
+
+		   	if(tracking_info.order_history.length > 0){
+		   		// $('.graph').show();
+		   		$('#statuses_table caption').html('{{lang("text_status_table_caption")}}');
+		   		for(let i=0 ; i < tracking_info.order_history.length; i++){
+		   			let date = tracking_info.order_history[i].date_added.split(/[- :]/);
+		   			$('#statuses_table > tbody').append(
+		   				'<tr>'+
+		   					'<td>'+ date[0]+'/'+date[1]+'/'+ date[2] +'</td>' +
+		   					'<td>'+ date[3]+':'+date[4]+':'+ date[5] + '</td>' +
+		   					'<td>'+ tracking_info.order_history[i].name + '</td>' +
+		   					'<td>'+ tracking_info.order_history[i].comment + '</td>' +
+		   				'</tr>'
+		   				);
+		   		}
+		   	}
+		   	else{
+		   		$('.graph').hide();
+		   	}
+
+		   	$('#result').fadeIn(1000);
+	   }
+
+
+	  $(".tracking-form button").click(function(){
+		  	//Clear
+			$('#order_info').html('');
+			$('#no_found_message').html('');
+			$('#result').hide();//('hidden');
+			$('#statuses_table > tbody').html('');
+			$('#errors').html('');
+
+
+		  	//Call
+		    $.post(
+		    	"index.php?route=/tracking/info", 
+		    	{ 
+		    		order_id    : $('#order_id').val(),
+		    		phone_number: $('#order_phone').val() 
+		    	},
+
+		    	function(data,status){
+		    		let result = JSON.parse(data);
+
+		    		console.log(JSON.parse(data).success);
+		    		console.log(result.errors);
+		    		// console.log(data);
+		    		// console.log("---------");
+		    		if(result.success == 0){
+		    			for(const key in result.errors){
+		    				$('ul#errors').append('<li>' + result.errors[key] + '</li>');
+		    			}
+
+		    			return;
+		    		}
+
+		    		tracking_info = JSON.parse(data).tracking_info;
+					fillView(tracking_info);
+		    	}
+			);
+			return false;
+	  });
+
+
+	});
+</script>

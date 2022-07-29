@@ -1,0 +1,2738 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<modification>
+  <id>Product Option Image PRO / Изображения опций PRO</id>
+  <version>1.3.7</version>
+  <vqmver>2.4.X</vqmver>
+  <author>Support: support@liveopencart.com / Поддержка: opencart@19th19th.ru</author>
+
+<!-- ****************** FRONTEND ******************** -->
+
+  <file name="catalog/model/catalog/product.php">  
+    
+    <operation >
+      <search position="after"><![CDATA[
+      public function getProductOptions($product_id) {
+      ]]></search>
+      <add><![CDATA[
+      // Product Option Image PRO module <<
+      $this->load->model('module/product_option_image_pro');
+      $poip_installed = $this->model_module_product_option_image_pro->installed();
+      if ($poip_installed) {
+        $product_options_images = $this->model_module_product_option_image_pro->getProductOptionImages($product_id);
+        $product_options_settings = $this->model_module_product_option_image_pro->getProductSettings($product_id);
+      }
+      // >> Product Option Image PRO module
+      ]]></add>
+    </operation>
+		
+		<operation >
+      <search position="after"><![CDATA[
+      $query = $this->db->query("SELECT * FROM " . DB_PREFIX . "product_image WHERE product_id
+      ]]></search>
+      <add><![CDATA[
+			
+      // Product Option Image PRO module <<
+      $this->load->model('module/product_option_image_pro');
+      $this->model_module_product_option_image_pro->addMainProductImageToAdditional($product_id, $query->rows);
+      
+      // >> Product Option Image PRO module
+      ]]></add>
+    </operation>
+		-->
+    
+    <operation >
+      <search position="after"><![CDATA[
+      foreach ($product_option_value_query->rows as $product_option_value) {
+      ]]></search>
+      <add><![CDATA[
+      // Product Option Image PRO module <<
+      if ($poip_installed) {
+        if ( isset($product_options_settings[(int)$product_option['product_option_id']]['img_first']) && $product_options_settings[(int)$product_option['product_option_id']]['img_first'] ) {
+          if ( isset($product_options_images[(int)$product_option['product_option_id']][$product_option_value['product_option_value_id']][0]['image'])) {
+            $product_option_value['image'] = $product_options_images[(int)$product_option['product_option_id']][$product_option_value['product_option_value_id']][0]['image'];
+          }
+        }
+      }
+      // >> Product Option Image PRO module
+      ]]></add>
+    </operation>
+		
+		
+		
+		
+    
+  </file>
+    
+	<!-- catalog/controller/themecontrol/product.php - pav fashion -->
+  <file name="catalog/controller/product/product.php,catalog/controller/themecontrol/product.php,catalog/controller/journal2/quickview.php" error="skip">  
+    
+    <operation >
+      <search position="after"><![CDATA[
+      $this->data['images'][] = array(
+      ]]></search>
+      <add><![CDATA[
+      // Product Option Image PRO module <<
+      'title' => isset($result['title']) ? $result['title'] : '',
+      // >> Product Option Image PRO module
+      ]]></add>
+    </operation>
+    
+    <operation >
+      <search position="after"><![CDATA[
+      $results = $this->model_catalog_product->getProductImages($this->request->get['p
+      ]]></search>
+      <add><![CDATA[
+			
+      // Product Option Image PRO module <<
+			// $this->request->get['pid'] - journal2 quickview
+			$poip_product_id = !(isset($this->request->get['product_id'])) ? $this->request->get['pid'] : $this->request->get['product_id'];
+			
+      $this->load->model('module/product_option_image_pro');
+      $this->data['poip_installed'] = $this->model_module_product_option_image_pro->installed();
+			$this->data['current_class'] = 'related_products';
+      if ($this->data['poip_installed']) {
+        $this->data['poip_product_settings'] = $this->model_module_product_option_image_pro->getProductSettings($poip_product_id);
+        $this->data['poip_settings'] = $this->model_module_product_option_image_pro->getSettings();
+        
+        $product_images = array();
+        $results = $this->model_module_product_option_image_pro->addOptionImagesToProductImages($results, $poip_product_id, $product_images);
+        $this->data['poip_images'] = $product_images;
+        $this->data['poip_product_option_ids'] = $this->model_module_product_option_image_pro->getProductOptionsIdsWithImages($product_images);
+        $this->data['poip_images_by_options'] = $this->model_module_product_option_image_pro->getProductOptionImagesByValues($poip_product_id);
+        
+        if ( isset($_SERVER['REQUEST_URI']) ) {
+					$poip_ov_name = "&amp;poip_ov=";
+					if (strpos($_SERVER['REQUEST_URI'], $poip_ov_name) !== false) {
+						$poip_str = substr($_SERVER['REQUEST_URI'], strpos($_SERVER['REQUEST_URI'], $poip_ov_name)+strlen($poip_ov_name));
+						$poip_ov = "";
+						while ($poip_str != "" && strpos("0123456789", substr($poip_str, 0, 1))!==false ) {
+							$poip_ov.= substr($poip_str, 0, 1);
+							$poip_str = substr($poip_str, 1);
+						}
+						if ($poip_ov != "") {
+							$this->data['poip_ov'] = $poip_ov;
+						}
+					}
+				}
+				
+				// не работает на mijoshop
+				//$this->data['poip_ov'] = isset($this->request->get['poip_ov']) ? (int)$this->request->get['poip_ov'] : false;
+				
+        
+      }
+      //>> Product Option Image PRO module
+      ]]></add>
+    </operation>
+		
+		<!-- related products -->
+		<operation >
+      <search position="after"><![CDATA[
+      $this->data['products'][] = array(
+      ]]></search>
+      <add><![CDATA[
+      // Product Option Image PRO module <<
+      
+      'option_images'  => $this->model_module_product_option_image_pro->getCategoryImages( $result['product_id'], "related_products" ),
+      // >> Product Option Image PRO module
+      ]]></add>
+    </operation>
+		
+		
+  </file>
+  
+	<!-- pav fashion theme compatibility - костыль -->
+	<file name="catalog/view/theme/*/template/themecontrol/product.tpl">
+		<operation error="skip">
+      <search position="before"><![CDATA[</body></html>]]></search>
+      <add><![CDATA[
+      <?php /* <?php echo $footer; ?> */ ?>
+      ]]></add>
+    </operation> 
+	</file>
+	
+	<!-- for related products -->	
+	<file name="catalog/view/theme/*/template/product/product.tpl">
+		<!-- related products -->
+		<operation error="skip">
+      <search position="ibefore"><![CDATA[
+      alt="<?php echo $product['name'];
+      ]]></search>
+      <add><![CDATA[<?php /* Product Option Image PRO module << */ if ($poip_installed) { ?> poip_id="image_<?php echo "".$current_class."_".$product['product_id']; ?>" <?php } /*  >> Product Option Image PRO module */ ?>]]></add>
+    </operation>
+		
+		<operation error="skip">
+
+			<!-- MORE? compatible -->
+			<search position="after"><![CDATA[
+      <a href="<?php echo $product['href']; ?>"><img
+      ]]></search>
+
+      <add><![CDATA[
+      
+      <?php // Product Option Image PRO module << ?>
+			
+      <?php  if ($poip_installed && isset($product['option_images']) && $product['option_images']) {
+			
+			
+        foreach ($product['option_images'] as $product_option_id => $option_images) {
+          
+					if ($this->config->get('config_template') == "sellegance" || $this->config->get('config_template') == "theme422") {
+						echo "<div id=\"poip_img\" style=\"  text-align: center; \">";
+						$image_counter = 0;
+						foreach ($option_images as $product_option_value_id => $option_image) {
+							$image_counter++;
+							echo "
+											<a onmouseover=\"show_thumb(this);\" style=\"display:inline;\" href=\"".$product['href']."&poip_ov=".(int)$product_option_value_id."\"
+												".( (isset($option_image['title']) && $option_image['title']) ? " title=\"".$option_image['title']."\" " : "" )."
+												thumb=\"".$option_image['thumb']."\"
+												image_id=\"".$current_class."_".$product['product_id']."\">
+											<img src=\"".$option_image['icon']."\"></a>
+										";
+						}
+						echo "</div>";
+					} else {
+					
+						echo "<table id=\"poip_img\" style=\"width: auto; padding:0px; border-collapse:collapse; border-spacing:0px; border:0px;\"><tr><td style='padding:0px;'>";
+						$image_counter = 0;
+						foreach ($option_images as $product_option_value_id => $option_image) {
+							$image_counter++;
+							if ($image_counter % 5 == 0) echo "<br>";
+							echo "<div class=\"image\" style=\"float:left; margin-left:0px; margin-right:0px; \">
+											<a onmouseover=\"show_thumb(this);\" href=\"".$product['href']."&poip_ov=".(int)$product_option_value_id."\"
+												".( (isset($option_image['title']) && $option_image['title']) ? " title=\"".$option_image['title']."\" " : "" )."
+												thumb=\"".$option_image['thumb']."\"
+												image_id=\"".$current_class."_".$product['product_id']."\">
+											<img src=\"".$option_image['icon']."\"></a>
+										</div>";
+										
+							if ($image_counter % 4 == 0) echo "<br>";
+						}
+						echo "</td></tr></table>";
+					}
+					
+				}
+      
+      } ?>
+      <?php //  >> Product Option Image PRO module ?>
+      ]]></add>
+    </operation>
+		
+	</file>
+  
+  <file name="catalog/view/theme/*/template/product/product.tpl,catalog/view/theme/*/template/themecontrol/product.tpl,catalog/view/theme/*/template/journal2/quickview/quickview.tpl">
+	<!-- <file name="catalog/view/theme/*/template/product/product.tpl"> -->
+    
+    
+    <operation error="skip">
+      <search position="replace"><![CDATA[
+      src="<?php echo $image['thumb']; ?>" title="<?php echo $heading_title; ?>" alt="<?php echo $heading_title; ?>"
+      ]]></search>
+      <add><![CDATA[
+      src="<?php echo $image['thumb']; ?>" title="<?php echo ( (isset($image['title']) && $image['title']) ? ' '.$image['title'] : $heading_title); ?>" alt="<?php echo ((isset($image['title']) && $image['title']) ? ' '.$image['title'] : $heading_title); ?>"
+      ]]></add>
+    </operation>  
+		
+		<!-- pav fashion - related products -->
+		<operation error="skip">
+			<search position="after" ><![CDATA[
+      <div class="warp-info">
+      ]]></search>
+
+      <add><![CDATA[
+      
+      <?php // Product Option Image PRO module << ?>
+			
+			<?php  if ($poip_installed && isset($product['option_images']) && $product['option_images']) {
+			
+        foreach ($product['option_images'] as $product_option_id => $option_images) {
+				
+          //opacity: .99; float:left; 
+					echo "<div id='poip_img' style='width:100%; display: table-cell;  position:relative; top:-6px; z-index: 1000;'>";
+					$image_counter = 0;
+          foreach ($option_images as $product_option_value_id => $option_image) {
+						$image_counter++;
+									
+							echo "			 
+                    <a style=\"margin:0px; margin-left:2px; margin-bottom:2px;  float:left; \" onmouseover=\"show_thumb(this);\" href=\"".$product['href']."&poip_ov=".(int)$product_option_value_id."\"
+                      ".( (isset($option_image['title']) && $option_image['title']) ? " title=\"".$option_image['title']."\" " : "" )."
+                      thumb=\"".$option_image['thumb']."\"
+                      image_id=\"".$current_class."_".$product['product_id']."\">
+                    <img style=\"\" src=\"".$option_image['icon']."\"></a>
+                   ";		
+									
+          }
+
+					echo "</div>";
+					
+        }
+      
+      } ?>
+      <?php //  >> Product Option Image PRO module ?>
+      ]]></add>
+    </operation>
+		
+		<!-- pav fashion theme script for related products -->
+		<operation error="skip">
+			<search position="before"><![CDATA[
+      <?php echo $footer; ?>
+      ]]></search>
+      <add><![CDATA[
+			<!-- << Product Option Image PRO module -->
+				<script type="text/javascript"><!--
+					$('div.product-action').css('top', '-70px');
+					$('a.pav-colorbox').css('top', 'auto');
+					$('a.pav-colorbox').css('bottom', '-40px');
+				--></script>
+			<!-- >> Product Option Image PRO module -->
+      ]]></add>	
+		</operation>
+		
+		<!-- journal2 quickview -->
+		
+		<!-- pav fashion theme script for related products -->
+		<operation error="skip">
+			<search position="after" offset="1"><![CDATA[
+      <html class="product-page quickview
+      ]]></search>
+      <add><![CDATA[
+			<!-- << Product Option Image PRO module -->
+				<script type="text/javascript"><!--
+					var poip_journal2_quickview = true;
+				--></script>
+			<!-- >> Product Option Image PRO module -->
+      ]]></add>	
+		</operation>
+		
+		<!-- SCRIPT -->
+    <operation >
+			<!-- </body> for journal2 quickview -->
+      <search position="before" regex="true"><![CDATA[~<\?php echo \$footer; \?>|</body>~]]></search>
+			
+			<!-- 
+			<search position="before"><![CDATA[
+      <?php echo $footer; ?>
+      ]]></search>
+			-->
+			
+      <add><![CDATA[
+      <!-- Product Option Image PRO module << -->
+      <?php  if ($poip_installed) {  ?>
+        
+      <script type="text/javascript"><!--
+      var console=console||{"log":function(){},"debug":function(){}};
+      var poip_options_settings = <?php echo json_encode($poip_product_settings); ?>;
+      var poip_settings = <?php echo json_encode($poip_settings); ?>;
+      var poip_images = <?php echo json_encode($poip_images); ?>;
+      var poip_images_by_options = <?php echo json_encode($poip_images_by_options); ?>;
+      var poip_product_option_ids = <?php echo json_encode($poip_product_option_ids); ?>;
+			
+			var poip_journal2_theme = <?php echo ($this->config->get('config_template') == "journal2")?"true":"false"; ?>;
+			var poip_theme_name = "<?php echo $this->config->get('config_template'); ?>";
+			if (poip_theme_name == 'default' && typeof(poip_ava_store) !== 'undefined' && poip_ava_store) {
+				poip_theme_name = 'ava_store';
+			}
+			var use_refresh_colorbox = poip_theme_name!='theme422';
+			//var use_refresh_colorbox = poip_theme_name!='theme422' && poip_theme_name!='polianna';
+			
+			var poip_std_src = poip_main_image().attr('src');
+			var poip_std_href = poip_main_image().closest('a').attr('href');
+			
+			var option_prefix = "option";
+			if ($('[name^=option_oc\\[]').length) {
+				option_prefix = "option_oc";
+			}
+			var option_prefix_length = option_prefix.length;
+			
+      // в список может быть включего главное изображений, надо его учесть
+			poipImageAdditional().find('a').each(function() {
+				var img_src = '';
+				if ($(this).attr('data-zoom-image') && poip_theme_name=='mattimeo') {
+					img_src = $(this).attr('data-zoom-image');
+				}else if ($(this).attr('data-image')) {
+					img_src = $(this).attr('data-image');
+				} else if ($(this).attr('href') && $(this).attr('href').substr(0,1) != "#") {
+					img_src = $(this).attr('href');
+				}
+				
+				if (img_src) {
+
+					var img_found = false;
+					for (var i=0;i<poip_images.length;i++) {
+						if (img_src == poip_images[i]['popup'] || decodeURIComponent(img_src) == poip_images[i]['popup']) {
+							img_found = true;
+							break;
+						}
+					}
+					if (!img_found) {
+						poip_images.unshift({"product_id":"<?php echo $product_id; ?>","product_image_id":["-1"],"popup":"","main":"","thumb":""});
+						poip_images[0].popup = img_src;
+						poip_images[0].main = img_src;
+						poip_images[0].thumb = img_src;
+					}
+				}
+			});
+			
+      
+			function poip_get_product_option_id_from_name(name) {
+				return name.substr(option_prefix_length+1, name.indexOf(']')-(option_prefix_length+1) )
+			}
+			
+      // 1 - без checkbox, 2 - только чекбокс
+      function get_selected_values(checkbox_variant, product_option_id) {
+			
+        var values = [];
+        
+        if (!checkbox_variant || checkbox_variant==1) {
+          var options = $("select[name^="+option_prefix+"\\[]");
+          for (var i=0; i<options.length; i++) {
+						var current_product_option_id = poip_get_product_option_id_from_name($(options[i]).attr('name'));
+						if ( (!product_option_id && $.inArray(current_product_option_id, poip_product_option_ids) != -1)
+							|| (product_option_id && product_option_id == current_product_option_id) ) {
+							
+							if (options[i].value) {
+								values.push(options[i].value);
+							}
+						}
+          }
+          
+          var options = $("input[type=radio][name^="+option_prefix+"\\[]:checked");
+          for (var i=0; i<options.length; i++) {
+						var current_product_option_id = poip_get_product_option_id_from_name($(options[i]).attr('name'))
+						if ( (!product_option_id && $.inArray(current_product_option_id, poip_product_option_ids) != -1)
+							|| (product_option_id && product_option_id == current_product_option_id) ) {
+							
+							if (options[i].value) {
+								values.push(options[i].value);
+							}
+						}
+          }
+        }
+        
+        if (!checkbox_variant || checkbox_variant==2) {
+          var options = $("input[type=checkbox][name^="+option_prefix+"\\[]:checked");
+          for (var i=0; i<options.length; i++) {
+						var current_product_option_id = poip_get_product_option_id_from_name($(options[i]).attr('name'));
+						if ( (!product_option_id && $.inArray(current_product_option_id, poip_product_option_ids) != -1)
+							|| (product_option_id && product_option_id == current_product_option_id) ) {
+							
+							if (options[i].value) {
+								values.push(options[i].value);
+							}
+						}
+          }
+        }
+        
+        return values;
+        
+      }
+      
+      function poip_get_global_visible_images() {
+        // изображения которые должны быть видны до применения фильтра
+        var global_visible_images = [];
+        var images_by_settings = [];
+        var selected_values = get_selected_values(); 
+        
+        for (var i=0; i<poip_images.length; i++) {
+					
+          if (poip_images[i]['product_image_id']) { // стандартное доп.изображение
+            global_visible_images.push(poip_images[i]['popup']);
+          } else {
+            for (var product_option_id in poip_options_settings) {
+              if (poip_options_settings[product_option_id]['img_use'] == 1) { // вкл изображения всех значений
+                global_visible_images.push(poip_images[i]['popup']);
+              } else if (poip_options_settings[product_option_id]['img_use'] == 2) { // вкл изображения только выбранных значений
+                for (var j=0; j<selected_values.length; j++) {
+                  if ($.inArray(selected_values[j], poip_images[i]['product_option_value_id'])!=-1) {
+                    global_visible_images.push(poip_images[i]['popup']);
+                  }
+                }
+              }
+            }
+          }
+          
+        }
+        
+        return global_visible_images;
+        
+      }
+      
+      function poip_array_intersection(arr1, arr2) {
+        
+        var match = [];
+        
+        $.each(arr1, function (i, val1) {
+          if ($.inArray(val1, arr2) != -1) {
+            match.push(val1);
+          }
+        });
+        
+        return match;
+      }
+      
+      function poip_change_available_images(product_option_id) {
+        
+				
+				if ($.inArray(product_option_id, poip_product_option_ids)==-1) {
+          return;
+        }
+        
+        var global_visible_images = poip_get_global_visible_images();
+        
+        
+				
+				var current_visible_images = poip_get_global_visible_images();
+				
+				for (var i in poip_product_option_ids) {
+					var current_product_option_id = poip_product_option_ids[i];
+					
+					var current_product_option_selected_values = get_selected_values(0, current_product_option_id);
+					
+					if (poip_options_settings[current_product_option_id]['img_limit'] && poip_options_settings[current_product_option_id]['img_use']
+						&& current_product_option_selected_values.length ) {
+						
+						var images_to_show = [];
+						for (var j in poip_images) {
+							if (poip_images[j]['product_option_value_id'] && poip_images[j]['product_option_value_id'].length) {
+								for (var copsv_i in current_product_option_selected_values) {
+									if ($.inArray(current_product_option_selected_values[copsv_i], poip_images[j]['product_option_value_id']) !== -1
+										&& $.inArray(poip_images[j]['popup'], images_to_show) == -1 ) {
+										images_to_show.push(poip_images[j]['popup']);
+									}
+								}
+							}
+						}
+						current_visible_images = poip_array_intersection(current_visible_images, images_to_show);
+					}
+					
+				}
+				
+				if (current_visible_images.length == 0) {
+          current_visible_images = global_visible_images;
+				}
+				
+				poip_set_visible_images(current_visible_images);
+				
+				return current_visible_images;
+				
+				/*
+				
+        if ($.inArray(product_option_id, poip_product_option_ids)==-1) {
+          return;
+        }
+        
+        var global_visible_images = poip_get_global_visible_images();
+        var selected_values = get_selected_values(1);
+        var selected_checks = get_selected_values(2);
+        
+        
+        if (poip_options_settings[product_option_id]['img_limit'] && poip_options_settings[product_option_id]['img_use']) {
+        
+          // соберем все изображения подходящие для чекбоксов
+          var images_for_checks = [];
+          
+          if (selected_checks.length) {
+            for (var j=0; j<poip_images.length; j++) {
+              var image_ok_all = true;
+              for (var i=0; i<poip_product_option_ids.length; i++) {
+                var check_option_id = poip_product_option_ids[i];
+                
+                if ($('input[type=checkbox][name^='+option_prefix+'\\['+check_option_id+'\\]]:checked').length) {
+                  var image_ok_one = false;
+                  $('input[type=checkbox][name^='+option_prefix+'\\['+check_option_id+'\\]]:checked').each( function() {
+                    image_ok_one = (image_ok_one || ($.inArray($(this).val(), poip_images[j]['product_option_value_id'])!=-1));
+                  });
+                  image_ok_all = image_ok_all && image_ok_one;
+                }
+              }
+              
+              if (image_ok_all) {
+                images_for_checks.push(poip_images[j]['popup']);
+              }
+            }
+          }
+          
+          // из изображений для чекбоксов отфильтруем остальные
+          var images_to_show = [];
+          if (selected_values.length ) {
+          
+            for (var i=0;i<poip_images.length;i++) {
+              if (poip_images[i]['product_option_value_id']) {
+                var show_image = true;
+                for (var j=0;j<selected_values.length;j++) {
+                  if ($.inArray(selected_values[j], poip_images[i]['product_option_value_id'])==-1) {
+                    show_image = false;
+                    break;
+                  }
+                }
+                if (show_image) {
+                  if (!selected_checks.length || $.inArray(poip_images[i]['popup'], images_for_checks)!=-1 ) {
+                    images_to_show.push(poip_images[i]['popup']);
+                  }
+                }
+              }
+            }
+            
+          } else {
+            if (selected_checks.length) {
+              images_to_show = images_for_checks;
+            }
+          }
+          
+          if (images_to_show.length == 0) {
+            images_to_show = global_visible_images;
+          } else {
+            images_to_show = poip_array_intersection(images_to_show, global_visible_images);
+          }
+          
+        } else {
+          images_to_show = global_visible_images;
+          
+        }
+        
+        poip_set_visible_images(images_to_show);
+        
+        
+        return images_to_show;
+				*/
+      }
+			
+			
+      
+      function poip_set_visible_images(images) {
+        
+				
+				
+				// << theme 422 compatibility
+				
+				if ($('div[class=image-additional]').find('ul[id=image-additional]').length) {
+				
+					// создадим копию списка изображений
+					if ( !$('#image-additional-copy').length ) {
+						$('div[class=image-additional]').after("<div id=\"image-additional-copy\" style=\"display: none;\">"+$('div[class=image-additional]').find('ul[id=image-additional]').html()+"</div>");
+					}
+				
+					
+					// проверим что список картинок надо менять
+					
+					
+					var new_html = '';
+					var new_images = [];
+					$('#image-additional-copy').find('a').each( function(){
+						// Учтем возможность спец символов типа пробела %20
+						if ($.inArray( $(this).attr('data-image'), images) != -1 || $.inArray(decodeURIComponent($(this).attr('data-image')), images) != -1) {
+							// anchors have parents = "li"
+							new_html += "<li>"+$(this).parent().html()+"</li>";
+							new_images.push($(this).attr('data-image'));
+						}
+						//else {
+						//	$(this).hide();
+						//}
+					});
+					
+					// в images изображения могут повторяться, поэтому проверяем по свернутому new_images 
+					var images_changed = $('#image-additional').find('a').length != new_images.length;
+					var same_images_count = 0;
+					if (!images_changed) {
+						$('#image-additional').find('a').each( function(){
+							if ($.inArray( $(this).attr('data-image'), images) != -1 || $.inArray(decodeURIComponent($(this).attr('data-image')), images) != -1) {
+								same_images_count++;
+							}
+						});
+						images_changed = same_images_count != new_images.length;
+					}
+					
+					if (images_changed) {	
+						
+						$('div[class=image-additional]').html("<ul id=\"image-additional\">"+new_html+"</ul>");
+						
+						if ($('#image-additional').find('a').length) {
+							setTimeout( function () {
+								$('#image-additional').bxSlider({
+									pager:false,
+									controls:true,
+									slideMargin:10,
+									minSlides: 3,
+									maxSlides: 3,
+									slideWidth:70,
+									infiniteLoop:false,
+									moveSlides:1
+								});
+								
+								$("#zoom_01").elevateZoom({gallery:'image-additional', cursor: 'pointer', galleryActiveClass: 'active', imageCrossfade: true}); 
+								//pass the images to Fancybox
+								$("#zoom_01").bind("click", function(e) {  
+									var ez =   $('#zoom_01').data('elevateZoom');	
+									$.fancybox(ez.getGalleryList());
+									return false;
+								});
+								
+							}, 0);
+						}
+					}
+					return;
+				}
+				
+				// >> theme 422 compatibility
+				
+				// Если карусель journal2 -
+				// если первый раз - скопируем все содержимое в скрытый элемент, вместе с дивами?
+				// если второй раз - заполним все содержимое из скрытого элемента
+				
+				// journal2 compatibility
+				if (poip_theme_name == 'journal2' || poip_theme_name == 'cosyone' || poip_theme_name == 'ava_store' || poip_theme_name == 'mattimeo') {
+				
+					if (poip_theme_name == 'journal2') {
+						var block_gallery = $("#product-gallery");
+					} else if (poip_theme_name == 'ava_store') { 
+						var block_gallery = $("#gallery div.owl-carousel");
+					} else if (poip_theme_name == 'mattimeo') { 
+						var block_gallery = $("#add-gallery");	
+					} else { // cosyone
+						var block_gallery = $("ul.image_carousel");
+					}
+				
+					// first time - copy all images to hidden element
+					if ( !$('#hidden-carousel').length ) {
+						block_gallery.after("<div style='display:none' id='hidden-carousel'></div>");
+						poipImageAdditional().find('a').each( function(){
+							$('#hidden-carousel').append( poip_outerHTML($(this)) );
+							//$('#hidden-carousel').append( poip_outerHTML($(this).parent()) );
+						});
+					}
+					
+					// add visible images to carousel
+					var pg_html = "";
+					var pg_added = [];
+					$('#hidden-carousel').find('a').each( function(){
+						// Учтем возможность спец символов типа пробела %20
+						
+						var img_href = $(this).attr('href');
+						if (poip_theme_name == 'mattimeo') {
+							if ( (img_href == '#' || !img_href) && $(this).attr('data-zoom-image') ) img_href = $(this).attr('data-zoom-image');
+						} else {
+							if ( (img_href == '#' || !img_href) && $(this).attr('data-image') ) img_href = $(this).attr('data-image');
+						}
+						
+						if ($.inArray( img_href, images) != -1 || $.inArray(decodeURIComponent(img_href), images) != -1) {
+							if ($.inArray(img_href, pg_added) == -1) { // чтобы изображения не дублировались
+								// show
+								pg_html = pg_html + poip_outerHTML($(this));
+								pg_added.push(img_href);
+								//pg_html = pg_html + poip_outerHTML($(this).parent());
+							}
+						}
+					});
+					
+					
+					
+					// when carousel for additional images is turned on
+					if (block_gallery.data('owlCarousel')) {
+						var pg_opts = block_gallery.data('owlCarousel').options;
+					}
+					
+					if (pg_html != block_gallery.html()) {
+						block_gallery.html(pg_html);
+						
+						// when carousel for additional images is turned on
+						if (block_gallery.data('owlCarousel')) {
+							block_gallery.data('owlCarousel').reinit(pg_opts);
+							
+							<?php if ($this->config->get('config_template') == "journal2" &&
+								($this->journal2->settings->get('product_page_gallery_carousel_arrows') == 'hover' || $this->journal2->settings->get('product_page_gallery_carousel_arrows') == 'always')): ?>
+							block_gallery.find('.owl-buttons').addClass('side-buttons');
+							<?php endif; ?>
+						}
+						
+						// в journal2 может вместо colorbox использовать другая галерея, в ней надо отдельно переключать изображения
+						<?php if ($this->config->get('config_template') == "journal2" && $this->journal2->settings->get('product_page_gallery') === '1'):?>
+							var ig_added = [];
+							
+							// Не нужно в quickview
+							if (typeof(poip_journal2_quickview) == 'undefined' || !poip_journal2_quickview) {
+							
+								$('.product-info .image-gallery a').each(function(){
+									// Учтем возможность спец символов типа пробела %20
+									
+									if (($.inArray( $(this).attr('href'), images) != -1 || $.inArray(decodeURIComponent($(this).attr('href')), images) != -1) && $.inArray($(this).attr('href'), ig_added) == -1) {
+										// show
+										$(this).attr('rel', 'poip-visible');
+										//$(this).addClass('swipebox');
+										ig_added.push($(this).attr('href'));
+									} else { // hide
+										$(this).attr('rel', '');
+										//$(this).removeClass('swipebox');
+										//$(this).hide();
+									}
+									
+								});
+								
+								//$('.product-info .image-gallery').replaceWith( poip_outerHTML($('.product-info .image-gallery')) );
+								//var temp_html = $('.product-info .image-gallery').html();
+								//$('.product-info .image-gallery').html( '' );
+								//$('.product-info .image-gallery').html( temp_html );
+								////$('.product-info .image-gallery').html( $('.product-info .image-gallery').html() );
+								////$('.product-info .image-gallery .swipebox[rel=poip-visible]').swipebox();
+								//$('.product-info .image-gallery .swipebox').swipebox();
+								//$.swipebox($('.product-info .image-gallery .swipebox[rel=poip-visible]'));
+								
+								$('.gallery-text').unbind('click');
+								$('.gallery-text').click(function () {
+									$('.product-info .image-gallery a.swipebox[rel=poip-visible][href="'+$('#image').parent().attr('href')+'"]').first().click();
+									return false;
+								});
+								
+							}
+						<?php endif; ?>
+						
+						if (poip_theme_name == 'cosyone') {
+							$('.cloud-zoom, .cloud-zoom-gallery').CloudZoom();
+							
+							//$(".cloud-zoom-gallery").last().removeClass("cboxElement");
+						
+							$(".cloud-zoom-gallery").click(function() {
+								$("#zoom-btn").attr('href', $(this).attr('href'));
+								$("#zoom-btn").attr('title', $(this).attr('title'));
+							
+										//$(".cloud-zoom-gallery").each(function() {
+										//$(this).addClass("cboxElement");
+									//});
+									//$(this).removeClass("cboxElement");
+								});
+										
+							
+						}
+						
+						<?php if ($this->config->get('product_zoom') == '1') { ?> // опциональная галерея вместо колорбокса
+						if (poip_theme_name == 'mattimeo') {
+							
+							$('.left .image').html($('.left .image').html());
+							
+							$('.image-additional a').click(function(){ 
+								$('.image-additional a').removeClass('active');
+								$(this).addClass('active'); // некоторые обращения переписаны, потому что в модуле из карусели убирается один див
+								$('.product-info .image img').attr('src', $(this).attr('data-image'));
+							});
+							$('.image-additional a:first').addClass('active');
+							// zoom
+							// elevateZoom destroy
+							$.removeData($("#main-image"), 'elevateZoom');
+							$('.zoomContainer').remove();
+							$("#main-image").elevateZoom({
+								gallery:'add-gallery',  
+								galleryActiveClass: 'active',
+								zoomType: "inner",
+								cursor: "pointer"
+							});
+							
+							
+							var mattimeo_data_index = 0;
+							$('.image-additional a').each(function(){
+								$(this).attr('data-index',mattimeo_data_index);
+								mattimeo_data_index++;
+							});
+							
+							
+							//$.removeData($('.left .image a'), 'magnificPopup');
+							
+							
+							
+							var popupSettings = {items: []
+																	,gallery: { enabled: true, preload: [0,2] }
+																	,type: 'image'
+																	,mainClass: 'mfp-fade'
+																	};
+							if ($('.image-additional div a').length) {
+								popupSettings['callbacks'] = {
+									open: function() {
+										var activeIndex = parseInt($('.image-additional a.active').attr('data-index'));
+										var magnificPopup = $.magnificPopup.instance;
+										magnificPopup.goTo(activeIndex);
+									}
+								};
+								
+								$('.image-additional div a').each(function(){
+									popupSettings['items'].push({src: $(this).attr('data-zoom-image')});
+								});
+								
+							}
+							
+							$('.left .image a').magnificPopup(popupSettings);
+							
+						}
+						<?php } ?>
+						
+						if (poip_theme_name == 'ava_store') {
+								
+							// elevateZoom destroy
+							$.removeData($("#zoom"), 'elevateZoom');
+							$('.zoomContainer').remove();
+							
+							$("#zoom").elevateZoom({
+								gallery:'gallery',
+								zoomType: "inner",
+								cursor: "crosshair",
+								galleryActiveClass: 'active',
+								imageCrossfade: true,
+								zoomWindowFadeIn: 500,
+								zoomWindowFadeOut: 750,
+								loadingIcon: 'catalog/view/theme/default/image/loader.gif'
+							});
+							
+						}
+						
+						if (poip_theme_name == 'journal2') {
+							/* additional images click */
+							$('.product-info .image-additional a').click(function (e) {
+									e.preventDefault();
+									var thumb = $(this).find('img').attr('src');
+									var image = $(this).attr('href');
+									Journal.changeProductImage(thumb, image);
+									return false;
+							});
+							
+							//images_to_mouseover();
+							if (poip_settings['img_hover']) {
+								$('div.image-additional').find('a').mouseover(function(){
+									poip_image_mouseover(this);
+								});
+							}
+						}
+						
+					}
+					
+					return;
+					
+				}
+				
+				// << pav fashion theme compatibility
+				if (poip_theme_name == 'pav_fashion' || poip_theme_name == 'pav_styleshop' || poip_theme_name == 'lexus_royal' || poip_theme_name == 'lexus_royal'  || poip_theme_name == 'lexus_store' ) {
+					
+					var image_additional_carousel = $('#image-additional-carousel, #image-additional .carousel-inner');
+					
+					// first time - copy all images to hidden element
+					if ( !$('#hidden-carousel').length ) {
+					
+						// count elements per item
+						var images_per_item = Math.max(3, $('#image-additional').find('.item').first().find('a').length);
+						
+						$("#image-additional").after("<div style='display:none' id='hidden-carousel' images_per_item='"+images_per_item+"'></div>");
+						
+						// , #image-additional .carousel-inner - for quickview
+						image_additional_carousel.find('a').each( function(){
+							$('#hidden-carousel').append( poip_outerHTML($(this)) );
+						});
+					};
+						
+					// add visible images to carousel
+					var pg_html = "";
+					var pg_added = [];
+					var anchors_cnt = 0;
+					var images_per_item = $('#hidden-carousel').attr('images_per_item');
+					$('#hidden-carousel').find('a').each( function(){
+						// Учтем возможность спец символов типа пробела %20
+						if ($.inArray( $(this).attr('href'), images) != -1 || $.inArray(decodeURIComponent($(this).attr('href')), images) != -1) {
+							if ($.inArray($(this).attr('href'), pg_added) == -1) { // чтобы изображения не дублировались
+							
+								if (anchors_cnt%images_per_item==0) {
+									if (anchors_cnt>0) pg_html = pg_html + "</div>";
+									pg_html = pg_html + "<div class='item'>";
+								}
+							
+								// show
+								pg_html = pg_html + poip_outerHTML($(this));
+								pg_added.push($(this).attr('href'));
+								//pg_html = pg_html + poip_outerHTML($(this).parent());
+								
+								anchors_cnt++;
+							}
+						}
+					});
+					if (pg_html != "") {
+						pg_html = pg_html + "</div>";
+					}
+					//console.debug(pg_html);
+					
+					if (pg_html != image_additional_carousel.html()) {
+					
+						// refresh prev/next
+						//var prev_next_html = "";
+						//$("#image-additional").find(".carousel-control").each(function () {
+						//	prev_next_html+= poip_outerHTML($(this));
+						//});
+						//$("#image-additional").find(".carousel-control").remove();
+						//$("#image-additional").append(prev_next_html);
+					
+						image_additional_carousel.html(pg_html);
+						if (image_additional_carousel.find('.item').length>1) {
+							$("#image-additional").find(".carousel-control").show();
+						} else {
+							$("#image-additional").find(".carousel-control").hide();
+						}
+						
+						
+						
+						$('#image-additional .item:first').addClass('active');
+						//$('#image-additional').carousel({interval:false})
+						
+						//images_to_mouseover();
+						if (poip_settings['img_hover']) {
+							$("#image-additional").find('a').mouseover(function(){
+								poip_image_mouseover(this);
+							});
+						}
+						
+					}
+					
+					return;
+				}
+				// >> pav fashion theme compatibility
+				
+				// << polianna theme compatibility
+				if (poip_theme_name == 'polianna') {
+				
+					// создадим копию списка изображений
+					if ( !$('#image-additional-copy').length ) {
+						$('div.image-additional').after("<div id=\"image-additional-copy\" style=\"display: none;\">"+$('div.image-additional div.overview').html()+"</div>");
+					}
+					
+					var shown_img = [];
+					var new_items = '';
+					$('#image-additional-copy a').each(function(){
+						if (($.inArray( $(this).attr('href'), images) != -1 || $.inArray(decodeURIComponent($(this).attr('href')), images) != -1) && $.inArray( $(this).attr('href'), shown_img) == -1) {
+							new_items+= '<div class="item">'+poip_outerHTML($(this))+'</div>';
+							shown_img.push($(this).attr('href'));
+						}
+					});
+					
+					$('div.image-additional div.overview').html(new_items);
+				
+					$('.image-scroll').tinycarousel({ 
+						axis: 'x', // vertical or horizontal scroller? ( x || y ).
+						interval: true,
+						rewind: false, 
+					});
+				
+					$('.cloud-zoom, .cloud-zoom-gallery').CloudZoom();
+				
+					return;
+				}
+				// >> polianna theme compatibility
+				
+				// << lexus superstore compatibility
+				if ($('div.image-additional').find('div.item').find('a').length) {
+					var shown_img = [];
+					$('div.image-additional').find('div.item').find('a').each( function(){
+					
+						// Учтем возможность спец символов типа пробела %20
+						if (($.inArray( $(this).attr('href'), images) != -1 || $.inArray(decodeURIComponent($(this).attr('href')), images) != -1) && $.inArray( $(this).attr('href'), shown_img) == -1) {
+							$(this).show();
+							shown_img.push($(this).attr('href'));
+						} else {
+							$(this).hide();
+							
+						}
+					});
+					return;
+				}
+				// >> lexus superstore compatibility
+				
+				// more compatible
+				var shown_img = [];
+				$('div.image-additional').find('a').each( function(){
+        //$('div.image-additional').children('a').each( function(){
+          // Учтем возможность спец символов типа пробела %20
+          if (($.inArray( $(this).attr('href'), images) != -1 || $.inArray(decodeURIComponent($(this).attr('href')), images) != -1) && $.inArray( $(this).attr('href'), shown_img) == -1) {
+            $(this).show();
+						shown_img.push($(this).attr('href'));
+          } else {
+            $(this).hide();
+          }
+        });
+				
+				// << theme neocart
+				if ( $('.product-img-box a.cloud-zoom-gallery').length ) {
+					$('.product-img-box a.cloud-zoom-gallery').each(function () {
+						if ($.inArray( $(this).attr('href'), images) != -1 || $.inArray(decodeURIComponent($(this).attr('href')), images) != -1) {
+							$(this).parent().show(); // <li>
+						} else {
+							$(this).parent().hide();
+						}
+					});
+					
+					// листаем в начало
+					if ($('.product-img-box .flex-direction-nav a.flex-prev').length) {
+						for (var i=1; i<=50; i++) {
+							$('.product-img-box .flex-direction-nav a.flex-prev').trigger('click');
+						}
+					}
+					
+				}
+				// >> theme neocart
+        
+      }
+      
+			//
+			function elevate_zoom_select_image(img_click) {
+			
+				//console.debug(img_click);.
+			
+				var have_elevate_zoom = false;
+				
+				$('#image-additional').find('li').find('a').each( function () {
+					if ($(this).attr('data-image') == img_click) {
+						have_elevate_zoom = true;
+					}
+				});
+				
+				if (have_elevate_zoom) {
+			
+					setTimeout( function() {
+								$('#image-additional').find('li').find('a').each( function () {
+									if ($(this).attr('data-image') == img_click) {
+										//$(this).find('img').click();
+										$(this).click();
+									}
+								});
+								}, 100);
+				}
+				return have_elevate_zoom;
+			}
+			
+			// for future
+			function cloud_zoom_switch(elem) {
+					
+					var data = elem.data('relOpts');
+					
+					$('#' + data.useZoom).parent().find('div.mousetrap').remove();
+	
+					// Destroy the previous zoom
+					$('#' + data.useZoom).data('zoom').destroy();
+	
+					// Change the biglink to point to the new big image.
+					$('#' + data.useZoom).attr('href', elem.attr('href'));
+	
+					// Change the small image to point to the new small image.
+					$('#' + data.useZoom + ' img').attr('src', data.smallImage);
+	
+					// Init a new zoom with the new images.				
+					$('#' + data.useZoom).CloudZoom();
+					
+			}
+			
+			// << theme lexus superstore & journal2
+			function lexus_superstore_zoom_switch(img_click) {
+				$('.image a #image').attr('data-zoom-image', img_click);
+				$('.zoomWindowContainer').find('div').css({"background-image": 'url("'+img_click+'")'});
+				if ($('.image a #image').data('zoom-image')) {
+					$('.image a #image').data('zoom-image', img_click);
+				}
+			}
+			// >> theme lexus superstore
+			
+			function pav_fashion_zoom_switch(img_click) {
+				$('div.image').find('#image').attr('data-zoom-image', img_click);
+				$('.zoomWindowContainer').find('div').css({"background-image": 'url("'+img_click+'")'});
+				if ($('div.zoomLens').css('background-image') != 'none') {
+					$('div.zoomLens').css({"background-image": 'url("'+img_click+'")'});
+				}
+				if ($('div.image').find('#image').data('zoom-image')) {
+					$('div.image').find('#image').data('zoom-image', img_click);
+				}
+			}
+			
+			function ava_store_zoom_switch(img_click) {
+				
+				$('div.product-info div.image a#zoom_link1').attr('href', img_click);
+				$('.zoomWindowContainer').find('div').css({"background-image": 'url("'+img_click+'")'});
+				if ($('.image a #image').data('zoom-image')) {
+					$('.image a #image').data('zoom-image', img_click);
+				}
+				
+			}
+			
+			function image_zoom_click(img_click) {
+			
+				//console.debug('zoom click');
+				//console.debug(img_click);
+				
+				// << elevatezoom compatibility / theme 422
+				if ( elevate_zoom_select_image(img_click) ) return;
+				// >> elevatezoom compatibility  / theme 422
+				
+				
+				
+				// << product image zoom free compatibility
+				$('div.image-additional').find('a.cloud-zoom-gallery').each( function () {
+					
+					if ($(this).attr('href') == img_click) {
+						$(this).find('img').click();
+						return false;
+					}
+					
+				});
+				// >> product image zoom free compatibility
+				
+				
+				if (poip_theme_name == 'mattimeo') { // Актуально только если включена замена колорбокса
+					setTimeout(function(){
+						$('div.image-additional a').each(function(){
+							if ($(this).attr('data-zoom-image') == img_click) {
+								$(this).find('img').click();
+								return false;
+							}
+						});
+					
+					}, 100);
+					
+					return;
+				}
+				
+				// << ava store theme
+				if (poip_theme_name == 'ava_store') {
+				
+					if ($('div.product-info div.image a#zoom_link1').attr('href') && $('.zoomWindowContainer').length && $('.zoomWindowContainer').find('div').length) {
+					
+						ava_store_zoom_switch(img_click);
+						
+					} else {
+						
+						setTimeout(function(){
+							ava_store_zoom_switch(img_click);
+						}, 100);
+						
+					}
+					
+					return;
+				}
+				// >> ava store theme
+				
+				// << pav fashion theme - product page & quickview
+				if (poip_theme_name == "pav_fashion" || poip_theme_name == 'pav_styleshop' || poip_theme_name == 'lexus_royal' || poip_theme_name == 'lexus_store') {
+					pav_fashion_zoom_switch(img_click);
+					return;
+				}
+				// >> pav fashion theme - product page & quickview
+				
+				// journal2 возможен другой зум - zm-viewer
+				if (poip_theme_name == 'journal2' && $('div.zm-viewer')) {
+					$('#product-gallery a').each(function(){
+						if ( $(this).attr('href') == img_click ) {
+							$(this).find('img').click();
+							return false;
+						}
+					});
+					return;
+				}
+				
+				/// << theme lexus superstore & journal2 & pav fashion (product page)
+				if ($('.image a #image').attr('data-zoom-image') && $('.zoomWindowContainer').length && $('.zoomWindowContainer').find('div').length) {
+					lexus_superstore_zoom_switch(img_click);
+					return; 
+				} else if ($('.image a #image').attr('data-zoom-image')) {
+					setTimeout(function () { lexus_superstore_zoom_switch(img_click); }, 100);
+					return;
+				}
+				// >> theme lexus superstore
+				
+				
+				
+				// << theme start zoom
+				$('#image-additional').find('a[data-zoom-image]').each( function () { // all elements with attribute 'data-zoom-image'
+					if ($(this).attr('href') == img_click) {
+						$(this).click();
+						return;
+					}
+				});
+				// >> theme start zoom
+				
+				// << theme neocart
+				if ( $('.product-img-box a.cloud-zoom-gallery').length ) {
+					$('.product-img-box a.cloud-zoom-gallery').each(function () {
+						//console.debug($(this).attr('href'));
+						//console.debug(img_click);
+						if ($(this).attr('href') == img_click ) {
+							$(this).click();
+							return;
+						}
+					});
+				}
+				// >> theme neocart
+				
+			}
+			
+      function poip_change_images(option) {
+			
+        var product_option_id = option.name.substr(option_prefix_length+1, option.name.indexOf(']')-(option_prefix_length+1) );
+        
+				if ($.inArray(product_option_id, poip_product_option_ids)==-1) {
+          return;
+        }
+				
+        images_to_show = poip_change_available_images(product_option_id);
+				
+        var value = option.value;
+				var selected_values = get_selected_values();
+				
+				if (images_to_show.length==0 && value && $.inArray(value, selected_values)==-1 && poip_std_src && poip_std_href) {
+					if ( !(poip_theme_name == 'mattimeo' && <?php echo $this->config->get('product_zoom') == 1 ? 'true' : 'false'; ?>) ) {
+						poip_main_image().attr('src', poip_std_src);
+						poip_main_image().closest('a').attr('href', poip_std_href);
+					}
+				}
+				
+        // сначала по сочетанию опций
+        // если используется фильтрация - то берем первое изображение из прошедших фильтр, иначе первое изображение опции
+        var main_image_switched = false;
+				if (images_to_show && ((poip_options_settings[product_option_id]['img_limit'] && poip_options_settings[product_option_id]['img_use'])
+															|| (value && $.inArray(value, selected_values)==-1)) ) { //если отменили выбор опции, то тоже показываем первую из доступных картинок
+        //if (images_to_show && poip_options_settings[product_option_id]['img_limit'] && poip_options_settings[product_option_id]['img_use']) {
+          for (var i=0;i<poip_images.length;i++) {
+            if (images_to_show[0] == poip_images[i]['popup']) {
+						
+							if ( !(poip_theme_name == 'mattimeo' && <?php echo $this->config->get('product_zoom') == 1 ? 'true' : 'false'; ?>) ) {
+								poip_main_image().attr('src', poip_images[i]['main']);
+								poip_main_image().closest('a').attr('href', poip_images[i]['popup']);
+							}
+							
+							// << zoom compatibility
+							image_zoom_click(poip_images[i]['popup']);
+							// >> zoom compatibility
+							
+              var main_image_switched = true;
+            }
+          }
+        }
+				
+        if (!main_image_switched) {
+				
+          // потом по выбранной опции
+          
+          if (value && $.inArray(value, selected_values)!=-1) {
+          
+            // смена главного изображения
+            if (poip_options_settings[product_option_id] && poip_options_settings[product_option_id]['img_change'] ) {
+            
+              if (poip_images_by_options[value]) {
+              
+                image = poip_images_by_options[value][0]['image'];
+                
+                for (var i=0;i<poip_images.length;i++) {
+                
+                  if (image == poip_images[i]['image']) {
+                    poip_main_image().attr('src', poip_images[i]['main']);
+                    poip_main_image().closest('a').attr('href', poip_images[i]['popup']);
+										
+										// << zoom compatibility
+										image_zoom_click(poip_images[i]['popup']);
+										// >> zoom compatibility
+				
+                    break;
+                  }
+                }
+              }
+  
+            }
+          }
+        }
+        
+        // отображение картинок под опцией
+        if (poip_options_settings[product_option_id] && poip_options_settings[product_option_id]['img_option'] ) {
+          if (!$('product_option_images'+product_option_id).length) {
+
+            // у чекбоксов может быть много значений
+            if ($(option).prop('tagName')=='INPUT' && $(option).prop('type')=='checkbox' ) {
+              var values = [];
+              $('input[type=checkbox][name^='+option_prefix+'\\['+product_option_id+'\\]]:checked').each( function() {
+                values.push($(this).val());
+              });
+            } else {
+              var values = [value];
+            }
+            
+            $('#option-images-'+product_option_id).remove();
+            if (!$('#option-images-'+product_option_id).length) {
+              $('#option-'+product_option_id).append('<div id="option-images-'+product_option_id+'"></div>');
+            }
+            
+            $('#option-images-'+product_option_id).html('');
+            for (var i=0; i<poip_images.length; i++) {
+              for (var j=0; j<values.length; j++) {
+                if (poip_images[i]['product_option_value_id'] && $.inArray(values[j], poip_images[i]['product_option_value_id']) != -1) {
+                  var html_image = '<a href="'+poip_images[i]['popup']+'" class="image-additional" style="margin: 5px;"><img src="'+poip_images[i]['thumb']+'" ></a>';
+                  $('#option-images-'+product_option_id).append(html_image);
+                }
+              }
+            }
+
+          }
+        }
+        
+      }
+      
+      function poip_option_value_selected(option) {
+        
+				poip_change_images(option);
+        
+        refresh_colorbox();
+        
+      }
+			
+			function poip_main_image() {
+				if (!$('#image').length) {
+					if ($('#main-image').length) {
+						return $('#main-image'); // theme start compatibility
+					}
+					if ($('div.product-info div.image a img').length) {
+						return $('div.product-info div.image a img'); // theme cosyone compatibility
+					}
+					if ($('div.row-product a img[itemprop="image"]').length) {
+						return $('div.row-product a img[itemprop="image"]'); // theme moneymaker compatibility
+					}
+				}
+				return $('#image'); // by standard default
+			}
+      
+			function poip_outerHTML(elem) {
+        str = $(document.createElement("div")).append(elem.clone()).html();
+        return str;
+      }
+			
+			function poipImageAdditional() {
+				if (poip_theme_name == 'moneymaker') {
+					return $('div.row-product div.images');
+				} else {
+				
+					if ( !$('div.image-additional').length ) {
+						$('div.product-info div.image').after('<div class="image-additional"></div>');
+					}
+				
+					return $('div.image-additional');
+				}
+			}
+			
+      function refresh_colorbox() {
+			
+				if (!use_refresh_colorbox) return;
+				
+				if (typeof(poip_journal2_quickview) !== 'undefined' && poip_journal2_quickview) return;
+				
+				<?php if ($this->config->get('product_zoom') == '1') { ?> // опциональная галерея вместо колорбокса
+					if (poip_theme_name == 'mattimeo') {
+						return; // Включена замена колорбоксу
+					}
+				<?php } ?>
+				
+        if (poip_settings['img_gal']) {
+				
+					<?php if ($this->config->get('config_template')=='moneymaker' && $this->config->get('mmr_product_gallery_type')=='photobox') { ?>
+						
+						// используем основную галерею с фильтром по видимости, клик по главному изображению переносим на клик по изображению в галерее
+						
+						//$('.photobox').data("_photobox").destroy(); - глючит
+						
+						// удаляем стандартный photobox если он есть
+						if ($('.photobox').data("_photobox")) {
+							var _photobox = $('.photobox').data("_photobox");
+							_photobox.selector.off('click.photobox', _photobox.target)
+							$('.photobox').removeData('_photobox');
+						}
+							
+						// удаляем наш photobox если он есть
+						if ($('div.images .photobox').data("_photobox")) {
+							var _photobox = $('div.images .photobox').data("_photobox");
+							_photobox.selector.off('click.photobox', _photobox.target)
+							$('div.images .photobox').removeData('_photobox');
+						}	
+							
+						$('div.images .photobox').photobox('a:visible');
+						
+						poip_main_image().parent().unbind('click', poip_photobox_main_image_click_function);
+						poip_main_image().parent().bind('click', poip_photobox_main_image_click_function);
+						
+						return;
+					<?php } ?>
+					
+					<?php if ($this->config->get('config_template')=='moneymaker' && $this->config->get('mmr_product_gallery_type')=='fancybox') { ?>
+						
+						// создаем копию галереи, в которую помещаем только видимые изображений, клики по изображениям переносим на клики в эту галерею
+						
+						$('#poip_fancybox').remove();
+						poipImageAdditional().after('<div style="display: none" id="poip_fancybox"></div>');
+						
+						var fancybox_images = [];
+						$('div.images a.fancybox:visible').each(function(){
+							if ( $.inArray($(this).attr('href'), fancybox_images)==-1 ) {
+								$('#poip_fancybox').append( poip_outerHTML($(this)).replace('data-rel="fancybox"', 'data-rel="poip_fancybox"').replace('fancybox', 'poip_fancybox') );
+								fancybox_images.push($(this).attr('href'));
+							}
+						});
+						
+						$(document).unbind("click.fb-start");
+						
+						$('.poip_fancybox').removeData('fancybox');
+						$('.fancybox').removeData('fancybox');
+						//$('div[id^=fancybox-]').remove();
+						//$.fancybox.init();
+						
+						$('.poip_fancybox').fancybox({
+							'padding'	:	20,
+							'transitionIn'	:	'fade',
+							'transitionOut'	:	'fade',
+							'overlayOpacity' : 0.7,
+							'overlayColor' : '#000',
+							'opacity'		: true,
+							'titleShow'		: false,
+							'showNavArrows'		: true,
+							onStart: function() { if(navigator.appVersion.indexOf("MSIE 8.")!=-1) {$("html, body").animate({scrollTop:0}, 'slow');}; },
+							onComplete: function() {
+								$("#fancybox-wrap").prepend("<div id='image-appendix'><div class='title hidden-xs'><?php echo $heading_title; ?></div><div class='btn-group btn-group-lg hidden-xs additional-buttons'><?php if (!$mmr_buyhide) { ?><button class='btn btn-primary' type='button' onclick='$(\"#image-appendix\").remove();$(\"#button-cart\").click();$.fancybox.close()'><i class='fa fa-shopping-cart'></i> <?php echo $button_cart; ?></button><input type='text' data-toggle='tooltip' class='form-control input-lg' name='quantities' size='2' value='<?php echo $minimum; ?>' title='<?php echo $text_qty; ?>' /><?php if ($mmr_qorder&&$this->config->get('mmr_quickorder_popup_button_disabled')!=1) { ?><a class='btn btn-default' onclick='$(\"#image-appendix\").remove();$.fancybox.close();$(\".btn-quickorder\").click();'><i class='fa fa-flip-horizontal fa-reply-all'></i> <span><?php echo $this->language->get('text_mmr_quickorder_button'); ?></span></a><?php } ?><?php } ?><?php if (!$this->config->get('mmr_common_btn_wishlist_hidden')) { ?><button type='button' data-toggle='tooltip' class='btn btn-default' title='<?php echo $button_wishlist; ?>' onclick='addToWishList(<?php echo $product_id; ?>);$.fancybox.close()'><i class='fa fa-heart'></i></button><?php } ?><?php if (!$this->config->get('mmr_common_btn_compare_hidden')) { ?><button type='button' data-toggle='tooltip' class='btn btn-default' title='<?php echo $button_compare; ?>' onclick='addToCompare(<?php echo $product_id; ?>);$.fancybox.close()'><i class='fa fa-bar-chart-o'></i></button><?php } ?></div></div>");
+								$('input[name=\"quantities\"]').keyup(function(){document.getElementsByName('quantity')[0].value = $(this).val(); });
+							},
+							onCleanup: function() {
+								$("#image-appendix").remove()
+							}
+						});
+						
+						$('.fancybox').unbind('click', poip_fancybox_click_function);
+						$('.fancybox').bind( 'click', poip_fancybox_click_function );
+						
+						return;
+					<?php } ?>	
+					
+					
+				
+          $('#poip_colorbox').remove();
+          
+          poipImageAdditional().after('<div style="display: none" id="poip_colorbox"></div>');
+          
+          var colorbox_images = [];
+
+					if (poip_theme_name == 'cosyone') {
+						var visible_images = $('div.image-additional ul.image_carousel a[href!="#"]');
+					} else if (poip_theme_name == 'ava_store') {
+						var visible_images = poipImageAdditional().find('a:visible[data-image]');
+					} else {
+						// more compatible
+						var visible_images = poipImageAdditional().find('a:visible[href!="#"]');
+					}
+					// more compatible
+					visible_images.each(function(){
+						var img_href = poip_theme_name == 'ava_store' ? $(this).attr('data-image') : $(this).attr('href') ;
+            if ($.inArray( img_href, colorbox_images) == -1) {
+              $('#poip_colorbox').append( poip_outerHTML($(this)).replace('colorbox', 'poip_colorbox') );
+              colorbox_images.push(img_href);
+            }
+          });
+					
+					
+          /* добавление главного изображения в галерею, даже когда оно не включено в доп изображения */
+          if ($.inArray(poip_main_image().parent().attr('href'), colorbox_images) == -1) {
+            $('#poip_colorbox').append( poip_outerHTML(poip_main_image().parent()).replace('colorbox', 'poip_colorbox') );
+						colorbox_images.push(poip_main_image().parent().attr('href'));
+          }
+					
+					// в ava store и, возможно, других шаблонах, нужно дозаполнить poip_colorbox
+					$('#poip_colorbox a[href!="#"], #poip_colorbox a[href="#"][data-image]').each(function(){
+						if ( !$(this).hasClass('poip_colorbox') ) {
+							$(this).addClass('poip_colorbox');
+						}
+						if ($(this).attr('href') == '#' && $(this).attr('data-image')) {
+							$(this).attr('href', $(this).attr('data-image'));
+						}
+					});
+					
+					if (typeof($.colorbox) !== 'undefined') {
+						$.colorbox.remove();
+					}
+					
+					// << pav fashion theme compatibility 
+					if ((poip_theme_name == 'pav_fashion' || poip_theme_name == 'pav_styleshop' ) && $.colorbox) {
+						
+						// for quickview
+						$('.pav-colorbox').colorbox({
+								width: '980px', 
+								height: '80%',
+								overlayClose: true,
+								opacity: 0.5,
+								iframe: true, 
+						});
+						
+						// if used zoom, colorbox for images not used
+						if ($('#image-additional').find('a[data-zoom-image][data-image]').length && $('.zoomWindowContainer').find('div').length) {
+							$('#image-additional').find('a[data-zoom-image][data-image]').click(function (event) {
+								event.preventDefault();
+							});
+							return;
+						}
+					}
+					// >>
+          
+					if (poip_theme_name == 'moneymaker') {
+					
+						colorbox_settings = {
+							next: "<button class='btn btn-default' type='button'><i class='fa fa-fw fa-chevron-right'></i></button>",
+							previous: "<button class='btn btn-default' type='button'><i class='fa fa-fw fa-chevron-left'></i></button>",
+							close: "<button class='btn btn-default' type='button'><i class='fa fa-fw fa-times'></i></button>",
+							rel: "colorbox",
+							onOpen: function() {
+								$("#colorbox").prepend("<div id='image-appendix'><div class='title hidden-xs'>iPhone</div><div class='btn-group btn-group-lg hidden-xs additional-buttons'><button class='btn btn-primary' type='button'  onclick='$(\"#image-appendix\").remove();$(\"#button-cart\").click();'><i class='fa fa-shopping-cart'></i> Купить</button><input type='text' data-toggle='tooltip' class='form-control input-lg' name='quantities' size='2' value='1' title='Количество:' /><button type='button' data-toggle='tooltip' class='btn btn-default' title='в закладки' onclick='addToWishList(40);'><i class='fa fa-heart'></i></button><button type='button' data-toggle='tooltip' class='btn btn-default' title='сравнение' onclick='addToCompare(40);'><i class='fa fa-bar-chart-o'></i></button></div></div>");
+								$('input[name=\"quantities\"]').keyup(function(){document.getElementsByName('quantity')[0].value = $(this).val(); });
+							},
+							onComplete: function() { if(navigator.appVersion.indexOf("MSIE 8.")!=-1) {$("html, body").animate({scrollTop:0}, 'slow');}; },
+							onClosed: function() {
+								$("#image-appendix").remove()
+							}
+						}
+					
+					} else {
+						var colorbox_settings = false;
+						try {
+							var scripts = $('script:contains(".colorbox")');
+							for (var i=0; i<scripts.length; i++) {
+								var script_html  =$(scripts[i]).html();
+								if (script_html.indexOf('$(\'.colorbox\').colorbox(') != -1 ) {
+									var str_pos = script_html.indexOf('$(\'.colorbox\').colorbox(');
+									var str = script_html.substr(str_pos+24);
+									str_pos = str.indexOf('});');
+									str = str.substr(0,str_pos+1);
+									colorbox_settings = eval('('+str+')');
+									break;
+								}
+							}
+						} catch (e) {
+							console.debug(e);
+							colorbox_settings = false
+						}
+						
+						if (!colorbox_settings || (typeof colorbox_settings) != 'object') {
+							console.log('colorbox settings not found');
+							colorbox_settings = {
+								overlayClose: true,
+								opacity: 0.5,
+								rel: "colorbox"
+							};
+						}
+					}
+          
+					//if (poip_theme_name != 'cosyone' || !$('#zoom-btn').length) {
+	          $('.poip_colorbox').colorbox(colorbox_settings);
+						//$('.colorbox').colorbox(colorbox_settings);
+					//}
+          
+          try {
+            $('[id^=option-images-]').each( function() {
+              
+              colorbox_settings['rel'] = $(this).attr('id');
+							// more compatible
+              $(this).find('a').colorbox(colorbox_settings);
+							//$(this).children('a').colorbox(colorbox_settings);
+              
+            });
+          } catch(e) {
+            console.debug(e);
+            console.debug("Ошибка установки colorbox для изображений под опциями");
+          }
+          
+          if (poip_theme_name == 'polianna') {
+						$('#plus').click(function(event){
+							event.preventDefault();
+							var poip_colorbox = $('a.poip_colorbox[href!="#"]');
+							for (var i=0; i<poip_colorbox.length; i++) {
+								if ($(this).parent().attr('href') == poip_colorbox[i].href || $(this).parent().attr('href') == decodeURIComponent(poip_colorbox[i].href)) {
+									$(poip_colorbox[i]).trigger('click');
+									break;
+								}
+							}
+						});
+					} else if (poip_theme_name == 'cosyone' && $('#zoom-btn').length) {
+						// в cosyone в зависимости от настроек может быть включен зум, тогда всплывающее окно только по плюсу
+						$('#zoom-btn').unbind('click');
+						$('#zoom-btn').click(function(event){
+							event.preventDefault();
+							var poip_colorbox = $('a.poip_colorbox[href!="#"]');
+							for (var i=0; i<poip_colorbox.length; i++) {
+								if ($(this).attr('href') == poip_colorbox[i].href || $(this).attr('href') == decodeURIComponent(poip_colorbox[i].href)) {
+									$(poip_colorbox[i]).trigger('click');
+									break;
+								}
+							}
+						});
+						
+					} else if (poip_theme_name == 'ava_store' && $('#zoom_link1').length) {
+						$('#zoom_link1').unbind('click');
+						$('#zoom_link1').click(function(event){
+							event.preventDefault();
+							
+							if ($('.zoomWindowContainer').find('div').css('background-image')) {
+								// изображение должно быть тем же что в зуме
+								var back_image = $('.zoomWindowContainer').find('div').css('background-image');
+								if (back_image.substr(0,4)=='url(' && back_image.substr(-1) == ')') {
+									back_image = back_image.substr(4,back_image.length-5);
+								}
+								$('#zoom_link1').attr('href', back_image);
+								$('#zoom_link1').attr('data-image', back_image);
+							}
+							
+							var poip_colorbox = $('#poip_colorbox a.poip_colorbox[data-image]');
+							
+							for (var i=0; i<poip_colorbox.length; i++) {
+								var poip_colorbox_href = $(poip_colorbox[i]).attr('data-image');
+								if ($(this).attr('href') == poip_colorbox_href || $(this).attr('href') == decodeURIComponent(poip_colorbox_href)) {
+									$(poip_colorbox[i]).trigger('click');
+									break;
+								}
+							}
+						});	
+						
+					} else {
+						
+						$('.colorbox').unbind('click', poip_colorbox_click_function);
+						$('.colorbox').bind( 'click', poip_colorbox_click_function );
+					}
+					
+        }
+				
+      }
+			
+			var poip_colorbox_click_function = function(event) {
+			
+				event.preventDefault();
+			
+				var this_data = ( poip_theme_name=='moneymaker' ? $(this).find('a') : $(this) );
+				var poip_colorbox = $('a.poip_colorbox[href!="#"]');
+				
+				for (var i=0; i<poip_colorbox.length; i++) {
+					if (this_data.attr('href') == poip_colorbox[i].href || this_data.attr('href') == decodeURIComponent(poip_colorbox[i].href)) {
+						$(poip_colorbox[i]).trigger('click');
+						break;
+					}
+				}
+			}
+			
+			var poip_fancybox_click_function = function(event) {
+			
+				event.preventDefault();
+			
+				var this_data = $(this);
+				var poip_box = $('a.poip_fancybox');
+				
+				for (var i=0; i<poip_box.length; i++) {
+					if (this_data.attr('href') == $(poip_box[i]).attr('href') ) {
+						$(poip_box[i]).trigger('click');
+						break;
+					}
+				}
+			}
+			
+			var poip_photobox_main_image_click_function = function(event) {
+			
+				event.preventDefault();
+			
+				var this_data = $(this);
+				var poip_box = $('div.images a:visible');
+				
+				for (var i=0; i<poip_box.length; i++) {
+					if (this_data.attr('href') == $(poip_box[i]).attr('href') ) {
+						$(poip_box[i]).trigger('click');
+						break;
+					}
+				}
+			}
+			
+      
+      function poip_image_mouseover(image_a) {
+			
+				if (poip_theme_name == 'mattimeo' && $(image_a).attr('data-zoom-image')) {
+					href = $(image_a).attr('data-zoom-image') ;
+				} else {
+					href = $(image_a).attr('href')!='#' ? $(image_a).attr('href') : $(image_a).attr('data-image') ;
+				}
+				
+        for (var i=0;i<poip_images.length;i++) {
+				
+          if (poip_images[i]['popup'] && poip_images[i]['popup'] == href) {
+						
+						if ( !(poip_theme_name == 'mattimeo' && <?php echo $this->config->get('product_zoom') == 1 ? 'true' : 'false'; ?>) ) {
+							poip_main_image().attr('src', poip_images[i]['main']);
+							poip_main_image().closest('a').attr('href', poip_images[i]['popup']);
+						}
+						
+						image_zoom_click(poip_images[i]['popup']);
+				
+            break;
+          }
+        }
+        refresh_colorbox();
+				
+      }
+      
+      function set_option_value(value) {
+        
+        var options = $('select[name^='+option_prefix+'\\[]').children('option');
+        for (var i=0; i<options.length;i++) {
+          if (options[i].value == value) {
+					
+						// Product Block Option compatibility
+						if ( $('a[option-value='+value+']').length ) {
+							$('a[option-value='+value+']').click();
+							return;
+						}
+					
+            $(options[i]).parent().val(value);
+            $(options[i]).parent().trigger('change');
+						
+           return;
+          }
+        }
+        
+        var options = $('input[type=radio][name^='+option_prefix+'\\[]');
+        for (var i=0; i<options.length;i++) {
+          if (options[i].value == value) {
+					
+						// Product Block Option compatibility
+						if ( $('a[option-value='+value+']').length ) {
+							$('a[option-value='+value+']').click();
+							return;
+						}
+					
+            options[i].checked = true;
+            $(options[i]).trigger('change');
+            return;
+          }
+        }
+        
+        var options = $('input[type=checkbox][name^='+option_prefix+'\\[]');
+        for (var i=0; i<options.length;i++) {
+          if (options[i].value == value) {
+            options[i].checked = true;
+            $(options[i]).trigger('change');
+            return;
+          }
+        }
+        
+      }
+      
+			function poipCheckEventsForSelects(first_time) {
+
+				$("select[name^="+option_prefix+"\\[]").each(function () {
+					var select_events = $(this).data('events');
+					var found_poip = false;
+					
+					if (select_events && select_events.change) {
+						for (var i=0; i<select_events.change.length; i++) {
+							if ( (''+select_events.change[i].handler).indexOf('poip_option_value_selected') != -1 ) {
+								found_poip = true;
+								break;
+							}
+						}
+					}
+					
+					if (!found_poip) {
+						$(this).change( function(){poip_option_value_selected(this);} );
+						// надо вызвать событие, возможно значение селекта было сброшено
+						if (!first_time) {
+							poip_option_value_selected(this);
+						}
+					}
+				});
+				
+			}
+      
+			/*
+      $("select[name^="+option_prefix+"\\[]").each(function (i) {
+        $(this).change(function(){
+          poip_option_value_selected(this);
+        });
+      })
+			*/
+			
+			
+			
+			
+			//$("select[name^="+option_prefix+"\\[]").change( function(){poip_option_value_selected(this);} );
+			poipCheckEventsForSelects(true);
+			
+			//$('div.options').click(function(){console.debug(99)});
+			$('div.options').click(function(){poipCheckEventsForSelects();});
+			
+			
+      
+      $("input[type=radio][name^="+option_prefix+"\\[]").each(function (i) {
+        $(this).change(function(){
+          poip_option_value_selected(this);
+        })
+      })
+			
+			if (poip_theme_name == "journal2") {
+				if ( $('div.option').find('input:radio').length && $('div.option').find('li[data-value]') ) {
+					$('div.option').on('click', 'li[data-value]', function(){
+						$('div.option').find('input:radio[value='+$(this).attr('data-value')+']').change();
+					});
+					/*
+					$('div.option').find('li[data-value]').click(function(){
+						$('div.option').find('input:radio[value='+$(this).attr('data-value')+']').change();
+					});
+					*/
+				}
+			}
+      
+      $("input[type=checkbox][name^="+option_prefix+"\\[]").each(function (i) {
+        $(this).change(function(){
+          poip_option_value_selected(this);
+        })
+      })
+      
+      //images_to_mouseover();
+      if (poip_settings['img_hover']) {
+				// more compatible
+				poipImageAdditional().on('mouseover', 'a' ,function(){
+          poip_image_mouseover(this);
+        });
+      }
+
+			
+      
+			$(document).ready(function(){
+				poip_set_visible_images(poip_get_global_visible_images());
+				refresh_colorbox();
+			
+      
+      <?php
+				
+        if (isset($poip_ov) && $poip_ov) {
+					echo "var poip_ov = '".(int)$poip_ov."';";
+				} else {
+					echo "var poip_ov = false;";
+        }
+      ?>
+			
+			
+			if (poip_ov) {
+				// journal 2 compatibility
+				setTimeout(function() {
+				if ($('.option ul li[data-value='+poip_ov+']').length) {
+					$('.option ul li[data-value='+poip_ov+']').click();
+				} else {
+					set_option_value(poip_ov);
+				}
+				},1);
+			}
+			
+			});
+      
+      //--></script>  
+        
+      <?php  }  ?>
+      <!-- >> Product Option Image PRO module -->
+      ]]></add>
+    </operation>
+    
+    
+    
+  </file>
+  
+  <!-- FilterPRO compatibility -->
+  <file name="catalog/controller/module/filterpro.php" error="skip">  
+    
+    <!--
+    <operation >
+      <search position="after"><![CDATA[
+      protected function index($setting) {
+      ]]></search>
+      <add><![CDATA[
+      // Product Option Image PRO module <<
+      $this->load->model('module/product_option_image_pro');
+      $this->data['poip_installed'] = $this->model_module_product_option_image_pro->installed();
+      $this->data['current_class'] = str_replace("Controller", "", get_class($this));
+      
+      // >> Product Option Image PRO module
+      ]]></add>
+    </operation>
+    -->
+    
+    <operation >
+      <search position="after"><![CDATA[
+      private function getHtmlProducts($results, $product_total) {
+      ]]></search>
+      <add><![CDATA[
+      // Product Option Image PRO module <<
+      $this->load->model('module/product_option_image_pro');
+      $this->data['poip_installed'] = $this->model_module_product_option_image_pro->installed();
+      $this->data['current_class'] = str_replace("Controller", "", get_class($this));
+      
+      // >> Product Option Image PRO module
+      ]]></add>
+    </operation>
+    
+    <operation >
+      <search position="after"><![CDATA[
+      $this->data['products'][] = array(
+      ]]></search>
+      <add><![CDATA[
+      // Product Option Image PRO module <<
+      
+      'option_images'  => $this->model_module_product_option_image_pro->getCategoryImages( isset($result['product_id']) ? $result['product_id'] : $product_info['product_id'],
+        (isset($this->data['current_class']) && $this->data['current_class']!= 'ProductCategory' && isset($setting))?($setting):(false)  ),
+      // >> Product Option Image PRO module
+      ]]></add>
+    </operation>
+    
+  </file>
+	
+	
+	<!-- pav fashion theme compatibility -->
+	<file name="catalog/controller/module/pavproducttabs.php" error="skip">  
+    <!--
+    <operation error="skip">
+      <search position="before"><![CDATA[
+      $this->load->model('catalog/product');
+      ]]></search>
+      <add><![CDATA[
+      // Product Option Image PRO module <<
+      $this->load->model('module/product_option_image_pro');
+      $this->data['poip_installed'] = $this->model_module_product_option_image_pro->installed();
+      $this->data['current_class'] = str_replace("Controller", "", get_class($this));
+      
+      // >> Product Option Image PRO module
+      ]]></add>
+    </operation>
+		-->
+		
+		<operation >
+      <search position="before"><![CDATA[
+      $this->data['tabs'] = $tabs;
+      ]]></search>
+      <add><![CDATA[
+      // << Product Option Image PRO module
+			$this->load->model('module/product_option_image_pro');
+			$this->data['poip_installed'] = $this->model_module_product_option_image_pro->installed();
+      $this->data['current_class'] = str_replace("Controller", "", get_class($this));
+      if ($this->data['poip_installed'] && $tabs && is_array($tabs)) {
+				
+				foreach ($tabs as &$products_tab) {
+					if ($products_tab && is_array($products_tab)) {
+						foreach ($products_tab as &$product) {
+							if (isset($product['product_id']) && $product['product_id']) {
+								$product['option_images'] = $this->model_module_product_option_image_pro->getCategoryImages($product['product_id'], false);
+							}
+						}
+						unset($product);
+					}
+					unset($products_tab);
+				}
+      }
+      // >> Product Option Image PRO module
+      ]]></add>
+    </operation>
+		
+	</file>
+  
+  <!-- много заморочек для совместимости с разными модулями, разные размеры изображений в них и т.д. -->
+  <file name="catalog/controller/product/category.php,catalog/controller/product/search.php,catalog/controller/product/manufacturer.php,catalog/controller/module/latest.php,catalog/controller/module/bestseller.php,catalog/controller/module/special.php,catalog/controller/module/featured.php,catalog/controller/module/pavproductcarousel.php">  
+    
+    <operation >
+      <search position="before"><![CDATA[
+      $this->load->model('catalog/product');
+      ]]></search>
+      <add><![CDATA[
+      // Product Option Image PRO module <<
+      $this->load->model('module/product_option_image_pro');
+      $this->data['poip_installed'] = $this->model_module_product_option_image_pro->installed();
+      $this->data['current_class'] = str_replace("Controller", "", get_class($this));
+			$this->config->set('isAvaStore', $this->model_module_product_option_image_pro->isAvaStore());
+      
+			
+      // >> Product Option Image PRO module
+      ]]></add>
+    </operation>
+    
+    <operation error="skip">
+      <search position="after"><![CDATA[
+      $this->data['products'][] = array(
+      ]]></search>
+      <add><![CDATA[
+      // Product Option Image PRO module <<
+      
+      'option_images'  => $this->model_module_product_option_image_pro->getCategoryImages( isset($result['product_id']) ? $result['product_id'] : $product_info['product_id'],
+        (isset($this->data['current_class']) && $this->data['current_class']!= 'ProductCategory' && isset($setting))?($setting):(false)  ),
+      // >> Product Option Image PRO module
+      ]]></add>
+    </operation>
+		
+		<!-- Universum & lexus royal theme compatibility -->
+		<operation error="skip">
+      <search position="after"><![CDATA[
+      $products[] = array(
+      ]]></search>
+      <add><![CDATA[
+      // Product Option Image PRO module <<
+      
+      'option_images'  => $this->model_module_product_option_image_pro->getCategoryImages( isset($result['product_id']) ? $result['product_id'] : $product_info['product_id'],
+        (isset($this->data['current_class']) && $this->data['current_class']!= 'ProductCategory' && isset($setting))?($setting):(false)  ),
+      // >> Product Option Image PRO module
+      ]]></add>
+    </operation>
+    
+  </file>
+	
+	<!-- journal2 compatibility -->
+	<file name="catalog/controller/module/journal2_carousel.php" error="skip">  
+    
+    <operation error="skip">
+      <search position="before"><![CDATA[
+      $this->template = "journal2/template/journal2/module/carousel
+      ]]></search>
+      <add><![CDATA[
+      // Product Option Image PRO module <<
+      $this->load->model('module/product_option_image_pro');
+      $this->data['poip_installed'] = $this->model_module_product_option_image_pro->installed();
+			$this->data['current_class'] = str_replace("Controller", "", get_class($this));
+			
+      if (isset($this->data['sections'])) {
+				foreach ($this->data['sections'] as &$section) {
+					if (isset($section['items'])) {
+						foreach ($section['items'] as &$product) {
+							if (isset($product['product_id'])) {
+								$product['option_images'] = $this->model_module_product_option_image_pro->getCategoryImages( $product['product_id'], false  );
+							}
+						}
+					}
+				}
+			}
+			unset($section);
+			unset($product);
+			
+      
+      // >> Product Option Image PRO module
+      ]]></add>
+    </operation>
+    
+    <operation error="skip">
+      <search position="before"><![CDATA[
+      $this->template = $this->config->get('config_template') . "/template/journal2/module/carousel_{$this->data['module_type']}.tpl";
+      ]]></search>
+      <add><![CDATA[
+      // Product Option Image PRO module <<
+      $this->load->model('module/product_option_image_pro');
+      $this->data['poip_installed'] = $this->model_module_product_option_image_pro->installed();
+			$this->data['current_class'] = str_replace("Controller", "", get_class($this));
+			
+      if (isset($this->data['sections'])) {
+				foreach ($this->data['sections'] as &$section) {
+					if (isset($section['items'])) {
+						foreach ($section['items'] as &$product) {
+							if (isset($product['product_id'])) {
+								$product['option_images'] = $this->model_module_product_option_image_pro->getCategoryImages( $product['product_id'], false  );
+							}
+						}
+					}
+				}
+			}
+			unset($section);
+			unset($product);
+			
+      
+      // >> Product Option Image PRO module
+      ]]></add>
+    </operation>
+    
+  </file>
+	
+	<!-- journal2 compatibility -->
+	<file name="catalog/controller/module/journal2_super_filter.php" error="skip">  
+    
+		<!-- $this->template = 'journal2/template/journal2/module/super_filter_product.tpl'; -->
+    <operation error="log">
+      <search position="before"><![CDATA[
+			template/journal2/module/super_filter_product.tpl';
+      ]]></search>
+      <add><![CDATA[
+      // Product Option Image PRO module <<
+      $this->load->model('module/product_option_image_pro');
+      $this->data['poip_installed'] = $this->model_module_product_option_image_pro->installed();
+      $this->data['current_class'] = str_replace("Controller", "", get_class($this));
+			foreach ($this->data['products'] as &$product) {
+				$product['option_images'] = $this->model_module_product_option_image_pro->getCategoryImages( $product['product_id'],
+					(isset($this->data['current_class']) && $this->data['current_class']!= 'ProductCategory' && isset($setting))?($setting):(false)  );
+			}
+			unset($product);
+      
+      // >> Product Option Image PRO module
+      ]]></add>
+    </operation>
+    
+  </file>
+  
+	<!-- journal2 compatibility -->
+	<file name="catalog/view/theme/*/template/journal2/module/carousel_product.tpl" error="skip">  
+    
+    <operation >
+      <search position="replace"><![CDATA[
+      alt="<?php echo $product['name']; ?>"
+      ]]></search>
+      <add><![CDATA[<?php /* Product Option Image PRO module << */ if ($poip_installed) { ?>alt="<?php echo $product['name']; ?>" id="image_<?php echo "".$current_class."_".$product['product_id']; ?>"<?php } else { ?>alt="<?php echo $product['name']; ?>"<?php } /*  >> Product Option Image PRO module */ ?>]]></add>
+
+    </operation>
+    
+		
+    <operation error="skip">
+			<search position="after"><![CDATA[<div class="name">' + $(element).find('.name').html() + '</div>]]></search> 
+      <add><![CDATA[
+			// Product Option Image PRO module <<
+			if ($(element).find('#poip_img').length) { html += '<div id=\'poip_img\'>' + $(element).find('#poip_img').html() + '<div>' };
+			//if ($(element).find('#poip_img').length) { html += $('<div>').append( $(element).find('#poip_img').clone() ).html() };
+			//>> Product Option Image PRO module
+			]]></add>
+    </operation>
+    
+    <operation >
+
+		<search position="after" ><![CDATA[<div class="name">]]></search>
+      <add><![CDATA[
+      
+      <?php // Product Option Image PRO module << ?>
+      <?php  if ($poip_installed && isset($product['option_images']) && $product['option_images']) {
+      
+        foreach ($product['option_images'] as $product_option_id => $option_images) {
+          
+					echo "<div id='poip_img'>";
+					$image_counter = 0;
+          foreach ($option_images as $product_option_value_id => $option_image) {
+						$image_counter++;
+									
+						echo "			 
+									<a style=\"padding-left:6px; padding-top:2px; margin:0px; width:25px; height:25px; float:left; \" onmouseover=\"show_thumb(this);\" href=\"".$product['href']."&poip_ov=".(int)$product_option_value_id."\"
+										".( (isset($option_image['title']) && $option_image['title']) ? " title=\"".$option_image['title']."\" " : "" )."
+										thumb=\"".$option_image['thumb']."\"
+										image_id=\"".$current_class."_".$product['product_id']."\">
+									<img style=\"width:24px; height:24px;\" src=\"".$option_image['icon']."\"></a>
+								 ";		
+          }
+					echo "</div>";
+					
+        }
+      
+      } ?>
+      <?php //  >> Product Option Image PRO module ?>
+			
+      ]]></add>
+    </operation>
+  </file>
+	
+	<!-- mattimeo theme -->
+	<file name="catalog/view/theme/mattimeo/template/product/category.tpl,catalog/view/theme/mattimeo/template/module/featured.tpl,catalog/view/theme/mattimeo/template/module/bestseller.tpl,catalog/view/theme/mattimeo/template/module/latest.tpl" error="skip">  
+		<operation error="skip">
+			<search position="after" offset="1"><![CDATA[
+      <!--end additional images-->
+      ]]></search>
+      <add><![CDATA[
+      <?php // Product Option Image PRO module << ?>
+      <?php  if ($poip_installed && isset($product['option_images']) && $product['option_images']) {
+      
+				foreach ($product['option_images'] as $product_option_id => $option_images) {
+          
+					echo "<div id=\"poip_img\" style=\"  text-align: center; \">";
+					$image_counter = 0;
+					foreach ($option_images as $product_option_value_id => $option_image) {
+						$image_counter++;
+						echo "
+										<a ". ($this->config->get('config_template')!="mattimeo" ? "onmouseover=\"show_thumb(this);\"" : "") ."
+											style=\"display:inline;\" href=\"".$product['href']."&poip_ov=".(int)$product_option_value_id."\"
+											".( (isset($option_image['title']) && $option_image['title']) ? " title=\"".$option_image['title']."\" " : "" )."
+											thumb=\"".$option_image['thumb']."\"
+											image_id=\"".$current_class."_".$product['product_id']."\">
+										<img src=\"".$option_image['icon']."\"></a>
+									";
+					}
+					echo "</div>";
+					
+        }
+      
+      } ?>
+      <?php //  >> Product Option Image PRO module ?>
+      ]]></add>
+    </operation>
+	</file>
+	
+	<!-- cosyone theme -->
+	<file name="catalog/view/theme/cosyone/template/product/category.tpl" error="skip">  
+		<operation error="skip">
+			<search position="after" ><![CDATA[
+      <a href="<?php echo $product['href']; ?>"><img src="<?php echo $product['thumb']; ?>" alt="<?php echo $product['name']; ?>" /></a>
+      ]]></search>
+      <add><![CDATA[
+      <?php // Product Option Image PRO module << ?>
+      <?php  if ($poip_installed && isset($product['option_images']) && $product['option_images']) {
+      
+        foreach ($product['option_images'] as $product_option_id => $option_images) {
+          
+					echo "<div id='poip_img'>";
+					$image_counter = 0;
+          foreach ($option_images as $product_option_value_id => $option_image) {
+						$image_counter++;
+									
+						echo "			 
+									<a style=\"padding-left:6px; padding-top:2px; margin:0px; width:25px; height:25px; float:left; \" onmouseover=\"show_thumb(this);\" href=\"".$product['href']."&poip_ov=".(int)$product_option_value_id."\"
+										".( (isset($option_image['title']) && $option_image['title']) ? " title=\"".$option_image['title']."\" " : "" )."
+										thumb=\"".$option_image['thumb']."\"
+										image_id=\"".$current_class."_".$product['product_id']."\">
+									<img style=\"width:24px; height:24px;\" src=\"".$option_image['icon']."\"></a>
+								 ";		
+          }
+					echo "</div>";
+					
+        }
+      
+      } ?>
+      <?php //  >> Product Option Image PRO module ?>
+      ]]></add>
+    </operation>
+	</file>
+	
+  <file name="catalog/view/theme/*/template/module/pavproductcarousel.tpl,catalog/view/theme/*/template/module/product_module.tpl,catalog/view/theme/*/template/product/product_collection.tpl,catalog\view\theme\*\template\module\pavproducttabs.tpl,catalog\view\theme\*\template\module\filterpro_products.tpl,catalog\view\theme\*\template\journal2\module\super_filter_product.tpl,catalog/view/theme/*/template/product/category.tpl,catalog/view/theme/*/template/product/search.tpl,catalog/view/theme/*/template/product/manufacturer_info.tpl,catalog/view/theme/*/template/module/latest.tpl,catalog/view/theme/*/template/module/bestseller.tpl,catalog/view/theme/*/template/module/special.tpl,catalog/view/theme/*/template/module/featured.tpl">  
+    
+    <operation error="skip">
+			
+			<!-- theme 422 compatibility -->
+      <search position="ibefore"><![CDATA[
+      alt="<?php echo $product['name'];
+      ]]></search>
+      <add><![CDATA[<?php /* Product Option Image PRO module << */ if ($poip_installed) { ?> poip_id="image_<?php echo "".$current_class."_".$product['product_id']; ?>" <?php } /*  >> Product Option Image PRO module */ ?>]]></add>
+
+    </operation>
+		
+		
+		<!-- pav styleshop -->
+		<operation  error="skip">
+			
+      <search position="replace"><![CDATA[
+      require( DIR_TEMPLATE.$this->config->get('config_template')."/template/product/product_collection.tpl" );
+      ]]></search>
+      <add><![CDATA[
+			/* Product Option Image PRO module << */
+			if ($poip_installed) {
+				require( VQMod::modCheck(DIR_TEMPLATE.$this->config->get('config_template')."/template/product/product_collection.tpl" ) );
+			} else {
+				require( DIR_TEMPLATE.$this->config->get('config_template')."/template/product/product_collection.tpl" );
+			}
+			/*  >> Product Option Image PRO module */
+			]]></add>
+
+    </operation>
+		<!-- pav styleshop -->
+		<operation  error="skip">
+			
+      <search position="replace"><![CDATA[
+      require( DIR_TEMPLATE.$this->config->get('config_template')."/template/module/product_module.tpl" );
+      ]]></search>
+      <add><![CDATA[
+			/* Product Option Image PRO module << */
+			if ($poip_installed) {
+				require( VQMod::modCheck(DIR_TEMPLATE.$this->config->get('config_template')."/template/module/product_module.tpl" ) );
+			} else {
+				require( DIR_TEMPLATE.$this->config->get('config_template')."/template/module/product_module.tpl" );
+			}
+			/*  >> Product Option Image PRO module */
+			]]></add>
+
+    </operation>
+    
+		
+    <operation error="skip">
+			<search position="before"><![CDATA[<div class="name">' + $(element).find('.name').html() + '</div>]]></search>
+      <!--<search position="before"><![CDATA[var price = $(element).find('.price').html();]]></search> -->
+      <add><![CDATA[
+			// Product Option Image PRO module <<
+			<?php if ($this->config->get('config_template')!='polianna' ) { ?>
+				if ($(element).find('#poip_img').length) {  html += $('<div>').append( $(element).find('#poip_img').clone() ).html(); $(element).find('#poip_img').remove() };
+			<?php } ?>
+			//>> Product Option Image PRO module
+			]]></add>
+    </operation>
+    
+		<operation error="skip">
+			
+			<search position="after"><![CDATA[
+				<?php foreach ($products as $product) { ?>
+			]]></search>
+		<add><![CDATA[
+			<?php
+			// << Product Option Image PRO module 
+			$poip_product_images_shown = false; // по этой переменной отловим попытки несколько раз вывести poip_img для одного товара
+			// >> Product Option Image PRO module
+			?>
+			]]></add>
+    </operation>
+    
+		<!-- different themes, different operations -->
+		<!-- usual: default, sellegance etc -->
+    <operation error="skip">
+
+			<!-- MORE? compatible -->
+			<search position="after"><![CDATA[
+      <a href="<?php echo $product['href']; ?>"><img
+      ]]></search>
+			
+			<!-- skip for cosyone theme -->
+			<ignoreif><![CDATA[
+			<?php if ($product['thumb_hover'] && $this->config->get('cosyone_rollover_effect') == 'enabled') { ?>
+			]]></ignoreif>
+			
+
+      <add><![CDATA[
+      
+      <?php // Product Option Image PRO module << ?>
+			
+      <?php  if ($poip_installed && isset($product['option_images']) && $product['option_images'] && $this->config->get('config_template') != "mattimeo") {
+			
+				if (!isset($poip_product_images_shown)) $poip_product_images_shown = false;
+				
+				if (!$poip_product_images_shown) {
+				
+					$poip_product_images_shown = true;
+				
+					foreach ($product['option_images'] as $product_option_id => $option_images) {
+						
+						if ($this->config->get('config_template') == "sellegance" || $this->config->get('config_template') == "theme422"
+							|| $this->config->get('config_template') == "polianna" || $this->config->get('config_template') == "moneymaker"
+							|| $this->config->get('isAvaStore') ) {
+							
+							echo "<div id=\"poip_img\" style=\"  text-align: center; \">";
+							$image_counter = 0;
+							foreach ($option_images as $product_option_value_id => $option_image) {
+								$image_counter++;
+								echo "
+												<a ". ($this->config->get('config_template')!="mattimeo" ? "onmouseover=\"show_thumb(this);\"" : "") ."
+													style=\"display:inline;\" href=\"".$product['href']."&poip_ov=".(int)$product_option_value_id."\"
+													".( (isset($option_image['title']) && $option_image['title']) ? " title=\"".$option_image['title']."\" " : "" )."
+													thumb=\"".$option_image['thumb']."\"
+													image_id=\"".$current_class."_".$product['product_id']."\">
+												<img src=\"".$option_image['icon']."\"></a>
+											";
+							}
+							echo "</div>";
+	
+						} elseif ($this->config->get('config_template') == "pav_styleshop") { // for product_module.tpl
+							// just skip
+						
+						} else {
+						
+							echo "<table id=\"poip_img\" style=\"width: auto; padding:0px; border-collapse:collapse; border-spacing:0px; border:0px;\"><tr><td style='padding:0px;'>";
+							$image_counter = 0;
+							foreach ($option_images as $product_option_value_id => $option_image) {
+								$image_counter++;
+								if ($image_counter % 5 == 0) echo "<br>";
+								echo "<div class=\"image\" style=\"float:left; margin-left:0px; margin-right:0px; \">
+												<a onmouseover=\"show_thumb(this);\" href=\"".$product['href']."&poip_ov=".(int)$product_option_value_id."\"
+													".( (isset($option_image['title']) && $option_image['title']) ? " title=\"".$option_image['title']."\" " : "" )."
+													thumb=\"".$option_image['thumb']."\"
+													image_id=\"".$current_class."_".$product['product_id']."\">
+												<img src=\"".$option_image['icon']."\"></a>
+											</div>";
+											
+								if ($image_counter % 4 == 0) echo "<br>";
+							}
+							echo "</td></tr></table>";
+						}
+						
+					}
+				}
+      } ?>
+      <?php //  >> Product Option Image PRO module ?>
+      ]]></add>
+    </operation>
+		
+		
+		
+		<!-- pav fashion -->
+		<operation error="skip">
+			<search position="before"><![CDATA[$.totalStorage('display', 'list');]]></search>
+      <add><![CDATA[
+			// << Product Option Image PRO module
+			$('div#poip_img').css('top', 'auto');
+			$('div.product-action').css('top', 'auto');
+			//>> Product Option Image PRO module
+			]]></add>
+    </operation>
+		
+		<!-- pav fashion -->
+		<operation error="skip">
+			<search position="before"><![CDATA[$.totalStorage('display', 'grid');]]></search>
+      <add><![CDATA[
+			// << Product Option Image PRO module
+			$('#poip_img').css('top', '-6px');
+			$('div.product-action').css('top', '-70px');
+			$('a.pav-colorbox').css('top', 'auto');
+			$('a.pav-colorbox').css('bottom', '-40px');
+			//>> Product Option Image PRO module
+			]]></add>
+    </operation>
+		
+		<!-- pav fashion -->
+		<operation error="skip">
+			<search position="after" ><![CDATA[
+      <div class="warp-info">
+      ]]></search>
+      <add><![CDATA[
+      <?php // Product Option Image PRO module << ?>
+      <?php  if ($poip_installed && isset($product['option_images']) && $product['option_images']) {
+        foreach ($product['option_images'] as $product_option_id => $option_images) {
+					echo "<div id='poip_img' style='width:100%; display: table-cell;  position:relative; top:-6px; z-index: 1000;'>";
+					$image_counter = 0;
+          foreach ($option_images as $product_option_value_id => $option_image) {
+						$image_counter++;
+						echo "			 
+									<a style=\"margin:0px; margin-left:2px; margin-bottom:2px;  float:left; \" onmouseover=\"show_thumb(this);\" href=\"".$product['href']."&poip_ov=".(int)$product_option_value_id."\"
+										".( (isset($option_image['title']) && $option_image['title']) ? " title=\"".$option_image['title']."\" " : "" )."
+										thumb=\"".$option_image['thumb']."\"
+										image_id=\"".$current_class."_".$product['product_id']."\">
+									<img style=\"\" src=\"".$option_image['icon']."\"></a>
+								 ";		
+          }
+					echo "</div>";
+        }
+      } ?>
+      <?php //  >> Product Option Image PRO module ?>
+      ]]></add>
+    </operation>
+		
+		<!-- pav styleshop for product_collection.tpl & product_module.tpl -->
+		<operation error="skip">
+			<search position="before" ><![CDATA[
+      <h3 class="name"><a href="<?php echo $product['href']; ?>"><?php echo $product['name']; ?></a></h3>
+      ]]></search>
+      <add><![CDATA[
+      <?php // Product Option Image PRO module << ?>
+      <?php  if ($poip_installed && isset($product['option_images']) && $product['option_images']) {
+        foreach ($product['option_images'] as $product_option_id => $option_images) {
+					echo "<div id='poip_img' style='width:100%; display: table-cell;  position:relative; top:-6px; z-index: 1000;";
+					if ($this->config->get('config_template') == 'lexus_royal') {
+						echo "padding-top:10px;padding-bottom:-10px;"; 
+					}
+					echo "'>";
+					$image_counter = 0;
+          foreach ($option_images as $product_option_value_id => $option_image) {
+						$image_counter++;
+						echo "			 
+									<a style=\"margin:0px; margin-left:2px; margin-bottom:2px;  float:left; \" onmouseover=\"show_thumb(this);\" href=\"".$product['href']."&poip_ov=".(int)$product_option_value_id."\"
+										".( (isset($option_image['title']) && $option_image['title']) ? " title=\"".$option_image['title']."\" " : "" )."
+										thumb=\"".$option_image['thumb']."\"
+										image_id=\"".$current_class."_".$product['product_id']."\">
+									<img style=\"\" src=\"".$option_image['icon']."\"></a>
+								 ";		
+          }
+					echo "</div>";
+        }
+      } ?>
+      <?php //  >> Product Option Image PRO module ?>
+      ]]></add>
+    </operation>
+		
+		<!-- different themes, different operations -->
+		<!-- journal2 -->
+    <operation error="skip">
+		<search position="after" offset="4" ><![CDATA[<?php if($this->journal2->settings->get('product_grid_wishlist_icon_position')]]></search>
+
+      <add><![CDATA[
+      
+      <?php // Product Option Image PRO module << ?>
+      <?php  if ($poip_installed && isset($product['option_images']) && $product['option_images']) {
+      
+        foreach ($product['option_images'] as $product_option_id => $option_images) {
+          
+					echo "<div id='poip_img'>";
+					$image_counter = 0;
+          foreach ($option_images as $product_option_value_id => $option_image) {
+						$image_counter++;
+									
+							echo "			 
+                    <a style=\"padding-left:6px; padding-top:2px; margin:0px; width:25px; height:25px; float:left; \" onmouseover=\"show_thumb(this);\" href=\"".$product['href']."&poip_ov=".(int)$product_option_value_id."\"
+                      ".( (isset($option_image['title']) && $option_image['title']) ? " title=\"".$option_image['title']."\" " : "" )."
+                      thumb=\"".$option_image['thumb']."\"
+                      image_id=\"".$current_class."_".$product['product_id']."\">
+                    <img style=\"width:24px; height:24px;\" src=\"".$option_image['icon']."\"></a>
+                   ";		
+									
+          }
+
+					echo "</div>";
+					
+        }
+      
+      } ?>
+      <?php //  >> Product Option Image PRO module ?>
+			
+      ]]></add>
+    </operation>
+		
+  </file>
+    
+  <file name="catalog/controller/common/header.php">  
+    
+    <operation >
+      <search position="after"><![CDATA[
+      protected function index() {
+      ]]></search>
+      <add><![CDATA[
+      // Product Option Image PRO module <<
+      $this->load->model('module/product_option_image_pro');
+      $this->data['poip_installed'] = $this->model_module_product_option_image_pro->installed();
+			
+			
+			
+      // >> Product Option Image PRO module
+      ]]></add>
+    </operation>
+    
+  </file>  
+    
+    
+  <file name="catalog/view/theme/*/template/common/header.tpl">    
+    
+    <!-- SCRIPT -->
+		<!-- before </head> -->
+    <operation >
+      <search position="after"><![CDATA[
+			$google_analytics;  
+      ]]></search>
+      <add><![CDATA[
+			<!-- Product Option Image PRO module << -->
+      <?php  if (isset($poip_installed) && $poip_installed) {  ?>
+      <script type="text/javascript"><!--
+      
+      function show_thumb(elem) {
+				
+        if ($(elem).attr('thumb') && $(elem).attr('image_id')) {
+					var main_img = $('img[poip_id="image_'+$(elem).attr('image_id')+'"]');
+					var prev_img = main_img.attr('src'); // journal2 compatibility
+          main_img.attr('src', $(elem).attr('thumb'));
+          main_img.parent().attr('href', $(elem).attr('href'));
+					
+					// journal2 compatibility
+					if (main_img.parent().hasClass('has-second-image')) {
+						main_img.parent().attr('style', main_img.parent().attr('style').replace(prev_img, $(elem).attr('thumb')) );
+					}
+					
+        }
+      }  
+      
+      //--></script>
+      <?php } ?>
+			
+			<?php
+				if ($this->config->get('config_template')=='cosyone') {
+					set_include_path(get_include_path() . PATH_SEPARATOR . DIR_APPLICATION.'/view/theme/cosyone/template/common');
+				}
+			?>
+			
+			
+      <!-- >> Product Option Image PRO module -->
+			]]></add>
+    </operation>
+		
+		<operation >
+      <search position="after" error="skip"><![CDATA[</head>]]></search>
+      <add><![CDATA[
+      <!-- << Product Option Image PRO module -->
+      <?php  if (isset($poip_installed) && $poip_installed) {  ?>
+      <script type="text/javascript"><!--
+      
+			var poip_ava_store = $('style:contains("AVA STORE")').length;
+			
+      //--></script>
+      <?php } ?>
+      <!-- >> Product Option Image PRO module -->
+      ]]></add>
+    </operation>
+		
+  </file>
+
+	<!-- <<<< Product Option Image PRO - compatibility with Product images anywhere  / Изображения опций PRO - совместимость с Product images anywhere</id> -->
+  
+  
+  <!-- Product Images in Checkout -->
+  <file name="catalog/controller/checkout/confirm.php">
+		<operation error="skip">
+			<search position="before"><![CDATA[
+			$thumb = $this->model_tool_image->resize($image, 60, 60);
+			]]></search>
+			<add><![CDATA[
+			// << Product Option Image PRO module
+      $this->load->model('module/product_option_image_pro');
+      $image = $this->model_module_product_option_image_pro->getProductCartImage((int)$product['product_id'], $product['option'], $image);
+      // >> Product Option Image PRO module
+			]]></add>
+		</operation>
+  </file>
+	
+	<!-- journal2 compatibility Product Images in temp-success-window -->
+	<file name="catalog/controller/checkout/cart.php">
+		<operation error="skip">
+			<search position="before"><![CDATA[
+			$json['image'] = Journal2Utils::resizeImage($this->model_tool_image, $product_info['image']
+			]]></search>
+			<add><![CDATA[
+			// << Product Option Image PRO module
+      $this->load->model('module/product_option_image_pro');
+			$poip_options = array();
+			foreach ($option as $po_id => $pov_id) {
+				$poip_options[] = array('product_option_id'=>$po_id, 'product_option_value_id'=>$pov_id);
+			}
+      $product_info['image'] = $this->model_module_product_option_image_pro->getProductCartImage((int)$product_info['product_id'], $poip_options, $product_info['image']);
+      // >> Product Option Image PRO module
+			]]></add>
+		</operation>
+  </file>
+	
+	<!-- BigDesFashion compatibility Product Images in temp-success-window -->
+	<file name="catalog/controller/checkout/cart.php">
+		<operation error="skip">
+			<search position="before"><![CDATA[
+			$json['success'] = sprintf($this->language->get('text_success'), $this->model_tool_image->resize($product_info['image'], '90', '120'), $this->url->link('product/product', 'product_id=' . $this->request->post['product_id']), $product_info['name'], $this->url->link('checkout/cart'));
+			]]></search>
+			<add><![CDATA[
+			// << Product Option Image PRO module
+      $this->load->model('module/product_option_image_pro');
+			$poip_options = array();
+			foreach ($option as $po_id => $pov_id) {
+				$poip_options[] = array('product_option_id'=>$po_id, 'product_option_value_id'=>$pov_id);
+			}
+      $product_info['image'] = $this->model_module_product_option_image_pro->getProductCartImage((int)$product_info['product_id'], $poip_options, $product_info['image']);
+      // >> Product Option Image PRO module
+			]]></add>
+		</operation>
+  </file>
+
+  <!-- Product Images in Order Order Email -->
+  <file name="catalog/model/checkout/order.php">
+		<operation error="skip">
+			<search position="before"><![CDATA[
+			$thumb = $this->model_tool_image->resize($image, 60, 60);
+			]]></search>
+			<add><![CDATA[
+			// << Product Option Image PRO module
+      $order_option_query = $this->db->query("SELECT * FROM " . DB_PREFIX . "order_option WHERE order_id = '" . (int)$order_id . "' AND order_product_id = '" . (int)$product['order_product_id'] . "'");
+      $this->load->model('module/product_option_image_pro');
+      $image = $this->model_module_product_option_image_pro->getProductCartImage((int)$product['product_id'], $order_option_query->rows, $image);
+      // >> Product Option Image PRO module
+			]]></add>
+		</operation>
+  </file>
+  
+  <!-- Product Images in Order History Page -->
+  <file name="catalog/controller/account/order.php">
+		<operation error="skip">
+			<search position="before"><![CDATA[
+			$thumb = $this->model_tool_image->resize($image, 60, 60);
+			]]></search>
+			<add><![CDATA[
+			// << Product Option Image PRO module
+      $this->load->model('module/product_option_image_pro');
+      $image = $this->model_module_product_option_image_pro->getProductCartImage((int)$product['product_id'], $options, $image);
+      // >> Product Option Image PRO module
+			]]></add>
+		</operation>
+  </file>
+
+	<!-- >>>> Product Option Image PRO - compatibility with Product images anywhere  / Изображения опций PRO - совместимость с Product images anywhere</id> -->
+</modification>

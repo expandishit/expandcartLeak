@@ -1,0 +1,123 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+
+{% block title %}
+    {{ lang('cit_title') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+    {% include "includes/buttons_top.expand" with {'cancel': links['cancel']} %}
+{% endblock headelements %}
+
+{% block content %}
+    <form class="form" action="{{ submit_link }}">
+        <div class="col-md-12">
+            <div class="panel panel-white">
+                <div class="panel-heading">
+                    <h6 class="panel-title"><span class="text-bold">{{ lang('cit_settings') }}</span></h6>
+                    <div class="heading-elements not-collapsible">
+                        <ul class="icons-list">
+                            <li><a data-action="collapse" class=""></a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label>{{ lang('cit_status') }}</label>
+                                <div class="checkbox checkbox-switchery no-margin">
+                                    <label>
+                                        <input type="checkbox" onchange="changeStatus(this);" name="cit[status]" class="switchery" {{ cit['status'] in ['1', 1,'on'] ? 'checked' }}>
+                                        <span class="switchery-status">{{ cit['status'] in [1, '1','on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-12">
+            <div class="panel panel-white">
+                <div class="panel-heading">
+                    <h6 class="panel-title"><span class="text-bold">{{ lang('cit_template') }}</span></h6>
+                    <div class="heading-elements not-collapsible">
+                        <ul class="icons-list">
+                            <li><a data-action="collapse" class=""></a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="collapse in">
+                        <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                            <div class="tab-content">
+                                {% for lng in languages %}
+                                    <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}"
+                                            id="langTab{{ lng['language_id'] }}">
+                                        <div class="form-group" id="description{{lng['language_id']}}-group">
+                                            <div class="col-md-2">
+                                                {% for key, group in cit_short_codes %}
+                                                    <p><strong>{{ lang('cit_' ~ key) }}</strong></p>
+                                                    {% if key == 'products' or key == 'totals' %}
+                                                        {{ lang('cit_multi_block_tip')|replace({'%s': '<strong style="text-transform:uppercase">['~key~']</strong> '}) }}<hr>
+                                                    {% endif %}
+                                                    {% for code in group %}
+                                                        <div>{{ code }}</div>
+                                                    {% endfor %}
+                                                    <hr>
+                                                {% endfor %}
+                                            </div>
+                                            <div class="col-md-10">
+                                                <textarea
+                                                    name="cit_template[{{ lng['language_id'] }}][html]"
+                                                    class="summernote"
+                                                >{{ cit_template[lng['language_id']] is defined ? cit_template[lng['language_id']] : "" }}</textarea>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                                {% for language in languages %}
+                                    <li class="{{ loop.first ? 'active' : '' }}">
+                                        <a href="#langTab{{ language['language_id'] }}" data-toggle="tab"
+                                            aria-expanded="false">
+                                            <img src="view/image/flags/{{ language['image'] }}" title="{{ language['name'] }}" class="pull-right">
+                                            <div> {{ language['name'] }}</div>
+                                        </a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+{% endblock content %}
+
+{% block scripts %}
+    <script>
+        function changeStatus(checkbox)
+        {
+            let self = $(checkbox);
+            let switch_status = self.siblings('.switchery-status');
+
+            if ( self.is(':checked') )
+            {
+                switch_status.html("{{ lang('text_enabled') }}");
+            }
+            else
+            {
+                switch_status.html("{{ lang('text_disabled') }}");
+            }
+        }
+    </script>
+{% endblock scripts %}

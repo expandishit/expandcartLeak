@@ -1,0 +1,307 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% set dualMenuEnabled = false %}
+
+
+{% block title %}
+{{ lang('heading_title', 'localisation/country') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+{{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+
+
+{% block content %}
+
+<form id="country_update" class="form" action="">
+
+
+    <!-- from here -->
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="panel panel-white">
+                <div class="panel-heading">
+                    <h6 class="panel-title"><span class="text-bold">{{ lang('entry_status')~ lang('text_before_edit')|trim(':') }}</span></h6>
+                    <div class="heading-elements not-collapsible">
+                        <ul class="icons-list">
+                            <li><a data-action="collapse" class=""></a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="collapse in" id="panel1">
+                        <div class="form-group" id="status-group">
+                            <label class="control-label">{{ lang('entry_status') }}</label>
+                            <div class="checkbox checkbox-switchery">
+                                <label>
+                                    <input disabled type="checkbox" onchange="changeStatus(this);" name="status" id="status" value="{{ old_value['status'] }}" class="switchery" {{ old_value['status'] in ['1', 1, 'on'] ? 'checked' }}>
+                                    <span class="switchery-status">{{ old_value['status'] in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                </label>
+                            </div>
+                            <span class="help-block"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="panel panel-white">
+                <div class="panel-heading">
+                    <h6 class="panel-title"><span class="text-bold">{{ lang('text_country')~ lang('text_before_edit') }}</span></h6>
+                    <div class="heading-elements not-collapsible">
+                        <ul class="icons-list">
+                            <li><a data-action="collapse" class=""></a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="collapse in" id="panel2">
+                        <div class="row">
+                            <div class ='col-md-12'>
+                                <div class="form-group">
+                                    <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                                        <div class="tab-content">
+                                            {% for index, language in languages %}
+                                                <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}" id="langTab{{ language['language_id'] }}">
+                                                    <div class="form-group" id="countryLang{{ language['language_id'] }}-group">
+                                                        <label class="control-label">{{ lang('entry_name') }} ({{ language['name'] }}) <span class="text-danger">*</span></label>
+                                                        <input disabled class="form-control" type="text" id="countryLang{{ language['language_id'] }}" name="countryLang{{ language['language_id'] }}" value="{{ old_value['names'][language['language_id']] }}" />
+                                                        <span class="help-block"></span>
+                                                    </div>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+
+                                        <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                                            {% for language in languages %}
+                                                <li class="{{ loop.first ? 'active' : '' }}">
+                                                    <a href="#langTab{{ language['language_id'] }}" data-toggle="tab" aria-expanded="false">
+                                                        <img src="view/image/flags/{{ language['image'] }}" title="{{ language['name'] }}" class="pull-right">
+                                                        <div> {{ language['name'] }}</div>
+                                                    </a>
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group" id="iso_code_2-group">
+                                    <label class="control-label">{{ lang('column_iso_code_2') }} <span class="text-danger">*</span></label>
+                                    <input disabled type="text" class="form-control" id="iso_code_2" name="iso_code_2" value="{{ old_value['iso_code_2'] }}" placeholder="{{ langempty('iso_code_2_ph') }}">
+                                    <span class="help-block"></span>
+                                    <span class="text-muted">{{ langempty('iso_code_2_help') }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group" id="iso_code_3-group">
+                                    <label class="control-label">{{ lang('column_iso_code_3') }} <span class="text-danger">*</span></label>
+                                    <input disabled type="text" class="form-control" id="iso_code_3" name="iso_code_3" value="{{ old_value['iso_code_3'] }}" placeholder="{{ langempty('iso_code_3_ph') }}">
+                                    <span class="help-block"></span>
+                                    <span class="text-muted">{{ langempty('iso_code_3_help') }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group" id="phonecode-group">
+                                    <label class="control-label">{{ lang('column_phone_code') }} <span class="text-danger">*</span></label> </label>
+                                    <input disabled type="text" class="form-control" id="phonecode" name="phonecode" value="{{ old_value['phonecode'] }}" placeholder="{{ langempty('phone_code_ph') }}">
+                                    <span class="help-block"></span>
+                                    <span class="text-muted">{{ entry_phone_code }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class='row'>
+                            <div class="col-md-3">
+                                <div class="form-group" id="postcode_required-group">
+                                    <label class="control-label">{{ lang('entry_postcode_required') }} <span class="text-danger">*</span></label>
+                                    <!-- Switchery -->
+                                    <div class="checkbox checkbox-switchery">
+                                        <label>
+                                            <input disabled type="checkbox" onchange="changeStatus(this);" name="postcode_required" value="{{ old_value['postcode_required']  }}" class="switchery" {{ old_value['postcode_required'] not in [0, '0', 'off'] or old_value['postcode_required'] is null ? 'checked' }}>
+                                            <span class="switchery-status">{{ old_value['postcode_required'] not in [0, '0', 'off'] or old_value['postcode_required'] is null ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                        </label>
+                                    </div>
+                                    <!-- /Switchery -->
+                                    <span class="help-block"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group" id="address_format-group">
+                                    <label class="control-label">{{ column_address_format }} </label>
+                                    <textarea disabled  cols='5' rows='5' class="form-control" id="address_format" name="address_format">{{ old_value['address_format'] }}</textarea>
+                                    <span class="help-block"></span>
+                                    <span class="text-muted">{{ entry_address_format }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+
+
+        </div>
+        <div class="col-md-6">
+            <div class="panel panel-white">
+                <div class="panel-heading">
+                    <h6 class="panel-title"><span class="text-bold">{{ lang('entry_status')~ lang('text_after_edit')|trim(':') }}</span></h6>
+                    <div class="heading-elements not-collapsible">
+                        <ul class="icons-list">
+                            <li><a data-action="collapse" class=""></a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="collapse in" id="panel1">
+                        <div class="form-group" id="status-group">
+                            <label class="control-label">{{ lang('entry_status') }}</label>
+                            <div class="checkbox checkbox-switchery">
+                                <label>
+                                    <input disabled type="checkbox" onchange="changeStatus(this);" name="status" data-match="status" value="{{ new_value['status'] }}" class="switchery new_vaules" {{ new_value['status'] in ['1', 1, 'on'] ? 'checked' }}>
+                                    <span class="switchery-status">{{ new_value['status'] in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                </label>
+                            </div>
+                            <span class="help-block"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="panel panel-white">
+                <div class="panel-heading">
+                    <h6 class="panel-title"><span class="text-bold">{{ lang('text_country')~ lang('text_after_edit') }}</span></h6>
+                    <div class="heading-elements not-collapsible">
+                        <ul class="icons-list">
+                            <li><a data-action="collapse" class=""></a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="collapse in" id="panel2">
+                        <div class="row">
+                            <div class ='col-md-12'>
+                                <div class="form-group">
+                                    <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                                        <div class="tab-content">
+                                            {% for index, language in languages %}
+                                                <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}" id="langTabNew{{ language['language_id'] }}">
+                                                    <div class="form-group" id="countryLang{{ language['language_id'] }}-group">
+                                                        <label class="control-label">{{ lang('entry_name') }} ({{ language['name'] }}) <span class="text-danger">*</span></label>
+                                                        <input disabled class="form-control new_vaules" type="text" data-match="countryLang{{ language['language_id'] }}" name="countryLang{{ language['language_id'] }}" value="{{ new_value['names'][language['language_id']] }}" />
+                                                        <span class="help-block"></span>
+                                                    </div>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+
+                                        <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                                            {% for language in languages %}
+                                                <li class="{{ loop.first ? 'active' : '' }}">
+                                                    <a href="#langTabNew{{ language['language_id'] }}" data-toggle="tab" aria-expanded="false">
+                                                        <img src="view/image/flags/{{ language['image'] }}" title="{{ language['name'] }}" class="pull-right">
+                                                        <div> {{ language['name'] }}</div>
+                                                    </a>
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group" id="iso_code_2-group">
+                                    <label class="control-label">{{ lang('column_iso_code_2') }} <span class="text-danger">*</span></label>
+                                    <input disabled type="text" class="form-control new_vaules" data-match="iso_code_2" name="iso_code_2" value="{{ new_value['iso_code_2'] }}" placeholder="{{ langempty('iso_code_2_ph') }}">
+                                    <span class="help-block"></span>
+                                    <span class="text-muted">{{ langempty('iso_code_2_help') }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group" id="iso_code_3-group">
+                                    <label class="control-label">{{ lang('column_iso_code_3') }} <span class="text-danger">*</span></label>
+                                    <input disabled type="text" class="form-control new_vaules" data-match="iso_code_3" name="iso_code_3" value="{{ new_value['iso_code_3'] }}" placeholder="{{ langempty('iso_code_3_ph') }}">
+                                    <span class="help-block"></span>
+                                    <span class="text-muted">{{ langempty('iso_code_3_help') }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group" id="phonecode-group">
+                                    <label class="control-label">{{ lang('column_phone_code') }} <span class="text-danger">*</span></label> </label>
+                                    <input disabled type="text" class="form-control new_vaules" data-match="phonecode" name="phonecode" value="{{ new_value['phonecode'] }}" placeholder="{{ langempty('phone_code_ph') }}">
+                                    <span class="help-block"></span>
+                                    <span class="text-muted">{{ entry_phone_code }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class='row'>
+                            <div class="col-md-3">
+                                <div class="form-group" id="postcode_required-group">
+                                    <label class="control-label">{{ lang('entry_postcode_required') }} <span class="text-danger">*</span></label>
+                                    <!-- Switchery -->
+                                    <div class="checkbox checkbox-switchery">
+                                        <label>
+                                            <input disabled  type="checkbox" onchange="changeStatus(this);" name="postcode_required" data-match="postcode_required" value="{{ new_value['postcode_required'] }}" class="switchery new_vaules" {{ new_value['postcode_required'] not in [0, '0', 'off'] or new_value['postcode_required'] is null ? 'checked' }}>
+                                            <span class="switchery-status">{{ new_value['postcode_required'] not in [0, '0', 'off'] or new_value['postcode_required'] is null ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                        </label>
+                                    </div>
+                                    <!-- /Switchery -->
+                                    <span class="help-block"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group" id="address_format-group">
+                                    <label class="control-label">{{ column_address_format }} </label>
+                                    <textarea disabled  cols='5' rows='5' class="form-control new_vaules" data-match="address_format" name="address_format">{{ new_value['address_format'] }}</textarea>
+                                    <span class="help-block"></span>
+                                    <span class="text-muted">{{ entry_address_format }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+
+
+        </div>
+
+    </div>
+
+</form>
+
+<script>
+    $(document).ready(function(){
+        $(".new_vaules").each((key, element) => {
+
+            let value = $(element).val();
+            let matchData = $(element).attr('data-match');
+            let matchValue = $("#"+matchData).val();
+            if(value != matchValue){
+                $(element).addClass("new_value_update");
+                if($(element).hasClass("switchery")){
+                    $(element).parent().find("span.switchery").addClass("new_value_update");
+                }
+
+                if($(element).hasClass("select2-hidden-accessible")){
+                    $(element).parent().find("span.select2-selection").addClass("new_value_update");
+                }
+            }
+        });
+    });
+</script>
+
+{% endblock content %}

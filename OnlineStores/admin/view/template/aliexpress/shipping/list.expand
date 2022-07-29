@@ -1,0 +1,123 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+
+{% block title %}
+    {{ lang('heading_title') }}
+{% endblock title %}
+
+{% set dualMenuEnabled = true %}
+{% block secondarymenu %}
+    {% include 'aliexpress/menu.expand' with {'active': '#tab-shipping-setting'} %}
+{% endblock secondarymenu %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+    <button type="button" class="btn btn-primary btn-ladda btn-ladda-spinner top-save-button"
+        data-style="zoom-in" onclick="$('#aliexpress-form').submit();">
+        <i class="far fa-save fa-lg position-left"></i> {{ lang('button_save') }}
+    </button>
+
+    <a href="{{ link('aliexpress/manager_shipping/addshipping') }}" data-toggle="tooltip"
+        title="{{ lang('button_shipping') }}" class="btn btn-primary">
+        <i class="fa fa-plus"></i> {{ lang('button_shipping') }}
+    </a>
+{% endblock headelements %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="panel panel-white">
+            <div class="panel-heading">
+                <h6 class="panel-title">
+                        <span class="text-bold">
+                            <i class="fa fa-cog"></i>
+                            <span>{{ lang('heading_title') }}</span>
+                        </span>
+                    </h6>
+                <div class="heading-elements not-collapsible">
+                    <ul class="icons-list">
+                        <li>
+                            <a data-action="collapse" class=""></a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="panel-body">
+                <div class="row">
+                    <table class="table table-bordered table-hover">
+                        <thead>
+                            <tr>
+                                <td class="text-center">
+                                    <input type="checkbox"
+                                        onclick="$('input[name*=\'selected\']').attr('checked', this.checked);" />
+                                </td>
+                                <td class="text-center">{{ lang('country') }}</td>
+                                <td class="text-center">{{ lang('zip_from') }}</td>
+                                <td class="text-center">{{ lang('zip_to') }}</td>
+                                <td class="text-center">{{ lang('price') }} </td>
+                                <td class="text-center">{{ lang('weight_from') }} </td>
+                                <td class="text-center">{{ lang('weight_to') }}</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if result_shipping %}
+                            {% for result_shippings in result_shipping %}
+                            <tr>
+                                <td class="text-center">
+                                {% if result_shippings.selected %}
+                                <input type="checkbox" name="selected[]"
+                                    value="{{ result_shippings.id }}" checked="checked" />
+                                {% else %}
+                                <input type="checkbox" name="selected[]"
+                                    value="{{ result_shippings.id }}" />
+                                {% endif %}
+                                </td>
+                                <td class="text-center">{{ result_shippings.country }} </td>
+                                <td class="text-center">{{ result_shippings.zip_from }} </td>
+                                <td class="text-center">{{ result_shippings.zip_to }} </td>
+                                <td class="text-center">{{ result_shippings.price }} </td>
+                                <td class="text-center">{{ result_shippings.weight_from }} </td>
+                                <td class="text-center">{{ result_shippings.weight_to }} </td>
+                            </tr>
+                            {% endfor %}
+                            {% else %}
+                            <tr>
+                                <td class="text-center" colspan="9">{{ lang('text_no_results') }} </td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6">{{ pagination }} </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $('.date').datetimepicker({
+        pickTime: false
+    });
+
+    $('.operation-type > li > a').on('click', function(e) {
+        e.preventDefault();
+        console.log($(this).data('operation-type'));
+        operation_type = $(this).data('operation-type');
+        $('input[name="filter_total_price_operation_type"]').val(operation_type);
+        $('.operation-action-button').text(operation_type);
+    });
+
+    $('.filter-button').on('click', function() {
+        url = 'index.php?route=warehouse/warehouseorders&user_token={{ user_token }}&sort={{ sort }}&order={{ order }}';
+        filter = $('#filter-form').serialize();
+        url += '&'+filter;
+        location = url;
+    });
+</script>
+{% endblock %}

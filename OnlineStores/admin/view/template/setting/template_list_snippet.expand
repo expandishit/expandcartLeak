@@ -1,0 +1,460 @@
+{% if templates|length > 0 %}  
+    <div class="grid">
+        {% for template in templates %}
+            {# {% if (template.premium == 1) and (template.custom_template == 0) %} #}
+            {% if (template.premium == 1)  and (template.CodeName != 'goodwin') %}
+            <div class="infinite-scroll-content template-box" id="{{ template['CodeName'] }}">
+                <div class="theme-box  {{template.CodeName == config_template ? 'current' : ''}}">
+
+
+                    {% set templateimage = imageBase ~ template.CodeName ~ '.jpg' %}
+                    {% if template.custom_template %}
+                        {% set templateimage = image(template['Image']) ?  image(template['Image']) : template['Image'] %}
+                    {% endif %}
+                    <div class="img">
+                        <img src="{{ templateimage }}" class="scroll-back-image">
+                    </div>
+
+                    <div class="info">
+                        <div class="up">
+                            <p class="name">{{ template.Name }}</p>
+                            {% if template.CodeName == config_template %}
+                            <span class="current-label">
+                                {{ lang('current_template') }}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="caption">
+                        {% if template.CodeName == config_template %}
+                        <div class="btns">
+                            <a href="{{ link('teditor/designeditor') }}" class="button blue-dark-btn w-100">
+                                {{lang('label_edit_template')}}
+                            </a>
+                            {% if template.custom_template != 1 %}
+                                <a target="_blank" onclick="trackUrl('Preview Template',{'Template Name' :'{{ template.Name }}'})"
+                                href="{{ link('templates/preview', {'t': template.CodeName}) }}" 
+                                class="button dark-white-empty"
+                                data-toggle="tooltip" data-placement="top" title=" {{ lang('text_preview_template') }}">
+                                    <i class="fas fa-external-link-alt"></i>
+                                </a>
+                            {% endif %}
+                        </div>
+                        
+                        {% else %}
+                            
+                            {% if template.custom_template == 1 %}
+                            <div class="btns" style="width: 100%;">
+                                {% if template.template_source and template.template_source == 'external' %}
+                                    {% if template.is_installed == 1 and template.CodeName == config_template %}
+                                    <button id="apply" class="btn btn-default btn-block">{{ lang('text_already_applied') }}</button>
+                                    {% else %}
+                                        {% if template.disabled == 1 %}
+                                            <button id="apply" onclick=" window.open('{{ link('account/charge') }}','_self');" data-template-id="{{ template.id }}" class="button orange-white-empty">
+                                                <i class="fas fa-lock"></i> {{ lang('text_plan') }}
+                                            </button>
+                                        {% else %}
+                                            <button id="apply" onclick="Pace.restart();importExternalTemplate(this);" data-template-id="{{ template.id }}" data-template-name="{{ template.CodeName}}" data-template-type="external" class="button blue-white-empty">
+                                                {{ lang('text_apply_template') }}
+                                            </button>
+                                        {% endif %}
+                                    {% endif %}
+                                {% else %}
+                                    {% if template.disabled == 1 %}
+                                        <button id="apply" onclick=" window.open('{{ link('account/charge') }}','_self');" data-template-id="{{ template.id }}" class="button orange-white-empty">
+                                            <i class="fas fa-lock"></i> {{ lang('text_plan') }}
+                                        </button>
+                                    {% else %}
+                                        <button id="apply" onclick="Pace.restart();changeCustomTemplate(this);" data-template-id="{{ template.id }}" data-template-name="{{ template.CodeName}}" class="button blue-white-empty" style="width: calc(100% - 37px);">
+                                                {{ lang('text_apply_template') }}
+                                        </button>
+                                    {% endif %}
+                                {% endif %}
+                                {% if not template.template_source or template.template_source != 'external' %}
+                                    <a href="{{ link('templates/customize', 'template=' ~ template.id) }}" class="button dark-white-empty"
+                                    data-toggle="tooltip" data-placement="top" title=" {{ lang('text_edit_template') }}">
+                                        <i class="icon-pencil"></i>
+                                    </a>
+                                {% endif %}
+                                {% if template.custom_template == 1 and template.CodeName != config_template %}
+                                    {% if template.template_source is not defined %}
+                                            <a data-popup="tooltip" class="button red-white-empty"
+                                                data-toggle="modal" data-target="#modal-destroy"
+                                                data-template-id="{{ template.id }}"
+                                                data-template-name="{{ template['CodeName'] }}"
+                                                data-original-title="{{ lang('text_delete_template') }}">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </a>
+                                    {% elseif template.is_installed == 1 and template.CodeName != config_template %}
+                                        <a data-popup="tooltip"
+                                            class="button red-white-empty"
+                                            data-toggle="modal"
+                                            data-target="#modal-delete-theme"
+                                            data-template-id="{{ template.internal_template_id ?: template.id }}"
+                                            data-template-name="{{ template['CodeName'] }}"
+                                            data-original-title="{{ lang('text_delete_template') }}">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </a>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                            {% else %}
+                                <div id="apply" class="btns" style="width: 100%;">
+                                    {% if template.disabled  %}
+                                        {#***************** Start ExpandCartTracking #347719  ****************#}
+
+                                        <button id="apply"
+                                                onclick="trackUrl('Upgrade Template',{'Template Name' :'{{ template.Name }}'});
+                                                window.open('{{ link('account/charge') }}','_self');" data-template-id="{{ template.id }}"
+                                                class="button orange-white-empty">
+                                            <i class="fas fa-lock"></i> {{ lang('text_plan') }}
+                                        </button>
+                                        {#***************** End ExpandCartTracking #347719  ****************#}
+
+                                    {% else %}
+                                        <button onclick="Pace.restart();changeTemplate(this);"
+                                                class="button blue-white-empty" style="width: calc(100% - 37px);">
+                                                {{ lang('text_apply_template') }}
+                                        </button>
+                                    {% endif %}
+                                    {#***************** Start ExpandCartTracking #347693  ****************#}
+
+                                    <a target="_blank" onclick="trackUrl('Preview Template',{'Template Name' :'{{ template.Name }}'})"
+                                    href="{{ link('templates/preview', {'t': template.CodeName}) }}" 
+                                    class="button dark-white-empty"
+                                    data-toggle="tooltip" data-placement="top" title=" {{ lang('text_preview_template') }}">
+                                        <i class="fas fa-external-link-alt"></i>
+                                    </a>
+                                    {#***************** End ExpandCartTracking #347693  ****************#}
+
+                                </div>
+                            {% endif %}
+                        {% endif %}
+                        
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+    <input type="hidden" id="currenctTemplateId" name="currenctTemplateId" value="">
+
+    <script>
+        $(document).ready(function(){
+            $('[data-toggle="tooltip"]').tooltip() 
+            getCurrentTemplate();   
+        });
+        
+        $('#modal-reset-custom').on('show.bs.modal', (event) => {
+            let templateId = $("#currenctTemplateId").val();
+
+            $(event.currentTarget).find('#template-id').attr('data-template-id', templateId);
+        });
+
+        $('#modal-destroy').on('show.bs.modal', (event) => {
+
+            let templateId = $(event.relatedTarget).attr('data-template-id');
+
+            $(event.currentTarget).find('#template-id').attr('data-template-id', templateId);
+        });
+
+        $('#modal-delete-theme').on('show.bs.modal', (event) => {
+
+            let templateId = $(event.relatedTarget).attr('data-template-id');
+
+            $(event.currentTarget).find('#template-id').attr('data-template-id', templateId);
+        });
+
+        /**
+         * Get current applied template
+         */
+        function getCurrentTemplate(){
+            $.ajax({
+                url: '{{ link('templates/template/getCurrentTemplate') }}',
+                success:function(data){
+                    template_data = JSON.parse(data)
+                    $("#currenctTemplateId").val(template_data['id'])
+                }
+            });
+        }
+        function updateExternalTemplate(that) {
+            var that = $(that);
+
+            that.parents('.modal').modal('toggle');
+
+            $('.errors-container').html('');
+
+            showContainerLoader();
+
+            $.ajax({
+                url: that.data('href'),
+                data: {template_id: that.data('id')},
+                dataType: 'JSON',
+                method: 'POST',
+                headers: {
+                    'X-Source-Ajax': 'true',
+                },
+                success: (r) => {
+                    if (typeof r.status != 'undefined' && r.status == 'OK') {
+                        location.reload();
+                    } else {
+                        for (i in r.errors) {
+                            let e = r.errors[i];
+                            $('.errors-container').append(`<div class="alert alert-danger">${e}</div>`);
+                            hideContainerLoader();
+                        }
+                    }
+                }
+            });
+        }
+
+        function changeCustomTemplate(that) {
+
+            var that = $(that);
+
+            showContainerLoader();
+
+            var templateId = that.data('template-id');
+            var templateName = that.data('template-name');
+
+            var resetToDef = false;
+
+            let templateType = 'uploaded';
+            if (typeof that.data('template-type') != 'undefined' && that.data('template-type') === 'external') {
+                templateType = 'external';
+            }
+
+            $.ajax({
+                url: '{{ link('templates/template/apply') }}',
+                method: 'POST',
+                data: {template_id: templateId, template_type: templateType,template_name:templateName},
+                dataType: 'JSON',
+                headers: {
+                    'X-Source-Ajax': 'true',
+                },
+                success: function (response) {
+
+                    if ( response.refresh == '1' ) {
+                        window.location.reload(window.location);
+                        return;
+                    }
+
+                    if (typeof response['status'] !== 'undefined' && response['status'] == 'success') {
+                        if (response.success == true) {
+                            $(".thumbnail.bg-green-300 #apply").fadeIn("slow", function() {
+                                $(this).replaceWith('<button id="apply" onclick="Pace.restart();changeTemplate(this);" class="btn btn-success btn-block"><i class="icon-brush position-left"></i> ' + txtApplyTemplate + '</button>');
+                            });
+
+                            $(".thumbnail.bg-green-300").fadeIn("slow", function() {
+                                $(this).find('.icon-checkmark4').remove();
+                                $(this).find('.heading-elements').remove();
+                                $(this).removeClass("bg-green-300");
+                            });
+
+                            $("#" + templateName + " .thumbnail").fadeIn("slow", function(){
+                                $(this).addClass("bg-green-300");
+                                $('.breadcrumb-elements.not-collapsible .text-bold').text($('#' + templateName + ' .panel-title').text());
+                                $('[data-target="#modal-reset-def"]').attr('tempName', templateName);
+                                $(this).find('.panel-heading').append('<div class="heading-elements"><ul class="icons-list"><li><a data-action="reload" data-popup="tooltip" data-toggle="modal" data-target="#modal-reset-def" tempname="' + templateName + '" data-original-title="' + text_reset_templ + '"></a></li></ul></div>');
+                                $(this).find('.panel-title').append('<i class="icon-checkmark4 text-white pull-left"></i>');
+                            });
+
+                            $("#" + templateName + " #apply").fadeIn("slow", function (){
+                                $(this).replaceWith('<button id="apply" class="btn btn-default btn-block">' + txtAlreadyApplied + '</button>');
+                            });
+                        }
+
+                        if (resetToDef) {
+                            $('#modal-reset-def').modal('toggle');
+                        }
+
+                        notify('Sucess', 'success', resetToDef ? text_template_reset : txtTemplateChanged);
+                    } else {
+                        $('#modal-destroy').modal('hide');
+                        that.find('#template-id').attr('data-template-id', 0);
+                    }
+                }
+            });
+        }
+
+        function resetCustomTemplate(that) {
+            var that = $(that);
+
+            $('#modal-reset-custom').modal('toggle');
+
+            showContainerLoader();
+
+            var templateId = that.data('template-id');
+
+            $.ajax({
+                url: '{{ link('templates/template/apply') }}',
+                data: {template_id: templateId},
+                method: 'POST',
+                dataType: 'JSON',
+                headers: {
+                    'X-Source-Ajax': 'true',
+                },
+                success: function (response) {
+                    if (typeof response['status'] !== 'undefined' && response['status'] == 'success') {
+                        location.reload();
+                    } else {
+                        $('#modal-destroy').modal('hide');
+                        that.find('#template-id').attr('data-template-id', 0);
+                    }
+                }
+            });
+        }
+
+        function deleteCustomTemplate(that) {
+
+            var that = $(that);
+
+            $('#modal-destroy').modal('toggle');
+
+            showContainerLoader();
+
+            var templateId = that.data('template-id');
+
+            $.ajax({
+                url: '{{ link('templates/template/remove') }}',
+                data: {template_id: templateId},
+                dataType: 'JSON',
+                headers: {
+                    'X-Source-Ajax': 'true',
+                },
+                success: function (response) {
+                    if (typeof response['status'] !== 'undefined' && response['status'] == 'success') {
+                        location.reload();
+                    } else {
+                        $('#modal-destroy').modal('hide');
+                        that.find('#template-id').attr('data-template-id', 0);
+                    }
+                }
+            });
+        }
+
+        function unlinkExternalTemplate(that) {
+
+            var that = $(that);
+
+            $('#modal-delete-theme').modal('toggle');
+
+            showContainerLoader();
+
+            var templateId = that.data('template-id');
+
+            $.ajax({
+                url: '{{ link("templates/externaltemplates/unlinkTheme") }}',
+                data: {template_id: templateId},
+                dataType: 'JSON',
+                method: 'POST',
+                headers: {
+                    'X-Source-Ajax': 'true',
+                },
+                success: function (response) {
+                    if (typeof response['status'] !== 'undefined' && response['status'] == 'OK') {
+                        location.reload();
+                    } else {
+                        $('#modal-destroy').modal('hide');
+                        that.find('#template-id').attr('data-template-id', 0);
+                    }
+                }
+            });
+        }
+
+        function importExternalTemplate(_t) {
+            let t = $(_t),
+                tid = t.data('template-id');
+
+            t.attr('disabled', true);
+
+            showContainerLoader();
+
+            $.ajax({
+                url: '{{ link("templates/externaltemplates/import") }}',
+                method: 'POST',
+                dataType: 'JSON',
+                data: {template_id: tid},
+                success: (r) => {
+                    if (typeof r.status != 'undefined' && r.status == 'OK') {
+                        if (typeof r.isExists != 'undefined' && r.isExists == 'true') {
+                            changeCustomTemplate(_t);
+                        } else {
+                            schemaGaurd(r);
+                        }
+                    }
+                }
+            });
+        }
+
+        function schemaGaurd(data) {
+            $.ajax({
+                url: '{{ link('templates/import/schemaGaurd') }}',
+                type: 'POST',
+                data: {template: data['template'], basefile: data['base']},
+                dataType: 'JSON',
+                success: function (response) {
+                    if (response['status'] == 'success') {
+                        hierarchyGaurd(response);
+                    } else {
+                        handleErrors(response['errors']);
+                    }
+                }
+            });
+        }
+
+        function hierarchyGaurd(data) {
+            $.ajax({
+                url: '{{ link('templates/import/hierarchyGaurd') }}',
+                type: 'POST',
+                data: {basefile: data['baseFile'], schemaPath: data['schemaPath']},
+                dataType: 'JSON',
+                success: function (response) {
+                    if (response['status'] == 'success') {
+                        sectionGaurd(response);
+                    } else {
+                        handleErrors(response['errors']);
+                    }
+                }
+            });
+        }
+
+        function sectionGaurd(data) {
+            $.ajax({
+                url: '{{ link('templates/import/sectionGaurd') }}',
+                type: 'POST',
+                data: {basefile: data['baseFile'], schemaPath: data['schemaPath']},
+                dataType: 'JSON',
+                headers: {
+                    'X-Source-Ajax': 'true'
+                },
+                success: function (r) {
+                    if (r['status'] == 'success') {
+                        // window.location = r['href'];
+                        changeCustomTemplate(
+                            `<span data-template-id="${r.template.id}" data-template-name="${r.template.name}"></span>`
+                        );
+                    } else {
+                        handleErrors(r['errors']);
+                    }
+                }
+            });
+        }
+    </script>
+
+    {% if pagination %}
+
+        <!-- Pagination -->
+        <div class="text-center pagination-wrapper content-group-lg pt-20"> {{ pagination }} </div>
+        <!-- /pagination -->
+
+        {% include 'includes/infinite_scroller_status.expand' %}
+
+        <script>
+            applyInfiniteScroll();
+        </script>
+    {% endif %}
+{% else %}
+    <h2 class="text-center"><i class="far fa-frown fa-2x"></i> <br>{{ lang('no_search_result') }}</h2>
+{% endif %}

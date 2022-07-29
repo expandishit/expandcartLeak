@@ -1,0 +1,553 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% set dualMenuEnabled = true %}
+
+{% block title %}
+{{ lang('heading_title_import') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+{{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+
+{% block secondarymenu %}
+    {% include 'module/amazon_connector/menu.expand' with {'active': '#am_map_order'} %}
+{% endblock secondarymenu %}
+
+{% block headelements %}
+
+    <a href="{{ button_back_link }}" title="{{ lang('button_back') }}" class="btn btn-info"><i class="fa fa-reply" aria-hidden="true"></i> {{ lang('button_back') }}</a>
+        
+{% endblock headelements %}
+
+{% block content %}
+  
+<style>
+.daterangepicker.dropdown-menu{
+  z-index: 9000;
+}
+</style>
+
+<div id="content">
+    <link href="view/stylesheet/csspin.css" rel="stylesheet" type="text/css"/>
+    <style type="text/css">
+      .alert-success{
+        color: green;
+      }
+      .cp-round::before, .cp-round::after{
+        width: 35px;
+        left:8px;
+        height: 35px;
+        margin-top: 25px;
+      }
+      .btn-success{
+        background-color:#6ABD6A;
+        color:#FFF;
+        border-style: solid;
+        border-width: 1px;
+        border-color: #6ABD6A;
+        border-bottom-width: 3px;
+      }
+      .btn-success:hover{
+        background-color:#e6e6e6;
+        color:#333;
+        border-style: solid;
+        border-width: 1px;
+        border-color: #adadad;
+        border-bottom-width: 3px;
+      }
+      .order_import_section, #profiler_order, #amazonOrderList, #start_import_all_order, .result_report, #createOrderProcessBar{
+        display: none;
+      }
+    </style>
+
+    <div class="col-md-12">
+      <div class="panel panel-default">
+        <div class="collapse in" id="feed-panel">
+            <?php if ($error_warning) { ?>
+            <div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> <?php echo $error_warning; ?>
+              <button type="button" class="close" data-dismiss="alert">&times;</button>
+            </div>
+            <?php } ?>
+          <div class="panel-heading"  style="display:inline-block;width:100%;">
+            <h5 class="panel-title"><i class="fa fa-info-circle" aria-hidden="true"></i> 
+            {{ lang('info_about_import_tab') }}</h5>
+          </div>
+          <div class="panel-body">
+            <ul>
+              <li>  {{ lang('text_tab_info1') }}</li>
+              <li>  {{ lang('text_tab_info2') }}</li>
+              <li>  {{ lang('text_tab_info3') }}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-12">
+      <div class="panel panel-default">
+        <div class="collapse in" id="feed-panel">
+          <div class="panel-heading" style="display:inline-block;width:100%;">
+            <h5 class="panel-title"><i class="fa fa-refresh" aria-hidden="true"></i> {{ lang('sync_order_tab') }}</h5>
+          </div>
+          <div class="panel-body" id="generate-report-order">
+            <div class="alert alert-warning"> <i class="fa fa-info-circle" aria-hidden="true"></i> {{ lang('info_report_id') }}</div>
+
+            <div class="panel-body">
+              <button type="button" class="btn btn-info" id="generate_order_report_id"><i class="fa fa-plus-circle" aria-hidden="true"></i> {{ lang('button_report_id') }}</button>
+
+              <div class="row form-group order_import_section">
+
+                <div class="col-sm-12 form-horizontal text-right" id="createOrderProcessBar">
+                  <div class="col-sm-12 form-group">
+                    <label class="col-sm-2 control-label">Processing...</label>
+                    <div class="col-sm-10" style="margin-top:10px">
+                      <div class="progress">
+                        <div id="progress-bar-createorder" class="progress-bar" style="width: 0%;"></div>
+                      </div>
+                      <div id="progress-text-createorder"></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-sm-12 col-md-6 col-lg-6" style="margin-top:5px;">
+                  <button type="button" class="btn btn-warning" id="import_amazon_order" data-toggle="modal" data-target=".order_details_model"><i class="fa fa-refresh" aria-hidden="true"></i>  {{ lang('button_import_order') }}</button>
+                </div>
+                <div class="col-sm-12 col-md-6 col-lg-6" style="margin-top:5px;">
+                  <button type="button" class="btn btn-warning" id="create_amazon_order" data-total="<?php echo count($total_imported_order); ?>"><i class="fa fa-refresh" aria-hidden="true"></i>  {{ lang('button_create_order') }}</button>
+                </div>
+                <div class="col-sm-12 col-md-6 col-lg-6" style="margin-top:5px;">
+                  <button type="button" class="btn btn-warning" data-toggle="modal" data-target=".order_id_model" id="import_order_one_by_one"><i class="fa fa-check-square-o" aria-hidden="true"></i>  {{ lang('button_import_order_by_id') }}</button>
+                </div>
+              </div>
+            </div>
+          
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-12">
+      <div class="panel panel-default" id="profiler_order">
+        <div class="collapse in" id="feed-panel">
+     
+          <div class="panel-heading"  style="display:inline-block;width:100%;">
+            <h5 class="panel-title"><i class="fa fa-list"></i> {{ lang('entry_order_response') }}</h5>
+          </div>
+          <div class="panel-body profiler_order_body">
+            <div class="alert alert-warning"><i class="fa fa-exclamation-triangle" aria-hidden="true"></i> {{ lang('error_not_referesh') }}</div>
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+    <!-- Models -->
+    <div class="modal fade order_details_model" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="gridSystemModalLabel"><strong>{{ lang('entry_order_details') }}</strong></h4>
+          </div>
+          <div class="modal-body">
+            <div class="alert alert-warning"><i class="fa fa-exclamation-triangle" aria-hidden="true"></i> {{ lang('error_not_referesh') }}</div>
+            <form id="importOrderList" class="form-horizontal" method="post" enctype="multipart/form-data">
+                <input type="hidden" name="next_token"  value="" />
+                <div class="form-group required" style="margin-left: 0px;margin-right: 0px;">
+                  <label class="control-label" style="margin-bottom: 10px;">{{ lang('entry_order_from') }}></label>
+                  <div class="col-sm-12">
+                     <input type="text" class="form-control daterange-basic"
+                      value="{{ filter_date_start }} - {{ filter_date_end }}" id="date_all"
+                      name="date_all">
+                  </div>
+                </div>
+            </form>
+
+            <div class="result_report" style="height:350px;overflow-x:auto;"></div>
+          </div>
+          <div class="modal-footer">
+            <span class="demo-spin" style="color: #1e91cf;position: relative;top: 6px;"><i class="fa  fa-spin fa-2x fa-fw"></i></span>
+            <button type="button" id="import_all_order" class="btn btn-primary">{{ lang('button_import') }}</button>
+            <button type="button" id="start_import_all_order" class="btn btn-primary">{{ lang('button_import') }}</button>
+            <button type="button" class="btn btn-default" data-dismiss="modal">{{ lang('button_close') }}</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade order_id_model" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="gridSystemModalLabel"><strong>{{ lang('heading_import_order') }}</strong></h4>
+          </div>
+          <div class="modal-body">
+
+          <form id="amazonOrderOneByOne" class="form-horizontal" method="post" enctype="multipart/form-data">
+
+            <div class="form-horizontal">
+                <div class="row form-group">
+                  <label class="col-sm-2 control-label"><?php echo "Processing..."; ?></label>
+                  <div class="col-sm-10" style="margin-top:10px">
+                    <div class="progress">
+                      <div id="progress-bar-importorder" class="progress-bar" style="width: 0%;"></div>
+                    </div>
+                    <div id="progress-text-importorder"></div>
+                  </div>
+                </div>
+
+              <div class="form-group required">
+                <label class="control-label" style="margin-bottom: 10px;">{{ lang('text_order_id') }}</label>
+                <div class="col-sm-12">
+                    <input type="text" name="selected[]" value="" placeholder="{{ lang('entry_order_id')}}" class="form-control" />
+                </div>
+              </div>
+            </div>
+          </form>
+          </div>
+          <div class="modal-footer">
+            <span class="demo-spin" style="color: #1e91cf;position: relative;top: 6px;"><i class="fa  fa-spin fa-2x fa-fw"></i></span>
+            <button type="button" id="import_by_orderId" class="btn btn-primary">{{ lang('button_import') }}</button>
+            <button type="button" class="btn btn-default" data-dismiss="modal">{{ lang('button_close') }}</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+{% endblock %}
+{% block scripts %}
+
+
+<script type="text/javascript">
+    // Order Generate Report Id section
+    var createRequests    = []; var totalCreatedOrder = 0; var totalImportedOrders = 0;
+         
+    $(document).ready(function(){
+          $('#generate_order_report_id').on('click',function(){
+            account_id = {{ account_id }};
+            $.ajax({
+              url     : '{{ link("amazon/amazon_map/product/generate_report_id?account_id='+account_id+'&status=order") }}',
+              dataType:'json',
+              type    : 'POST',
+              cache   : false,
+              beforeSend: function()
+              {
+                  startLoadingScreen();
+              },
+              complete: function() {
+                 removeLoadingScreen();
+              },
+              success: function(json) {
+                if (json['error']) {
+                  html = '<div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i>  '+ json['error']+'<button type="button" class="close" data-dismiss="alert">&times;</button></div>';
+                  $('#generate-report-order').prepend(html);
+                }
+                if (json['success']){
+                  $('#generate-report-order .alert').remove();
+                  html = '<div class="alert alert-success"><i class="fa fa-exclamation-circle"></i>  '+ json['success']['message']+'<button type="button" class="close" data-dismiss="alert">&times;</button></div>';
+                  $('#generate-report-order').prepend(html);
+                  $('.order_import_section').find('input').attr('value', json['success']['report_id']);
+                  $('#generate_order_report_id').css('display','none');
+                  $('.order_import_section').css('display','block');
+                }
+              },
+              error: function(xhr, ajaxOptions, thrownError) {
+                alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+              }
+            });
+        });
+
+        $('.daterange-basic').daterangepicker({
+
+            "autoApply": true,
+            // applyClass: 'bg-slate-600',
+            // cancelClass: 'btn-default',
+            ranges: locales['drp_ranges'],
+            locale: locales['drp_locale'],
+            opens: locales['drp_direction']
+
+        });
+
+        $('.daterangepicker-inputs').addClass('hidden');
+        
+          // Import all amazon orders and save to opencart table
+        var countSavedOrder = 0;
+        $("#import_all_order").on("click", function(){
+          countSavedOrder = 0;
+          console.log($('input[name="date_all"]').val());
+          $("#importOrderList").find('.text-danger').remove();
+          $("#importOrderList").find('.alert-success, .alert-danger').remove();
+          var args        = [];
+          var getDateRange =  $('input[name="date_all"]').val();
+              args['order_daterange'] = getDateRange;
+
+            if(getDateRange.length != 0){
+              jQuery.ajax({
+                  url: "{{ link('amazon/amazon_map/order/getOrderList?account_id=' ~ account_id ~ '')}}",
+                  data: {
+                      'amazon_order_daterange': getDateRange, 
+                      'next_token'        : ''
+                  },
+                  dataType:'json',
+                  type:'POST',
+                  beforeSend: function() {
+                    $('#profiler_order .profiler_order_body, .result_report').find('.alert-success, .alert-danger').remove();
+                    $(".demo-spin > .fa").addClass('fa-cog');
+                  },
+                  success: function(json) {
+                    if (json.warning) {
+                        if(json.warning['error_date_range']){
+                            $('#importOrderList').find('input[name="date_all"]').parent().parent().append('<div class="text-danger"> '+json.warning['error_date_range']+'</div>');
+                        }
+                        if(json.warning['error']){
+                            $('#importOrderList').append('<div class="alert alert-danger"><i class="fa fa-times" aria-hidden="true"></i>   '+json.warning['error']+'<button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+                        }
+                        $(".demo-spin > .fa").removeClass('fa-cog');
+                    }else{
+                        $('#importOrderList').css('display', 'none');
+                        $('.result_report').css('display', 'block');
+                        if (json.success) {
+                            countSavedOrder = countSavedOrder + json.success;
+                            $('.result_report').append('<div class="alert alert-success"><i class="fa fa-exclamation-circle" aria-hidden="true"></i>  Success: '+countSavedOrder+' amazon order(s) imported!<button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+                        }
+                        if (json.error) {
+                            for (i in json.error) {
+                              var html = '';
+                                html = '<div class="alert alert-danger"><i class="fa fa-times" aria-hidden="true"></i>   '+json.error[i]['message']+'<button type="button" class="close" data-dismiss="alert">&times;</button></div>';
+                                $('.result_report').append(html);
+                            }
+                        }
+                        if(json.next_token){
+                            nextOrderArray(args, json.next_token, countSavedOrder);
+                        }else{
+                            $('.result_report').append('<div class="alert alert-success"><i class="fa fa-exclamation-circle" aria-hidden="true"></i>  Success: Total '+countSavedOrder+' amazon order(s) imported in opencart store from amazon, Click on <b>Create Imported Order</b> button to create imported product to opencart store! <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+                            $('body .order_import_section').parent().before('<div class="alert alert-success"><i class="fa fa-exclamation-circle" aria-hidden="true"></i>  Success: Total '+countSavedOrder+' amazon order(s) imported in opencart store from amazon, Click on <b>Create Imported Order</b> button to create imported product to opencart store! <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+                            $(".demo-spin > .fa").removeClass('fa-cog');
+                            $('#create_amazon_order').attr('data-total', json.total_order);
+                        }
+                    }
+                  },
+                  error: function(xhr, ajaxOptions, thrownError) {
+                    alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                  }
+              });
+            }
+        });
+
+        // import and create imported amazon single order to opencart store
+        $("#import_by_orderId").on("click", function(e){
+          e.preventDefault();
+          var getOrderId = $('#amazonOrderOneByOne').find('input').val();
+          if(getOrderId.length > 10 && getOrderId.length < 25){
+              $('#progress-bar-importorder').css('width', '0%');
+              $('#progress-bar-importorder').removeClass('progress-bar-danger progress-bar-success');
+              $('#progress-text-importorder').html('<div class="text-info text-left"><?php echo $text_currently_importorder; ?></div>');
+
+              jQuery.ajax({
+                  url   : '{{ link("amazon/amazon_map/order/importSingleOrder") }}',
+                  data  : {
+                            'account_id'      : '{{ account_id }}',
+                            'amazon_order_id' : getOrderId,
+                          },
+                  dataType: 'json',
+                  type    : 'POST',
+                  beforeSend: function() {
+                      $('#amazonOrderOneByOne').find('.text-danger').remove();
+                      $('#amazonOrderOneByOne').find('.alert').remove();
+                  },
+                  success: function(json) {
+                      if (json.error_failed) {
+                          $('#progress-bar-importorder').addClass('progress-bar-danger');
+                          $('#progress-text-importorder').html('<div class="text-danger">' + json.error_failed + '</div>');
+                          $("#amazonOrderOneByOne .form-horizontal").prepend('<div class="alert alert-danger"><i class="fa fa-check-circle"></i> '+json.error_failed+' <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+                      }
+                      if(json.success){
+                          $('#progress-bar-importorder').addClass('progress-bar-success');
+                          $('#progress-text-importorder').html('<div class="text-success">' + json.success + '</div>');
+                          $("#amazonOrderOneByOne .form-horizontal").prepend('<div class="alert alert-success"><i class="fa fa-check-circle"></i> '+json.success+' <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+                      }
+                      $('#progress-bar-importorder').css('width', '100%');
+                  },
+                  error: function(xhr, ajaxOptions, thrownError) {
+                    alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                  }
+              });
+          }else{
+              $('#amazonOrderOneByOne').find('.text-danger').remove();
+              $('#amazonOrderOneByOne').find('input').parent().append('<div class="text-danger">Warning: Provide valid Amazon order Id!</div>');
+          }
+        });
+
+         // create imported amazon orders to opencart store
+    
+          var countOrder  = 1;
+          $('#create_amazon_order').on('click', function(e){
+              e.preventDefault();
+              totalCreatedOrder = totalImportedOrders = 0;
+              totalImportedOrders = $('#create_amazon_order').attr('data-total');
+
+              $('#createOrderProcessBar').css('display', 'block');
+              if (typeof timer != 'undefined') {
+                  clearInterval(timer);
+              }
+              timer = setInterval(function() {
+                      clearInterval(timer);
+              // Reset everything
+              $('.alert').remove();
+              $('#progress-bar-createorder').css('width', '0%');
+              $('#progress-bar-createorder').removeClass('progress-bar-danger progress-bar-success');
+              $('#progress-text-createorder').html('<div class="text-info text-left"><?php echo "Amazon order(s) create processing..."; ?></div>');
+              $.ajax({
+                  url     : '{{ link("amazon/amazon_map/order/createOrder") }}',
+                  data    : {
+                              'account_id' : '{{ account_id }}',
+                              'count'      : countOrder,
+                            },
+                  dataType: 'json',
+                  type    : 'POST',
+                  beforeSend: function() {
+                    $('#profiler_order').css('display', 'block');
+                    $('#profiler_order .profiler_order_body').find('.alert-danger, .alert-success').remove();
+                    $('.block_div').css('display','block');
+                    $('.container-fluid > .alert').remove();
+                  },
+                  complete:function() {
+                      NextCreateStep();
+                  },
+                  success: function(jsonAmazonOrd) {
+                        if (jsonAmazonOrd.error_failed) {
+                            $('#progress-bar-createorder').addClass('progress-bar-danger');
+                            $('#progress-text-createorder').html('<div class="text-danger">' + jsonAmazonOrd.error_failed + '</div>');
+                            $('#profiler_order .profiler_order_body').append('<div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> '+jsonAmazonOrd.error_failed+' <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+                        }else{
+                            if(jsonAmazonOrd.error){
+                                $('#profiler_order .profiler_order_body').append('<div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> '+jsonAmazonOrd.error+' <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+                            }
+                            if(jsonAmazonOrd.success){
+                                $('#profiler_order .profiler_order_body').append('<div class="alert alert-success"><i class="fa fa-check-circle"></i> '+jsonAmazonOrd.success+' <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+                                totalCreatedOrder = totalCreatedOrder + 1;
+                            }
+                            for(countOrder = 2; countOrder <= totalImportedOrders; countOrder++) {
+                                createRequests.push({
+                                    url     : '{{ link("amazon/amazon_map/order/createOrder") }}',
+                                    data    : {
+                                              'account_id' : '{{ account_id }}',
+                                              'count'      : countOrder,
+                                            },
+                                    dataType: 'json',
+                                    type    : 'POST',
+                                    success :   function(json_response){
+                                        if(json_response.error){
+                                            $('#profiler_order .profiler_order_body').append('<div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> '+json_response.error+' <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+                                        }
+                                        if(json_response.success){
+                                            $('#profiler_order .profiler_order_body').append('<div class="alert alert-success"><i class="fa fa-check-circle"></i> '+json_response.success+' <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+                                            totalCreatedOrder = totalCreatedOrder + 1;
+                                        }
+                                    },
+                                });
+                            }
+                        }
+                      },
+                      error: function(xhr, ajaxOptions, thrownError) {
+                        alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                      }
+                  });
+              }, 500);
+          });
+
+
+
+    });
+
+//--></script>
+
+<script type="text/javascript"><!--
+
+  function nextOrderArray(args, nxt_token, countSavedOrder) {
+      $.ajax({
+          url: "{{ link('amazon/amazon_map/order/getOrderList?account_id=' ~ account_id ~ '')}}",
+          data: {
+            'amazon_order_daterange' : args['order_daterange'],
+            'next_token'        : nxt_token
+          },
+          type: 'POST',
+          dataType:'JSON',
+          success: function (response) {
+              if(response.warning){
+                  if(response.warning['error']){
+                      $('#importOrderList').append('<div class="alert alert-danger"><i class="fa fa-times" aria-hidden="true"></i>   '+response.warning['error']+'<button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+                  }
+                  $('.result_report').append('<div class="alert alert-success"><i class="fa fa-exclamation-circle" aria-hidden="true"></i>  Success: Total '+countSavedOrder+' amazon order(s) imported in opencart store from amazon, Click on <b>Create Imported Order</b> button to create imported product to opencart store! <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+
+                  $('body .order_import_section').parent().before('<div class="alert alert-success"><i class="fa fa-exclamation-circle" aria-hidden="true"></i>  Success: Total '+countSavedOrder+' amazon order(s) imported in opencart store from amazon, Click on <b>Create Imported Order</b> button to create imported product to opencart store! <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+
+                  $(".demo-spin > .fa").removeClass('fa-cog');
+                  $('#create_amazon_order').attr('data-total', response.total_order);
+              }else{
+                  if (response.success) {
+                      countSavedOrder = countSavedOrder + response.success;
+                      $('.result_report').append('<div class="alert alert-success"><i class="fa fa-exclamation-circle" aria-hidden="true"></i>  Success: '+countSavedOrder+' amazon order(s) imported!<button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+                  }
+                  if(response.next_token){
+                      if (response.error) {
+                          for (i in response.error) {
+                            var html = '';
+                              html = '<div class="alert alert-danger"><i class="fa fa-times" aria-hidden="true"></i>   '+response.error[i]['message']+'<button type="button" class="close" data-dismiss="alert">&times;</button></div>';
+                              $('.result_report').append(html);
+                          }
+                      }
+                      nextOrderArray(args, response.next_token, countSavedOrder);
+                  }else{
+                      $('.result_report').append('<div class="alert alert-success"><i class="fa fa-exclamation-circle" aria-hidden="true"></i>  Success: Total '+countSavedOrder+' amazon order(s) imported in opencart store from amazon, Click on <b>Create Imported Order</b> button to create imported product to opencart store! <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+                      $('body .order_import_section').parent().before('<div class="alert alert-success"><i class="fa fa-exclamation-circle" aria-hidden="true"></i>  Success: Total '+countSavedOrder+' amazon order(s) imported in opencart store from amazon, Click on <b>Create Imported Order</b> button to create imported product to opencart store! <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+                      $(".demo-spin > .fa").removeClass('fa-cog');
+                      $('#create_amazon_order').attr('data-total', response.total_order);
+                  }
+              }
+          },
+          error: function(xhr, ajaxOptions, thrownError) {
+            alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+          }
+      });
+  }
+//--></script>
+
+<script type="text/javascript"><!--
+
+  var NextCreateStep = function(){
+      if (createRequests.length) {
+          $('#progress-bar-createorder').css('width', (100 - (createRequests.length / totalImportedOrders) * 100) + '%');
+          $.ajax(createRequests.shift()).then(NextCreateStep);
+      } else {
+          $('#progress-bar-createorder').css('width', '100%');
+          if(totalCreatedOrder != 0){
+              $('#progress-text-createorder').html('<div class="text-success"><?php echo "Total '+totalCreatedOrder+' amazon order(s) created to opencart store from amazon store!" ?></div>');
+              $('#progress-bar-createorder').addClass('progress-bar-success');
+          }else{
+              $('#progress-text-createorder').html('<div class="text-danger"><?php echo "Total '+totalCreatedOrder+' amazon order(s) created to opencart store from amazon store!" ?></div>');
+              $('#progress-bar-createorder').addClass('progress-bar-danger');
+          }
+          $('#profiler_order .profiler_order_body').append('<div class="alert alert-success"><i class="fa fa-check-circle"></i> <?php echo "Total '+totalCreatedOrder+' amazon order(s) created to opencart store from amazon store!" ?> <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+
+          $('#profiler_order .profiler_order_body').append('<div class="alert alert-info"><i class="fa fa-check-circle"></i> Finished Execution <button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+          $('.block_div').css('display','none');
+      }
+  };
+//--></script>
+
+<script type="text/javascript"><!--
+
+$(document).on("keypress", ":input:not(textarea)", function(event) {
+    if (event.keyCode == 13) {
+        event.preventDefault();
+    }
+});
+//--></script>
+
+{% endblock %}

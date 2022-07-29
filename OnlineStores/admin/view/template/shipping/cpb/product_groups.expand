@@ -1,0 +1,142 @@
+<style>
+    .setting, .input-group, .rule {
+        margin-bottom: 5px;
+    }
+
+    .rule {
+        font-size: 11px;
+    }
+
+    .rule select, .rule input {
+        display: inline-block;
+        font-size: inherit;
+        padding: 0 5px !important;
+        height: 2.5em;
+    }
+
+    .rule input[type="text"] {
+        width: auto !important;
+    }
+
+    .collapsed .rule {
+        padding-bottom: 8px;
+    }
+
+    input[type="text"].short {
+        width: 42px !important;
+    }
+</style>
+
+
+<div class="col-md-12">
+    <div class="panel panel-flat">
+        <div class="panel-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th>{{ lang('column_action') }}</th>
+                        <th>{{ lang('column_sort_order') }}</th>
+                        <th>{{ lang('column_name') }}</th>
+                        <th>{{ lang('column_group_members') }}</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for key,product_group in setting['product_group'] %}
+                        <tr class="product_group">
+                            <td>
+                                <div class="setting">
+                                    <a class="btn btn-warning add-button" data-help="{{ lang('text_copy') }}"
+                                       onclick="saveRow(copyRow($(this).parents('tr'))); $('.tooltip').hide();"><i
+                                                class="fa fa-copy fa-lg fa-fw"></i></a>
+                                </div>
+
+                                <div class="setting">
+                                    <a class="btn btn-danger" data-help="{{ lang('text_delete') }}"
+                                       onclick=" removeRow($(this).parents('tr'))"><i
+                                                class="fa fa-trash-alt fa-lg fa-fw"></i></a>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="setting">
+                                    <input class="form-control short" name="product_group_{{ key }}_sort_order"
+                                           id="input-product_group_{{ key }}_sort_order"
+                                           data-help="{{ lang('help_product_group_sort_order') }}"
+                                           maxlength="2" value="{{ saved['product_group_' ~ key ~ '_sort_order'] }}"
+                                           type="text">
+                                </div>
+                            </td>
+                            <td>
+                                <div class="setting">
+                                    <input class="form-control " name="product_group_{{ key }}_name"
+                                           id="input-product_group_{{ key }}_name"
+                                           data-help="{{ lang('help_product_group_name') }}"
+                                           value="{{ saved['product_group_' ~ key ~ '_name'] }}"
+                                           type="text">
+                                </div>
+                            </td>
+                            <td>
+                                <div class="setting typeahead-block">
+                                    {{ lang('text_autocomplete_from') }}
+                                    <select class="nosave form-control" style="margin: 0 0 5px 0"
+                                            data-help="{{ lang('help_autocomplete_from') }}">
+                                        <option value="all">{{ lang('text_all_database_tables') }}</option>
+                                        {% for typeahead in typeaheads %}
+                                            <option value="{{ typeahead }}">{{ typeahead }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <br/>
+                                    <input class="nosave form-control typeahead"
+                                           data-key="product_group_{{ key }}_member"
+                                           data-type="{{ setting['typeahead'] is defined ? setting['typeahead'] : 'typeahead' }}"
+                                           placeholder="{{ lang('placeholder_typeahead') }}"
+                                           data-help="{{ lang('help_typeahead') }}"
+                                           type="text">
+                                </div>
+                                <div class="product-group-scrollbox typeahead-block">
+                                    {% set scrollbox_list = [] %}
+                                    {% for saved_key,saved_value in saved %}
+                                        {% if 'product_group_' ~ key ~ '_member' in saved_key %}
+                                            {% if saved_value is iterable %}
+                                                {% for key,value in saved_value %}
+                                                    {% set scrollbox_list = scrollbox_list|merge({(value): (saved_key ~ '[]')}) %}
+                                                {% endfor %}
+                                            {% else %}
+                                                {% set scrollbox_list = scrollbox_list|merge({(saved_value): saved_key}) %}
+                                            {% endif %}
+                                        {% endif %}
+                                    {% endfor %}
+                                    {#uksort($scrollbox_list, 'strcasecmp');#}
+
+                                    {% for saved_value,saved_key in scrollbox_list %}
+                                        <div>
+                                            <a class="btn btn-danger btn-xs" data-help='{{ lang("button_delete") }}'
+                                               onclick="removeRow($(this).parent())"><i
+                                                        class="fa fa-trash-alt fa-lg"></i>
+                                            </a>
+                                            {{ saved_value }}
+                                            <input type="hidden" class="form-control" name="{{ saved_key }}"
+                                                   value="{{ saved_value }}"/>
+                                            <span style="display: none">{{ saved_value }}</span>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                    <tfoot>
+                    <tr>
+                        <td colspan="10">
+                            <a class="btn btn-primary add-button"
+                               onclick="saveRow(clearRow(copyRow($(this).parents('table').find('tbody tr:last-child')), 'soft'))">
+                                <i class="fa fa-plus pad-right-sm"></i> {{ lang('button_add_product_group') }}
+                            </a>
+                        </td>
+                    </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

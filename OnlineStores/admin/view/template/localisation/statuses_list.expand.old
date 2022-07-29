@@ -1,0 +1,534 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% set dualMenuEnabled = false %}
+
+{% block title %}
+{{ lang('heading_title') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+{{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block scripts %}
+<script>
+
+    function showNotification(res){
+        var opts = {
+            title: res.title,
+            text: res.message,
+            //addclass: "bg-primary",
+        };
+        switch (res.type) {
+            case 'error':
+            opts.addclass = "bg-danger";
+            opts.type = "error";
+            opts.icon = 'icon-blocked';
+            break;
+
+            case 'info':
+            opts.addclass = "bg-info";
+            opts.type = "info";
+            break;
+
+            case 'success':
+            opts.addclass = "bg-success";
+            opts.icon = "icon-checkmark3";
+            opts.type = "success";
+            break;
+        }
+        new PNotify(opts);
+    }
+    function resetModal(obj){
+        obj.find('input').val('');
+    }
+    var dt_orderStatus;
+    var dt_stockStatus;
+    
+    function removeOrderStatus(order_status_id) {
+	    confirmMessage(function () {
+		    ajax("{{ link("localisation/statuses/removeOrderStatus") }}", {order_status_id: order_status_id}, function (res) {
+			    reload(dt_orderStatus);
+                            res = JSON.parse(res);
+                            showNotification(res);
+		    });
+	    });
+    }
+
+    function editOrderStatus(order_status_id){
+        
+        ajax("{{ link("localisation/statuses/getOrderStatus") }}", {order_status_id: order_status_id}, function (res) {
+                
+                $('#insertOrderStatus').attr('id', 'updateOrderStatus');
+                var updateOrderStatus = $('#updateOrderStatus');
+                res = JSON.parse(res);
+                for (var property in res) {
+                    if (res.hasOwnProperty(property)) {
+                        $("#"+property).val(res[property]);
+                    }
+                }
+                $('#insert_order_status').modal('show');
+                updateOrderStatus.off('click').on('click', function(event){
+                    event.preventDefault();
+                    
+                    if(order_status_id){
+                        var data= updateOrderStatus.closest('form').serialize()+"&order_status_id="+order_status_id;
+                        ajax("{{ link("localisation/statuses/updateOrderStatus") }}", data, function (res) {
+                            reload(dt_orderStatus);
+                            res = JSON.parse(res);
+                            showNotification(res);
+                        });
+                    }
+
+                    $('#insert_order_status').modal('hide');
+                    order_status_id=null;
+                });
+            });
+    }
+
+    function removeStockStatus(stock_status_id) {
+        confirmMessage(function () {
+            ajax("{{ link("localisation/statuses/removeStockStatus") }}", {stock_status_id: stock_status_id}, function (res) {
+                            reload(dt_stockStatus);
+                            res = JSON.parse(res);
+                            showNotification(res);
+            });
+        });
+    }
+
+    function editStockStatus(stock_status_id){
+        
+        ajax("{{ link("localisation/statuses/getStockStatus") }}", {stock_status_id: stock_status_id}, function (res) {
+                
+                $('#insertStockStatus').attr('id', 'updateStockStatus');
+                var updateStockStatus = $('#updateStockStatus');
+                res = JSON.parse(res);
+                for (var property in res) {
+                    if (res.hasOwnProperty(property)) {
+                        $("#"+property).val(res[property]);
+                    }
+                }
+                $('#insert_stock_status').modal('show');
+                updateStockStatus.off('click').on('click', function(event){
+                    event.preventDefault();
+                    
+                    if(stock_status_id){
+                    //console.log(updateStockStatus.closest('form').serialize());
+                    //var data = {stock_status_id: stock_status_id, data: };
+                    var data = updateStockStatus.closest('form').serialize() + "&stock_status_id="+stock_status_id;
+                        ajax("{{ link("localisation/statuses/updateStockStatus") }}", data, function (res) {
+                            reload(dt_stockStatus);
+                            res = JSON.parse(res);
+                            showNotification(res);
+                        });
+                    }
+
+                    $('#insert_stock_status').modal('hide');
+                    stock_status_id=null;
+                });
+            });
+    }
+
+    function reload(dt) {
+	dt.ajax.reload();
+    }
+
+    $(function () {
+              $.extend($.fn.dataTable.defaults, {
+                autoWidth: false,
+                columnDefs: [{
+                    orderable: false,
+                    width: '50px',
+                }],
+                dom: '<"datatable-header"fB><"datatable-scroll-wrap"t><"datatable-footer"lip>',
+                language: locales['dt_language']
+            });
+
+        //order status part
+        dt_orderStatus = $('#dt_orderStatus').DataTable({
+            "processing": true,
+            "serverSide": true,
+            autoWidth: false,
+            language: locales['dt_language'],
+             "order": [[1, "asc"]],
+            
+            "ajax": {
+                url: '{{ link('localisation/statuses/handler_orderStatus') }}',
+                type: "post"
+            },
+            select: {
+                style: 'multi',
+                selector: 'td:first-child'
+            },
+            "columnDefs": [
+            {
+                    orderable: false,
+                    "render": function (data, type, row) {
+                    return "<input type='checkbox' class='select-checkbox' name='order_status_id[]' value='" + row.order_status_id + "' />";
+                    },
+                    "targets": 0
+            },
+            {
+            "render": function (data, type, row) {
+            return row.name;
+            },
+                    "targets": 1
+            },
+            {
+            orderable: false,
+                    "render": function (data, type, row) {
+                        return `<ul class="icons-list pull-right">
+                                <li class="dropdown">
+                                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                        <i class="icon-menu9"></i>
+                                    </a>
+                                    <ul class="dropdown-menu dropdown-menu-right">
+                                        <li><a onclick="editOrderStatus(${row['order_status_id']})"><i class='icon-pencil7'></i> ${locales['button_edit']}</a></li>
+                                        <li><a onclick="removeOrderStatus(${row['order_status_id']})"><i class='icon-trash'></i> ${locales['button_delete']}</a></li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        `;
+                    },
+                    "targets": 2
+            }
+            ],
+             buttons: [{
+                text: "<i class='icon-trash'></i>",
+                className: 'btn btn-default bulk-delete deleteBulk',
+                action: function(e, dataTable, node, config) {
+                    var checkbox_value = [];
+		    $("input[name='order_status_id[]']").each(function () {
+			    var ischecked = $(this).is(":checked") || $(this).parents().hasClass('selected');
+			    if (ischecked) {
+				    checkbox_value.push($(this).val());
+			    }
+		    });
+		    if (checkbox_value.length > 0){
+			    confirmMessage(function () {
+				    $.ajax({
+				    url: '{{ link('localisation/statuses/removeOrderStatusBulk') }}',
+				            type: 'post',
+				            data: {order_status_ids: checkbox_value},
+				            success: function(res){
+					            reload(dt_orderStatus);
+                                                    res = JSON.parse(res);
+                                                    showNotification(res);
+				            }
+				    });
+			    });
+		    }
+                }
+            },
+            {
+            text: "<i class='icon-plus3'></i>",
+            className: 'btn btn-default btn-insert',
+            action: function (e, dataTable, node, config)
+                {
+                    resetModal($('#insert_order_status'));
+                    $("#updateOrderStatus").attr('id', 'insertOrderStatus');
+                    var orderStatusModel = $('#insert_order_status');
+                    orderStatusModel.modal('show');
+                    var insertOrderStatus = $("#insertOrderStatus");
+                    insertOrderStatus.off('click').on('click', function(event){
+                        event.preventDefault();
+                        ajax("{{ link("localisation/statuses/insertOrderStatus") }}", insertOrderStatus.closest('form').serialize(), function (res) {
+			    reload(dt_orderStatus);
+                            $('#insert_order_status').modal('hide');
+                            res = JSON.parse(res);
+                            showNotification(res);
+
+                        });
+                    });
+                }
+            }],
+        });
+
+        //stock status part
+        
+            dt_stockStatus = $('#dt_stockStatus').DataTable({
+            "processing": true,
+            "serverSide": true,
+            autoWidth: false,
+                language: locales['dt_language'],
+             "order": [[1, "asc"]],
+            
+            "ajax": {
+                url: '{{ link('localisation/statuses/handler_stockStatus') }}',
+                type: "post"
+            },
+                select: {
+                    style: 'multi',
+                    selector: 'td:first-child'
+                },
+            "columnDefs": [
+            {
+                    orderable: false,
+                    "render": function (data, type, row) {
+                    return "<input type='checkbox' class='select-checkbox' name='stock_status_id[]' value='" + row.stock_status_id + "' />";
+                    },
+                    "targets": 0
+            },
+            {
+            "render": function (data, type, row) {
+            return row.name;
+            },
+                    "targets": 1
+            },
+            {
+            orderable: false,
+                    "render": function (data, type, row) {
+                        return `<ul class="icons-list pull-right">
+                                    <li class="dropdown">
+                                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                            <i class="icon-menu9"></i>
+                                        </a>
+                                        <ul class="dropdown-menu dropdown-menu-right">
+                                            <li><a onclick="editStockStatus(${row['stock_status_id']})"><i class='icon-pencil7'></i> ${locales['button_edit']}</a></li>
+                                            <li><a onclick="removeStockStatus(${row['stock_status_id']})"><i class='icon-trash'></i> ${locales['button_delete']}</a></li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            `;
+                    },
+                    "targets": 2
+            }
+            ],
+             buttons: [{
+                text: "<i class='icon-trash'></i>",
+                className: 'btn btn-default deleteBulk bulk-delete',
+                action: function(e, dataTable, node, config) {
+                    var checkbox_value = [];
+            $("input[name='stock_status_id[]']").each(function () {
+                var ischecked = $(this).is(":checked") || $(this).parents().hasClass('selected');
+                if (ischecked) {
+                    checkbox_value.push($(this).val());
+                }
+            });
+            if (checkbox_value.length > 0){
+                confirmMessage(function () {
+                    $.ajax({
+                    url: '{{ link('localisation/statuses/removeStockStatusBulk') }}',
+                            type: 'post',
+                            data: {stock_status_ids: checkbox_value},
+                            success: function(res){
+                                reload(dt_stockStatus);
+                                res = JSON.parse(res);
+                                showNotification(res);
+                            }
+                    });
+                });
+            }
+                }
+            },
+            {
+            text: "<i class='icon-plus3'></i>",
+            className: 'btn btn-default',
+            action: function (e, dataTable, node, config)
+                {
+                    resetModal($('#insert_stock_status'));
+                    $("#updateStockStatus").attr('id', 'insertStockStatus');
+                    var stockStatusModel = $('#insert_stock_status');
+                    stockStatusModel.modal('show');
+                    var insertStockStatus = $("#insertStockStatus");
+                    insertStockStatus.off('click').on('click', function(event){
+                        event.preventDefault();
+                        ajax("{{ link("localisation/statuses/insertStockStatus") }}", insertStockStatus.closest('form').serialize(), function (res) {
+                            reload(dt_stockStatus);
+                            $('#insert_stock_status').modal('hide');
+                            res = JSON.parse(res);
+                            showNotification(res);
+
+                        });
+                    });
+                }
+            }],
+        });
+
+
+    })
+</script>
+{% endblock scripts %}
+
+
+
+
+
+
+
+
+{% block headelements %}
+{% endblock headelements %}
+
+
+{% block content %}
+<div class = 'row'>
+    <div class="col-md-6">
+        <div class="panel panel-flat">
+            <div class="panel-body">
+                <fieldset>
+                    <legend class="text-semibold">
+                        <i class="fas fa-adjust fa-lg position-left"></i>
+                        {{ lang('table_order_status') }} 
+                        <a class="control-arrow" data-toggle="collapse" data-target="#panel_orderStatus">
+                            <i class="icon-circle-down2"></i>
+                        </a>
+                    </legend>
+                    <div class="collapse in" id="panel_orderStatus" style="">
+                        <div class="form-group" id="status-group">
+                            <table class="table datatable-select-checkbox table-bordered" id="dt_orderStatus">
+                                <thead>
+                                    <tr>
+                                        <th></th>
+                                        <th class="text">{{ lang('entry_name_order_status') }}</th>
+                                        <th>{{ lang('column_action') }}</th>
+                                    </tr>
+                                </thead>
+                            </table>
+                            <span class="help-block"></span>
+                            <span class="text-muted">{{ langempty('cod-status_help') }}</span>
+                        </div>
+                    </div>
+
+                </fieldset>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="panel panel-flat">
+            <div class="panel-body">
+                <fieldset>
+                    <legend class="text-semibold">
+                        <i class="fas fa-adjust fa-lg position-left"></i>
+                        {{ lang('table_stock_status') }}
+                        <a class="control-arrow" data-toggle="collapse" data-target="#panel_stockStatus">
+                            <i class="icon-circle-down2"></i>
+                        </a>
+                    </legend>
+                    <div class="collapse in" id="panel_stockStatus" style="">
+                        <div class="form-group" id="status-group">
+                            <table class="table datatable-select-checkbox" id="dt_stockStatus">
+                                <thead>
+                                    <tr>
+                                        <th></th>
+                                        <th>{{ lang('entry_name_stock_status') }}</th>
+                                        <th>{{ lang('column_action') }}</th>
+                                    </tr>
+                                </thead>
+                            </table>
+                            <span class="help-block"></span>
+                            <span class="text-muted">{{ langempty('cod-status_help') }}</span>
+                        </div>
+                    </div>
+
+                </fieldset>
+            </div>
+        </div>
+    </div>
+
+
+</div>
+
+<!-- Modals Part -->
+<!--<button type="button" class="btn btn-default btn-sm" data-toggle="modal" data-target="#insert_order_status">Launch <i class="icon-play3 position-right"></i></button>-->
+
+<div id="insert_order_status" class="modal fade">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h5 class="modal-title">{{ lang('text_insert_order_status') }}</h5>
+            </div>
+
+            <form id='test' method='post' action="#">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                            <div class="tab-content">
+                                {% for  language in languages %}
+                                <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}" id="langTab_orderStatus{{ language['language_id'] }}">
+                                    <div class="form-group" id="name[{{ language['language_id'] }}]">
+                                        <label class="control-label">{{ lang('entry_name_order_status') }} ({{ language['name'] }}) <span class="text-danger">*</span></label>
+                                        <input class="form-control" type="text" name="orderStatus{{ language['language_id'] }}" id="orderStatus{{ language['language_id'] }}"  />
+                                        <span class="help-block"></span>
+                                        <span class="text-muted">{{ langempty('config_maintenance_msg_help') }}</span>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+
+                            <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                                {% for language in languages %}
+                                <li class="{{ loop.first ? 'active' : '' }}">
+                                    <a href="#langTab_orderStatus{{ language['language_id'] }}" data-toggle="tab" aria-expanded="false">
+                                        <img src="view/image/flags/{{ language['image'] }}" title="{{ language['name'] }}" class="pull-right">
+                                        <div> {{ language['name'] }}</div>
+                                    </a>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link" data-dismiss="modal">{{ lang('text_close') }}</button>
+                    <button id="insertOrderStatus" type="submit" class="btn btn-primary">{{ lang('button_save') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div id="insert_stock_status" class="modal fade">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h5 class="modal-title">{{ lang('text_insert_stock_status') }}</h5>
+            </div>
+
+            <form id='test' method='post' action="#">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                            <div class="tab-content">
+                                {% for  language in languages %}
+                                <?php print_r($language); ?>
+                                <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}" id="langTab_stockStatus{{ language['language_id'] }}">
+                                    <div class="form-group" id="name[{{ language['language_id'] }}]">
+                                        <label class="control-label">{{ lang('entry_name_stock_status') }} ({{ language['name'] }}) <span class="text-danger">*</span></label>
+                                        <input class="form-control" type="text" name="stockStatus{{ language['language_id'] }}" id="stockStatus{{ language['language_id'] }}"  />
+                                        <span class="help-block"></span>
+                                        <span class="text-muted">{{ langempty('config_maintenance_msg_help') }}</span>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+
+                            <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                                {% for language in languages %}
+                                <li class="{{ loop.first ? 'active' : '' }}">
+                                    <a href="#langTab_stockStatus{{ language['language_id'] }}" data-toggle="tab" aria-expanded="false">
+                                        <img src="view/image/flags/{{ language['image'] }}" title="{{ language['name'] }}" class="pull-right">
+                                        <div> {{ language['name'] }}</div>
+                                    </a>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link" data-dismiss="modal">{{ lang('text_close') }}</button>
+                    <button id="insertStockStatus" type="submit" class="btn btn-primary">{{ lang('button_save') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}

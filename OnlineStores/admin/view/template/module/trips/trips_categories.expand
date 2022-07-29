@@ -1,0 +1,126 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% set dualMenuEnabled = true %}
+
+{% block title %}
+    {{ lang('trips_categories', 'module/trips') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block secondarymenu %}
+    {% if isMultiseller %}
+    {% include 'module/trips/menu.expand' with {'active': '#trips_categories'} %}
+    {% endif %}
+{% endblock secondarymenu %}
+
+{% block headelements %}
+    {% include "includes/buttons_top.expand" %}
+{% endblock headelements %}
+
+{% block content %}
+<style>
+        .bootstrap-select, .btn-group, .multiselect-container {width: 100% !important;}
+    </style>
+{% if isMultiseller %}
+<form action="{{ action }}" method="post" class="form">
+      <div class="col-md-12">
+        <div class="panel panel-white">
+            <div class="panel-heading">
+                <h6 class="panel-title"><span class="text-bold">{{ lang('trips_categories') }}</span></h6>
+                <div class="heading-elements not-collapsible">
+                    <ul class="icons-list">
+                        <li><a data-action="collapse" class=""></a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="collapse in" id="fields-panel">
+                       <div class="row">
+                          <div class="col-md-12">
+                              <div class="form-group col-md-12" id="">
+                            <label for="">{{ lang('text_categories') }}</label>
+                            <br>
+                            <select name="trips_categories[]" multiple class="multiselect-full-featured form-control">
+                            {% for category in categories %}
+                                <option value="{{category['category_id']}}" {{ category['category_id'] in selectedCategories ? 'selected' }}>
+                                    {{ category['name'] }}
+                                </option>
+                            {% endfor %}
+                            </select>
+                        </div>
+                            </div>
+                          </div>
+                       </div>
+                       <!--End Popup status-->
+                </div>
+            </div>
+         <div class="tab-pane fade in active" id="gridView">
+            <div class="panel panel-default">
+                <div class="collapse in">
+                    <table id="datatableGrid" class="table table-hover datatable-highlight">
+                        <thead>
+                        <tr>                           
+                            <th>{{ lang('category_title') }}</th>
+                            <th>{{ lang('entry_edit') }}</th>            
+                        </tr>
+                        </thead>
+                        <tbody>
+                {% for category in tripsCategories %}
+                        <tr>
+                        <td><a href='{{ link('catalog/category/update') }}?category_id={{category['category_id']}}'>{{category['name']}}</a></td>
+                        <td><a href='{{ link('catalog/category/update') }}?category_id={{category['category_id']}}'><i class="fa fa-pencil-square-o "></i></a></td>
+                        </tr>
+                    {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+        </div>
+    </div>
+        </div>
+      </div>
+   
+</form>
+{% else %}
+<div class="alert alert-warning"><i class="fa fa-exclamation-circle"></i>
+    {{ lang('text_multiseller_not_active') }}
+</div>
+{% endif %}
+<script type="text/javascript">
+
+function changeStatus(checkbox)
+{
+    var self = $(checkbox);
+    var switch_status = self.siblings('.switchery-status');
+
+    if ( self.is(':checked') )
+    {
+        switch_status.html("{{ text_enabled }}");
+    }
+    else
+    {
+        switch_status.html("{{ text_disabled }}");
+    }
+
+}
+    $(document).ready(function(){
+        $('.multiselect-full-featured').multiselect({
+            includeSelectAllOption: true,
+            enableFiltering: true,
+            templates: {
+                filter: '<li class="multiselect-item multiselect-filter"><i class="icon-search4"></i> <input class="form-control" type="text"></li>'
+            },
+            onSelectAll: function() {
+                $.uniform.update();
+            },
+            buttonWidth: '100%',
+            width: '100%'
+        });
+
+        $(".styled, .multiselect-container input").uniform({ radioClass: 'choice'});
+    });
+</script>
+{% endblock %}

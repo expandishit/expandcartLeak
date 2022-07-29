@@ -1,0 +1,761 @@
+{% macro input(type,name,attributes = [],settings = []) %}
+
+
+
+    {# check validation if exist #}
+    {% if settings.option == 'labeled' %}
+
+        {% from _self import labeled_input %}
+        {{ labeled_input(type,name,attributes,settings) }}
+    {% endif %}
+    {# check validation if exist #}
+    {% if settings.option == 'wrapped' %}
+
+        {% from _self import wrapped_input %}
+        {{ wrapped_input(type,name,attributes,settings) }}
+    {% endif %}
+
+    {% if settings.option == 'group' %}
+
+        {% from _self import input_group %}
+        {{ input_group(type,name,attributes,settings) }}
+    {% endif %}
+
+    {% if settings.option == 'touchspin' %}
+        {% from _self import input_touchspin %}
+        {{ input_touchspin(type,name,attributes,settings) }}
+
+    {% endif %}
+
+
+    {% if settings.option == 'token-field' %}
+        {% from _self import input_tokenField %}
+        {{ input_tokenField(type,name,attributes,settings) }}
+
+    {% endif %}
+
+
+
+    {% if settings.option == 'tele-validation' %}
+        {% from _self import input_tele_validation %}
+        {{ input_tele_validation(type,name,attributes,settings) }}
+
+    {% endif %}
+
+{% endmacro %}
+
+
+{% macro wrapped_input(type,name,attributes = [],settings = []) %}
+
+    <div class="form-group {{ (settings.validation is defined) ? "has-feedback  has-"~settings.validation.type : '' }} {{ (settings.icon is defined) ? "has-feedback  has-feedback-"~settings.icon.icon_position : '' }}">
+
+        <div class="{{ settings.input_grid }}">
+
+            <input type="{{ type|default('text') }}"
+                   name="{{ name }}" {% for attr, value in attributes %} {{ attr }}="{{ value }}"{% endfor %}{% if not attributes.id is defined %} id="{{ name }}"{% endif %}
+            />
+
+            {# check validation if exist #}
+            {% if settings.validation is defined %}
+
+                {% from _self import validation %}
+                {{ validation(settings) }}
+            {% endif %}
+            {# check validation if exist #}
+
+
+
+            {# check validation if exist validation already add helper and icon #}
+            {% if not settings.validation is defined %}
+
+                {% if (settings.helper is defined)  and ( settings.helper.display != "inline") %}
+                    {% from _self import helperLabel %}
+                    {{ helperLabel(settings) }}
+                {% endif %}
+
+                {% if settings.icon is defined %}
+                    {% from _self import icon %}
+                    {{ icon(settings) }}
+                {% endif %}
+            {% endif %}
+
+
+        </div>
+
+        {% if  settings.helper.display == "inline" %}
+            {% from _self import helperLabel %}
+            {{ helperLabel(settings) }}
+        {% endif %}
+    </div>
+
+
+{% endmacro %}
+
+
+
+{% macro labeled_input(type,name,attributes = [],settings = []) %}
+
+
+
+    <div class="form-group {{ (settings.validation is defined) ? "has-feedback  has-"~settings.validation.type : '' }} {{ (settings.icon is defined) ? "has-feedback  has-feedback-"~settings.icon.icon_position : '' }}">
+
+        {% from _self import label %}
+        {{ label(settings.label.name, settings.label.attributes) }}
+
+        <div class="{{ settings.input_grid }}">
+
+            <input type="{{ type|default('text') }}"
+                   name="{{ name }}" {% for attr, value in attributes %} {{ attr }}="{{ value }}"{% endfor %}{% if not attributes.id is defined %} id="{{ name }}"{% endif %}
+            />
+
+            {# check validation if exist #}
+            {% if settings.validation is defined %}
+
+                {% from _self import validation %}
+                {{ validation(settings) }}
+            {% endif %}
+            {# check validation if exist #}
+
+
+
+            {# check validation if exist validation already add helper and icon #}
+            {% if not settings.validation is defined %}
+
+                {% if (settings.helper is defined)  and ( settings.helper.display != "inline") %}
+                    {% from _self import helperLabel %}
+                    {{ helperLabel(settings) }}
+                {% endif %}
+
+                {% if settings.icon is defined %}
+                    {% from _self import icon %}
+                    {{ icon(settings) }}
+                {% endif %}
+            {% endif %}
+
+
+        </div>
+
+        {% if  settings.helper.display == "inline" %}
+            {% from _self import helperLabel %}
+            {{ helperLabel(settings) }}
+        {% endif %}
+
+
+    </div>
+
+{% endmacro %}
+
+
+{% macro  input_group(type,name,attributes = [],settings = []) %}
+    <div class="form-group  {{ (settings.validation is defined) ? "has-"~settings.validation.type : '' }}">
+        <label class="{{ settings.label.class }}">{{ settings.label.value }}t</label>
+        <div class="col-lg-10">
+            <div class="input-group">
+
+                {% if (settings.validation is defined) and (settings.validation.direction == 'left') %}
+                    <span class="input-group-addon"><i class="icon-check"></i></span>
+                {% endif %}
+                {% if settings.left is defined %}
+
+                    {% for key,addon in settings.left %}
+                        {% if key == 'icon' %}
+                            {% from _self import addonIcon %}
+                            {{ addonIcon(addon) }}
+
+                        {% elseif  key == 'text' %}
+                            {% from _self import addonText %}
+                            {{ addonText(addon) }}
+                        {% else %}
+                            {% from _self import addonButton %}
+                            {{ addonButton(addon,'left') }}
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+                <input type="text"
+                       class="form-control" {% for attr, value in attributes %} {{ attr }}="{{ value }}"{% endfor %}{% if not attributes.id is defined %} id="{{ name }}"{% endif %}
+                />
+
+                {% if settings.right is defined %}
+                    {% for key,addon in settings.right %}
+                        {% if key == 'icon' %}
+                            {% from _self import addonIcon %}
+                            {{ addonIcon(addon) }}
+
+                        {% elseif  key == 'text' %}
+                            {% from _self import addonText %}
+                            {{ addonText(addon) }}
+                        {% else %}
+                            {% from _self import addonButton %}
+                            {{ addonButton(addon,'right') }}
+                        {% endif %}
+
+                    {% endfor %}
+
+                {% endif %}
+
+                {% if (settings.validation is defined) and (settings.validation.direction == 'right') %}
+                    <span class="input-group-addon"><i class="icon-check"></i></span>
+                {% endif %}
+            </div>
+            {% if settings.validation is defined %}
+                <span class="help-block">{{ settings.validation.help_text }}</span>
+            {% endif %}
+        </div>
+    </div>
+
+
+{% endmacro %}
+
+
+{% macro input_touchspin(type,name,attributes = [],settings = []) %}
+    <div class="form-group  {{ (settings.validation is defined) ? "has-"~settings.validation.type : '' }}">
+        <label class="{{ settings.label.class }}">{{ settings.label.value }}t</label>
+        <div class="{{ settings.input_grid }}">
+            <div class="input-group">
+
+                {% if (settings.validation is defined) and (settings.validation.direction == 'left') %}
+                    <span class="input-group-addon"><i class="icon-check"></i></span>
+                {% endif %}
+                {% if settings.left is defined %}
+
+                    {% for key,addon in settings.left %}
+                        {% if key == 'icon' %}
+                            {% from _self import addonIcon %}
+                            {{ addonIcon(addon) }}
+
+                        {% elseif  key == 'text' %}
+                            {% from _self import addonText %}
+                            {{ addonText(addon) }}
+                        {% else %}
+                            {% from _self import addonButton %}
+                            {{ addonButton(addon,'left') }}
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+
+
+                <input type="text" value=""
+                       class="touchspin-{{ settings.variations.type }} {{ attributes.class }}" {% for attr, value in attributes %} {{ attr }}="{{ value }}"{% endfor %}{% if not attributes.id is defined %} id="{{ name }}"{% endif %}
+                >
+
+                {% if settings.right is defined %}
+                    {% for key,addon in settings.right %}
+                        {% if key == 'icon' %}
+                            {% from _self import addonIcon %}
+                            {{ addonIcon(addon) }}
+
+                        {% elseif  key == 'text' %}
+                            {% from _self import addonText %}
+                            {{ addonText(addon) }}
+                        {% else %}
+                            {% from _self import addonButton %}
+                            {{ addonButton(addon,'right') }}
+                        {% endif %}
+
+                    {% endfor %}
+
+                {% endif %}
+
+                {% if (settings.validation is defined) and (settings.validation.direction == 'right') %}
+                    <span class="input-group-addon"><i class="icon-check"></i></span>
+                {% endif %}
+
+            </div>
+
+            {% if settings.validation is defined %}
+                <span class="help-block">{{ settings.validation.help_text }}</span>
+            {% endif %}
+        </div>
+    </div>
+
+{% endmacro %}
+
+
+{% macro input_tele_validation(type,name,attributes = [],settings = []) %}
+
+    <div class="form-group  {{ (settings.validation is defined) ? "has-"~settings.validation.type : '' }} valdation-phone" >
+        <label class="{{ settings.label.class }}">{{ settings.label.value }}t</label>
+        <div class="col-lg-10">
+            <div class="input-group">
+
+                {% if (settings.validation is defined) and (settings.validation.direction == 'left') %}
+                    <span class="input-group-addon"><i class="icon-check"></i></span>
+                {% endif %}
+                {% if settings.left is defined %}
+
+                    {% for key,addon in settings.left %}
+                        {% if key == 'icon' %}
+                            {% from _self import addonIcon %}
+                            {{ addonIcon(addon) }}
+
+                        {% elseif  key == 'text' %}
+                            {% from _self import addonText %}
+                            {{ addonText(addon) }}
+                        {% else %}
+                            {% from _self import addonButton %}
+                            {{ addonButton(addon,'left') }}
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+                <input type="tel" id="{{ attributes.id }}"
+                       class="form-control" {% for attr, value in attributes.attributes %} {{ attr }}="{{ value }}"{% endfor %} />
+                <span id="valid-msg" class="hide">✓ Valid</span>
+                <span id="error-msg" class="hide">Invalid number</span>
+                {% if settings.right is defined %}
+                    {% for key,addon in settings.right %}
+                        {% if key == 'icon' %}
+                            {% from _self import addonIcon %}
+                            {{ addonIcon(addon) }}
+
+                        {% elseif  key == 'text' %}
+                            {% from _self import addonText %}
+                            {{ addonText(addon) }}
+                        {% else %}
+                            {% from _self import addonButton %}
+                            {{ addonButton(addon,'right') }}
+                        {% endif %}
+
+                    {% endfor %}
+
+                {% endif %}
+
+                {% if (settings.validation is defined) and (settings.validation.direction == 'right') %}
+                    <span class="input-group-addon"><i class="icon-check"></i></span>
+                {% endif %}
+            </div>
+            {% if settings.validation is defined %}
+                <span class="help-block">{{ settings.validation.help_text }}</span>
+            {% endif %}
+        </div>
+    </div>
+    {% from _self import tel_validationScript %}
+    {{ tel_validationScript(attributes) }}
+{% endmacro %}
+
+
+{% macro tel_validationScript(attributes) %}
+
+    <script>
+
+        var telInput = $("#{{ attributes.id }}");
+        telInput.intlTelInput({
+            preferredCountries: [],
+            geoIpLookup: function (callback) {
+                $.get("http://ipinfo.io", function () {
+                }, "jsonp").always(function (resp) {
+                    var countryCode = (resp && resp.country) ? resp.country : "";
+                    callback(countryCode);
+                });
+            },
+            hiddenInput: "full_number",
+            initialCountry: "auto",
+            nationalMode: true,
+
+            placeholderNumberType: "MOBILE",
+
+            utilsScript: "view/build/js/utils.js"
+        });
+
+
+        errorMsg = $(".valdation-phone");
+            // validMsg = $(".valdation-phone");
+
+
+        var reset = function () {
+            telInput.removeClass("error");
+            errorMsg.removeClass("has-warning");
+            errorMsg.removeClass("has-success");
+            // validMsg.addClass("hide");
+        };
+
+        // on blur: validate
+        telInput.blur(function () {
+            reset();
+
+            if ($.trim(telInput.val())) {
+                if (telInput.intlTelInput("isValidNumber")) {
+                    // validMsg.removeClass("hide");
+                    errorMsg.addClass("has-success");
+                } else {
+                    // errorMsg.removeClass("hide");
+                    errorMsg.addClass("has-warning");
+                }
+            }
+        });
+
+        // on keyup / change flag: reset
+        telInput.on("keyup change", reset);
+
+
+    </script>
+
+{% endmacro %}
+
+
+
+
+{#  label attribute  #}
+
+{% macro label(name,attributes) %}
+
+
+
+    <label {% for attr, value in attributes %} {{ attr }}="{{ value }}"{% endfor %}>{{ name }}</label>
+
+{% endmacro %}
+
+{#  label attribute  #}
+
+
+
+{% macro textarea(name,value,attributes= [] , settings= []) %}
+    <div class="form-group  {{ (settings.validation is defined) ? "has-feedback  has-"~settings.validation.type : '' }} {{ (settings.icon is defined) ? "has-feedback  has-feedback-"~settings.icon.icon_position : '' }}">
+
+
+        {# check label if exist #}
+        {% if settings.label is defined %}
+
+            {% from _self import label %}
+            {{ label(settings.label.name, settings.label.attributes) }}
+        {% endif %}
+        {# check label if exist #}
+
+
+        {% if settings.input_gird  is defined %}
+        <div class="{{ settings.input_gird }}">
+            {% endif %}
+
+
+            <textarea
+                    name="{{ name }}" {% for attr, value in attributes %} {{ attr }}="{{ value }}"{% endfor %}{% if not attributes.id is defined %} id="{{ name }}"{% endif %}
+            >{{ value }}</textarea>
+
+
+            {# check validation if exist #}
+            {% if settings.validation is defined %}
+
+                {% from _self import validation %}
+                {{ validation(settings) }}
+            {% endif %}
+            {# check validation if exist #}
+
+
+
+            {# check validation if exist validation already add helper and icon #}
+            {% if not settings.validation is defined %}
+
+                {% if settings.helper is defined %}
+                    {% from _self import helperLabel %}
+                    {{ helperLabel(settings) }}
+                {% endif %}
+
+                {% if settings.icon is defined %}
+                    {% from _self import icon %}
+                    {{ icon(settings) }}
+                {% endif %}
+            {% endif %}
+
+
+
+            {% if settings.input_gird is defined %}
+        </div>
+        {% endif %}
+
+
+    </div>
+{% endmacro %}
+
+{#
+
+============================================================  settings =====================================================================
+
+
+#}
+
+{#   start   helper macro   #}
+{% macro   helperLabel(settings) %}
+
+
+    {# helper addon #}
+    {% if settings.helper is defined %}
+        {# helper help text #}
+        {% if settings.helper.type == 'help' %}
+            {#  if  condition to check  display block or inline  #}
+
+            {% if settings.helper.display ==  "block" %}
+                <span class="help-block text-{{ settings.helper.text_align }}  {{ settings.helper.class }}">{{ settings.helper.value }}</span>
+
+            {% else %}
+
+                <span class="help-inline text-{{ settings.helper.text_align }} {{ settings.helper.class }}">{{ settings.helper.value }}</span>
+
+            {% endif %}
+
+        {% else %}
+
+            {# helper display for label helper  #}
+
+            {% if settings.helper.display ==  "block" %}
+                <div class="label-block text-{{ settings.helper.text_align }}">
+                    <span class="label  text-{{ settings.helper.text_align }}  {{ settings.helper.class }}">{{ settings.helper.value }}</span>
+                </div>
+            {% elseif settings.helper.display ==  "inline" %}
+
+                <span class="label text-{{ settings.helper.text_align }} {{ settings.helper.class }} help-inline">{{ settings.helper.value }}</span>
+
+
+            {% else %}
+                <span class="label label-block text-{{ settings.helper.text_align }}  {{ settings.helper.class }}">{{ settings.helper.value }}</span>
+            {% endif %}
+
+        {% endif %}
+    {% endif %}
+    {# helper addon #}
+{% endmacro %}
+
+
+{#   end   helper macro   #}
+
+
+{#   start   icon  macro   #}
+
+{% macro icon(settings) %}
+    <div class="form-control-feedback">
+        <i class="{{ settings.icon.icon_class }}"></i>
+    </div>
+
+{% endmacro %}
+
+{#   end   icon macro   #}
+
+
+{#   start   validation  macro   #}
+
+{% macro validation(settings) %}
+
+    {% if settings.validation.type == 'warning' %}
+        <div class="form-control-feedback">
+            <i class="icon-notification2"></i>
+        </div>
+
+    {% elseif  settings.validation.type == 'success' %}
+        <div class="form-control-feedback">
+            <i class="icon-checkmark-circle"></i>
+        </div>
+
+    {% else %}
+
+        <div class="form-control-feedback">
+            <i class="icon-cancel-circle2"></i>
+        </div>
+    {% endif %}
+    <span class="help-block">{{ settings.validation.value }}</span>
+
+
+{% endmacro %}
+
+{#   end   validation macro   #}
+
+
+{# ==============================================================  Addon ====================================================================#}
+
+
+{% macro addonIcon(addon) %}
+
+    <span class="input-group-addon {{ addon.class }}"><i class="{{ addon.icon_value }}"></i></span>
+
+{% endmacro %}
+
+
+{% macro addonText(addon) %}
+
+    <span class="input-group-addon {{ addon.class }}">{{ addon.value }}</span>
+
+
+
+{% endmacro %}
+
+
+
+{% macro addonButton(addon,direction) %}
+
+
+    {% if addon.type == 'button' %}
+        <span class="input-group-btn">
+			<button class="btn {{ addon.class }}" type="button">{{ addon.value }}</button>
+		</span>
+    {% else %}
+
+        {% if direction == 'right' %}
+            <div class="input-group-btn">
+                <button type="button" class="btn {{ addon.class }} dropdown-toggle"
+                        data-toggle="dropdown">{{ addon.value }} <span
+                            class="caret"></span></button>
+                <ul class="dropdown-menu dropdown-menu-right">
+                    {% for link in addon.dropdown %}
+                        <li><a href="{{ link.href }}">{{ link.value }}</a></li>
+                    {% endfor %}
+                    {#<li><a href="#">Another action</a></li>#}
+                    {#<li><a href="#">Something else here</a></li>#}
+                    {#<li><a href="#">One more line</a></li>#}
+                </ul>
+            </div>
+        {% else %}
+            <div class="input-group-btn">
+                <button type="button" class="btn {{ addon.class }} dropdown-toggle"
+                        data-toggle="dropdown">{{ addon.value }} <span
+                            class="caret"></span></button>
+                <ul class="dropdown-menu">
+                    {% for link in addon.dropdown %}
+                        <li><a href="{{ link.href }}">{{ link.value }}</a></li>
+                    {% endfor %}
+                    {#<li><a href="#">Another action</a></li>#}
+                    {#<li><a href="#">Something else here</a></li>#}
+                    {#<li><a href="#">One more line</a></li>#}
+                </ul>
+            </div>
+
+        {% endif %}
+    {% endif %}
+{% endmacro %}
+
+
+
+{# ==============================================================  Addon ====================================================================#}
+
+
+
+
+{#==============================================================  checkbox   ===================================================#}
+
+{% macro checkbox(elements_attributes= [] , settings= []) %}
+
+    {% if settings.type  == 'default' %}
+
+        {% from _self import defaultCheckbox %}
+        {{ defaultCheckbox(elements_attributes, settings) }}
+
+    {% endif %}
+
+
+    {% if settings.type  == 'switchery' %}
+        {% from _self import switchery %}
+        {{ switchery(elements_attributes, settings) }}
+
+    {% endif %}
+    {% if settings.type == 'bootstarp-switch' %}
+
+        {% from _self import bootstarpSwitch %}
+        {{ bootstarpSwitch(elements_attributes, settings) }}
+
+    {% endif %}
+
+{% endmacro %}
+
+{% macro  defaultCheckbox(elements_attributes= [] , settings= []) %}
+    <div class="form-group">
+        {% for attribute  in elements_attributes %}
+            <div class="checkbox {{ (attribute.attributes.disabled is defined) ? "disabled" : '' }} {{ settings.checkbox_dir == 'right' ? 'checkbox-right' : '' }} {{ settings.display == 'inline' ? 'checkbox-inline' : '' }}">
+                <label class="{{ attribute.label.class }} {{ settings.display == 'inline' ? 'checkbox-inline' : '' }}">
+                    <input type="checkbox" {% for attr, value in attribute.attributes %} {{ attr }}="{{ value }}"{% endfor %}{% if not attribute.attributes.id is defined %} id="{{ attribute.attributes.name }}"{% endif %}
+                    >
+                    {{ attribute.label.value }}
+                </label>
+            </div>
+        {% endfor %}
+    </div>
+{% endmacro %}
+
+
+{% macro switchery(elements_attributes= [] , settings= []) %}
+
+    <div class="form-group">
+        {% for attribute  in elements_attributes %}
+            <div class="checkbox checkbox-switchery   switchery-{{ settings.size }} checkbox-{{ settings.checkbox_dir == 'right' ? 'right' : '' }} {{ (attribute.attributes.disabled is defined) ? "disabled" : '' }} {{ settings.display == 'inline' ? 'checkbox-inline' : '' }}">
+                <label class="{{ attribute.label.class }} {{ settings.display == 'block' ? 'display-block' : '' }}">
+                    <input type="checkbox" {% for attr, value in attribute.attributes %} {{ attr }}="{{ value }}"{% endfor %}{% if not attribute.attributes.id is defined %} id="{{ attribute.attributes.name }}"{% endif %}
+                    >
+                    {{ attribute.label.value }}
+                </label>
+            </div>
+        {% endfor %}
+    </div>
+
+{% endmacro %}
+
+
+{% macro bootstarpSwitch(elements_attributes= [] , settings= []) %}
+    <div class="form-group">
+        {% for attribute  in elements_attributes %}
+            <div class="checkbox checkbox-switch {{ settings.display == 'inline' ? 'checkbox-inline' : '' }}">
+                <label class="{{ attribute.label.class }}   {{ settings.display == 'inline' ? 'checkbox-inline' : '' }}">
+                    <input type="checkbox" class="switch {{ attribute.class }}"
+                           data-on-text="{{ attribute.switch.on|default('On') }}"
+                           data-off-text="{{ attribute.switch.off|default('Off') }}"
+                           data-on-color="{{ attribute.switch.on_color|default('primary') }}"
+                           data-off-color="{{ attribute.switch.off_color }}"
+                           data-size="{{ attribute.switch.size }}" {% for attr, value in attribute.attributes %} {{ attr }}="{{ value }}"{% endfor %}{% if not attribute.attributes.id is defined %} id="{{ attribute.attributes.name }}"{% endif %}
+                    >
+                    {{ attribute.label.value }}
+                </label>
+            </div>
+        {% endfor %}
+    </div>
+{% endmacro %}
+{#============================================================  checkbox   ===================================================#}
+
+
+{#================================   token field  ========================================================#}
+
+{% macro input_tokenField(type,name,attributes = [],settings = []) %}
+
+
+    <div class="form-group  {{ (settings.validation is defined) ? "has-"~settings.validation.type : '' }} form-group-material">
+        <label class="{{ settings.label.class }} control-label has-margin">{{ settings.label.value }}</label>
+        <div class="{{ settings.input_grid }}">
+
+            <input type="text"
+                   class="form-control {{ settings.tokenField.class }} token-field" {% for attr, value in attributes %} {{ attr }}="{{ value }}"{% endfor %}{% if not attributes.id is defined %} id="{{ name }}"{% endif %}
+            />
+
+
+            {# check validation if exist #}
+            {% if settings.validation is defined %}
+
+                {% from _self import validation %}
+                {{ validation(settings) }}
+            {% endif %}
+            {# check validation if exist #}
+
+
+
+            {# check validation if exist validation already add helper and icon #}
+            {% if not settings.validation is defined %}
+
+                {% if (settings.helper is defined)  and ( settings.helper.display != "inline") %}
+                    {% from _self import helperLabel %}
+                    {{ helperLabel(settings) }}
+                {% endif %}
+
+                {% if settings.icon is defined %}
+                    {% from _self import icon %}
+                    {{ icon(settings) }}
+                {% endif %}
+            {% endif %}
+
+
+        </div>
+
+
+        {% if  settings.helper.display == "inline" %}
+            {% from _self import helperLabel %}
+            {{ helperLabel(settings) }}
+        {% endif %}
+
+    </div>
+    <script type="text/javascript">
+        // Basic initialization
+        $(".{{ settings.tokenField.class }}").tokenfield();
+    </script>
+{% endmacro %}
+{#================================   token field  ========================================================#}

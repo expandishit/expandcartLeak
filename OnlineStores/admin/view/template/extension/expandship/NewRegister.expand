@@ -1,0 +1,561 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+
+{% block title %}
+    {{ lang('heading_title_expandship', 'extension/expandship') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block content %}
+
+    <style>
+        .content-wrapper {
+            background-color: #f8f9ff;
+        }
+
+        .page-header-default {
+            background-color: transparent;
+        }
+
+        .page-header-content + .breadcrumb-line {
+            border: 0;
+        }
+
+        .page-header {
+            margin: 0 60px;
+        }
+
+        .breadcrumb-line {
+            /* border-bottom: 1px solid #e0ddef !important; */
+            margin: 0 32px;
+            border-top: 0;
+            margin-bottom: 30px !important;
+        }
+
+        .page-holder-center {
+            margin: 0 70px;
+        }
+
+        .international-telephone-holder .flag-container {
+            position: static;
+            padding: 0;
+        }
+
+        .international-telephone-holder .selected-flag {
+            position: absolute;
+            border-right: 1px solid #e4e4e4;
+            background-color: transparent !important;
+        }
+
+        .international-telephone-holder .country-list {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 40px;
+        }
+
+        html[dir="rtl"] input.international-telephone {
+            direction: ltr;
+            text-align: right;
+        }
+
+        html[dir="rtl"] .international-telephone-holder .country-list {
+            left: 2px;
+            direction: ltr;
+        }
+
+        html[dir="rtl"] .international-telephone-holder .selected-flag {
+            direction: ltr;
+            left: 0;
+        }
+
+
+        @media (max-width: 768px) {
+            .page-header {
+                margin: 0;
+            }
+
+            .page-holder-center {
+                margin: 0 0px;
+            }
+        }
+
+        .expandship__country {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .expandship__country .expandship__country-item {
+            display: flex;
+            align-items: center;
+            margin-inline-end: 30px;
+            cursor: pointer;
+        }
+        .expandship__country .expandship__country-item .expandship__country-circle {
+            width: 30px;
+            height: 30px;
+            border-radius: 50px;
+            background-color: #eff3f6;
+            border: 1px solid #d9d9d9;
+            position: relative;
+            padding: 5px;
+            display: inline-block;
+            margin-inline-end: 10px;
+        }
+        .expandship__country .expandship__country-item .expandship__country-circle::before {
+            content: "";
+            position: absolute;
+            right: 4px;
+            left: 4px;
+            top: 4px;
+            bottom: 4px;
+            border-radius: 50px;
+            background: #0b0b0b;
+            transition: 0.3s ease;
+            opacity: 0;
+        }
+        .expandship__country .expandship__country-item .expandship__country-name {
+            font-weight: 600;
+        }
+        .expandship__country .expandship__country-item .expandship__country-soon {
+            color: #fc7f3d !important;
+        }
+        .expandship__country .expandship__country-item.expandship__country-active .expandship__country-circle::before {
+            opacity: 1;
+        }
+        .expandship__country .expandship__country-item.expandship__country-disabled {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+    </style>
+
+
+
+
+    <!-- App Settings history  -->
+    <div class="page-holder-center">
+        <section class="main-setting">
+            <form id="createAccountForm">
+
+
+                <input type="hidden" name='website' class="form-control" value="{{ constant('STORE_DATA_URL') }}">
+                <input type="hidden" name="orders_per_month"  class="form-control" value="{{ no_order }}"  >
+                <input type="hidden" name="store_code"  class="form-control" value="{{ constant('STORECODE') }}"  >
+                <input type="hidden" name="product_type"  class="form-control" value="{{ product_source }}"  >
+                <input type="hidden" name="total_products"  class="form-control" value="{{ total_products }}"  >
+                <input type="hidden" name="joining_date"  class="form-control" value="{{ joining_date }}"  >
+                <input type="hidden" name="free_or_paid"  class="form-control" value="{{ free_or_paid }}"  >
+                <input type="hidden" name="total_orders"  class="form-control" value="{{ total_orders }}"  >
+                <input type="hidden" name="last_order_date"  class="form-control" value="{{ last_order_date }}"  >
+                
+{#                <input type="hidden" name="business_name"  class="form-control" value="business_name"  >#}
+
+                <div class="panel panel-white">
+                    <div class="panel-body">
+                        <p class="bold font-14 mb-5 mt-10">{{ lang('register_pickup_title') }}</p>
+                        <p class="font-color-mindark mb-20">{{ lang('register_pickup_desc') }}</p>
+
+                        <div class="expandship__country">
+
+                            {% for country in data.countries %}
+                                <div class="expandship__country-item {% if loop.first %} expandship__country-active {% endif %} {% if not country.status %} expandship__country-disabled {% endif %}">
+                                    <input type="radio" class="hidden" name='country_id' value="{{ country.id }}" data-text="{{ country.name }}"
+                                            {% if loop.first %} checked {% endif %} >
+                                    <span class="expandship__country-circle"></span>
+                                    <p class="expandship__country-name">
+                                        {{ country.name }}
+                                        {% if not country.status %}
+                                            <span class="expandship__country-soon">{{ lang('country_item_soon') }}</span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <p class="bold font-14 mb-20 mt-20">{{ lang('entry_registeration_info') }}</p>
+                        <div class="row ">
+                            <div class="form-group col-md-6">
+                                <label class="control-label d-block">{{ lang('entry_email') }}<span class="text-danger ml-5">*</span></label>
+                                <input type="text" name='email' class="form-control required-field-toSubmit"
+                                       value="{{ constant('BILLING_DETAILS_EMAIL') }}" required>
+                                <span class="help-block"></span>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label class="control-label d-block">{{ lang('entry_full_name') }}<span class="text-danger ml-5">*</span></label>
+                                <input type="text" name='name' class="form-control required-field-toSubmit"
+                                       value="{{ constant('BILLING_DETAILS_NAME') }}" required>
+                                <span class="help-block"></span>
+                            </div>
+                        </div>
+
+                        <div class="row ">
+                            <div class="form-group col-md-6 valdation-phone">
+                                <label class="control-label">{{ lang('entry_mobile') }}<span class="text-danger ml-5">*</span></label>
+                                <div class="international-telephone-holder">
+                                    <input type="text" name='mobile'
+                                           class="form-control international-telephone required-field-toSubmit" placeholder=""
+                                           oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');">
+                                    <span class="help-block"></span>
+                                    <span class="ValidNumberMsg text-danger " style="display: none;">{{ lang('entry_invalid_mobile') }}</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group col-md-6">
+                                <label class="control-label d-block">{{lang('entry_business_name') }}<span class="text-danger ml-5">*</span></label>
+                                <input type="text" name='business_name' class="form-control required-field-toSubmit" value=""
+                                       required>
+                                <span class="help-block"></span>
+                            </div>
+                        </div>
+
+
+                        <p class="bold font-14 mb-5 mt-10">{{ lang('entry_pickup_location') }}</p>
+                        <p class="font-color-mindark mb-20">{{lang('entry_pickup_desc')}}</p>
+
+
+                        <div class="row ">
+                            <div class="form-group col-md-6">
+                                <label for="pickCountry" class="control-label">{{ lang('entry_country') }}<span class="text-danger ml-5">*</span></label>
+                                <input type="text" value="{{ (data.countries|first).name }}"
+                                       class="form-control disabled-country" readonly>
+                                <span class="help-block"></span>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label for="pickCity" class="control-label">{{ lang('entry_city') }}<span class="text-danger ml-5">*</span></label>
+                                <select name="city_id" id="pickCity" class="form-control required-field-toSubmit" required>
+                                    <option value="">{{ lang('entry_please_select') }}</option>
+                                    {% for city in data.cities %}
+                                        <option value="{{ city.id }}">{{ city.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <span class="help-block"></span>
+                            </div>
+
+
+{#                            <div class="form-group col-md-6">#}
+{#                                <label for="pickState" class="control-label">{{ lang('entry_state') }}<span class="text-danger ml-5">*</span></label>#}
+{#                                <select name="" id="pickState" class="form-control required-field-toSubmit" required>#}
+{#                                    <option value="">{{ lang('entry_please_select') }}</option>#}
+{#                                </select>#}
+{#                                <span class="help-block"></span>#}
+{#                            </div>#}
+
+                        </div>
+
+                        <div class="row ">
+                            <div class="form-group col-md-6">
+                                <label class="control-label d-block">{{ lang('entry_address_build_street') }} <span class="text-danger ml-5">*</span></label>
+                                <input type="text" name='address' class="form-control required-field-toSubmit" required>
+                                <span class="help-block"></span>
+                            </div>
+
+                            <div class="form-group col-md-6">
+                                <label class="control-label d-block">{{ lang('entry_landmark') }}<span class="text-danger ml-5">*</span></label>
+                                <input type="text" name='landmark' class="form-control required-field-toSubmit" required>
+                                <span class="help-block"></span>
+                            </div>
+
+                        </div>
+
+{#                        <div class="row ">#}
+{#                            <div class="form-group col-md-6">#}
+{#                                <label class="control-label d-block">{{ lang('entry_postal_code') }}<span class="text-danger ml-5">*</span></label>#}
+{#                                <input type="text" name='postal_code' class="form-control required-field-toSubmit" id="postalCode">#}
+{#                                <span class="help-block"></span>#}
+{#                            </div>#}
+{#                        </div>#}
+
+{#                        <p class="bold font-14 mb-5 mt-10">Let's Know More About Your Business</p>#}
+{#                        <p class="font-color-mindark mb-20"> it will help us to understand your need and assign a#}
+{#                            suitable account manager</p>#}
+
+
+{#                        <div class="row ">#}
+{#                            <div class="form-group col-md-6">#}
+{#                                <label class="control-label d-block">Your Products Type<span#}
+{#                                            class="text-danger ml-5">*</span></label>#}
+{#                                <input type="text" name='Email' class="form-control required-field-toSubmit" value=""#}
+{#                                       required>#}
+{#                                <span class="help-block"></span>#}
+{#                            </div>#}
+{#                            <div class="form-group col-md-6">#}
+{#                                <label class="control-label d-block">No.Of Order Monthly<span#}
+{#                                            class="text-danger ml-5">*</span></label>#}
+{#                                <input type="text" name='no_order' class="form-control required-field-toSubmit" value=""#}
+{#                                       required>#}
+{#                                <span class="help-block"></span>#}
+{#                            </div>#}
+{#                        </div>#}
+
+{#                        <p class="bold font-14 mb-5 mt-10">{{ lang('bank_info') }}</p>#}
+{#                        <p class="font-color-mindark mb-20">{{ lang('entry_bank_desc') }}</p>#}
+
+{#                        <div class="row">#}
+{#                            <div class="form-group col-md-6">#}
+{#                                <label for="bank-name" class="control-label">{{ lang('entry_bank_name') }}<span#}
+{#                                            class="text-danger ml-5">*</span></label>#}
+{#                                <select name="bank_id" id="bank-name" class="form-control required-field-toSubmit">#}
+{#                                    <option selected value="">{{ lang("entry_please_select") }}</option>#}
+{#                                    {% for bank in data.banks %}#}
+{#                                        <option value="{{ bank.id }}" {% if data.merchant.bank_id == bank.id %} selected {% endif %}>{{ bank.name }}</option>#}
+{#                                    {% endfor %}#}
+{#                                </select>#}
+{#                                <span class="help-block"></span>#}
+{#                            </div>#}
+
+{#                            <div class="form-group col-md-6">#}
+{#                                <label class="control-label">{{ lang('entry_account_holder_name') }}<span class="text-danger ml-5">*</span></label>#}
+{#                                <input type="text" name='account_name' class="form-control required-field-toSubmit"  required>#}
+{#                                <span class="help-block"></span>#}
+{#                            </div>#}
+{#                        </div>#}
+
+{#                        <div class="row">#}
+
+{#                            <div class="form-group col-md-6">#}
+{#                                <label class="control-label">{{ lang('entry_bank_account') }}<span class="text-danger ml-5">*</span></label>#}
+{#                                <input type="text" name='account_number' class="form-control required-field-toSubmit"#}
+{#                                       oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');" required>#}
+{#                                <span class="help-block"></span>#}
+{#                            </div>#}
+
+{#                            <div class="form-group col-md-6">#}
+{#                                <label class="control-label">{{ lang('entry_iban') }}<span class="text-danger ml-5">*</span></label>#}
+{#                                <input type="text" name='iban' class="form-control required-field-toSubmit"#}
+{#                                       oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');" required>#}
+{#                                <span class="help-block"></span>#}
+{#                            </div>#}
+{#                        </div>#}
+
+                        <div class=" pull-right">
+                            {# cancel button #}
+                            <a href="{{ cancel_url }}" class="btn btn-default top-cancel-button"> {{ lang('entry_cancel') }}</a>
+
+                            {# submit button #}
+                            <button type="button" class="btn btn-primary btn-ladda btn-ladda-spinner top-save-button"
+{#                            <button type="button" class="btn btn-primary btn-ladda top-save-button"#}
+                                    id="createAccountSubmitButton" data-style="zoom-in">
+                                {{ lang('btn_submit_register') }}
+                                <span class="ladda-spinner"></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </section>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+
+    <script>
+
+
+        $(document).ready(function () {
+
+            //set states for first country
+            {#setState("{{ (data.countries|first).id }}")#}
+
+            $('.expandship__country-item').click(function () {
+                // $('.expandship__country-item').removeClass('expandship__country-active')
+                // $('.expandship__country-item').removeClass('expandship__country-active')
+                // $(this).addClass('expandship__country-active');
+                //
+                // //toggle check
+                // $('input[name="country_id"]').prop('checked', false);
+                // //change country, states select
+                // let country = $(this).find('input[name="country_id"]');
+                // country.prop('checked',true);
+                // $('.disabled-country').val(country.data('text'));
+                //
+                // //get states for this country
+                // setState(country.val())
+
+            });
+
+
+            // intlTelInput initial
+            var telInput = jQuery(".international-telephone");
+            // run input number flags function
+
+            let iti = telInput.intlTelInput({
+                initialCountry: "eg",
+                separateDialCode: true,
+                utilsScript: "{{ link('view/build/js/utils.js') }}"
+            });
+
+            errorMsg = $(".valdation-phone");
+            // on blur: validate
+            var reset = function () {
+                telInput.removeClass("error");
+                errorMsg.removeClass("has-warning");
+                errorMsg.removeClass("has-success");
+            };
+
+            telInput.blur(function () {
+                reset();
+
+                if ($.trim(telInput.val())) {
+                    if (telInput.intlTelInput("isValidNumber")) {
+                        errorMsg.addClass("has-success");
+                        $('.ValidNumberMsg').hide();
+                    } else {
+                        errorMsg.addClass("has-warning");
+                        $('.ValidNumberMsg').show();
+                    }
+                }
+            });
+
+            // select2 initial
+            $('select').select2();
+
+            // tooltip initial
+            $('[data-toggle="tooltip"]').tooltip();
+
+            //hide submit if the required fields are empty
+            function emptyInputCreate() {
+                var empty = false;
+                $('.main-setting input.required-field-toSubmit, .main-setting select.required-field-toSubmit').each(function () {
+                    if ($(this).val() == '') {
+                        empty = true;
+                    }
+                });
+                if (empty || !telInput.intlTelInput("isValidNumber")) {
+                    $('#createAccountSubmitButton').addClass('hiddenSubmit');
+                } else {
+                    $('#createAccountSubmitButton').removeClass('hiddenSubmit');
+                }
+            };
+            $('.main-setting input.required-field-toSubmit').keyup(function () {
+                emptyInputCreate();
+            });
+
+            $('.main-setting select.required-field-toSubmit').change(function () {
+                emptyInputCreate();
+            });
+            emptyInputCreate()
+        });
+
+
+        //update state in change of country
+        function setState(countryId){
+
+            // empty cities and states
+            $('#pickState').empty()
+            $('#pickState').append('<option selected value=""  hidden>{{ lang("entry_please_select") }}</option>');
+            $('#pickCity').empty()
+            $('#pickCity').append('<option selected value=""  hidden>{{ lang("entry_please_select") }}</option>');
+
+            $.ajax({
+                url: "{{ link('extension/expandship/getStatesByCountry') }}",
+                data: {country_id: countryId},
+                dataType: 'JSON',
+                method: 'POST',
+                success: function (response) {
+                    console.log(response);
+                    if (response.success == 1) {
+
+                        //update states with new data
+                        $.each(response.states, function (index, value) {
+                            $('#pickState').append('<option value="' + value.id + '">' + value.name + '</option>');
+                        });
+                    }
+                }
+            });
+        }
+
+
+        //update cities  in change of states
+        $(document).on('change', '#pickState', function () {
+            let stateId = $(this).val();
+            // empty cities
+            $('#pickCity').empty()
+            $.ajax({
+                url: "{{ link('extension/expandship/getCitiesByState') }}",
+                data: {state_id: stateId},
+                dataType: 'JSON',
+                method: 'POST',
+                success: function (response) {
+                    console.log(response);
+                    if (response.success == 1) {
+
+                        $('#pickCity').append('<option selected value=""  hidden>{{ lang("entry_please_select") }}</option>');
+                        //update cities with new data
+                        $.each(response.cities, function (index, value) {
+                            $('#pickCity').append('<option value="' + value.id + '">' + value.name + '</option>');
+                        });
+                    }
+                }
+            });
+        });
+
+        /// register the merchant
+        $(document).on('click','#createAccountSubmitButton', function (e) {
+
+            $(this).attr("disabled data-loading");
+            e.preventDefault();
+
+            {#//check if postal_code length > 5#}
+            {#if ($('#postalCode').val().length > 5) {#}
+            {#    $(this).removeAttr("disabled data-loading");#}
+            {#    fireAlert("{{ lang('alert_check_postal_code') }}");#}
+            {#    return;#}
+            {#}#}
+
+            // $('.alert-loading.createloader').show();
+            $("input, select").parent().removeClass('has-error');
+            $("input, select").closest('.form-group').removeClass('has-error');
+            // $("input").next().empty();
+            $("input, select").closest('.form-group').find('.help-block').empty();
+
+            let formData = new FormData($("#createAccountForm")[0]);
+
+            $(this).attr("disabled data-loading");
+            $.ajax({
+                url: "{{ link('extension/expandship/register') }}",
+                data: formData,
+                dataType: 'JSON',
+                method: 'POST',
+                processData: false,
+                contentType: false,
+                success: function (response) {
+                    console.log(response);
+                    // $('.alert-loading.createloader').hide();
+                    if (response.success == 1) {
+
+                        window.location.href = "{{ setting_url }}";
+                    } else {
+                        $("#createAccountSubmitButton").removeAttr("disabled data-loading");
+                        $.each(response.errors, function (key, value) {
+                            //assign shop name to business name
+                            if(key == 'shop_name')
+                                key = 'business_name';
+                            else if(key == 'phone')
+                                key='mobile';
+
+                            //display errors for inputs and select
+                            $("input[name='" + key + "'], select[name='" + key + "']").closest('.form-group').addClass('has-error');
+                            $("input[name='" + key + "'], select[name='" + key + "']").closest('.form-group').find('.help-block').append(value[0])
+
+                            $("#" + key).closest('.form-group').addClass('has-error');
+                            $("#" + key).closest('.form-group').find('.help-block').empty().append(value[0])
+
+
+                        });
+                    }
+                }
+            });
+
+            function fireAlert(message) {
+                swal(message, "", "error");
+            }
+
+        });
+
+
+    </script>
+
+{% endblock scripts %}

@@ -1,0 +1,258 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block title %}
+    {{ lang('heading_title', 'module/stockzones') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+    {% include "includes/buttons_top.expand" %}
+{% endblock headelements %}
+
+{% block content %}
+
+<style type="text/css">
+    .disabled{ opacity: 0.4; cursor: not-allowed;}
+    .disabled a{
+        pointer-events:none; 
+    }
+    /*.mr-3{margin-right: 20px;}*/
+    .stockzones-operations-buttons > li{
+        margin-bottom: 10px;
+        padding: 1px;
+    }
+    .stockzones-operations-buttons > li > label {
+        padding-left: 7px;
+    }
+</style>
+
+<form action="{{ link('module/stockzones/save', '', 'SSL') }}" class="form" method="post">
+    
+    {# Status #}
+    <div class="col-md-7">
+
+        <div class="panel panel-white">
+
+            <!--Panel Title-->
+            <div class="panel-heading">
+                <h6 class="panel-title"><span class="text-bold">{{ lang('entry_settings') }}</span></h6>
+                <div class="heading-elements not-collapsible">
+                    <ul class="icons-list">
+                        <li><a data-action="collapse"></a></li>
+                    </ul>
+                </div>
+            </div>
+            <!--/Panel Title-->
+
+
+
+            <div class="panel-body">
+                <div class="collapse in" id="fields-panel">
+                    <div class="row">
+
+                        <div class="form-group col-md-3">
+                            <label class="control-label">{{ lang('entry_status') }}</label>
+                            <div class="checkbox checkbox-switchery no-margin">
+                                <label>
+                                    <input type="checkbox" onchange="changeStatus(this);" name="stockzones[status]" class="switchery" value="{{stockzones.status}}" {{ stockzones.status == '1'   ? 'checked' }}>
+                                    <span class="switchery-status">{{ stockzones.status == '1' ? lang('text_enabled') :  lang('text_disabled') }}</span>
+                                </label>
+                            </div>
+                            <span class="help-block"></span>
+                        </div>
+
+
+                        {# <hr style="width: 100%; border: 1px solid #e8e8e8;"> #}
+
+
+                        <div class="form-group col-md-12">
+                            <label class="control-label">{{ lang('entry_debugging_mode') }}</label>
+                            <div class="checkbox checkbox-switchery">
+                                <label>
+                                    <input type="checkbox" onchange="changeStatus(this);" name="stockzones[debugging_mode]" class="switchery" {{ stockzones.debugging_mode not in ['0', 0, 'off'] or stockzones.debugging_mode is null ? 'checked' }}>
+                                    <span class="switchery-status">{{ stockzones.debugging_mode not in ['0', 0, 'off'] or stockzones.debugging_mode is null ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                </label>
+                            </div>
+                        </div>
+
+
+
+                        <div class="form-group col-md-12">
+                            <label for="access_token" class="control-label">{{ lang('entry_access_token') }}<span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="access_token" name="stockzones[access_token]" value="{{ stockzones.access_token }}">
+                            <span class="help-block"></span>
+                        </div>
+
+
+                        <div class="form-group col-md-12">
+                            <label for="access_key" class="control-label">{{ lang('entry_access_key') }}<span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="access_key" name="stockzones[access_key]" value="{{ stockzones.access_key }}">
+                            <span class="help-block"></span>
+                        </div>
+
+                    </div><!-- /Row -->
+                </div><!-- /collapse in-->
+            </div>
+            <!-- /panel body-->
+
+
+        </div><!-- /panel panel-white -->
+    </div>
+
+
+    {# Operations Buttons #}
+    <div class="col-md-5 disabled" id="operations_div">
+        <div class="panel panel-white">
+           
+            <div class="panel-heading">
+                <h6 class="panel-title"><span class="text-bold">{{ lang('text_operations') }}</span></h6>
+                <div class="heading-elements not-collapsible">
+                    <ul class="icons-list">
+                        <li><a data-action="collapse" class=""></a></li>
+                    </ul>
+                </div>
+            </div>
+
+
+            <div class="panel-body">
+                <div class="collapse in" id="fields-panel">
+
+                    <ul class="stockzones-operations-buttons">
+                        <li>
+                            {# Import Categories from stockzones #}
+                            <a id="import_categories" class="btn btn-success"><i class="icon-plus3"></i></a>
+                            <img style="display:none" class="import-categories-process" src="{{ link('view/image/knawat_ajax_loader.gif') }}" style="width:30px;" />
+                            <label for="import_categories">{{ lang('btn_import_categories') }}</label>
+                        </li>
+                        <li>
+                            {# Import Products from stockzones #}
+                            <a id="import_products" class="btn btn-primary" data-toggle="modal" data-target="#modal_import_products"><i class="icon-plus3"></i></a>
+                            <img style="display:none" class="import-products-process" src="{{ link('view/image/knawat_ajax_loader.gif') }}" style="width:30px;" />                            
+                            <label for="import_products">{{ lang('btn_import_products') }}</label>
+                        </li>
+                        <li>
+                            {# Sync Products between ExpandCart and stockzones #}
+                            <a id="sync_products" class="btn btn-danger"><i class="icon-loop"></i></a>                        
+                            <img style="display:none" class="sync-products-process" src="{{ link('view/image/knawat_ajax_loader.gif') }}" style="width:30px;" />                            
+                            <label for="sync_products">{{ lang('btn_sync_products') }}</label>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+
+            <div class="panel-footer">
+                <div class="footer-elements" style="padding: 10px;">
+                    <span>Total Imported:</span>
+                    <span class="imported-count"> 0</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</form>
+
+<!-- Lower Buttons -->
+{% include "includes/buttons_bottom.expand" %}
+<!-- End Lower Buttons -->
+
+{% endblock %}
+
+
+{% block scripts %}
+<script type="text/javascript">
+    $(document).ready( () => {
+        operationsDivStatus();
+
+        // window.addEventListener("beforeunload", function(event) {
+        //     event.returnValue = "You have attempted to leave this page. Are you sure?";
+        // });
+
+        $('#import_categories').click(()=>{
+            
+            $('.imported-count').html(0);
+            $('#import_categories').hide();
+            $('.import-categories-process').show();
+
+            $.ajax({
+                type: 'POST',
+                url : '{{ link("module/stockzones/importCategories") }}'
+            }).done((res)=>{
+                $('.imported-count').html(res);                
+            }).fail((jqXHR, textStatus)=>{
+                alert( "Request failed: " + textStatus );
+            }).always(()=>{
+                $('#import_categories').show();
+                $('.import-categories-process').hide();
+            });
+
+        });
+
+
+
+        $('#import_products').click(()=>{
+            
+            $('.imported-count').html(0);
+            $('#import_products').hide();
+            $('.import-products-process').show();
+
+            $.ajax({
+                type: 'POST',
+                url : '{{ link("module/stockzones/importProducts") }}'
+            }).done((res)=>{
+                $('.imported-count').html(res);                
+            }).fail((jqXHR, textStatus)=>{
+                alert( "Request failed: " + textStatus );
+            }).always(()=>{
+                $('#import_products').show();
+                $('.import-products-process').hide();
+            });;
+
+        });
+
+
+
+        $('#sync_products').click(()=>{
+  
+            $('.imported-count').html(0);
+            $('#sync_products').hide();
+            $('.sync-products-process').show();
+
+            $.ajax({
+                type: 'POST',
+                url : '{{ link("module/stockzones/syncProducts") }}'
+            }).done((res)=>{
+                $('.imported-count').html(res);                
+            }).fail((jqXHR, textStatus)=>{
+                alert( "Request failed: " + textStatus );
+            }).always(()=>{
+                $('#sync_products').show();
+                $('.sync-products-process').hide();
+            });;;
+
+        });
+    });
+    
+    const changeStatus = checkbox => {
+        let status = $(checkbox).is(':checked') ? "{{ lang('text_enabled') }}" : "{{ lang('text_disabled') }}";
+        $(checkbox).siblings('.switchery-status').html(status);
+    };
+
+    const operationsDivStatus = () => {
+        if( $("input[name='stockzones[status]']").val() != '1' ||
+            $("input[name='stockzones[access_token]']").val() == '' || 
+            $("input[name='stockzones[access_key]']").val() == ''){
+            $('#operations_div').addClass('disabled');
+        }
+        else{
+            $('#operations_div').removeClass('disabled');
+        }
+    };
+</script>
+{% endblock %}

@@ -1,0 +1,144 @@
+<!DOCTYPE HTML>
+<html lang="{{ lang('code') }}" class="{{ lang('direction') == 'rtl' ? 'cms-rtl' : '' }}">
+<head>
+    <title>{{ lang('scanner_page_title') }}</title>
+    <link rel="stylesheet" type="text/css" href="expandish/view/theme/elite/lib/bootstrap/css/bootstrap.min.css" />
+    {% if lang('direction') == 'rtl' %}
+    <style>
+    body {
+        direction: rtl;
+    }
+    </style>
+    {% endif %}
+    <style>
+        html {height: 100%; min-height: 100%; width: 100%;}
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            min-height: 100%;
+            width: 100%;
+        }
+        .reservation-info .reservation-head i {margin-top: 10px; margin-bottom: 10px;}
+        .reservation-info .reservation-head {font-size: 6rem;}
+        .reservation-info table thead th {
+            text-align: center;
+            font-weight: 500;
+            font-size: 2rem;
+            vertical-align: middle;
+        }
+
+        .reservation-info table {
+            height: 100%;
+        }
+
+        .reservation-info table tbody td {
+            width: 50%;
+            vertical-align: middle;
+        }
+
+        .reservation-info {
+            width: 70%;
+        }
+
+        input, label {vertical-align:middle}
+        .qrcode-text {padding-right:1.7em; margin-right:0}
+        .qrcode-text-btn {
+            display:inline-block;
+            background:url(//dab1nmslvvntp.cloudfront.net/wp-content/uploads/2017/07/1499401426qr_icon.svg) 50% 50% no-repeat;
+            height:1em;
+            width:1.7em;
+            margin-left:-1.7em;
+            cursor:pointer
+        }
+        .qrcode-text-btn > input[type=file] {position:absolute; overflow:hidden; width:1px; height:1px; opacity:0}
+    </style>
+</head>
+<body>
+    <div class="reservation-info row">
+        <div class="col-md-12 col-sm-12 col-xs-12" style="text-align: center;">
+            <input type=text size=16 placeholder="Tracking Code" class=qrcode-text>
+            <label class=qrcode-text-btn>
+                <input type=file accept="image/*" capture=environment onchange="openQRCamera(this);" tabindex=-1>
+            </label> 
+        </div>
+
+        <br />
+        <br />
+
+        <div class="col-md-12 col-sm-12 col-xs-12">
+            <table class="table table-hover table-bordered" style="display: none;">
+                <thead>
+                    <tr><th colspan="5">{{ lang('reservation_info') }}</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>{{ lang('reservation_code') }}</td>
+                        <td class="reservation_code">...</td>
+                    </tr>
+                    <tr>
+                        <td>{{ lang('reservation_time') }}</td>
+                        <td class="reservation_time">...</td>
+                    </tr>
+                    <tr>
+                        <td>{{ lang('reservation_name') }}</td>
+                        <td class="reservation_name">...</td>
+                    </tr>
+                    <tr>
+                        <td>{{ lang('reservation_email') }}</td>
+                        <td class="reservation_email">...</td>
+                    </tr>
+                    <tr>
+                        <td>{{ lang('reservation_phone') }}</td>
+                        <td class="reservation_phone">...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+<script src="https://rawgit.com/sitepoint-editors/jsqrcode/master/src/qr_packed.js"></script>
+<script src="expandish/view/javascript/jquery/jquery-1.7.1.min.js"></script>
+<script>
+var getCodeInfoUrl = '{{ link("module/slots_reservations/scan") }}';
+function openQRCamera(node) {
+    var reader = new FileReader();
+        reader.onload = function() {
+        node.value = "";
+        qrcode.callback = function(res) {
+            if(res instanceof Error) {
+                alert("No QR code found. Please make sure the QR code is within the camera's frame and try again.");
+            } else {
+                node.parentNode.previousElementSibling.value = res;
+
+                $.ajax({
+                    url: getCodeInfoUrl,
+                    type: 'POST',
+                    data: {code: res},
+                    dataType: 'JSON',
+                    success: (r) => {
+                        if (typeof r.status == 'undefined' || r.status == 'ERR') {
+                            alert('error happened');
+                            return;
+                        }
+
+                        $('.reservation_code').html(r.data.code);
+                        $('.reservation_time').html(r.data.time);
+                        $('.reservation_name').html(r.data.name);
+                        $('.reservation_email').html(r.data.email);
+                        $('.reservation_phone').html(r.data.phone);
+
+                        $('.reservation-info table').slideDown();
+                    }
+                });
+            }
+        };
+        qrcode.decode(reader.result);
+    };
+  reader.readAsDataURL(node.files[0]);
+}
+
+</script>
+</body>
+</html>

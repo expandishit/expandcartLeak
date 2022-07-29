@@ -1,0 +1,192 @@
+<style>
+    .cc-selector input{
+        margin:0;padding:0;
+        -webkit-appearance:none;
+        -moz-appearance:none;
+        appearance:none;
+    }
+    .meeza{background-image:url('/expandish/view/theme/default/image/nbe_meeza.png');}
+    .visaMastercard{background-image:url('/expandish/view/theme/default/image/nbe_visa_master.png');}
+
+    .cc-selector input:active +.drinkcard-cc{opacity: .9;}
+    .cc-selector input:checked +.drinkcard-cc{
+        -webkit-filter: none;
+        -moz-filter: none;
+        filter: none;
+    }
+    .drinkcard-cc{
+        cursor:pointer;
+        background-size:contain;
+        background-repeat:no-repeat;
+        display:inline-block;
+        width:100px;height:100px;
+        -webkit-transition: all 100ms ease-in;
+        -moz-transition: all 100ms ease-in;
+        transition: all 100ms ease-in;
+        -webkit-filter: brightness(1.8) grayscale(1) opacity(.7);
+        -moz-filter: brightness(1.8) grayscale(1) opacity(.7);
+        filter: brightness(1.8) grayscale(1) opacity(.7);
+    }
+    .drinkcard-cc:hover{
+        -webkit-filter: brightness(1.2) grayscale(.5) opacity(.9);
+        -moz-filter: brightness(1.2) grayscale(.5) opacity(.9);
+        filter: brightness(1.2) grayscale(.5) opacity(.9);
+    }
+    /* Extras */
+    a:visited{color:#888}
+    a{color:#444;text-decoration:none;}
+</style>
+
+<div id="payment_methods_options" style="display: none">
+    <hr>
+    <div class="cc-selector">
+        <div class="row">
+            <div class="col-sm-6">    
+                <input id="mastercard" class="nebPaymentMethod" data-chosen-payment="visaMastercard" type="radio" name="credit-card" />
+                <label class="drinkcard-cc visaMastercard"for="mastercard"></label>
+            </div>    
+            
+            {% if meezaActive == 1 %}
+            <div class="col-sm-6">    
+                <input id="meezaCard" class="nebPaymentMethod" data-chosen-payment="meeza" type="radio" name="credit-card" />
+                <label class="drinkcard-cc meeza" for="meezaCard"></label>
+            </div>
+           {% endif %} 
+        </div>
+    </div>
+    <hr>
+</div>
+
+
+<script {% if testMode == 1 %} src="https://test-nbe.gateway.mastercard.com/checkout/version/{{version}}/checkout.js" {% else %} src="https://nbe.gateway.mastercard.com/checkout/version/{{version}}/checkout.js" {% endif %} data-error="{{ link('payment/nbe_bank/error') }}" data-cancel="{{ link('payment/nbe_bank/error') }}" data-complete="{{ link('payment/nbe_bank/success') }}"></script>
+{% if meezaActive == 1 %}
+<script src="{{ meezaUrl }}" data-error="{{ link('payment/nbe_bank/error') }}" data-cancel="{{ link('payment/nbe_bank/error') }}" data-complete="{{ link('payment/nbe_bank/success') }}"></script>
+{% endif %} 
+
+<script>
+
+    {# 
+        |==================================================|
+                here we explane how NBE working
+        
+        1- in our checkout page cusotmer can choose if he wants to dispaly
+           payment menthods using dropdown or radio buttons 
+           for this reason we check before run any function
+    
+        2- after customer choose NBE as payment method  
+           we display NBE options like (visa-meeza) by using displayPaymentOptions function
+    
+        3-    
+        |==================================================|
+    #}
+
+        $(function () {
+
+            var paymentSelector = $("#payment_method_wrap > .payment-methods :radio, .custom-select"),
+                    paymentMethodsOptions = $("#payment_methods_options"),
+                    confirmOrderButton = $('#qc_confirm_order');
+
+            function displayPaymentAfterLoad()
+            {
+                var selectedOption = ($('#nbe_bank').is(':checked') || $('.custom-select').find(':selected').attr('id') == "nbe_bank") ? 'nbe_bank' : '';
+                displayPaymentOptions(selectedOption);
+            }
+
+            displayPaymentAfterLoad();
+            
+            function displayPaymentOptions(chosenOption)
+            {
+                let insertAfterElement = ($("label[for='nbe_bank']").length > 0) ? "label[for='nbe_bank']" : '.custom-select';
+                if (chosenOption == 'nbe_bank')
+                {
+                    paymentMethodsOptions.insertAfter(insertAfterElement).fadeIn();
+                } else {
+                    paymentMethodsOptions.insertAfter(insertAfterElement).fadeOut();
+                }
+            }
+
+            function changePaymentOption()
+            {
+                var chosenOption = (typeof $(this).attr('id') === "undefined") ? $(this).find(':selected').attr('id') : $(this).attr('id');
+                displayPaymentOptions(chosenOption);
+            }
+
+            paymentSelector.on('change', changePaymentOption);
+            function nbeChosenPaymentOption()
+            {
+                let _this = $(this),
+                        customerChosenPayment = _this.data('chosen-payment');
+                sessionStorage.setItem("nbeChosenPayment", customerChosenPayment);
+            }
+
+            $('.nebPaymentMethod').on('click', nbeChosenPaymentOption);
+            function submitPaymentForm(event)
+            {
+                event.preventDefault();
+                let nbeChosenPayment = sessionStorage.getItem("nbeChosenPayment");
+                if (nbeChosenPayment == 'visaMastercard') {
+                    visaMastercardCall();
+                } else if (nbeChosenPayment == 'meeza') {
+                    meezaCall();
+                }
+            }
+            function visaMastercardCall()
+            {
+                $.ajax({
+                    url: '{{ link('payment/nbe_bank/getVisaMastarData') }}',
+                    type: 'POST',
+                    dataType: 'JSON',
+                    success: function (response) {
+                        let  paymentObject = {
+                            merchant: response.merchantNumber,
+                            order: {
+                                amount: response.amount,
+                                currency: response.currencyCode,
+                                description: response.orderProducts,
+                                id: response.orderId
+                            },
+                            session: {
+                                id: response.sessionId
+                            },
+                            interaction: {
+                                operation: 'PURCHASE',
+                                merchant: {
+                                    name: response.storeName
+                                }
+                            }
+
+                        };
+                        Checkout.configure(paymentObject);
+
+                        Checkout.showPaymentPage();
+                    }
+
+                });
+            }
+
+            function meezaCall()
+            {
+
+                $.ajax({
+                    url: '{{ link('payment/nbe_bank/getMeezaData') }}',
+                    type: 'POST',
+                    dataType: 'JSON',
+                    success: function (response) {
+                        Lightbox.Checkout.configure = {
+                            paymentMethodFromLightBox: 0,
+                            MID: response.merchantId,
+                            TID: response.terminalId,
+                            AmountTrxn: response.amount,
+                            SecureHash: response.secureHash,
+                            TrxDateTime: Date.now()
+                        };
+                        Lightbox.Checkout.showPaymentPage();
+                    }
+                });
+
+            }
+
+            confirmOrderButton.on('click', submitPaymentForm);
+        });
+
+</script>

@@ -1,0 +1,71 @@
+<?php
+
+$_  =[ 
+    'product_classification_heading_title'  => 'Klasîkirina hilberê', 
+    'error_warning'    => 'Hişyarî: Ji kerema xwe bizanin ku zeviyên çewt an pêwîst binirxînin!', 
+    'text_settings'  => 'Mîhengên', 
+    'text_enabled'  => 'Enabled', 
+    'text_disabled'  => 'Seqet kirin', 
+    'please_wait' => 'Ji kerema xwe li bendê be ...', 
+
+    'entry_form_title'  => 'Sernavê lêgerînê', 
+    'entry_status'  => 'Rewş', 
+    'entry_brand'  => 'Brand', 
+    'entry_brands'  => 'Brands', 
+    'entry_years'  => 'Sal', 
+    'entry_model'  => 'Model', 
+    'entry_models'  => 'Models', 
+    'entry_year'  => 'Sala', 
+    'entry_year_from'  => 'Sala ji', 
+    'entry_year_to'  => 'Sala to', 
+    'entry_year_note'  => 'Salên berê dê dubare neke', 
+    'entry_select_brand'  => 'Brand hilbijêrin', 
+    'entry_select_model'  => 'Modela hilbijêrin', 
+    'entry_year_from_note'  => 'Mînak: 2000', 
+    'entry_year_to_note'  => 'Mînak: 2020', 
+    'general_settings'  => 'Kodên hilberê xweş bikin', 
+    'text_settings_success'  => 'Mîhengên bi serfirazî hate nûve kirin', 
+    'text_success'  => 'Mîhengên bi serfirazî hate nûve kirin', 
+    'text_bulkdelete_success'  => 'Koda bi serfirazî hate jêbirin', 
+    // error
+    'error_name'      => 'Navê brand divê di navbera 2 û 32 tîpan de be!', 
+    'error_permission'      => 'Hişyarî: Hûn destûr nînin ku hûn kodên guhêzbar bikin!', 
+    'text_bulkdelete_error'      => 'Errorewtiyek nediyar çêbû', 
+    'unexpected_error'      => 'Errorewtiyek nediyar çêbû', 
+    'error_brand_required'      => 'Brand hewce ye', 
+    'error_year_required'      => 'Navê salê pêdivî ye û tenê hejmar destûr tê dayîn', 
+    'error_years_required'      => 'Sal pêdivî ye', 
+    'error_year_from_required'      => 'Sala ji lazim e û tenê hejmar destûr tê dayîn û herî kêm hejmar 4', 
+    'error_year_to_required'      => 'Sala pêdivî ye ku hewce ye û tenê hejmar destûr tê dayîn û herî kêm hejmar 4', 
+    'error_year_exists'      => 'Sal berê heye', 
+    'error_model_required'      => 'Navê Modelê pêdivî ye', 
+
+    'column_brand_name'  => 'Brand', 
+    'column_model_name'  => 'Model', 
+    'btn_new_brand'  => 'Brand New Add', 
+    'btn_new_model'  => 'Modela nû lê zêde bike', 
+    'column_year_name'  => 'Sala', 
+    'btn_new_year'  => 'Sala nû zêde bike', 
+
+
+    'pc_menu_brand'  => 'Brands', 
+    'pc_menu_model'  => 'Models', 
+    'pc_menu_year'  => 'Sal', 
+    'pc_menu_settings'  => 'Mîhengên', 
+    'brand_heading_title'  => 'Brands', 
+    'brand_heading_brand_add'  => 'Brand New Add', 
+    'brand_heading_brand_update'  => 'Brandê nûvekirin', 
+
+    'year_heading_title'  => 'Sal', 
+    'year_heading_year_add'  => 'New Year', 
+    'year_heading_year_update'  => 'Sala nûvekirin', 
+    'year_heading_year_add_models'  => 'Modelên salê zêde bikin', 
+    'btn_year_models'  => 'Modelên Salê', 
+    'button_add_product_classification'  => 'Klasîkirina nû zêde bike', 
+
+    'model_heading_title'  => 'Models', 
+    'model_heading_model_add'  => 'Model zêde bikin', 
+    'model_heading_model_update'  => 'Modela Nûvekirin', 
+
+];
+

@@ -1,0 +1,107 @@
+<div id="content row">
+    <!-- breadcrumb -->
+    <div class="breadcrumb-page">
+        <ol class="breadcrumb">
+            {% for breadcrumb in breadcrumbs %}
+                {% if loop.last %}
+                    <li class="active">{{ breadcrumb['text'] }}</li>
+                {% else %}
+                    <li><a href="{{ breadcrumb['href'] }}">{{ breadcrumb['text'] }}</a></li>
+                {% endif %}
+            {% endfor %}
+        </ol>
+    </div> <!-- breadcrumb -->
+
+    <div class="col-md-12">
+        <div class="page-title-base">
+            <h1 class="title-base">{{ lang('affiliate_promo_list') }}</h1>
+        </div>
+
+        <table id="promo-code-list">
+            <thead>
+                <tr>
+                    <th>{{ lang('affiliate_promo_code') }}</th>
+                    <th>{{ lang('affiliate_promo_type') }}</th>
+                    <th>{{ lang('affiliate_promo_ratio') }}</th>
+                    <th>{{ lang('status') }}</th>
+                    <th>{{ lang('affiliate_promo_share_link') }}</th>
+                    <th>{{ lang('affiliate_promo_total_use') }}</th>
+                    <th>{{ lang('affiliate_promo_actions') }}</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+    </div>
+</div>
+
+<link rel="stylesheet" href="//cdn.datatables.net/1.10.20/css/jquery.dataTables.min.css">
+<script src="//cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js"></script>
+
+<script>
+var locales = {};
+locales["search"] = "{{ lang('affiliate_promo_dt_search') }}";
+locales["searchPlaceholder"] = "{{ lang('affiliate_promo_dt_search_placeholder') }}";
+locales["lengthMenu"] = "{{ lang('affiliate_promo_dt_length_menu') }}";
+locales["processing"] = "{{ lang('affiliate_promo_dt_processing') }}";
+locales["infoFiltered"] = "{{ lang('affiliate_promo_dt_info_filtered') }}";
+locales["zeroRecords"] = "{{ lang('affiliate_promo_dt_zero_records') }}";
+locales["loadingRecords"] = "{{ lang('affiliate_promo_dt_loading_records') }}";
+locales["emptyTable"] = "{{ lang('affiliate_promo_dt_empty_table') }}";
+locales["info"] = "{{ lang('affiliate_promo_dt_info') }}";
+
+$(document).ready(function () {
+    $('#promo-code-list').DataTable({
+        "language": locales,
+        "processing": true,
+        "serverSide": true,
+        "ajax": '{{ ajax_link }}',
+        "rowId": "coupon_id",
+        "columns": [
+            { data: 'code' },
+            { data: 'type' },
+            { data: 'discount' },
+            { data: 'status' },
+            { data: 'share_link' },
+            { data: 'total_use' }
+        ],
+        "columnDefs": [
+            {
+                targets: 1,
+                render: function (data, type, row) {
+                    if (row['type'] == 'P') {
+                        return "{{ lang('affiliate_promo_percent') }}"
+                    } else {
+                        return "{{ lang('affiliate_promo_fixed') }}"
+                    }
+                }
+            },
+            {
+                targets: 6,
+                render: function (data, type, row) {
+                    var links = '<a href="'+row['order_history']+'" class="btn btn-primary"><i class="fa fa-shopping-cart"></i></a> <a href="'+row['edit']+'" class="btn btn-warning"><i class="fa fa-edit"></i></a> ';
+                    links += '<button class="btn btn-danger delete-btn" data-id="'+row['coupon_id']+'"><i class="fa fa-trash"></i></button>';
+                    return links;
+                }
+            }
+        ]
+    });
+
+    $(document).on('click', '.delete-btn', function () {
+        if (confirm("{{ lang('affiliate_promo_confirm') }}")) {
+            var id = $(this).data('id');
+            $.ajax({
+                method: 'POST',
+                url: '{{ ajax_delete_link }}',
+                data: {
+                    coupon_id: id
+                },
+                success: function() {
+                    $('#' + id).remove();
+                }
+            });
+        }
+    });
+
+});
+</script>

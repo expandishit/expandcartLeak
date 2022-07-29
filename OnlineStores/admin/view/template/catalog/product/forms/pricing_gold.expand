@@ -1,0 +1,163 @@
+<div class="panel panel-flat">
+    <div class="panel-heading">
+        <h6 class="panel-title">
+            <div class="title">
+                <span>
+                    <span class="text-bold">{{ lang('tab_pricing_gold') }}</span>
+                </span>
+            </div>
+            <a class="heading-elements-toggle"><i class="icon-more"></i></a>
+        </h6>
+        <div class="heading-elements not-collapsible">
+            <ul class="icons-list">
+                <li><a data-action="collapse" class=""></a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="panel-body">
+
+        <div class="form-group col-md-6" id="cost_price-group">
+            <label for="cost_price" class="control-label">
+                {{ lang('entry_caliber') }} <span class="text-danger">*</span>
+            </label>
+            <select class="select2" id="caliber" name="gold_caliber" class="form-control">
+                {% for clib in calibers %}
+                    <option value="{{ clib['id'] }}" data-price="{{ clib['price'] }}" data-manufprice="{{ clib['manuf_price'] }}"
+                            {{ product_caliber['gold_id'] == clib['id'] ? 'selected' : '' }}>
+                        {{ clib['caliber'] }}
+                    </option>
+                {% endfor %}
+            </select>
+            <span class="help-block"></span>
+            <span class="text-muted">{{ langempty('entry_caliber_help') }}</span>
+        </div>
+
+        <div class="form-group col-md-6" id="profit-group">
+            <label for="caliber_price" class="control-label">
+                {{ lang('entry_gram_price') }}
+            </label>
+            <input type="text" class="form-control touchspin-money" id="gold_caliber_price1" disabled value="">
+            <input type="hidden" name="gold_caliber_price" id="gold_caliber_price" value="">
+            <span class="help-block"></span>
+        </div>
+
+        <div class="form-group col-md-6" id="manuf_price-group">
+            <label for="manuf_price" class="control-label">
+                {{ lang('entry_manuf_price') }}
+            </label>
+            <input
+                    type="text"
+                    class="form-control touchspin-money"
+                    id="manuf_price"
+                    name="gold_manuf_price"
+                    {% if product_caliber['manuf_price'] %}
+                        value="{{ product_caliber['manuf_price'] }}"
+                    {% else %}
+                        value=""
+                    {% endif %}
+            >
+            <span class="help-block"></span>
+        </div>
+
+        <div class="form-group col-md-6" id="caliber_weight-group">
+            <label for="caliber_weight" class="control-label">
+                {{ lang('entry_caliber_weight') }} <span class="text-danger">*</span>
+            </label>
+            <input type="text" class="form-control touchspin-weight-control" id="caliber_weight" name="gold_caliber_weight" value="{{ weight ?? 0 }}">
+            <span class="help-block"></span>
+        </div>
+
+        <div class="form-group col-md-6 mt-5" id="manuf_on-group">
+            <input type="hidden" id="manuf_on" value="{{ product_caliber['manuf_on'] ?? 'product' }}" />
+            <div class="switch-component mt-20">
+                <div class="switch-inner">
+                    <span class="title">{{ lang('entry_manuf_on') }}</span>
+                    <label class="switch-cover">
+                        <input type="checkbox" class="hide" onchange="changeManufStatus(this);" name="gold_manuf_on" {{ product_caliber['manuf_on'] in ['gram'] ? 'checked' }}>
+                        <span class="switch-title switch-disabled">
+                        {{lang('text_on_gram')}}
+                    </span>
+                        <span class="switch-title switch-enabled">
+                        {{lang('text_on_product')}}
+                    </span>
+                        <span class="switch-btn"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group col-md-6" id="profit-group">
+            <label for="gold_total_price" class="control-label">
+                {{ lang('entry_gold_total_price') }}
+            </label>
+            <input type="text" class="form-control touchspin-money" id="gold_total_price" disabled value="">
+            <span class="help-block"></span>
+        </div>
+        <div class="clearfix"></div>
+    </div>
+</div>
+
+<script>
+    $( document ).ready(function() {
+        //set product manuf price
+        {% if not product_caliber['manuf_price'] %}
+        let manufprice = parseFloat($('#caliber option:selected').data('manufprice'));
+        $("#manuf_price").val(manufprice.toFixed(currency_decimal_places));
+        {% endif %}
+
+        calcCaliber(false);
+    });
+
+    // calc caliber function
+    let calcCaliber = function(chManufPrice) {
+        let currency_decimal_places = '{{ currency_decimal_places }}';
+
+        let clib       = parseFloat($('#caliber option:selected').data('price'));
+        let main_manufprice = parseFloat($('#caliber option:selected').data('manufprice'));
+        let weight     = parseFloat($('#caliber_weight').val());
+
+        let manuf_on = $("#manuf_on").val();
+
+        $("#gold_caliber_price1").val(clib.toFixed(currency_decimal_places));
+        $("#gold_caliber_price").val(clib.toFixed(currency_decimal_places));
+
+        //avoid change manuf price in first load if product already has manuf price
+        if(chManufPrice)
+            $("#manuf_price").val(main_manufprice.toFixed(currency_decimal_places));
+
+        let manufprice = parseFloat($("#manuf_price").val());
+
+        let total = 0;
+        console.log(clib, manufprice, weight);
+        if(manuf_on == 'gram')
+            total =  ( clib * weight ) + ( manufprice * weight );
+        else
+            total =  ( clib * weight ) + manufprice;
+
+        $("#gold_total_price").val(total.toFixed(currency_decimal_places));
+    }
+
+    $('#caliber').on('change', function() {
+        calcCaliber(true)
+    });
+    $('#caliber_weight, #manuf_price').on('input', function() {
+        calcCaliber(false)
+    });
+    $(".bootstrap-touchspin-up").on('click', function() {
+        calcCaliber(false)
+    });
+
+    function changeManufStatus(checkbox) {
+        var self = $(checkbox);
+        var switch_status = self.siblings('.switchery-status');
+
+        if (self.is(':checked')) {
+            $("#manuf_on").val('gram');
+        }
+        else {
+            $("#manuf_on").val('product');
+        }
+
+        calcCaliber(false)
+    }
+</script>

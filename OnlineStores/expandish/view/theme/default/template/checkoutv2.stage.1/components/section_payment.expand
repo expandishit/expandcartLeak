@@ -1,0 +1,105 @@
+{% if is_logged %}
+<!-- Quick Checkout v4.0 by Dreamvention.com quickcheckout/payment_method.tpl -->
+{% if checkout_mode == '1' %} <h2 class="h2 mb-4">{{ data['title'] }}</h2> {% endif %}
+<div id="payment_method_wrap">
+    {% if not payment_methods %} <div class="error_span">{{ no_payment_msg }}</div>{% endif %}
+    {% if error_warning %}<div class="error alert alert-danger">{{ error_warning }}</div>{% endif %}
+        
+    {% if payment_methods %}
+    <form id="payment_method_form" >
+        <div class="ship_method payment_selection">
+            <div class="box-content ">
+                {% if data['description'] %} <div class="description">{{ data['description'] }}</div> {% endif %}
+                <div class="payment-methods {% if not data['display_options'] %}qc-hide{% endif %}">
+                        {% for payment_method in payment_methods %}
+                            <div class="input-group mt-2">
+                                <div class="input-group-prepend">
+                                
+                                    <div id="radio_{{ payment_method['code'] }}" class="input-group-text ">
+                             
+                                        
+                                        <label for="{{ payment_method['code'] }}" class="p" data-payment="{{ payment_method['code'] }}">
+                                            {% if payment_method['code'] == code %}
+                                                <input type="radio" name="payment_method" value="{{ payment_method['code'] }}" id="{{ payment_method['code'] }}" class="styled pay-method"  data-refresh="6" checked/>
+                                            {% else %}
+                                                <input type="radio" name="payment_method" value="{{ payment_method['code'] }}" id="{{ payment_method['code'] }}" class="styled pay-method"  data-refresh="6"/>
+                                            {% endif %}
+                                            <span class="checkmark__radio"></span>
+                                          <span class="input-group__brief">  {{ payment_method['title'] }} </span>
+                                        </label>
+                                    </div>
+                                            
+                                    <div class="payment-method__toggle payment_method_content{{ payment_method['code'] == code ? ' step_7' : '' }}" id="payment_method_content_{{ payment_method['code'] }}"{{ payment_method['code'] == code ? 'style="display: block;"' : '' }}>
+                                        {# payment content #}
+                                    </div>
+                                
+                                    {#<img src="/expandish/view/theme/default/template/checkoutv2/img/paypal.png" alt="">#}
+                                    {% if payment_method['cost'] %}<p class="p">{{ payment_method['cost'] }}</p>{% endif %}
+                                    
+                                </div>
+                            </div>
+                        {% endfor %}
+                        <input type="hidden" id="selected_payment_code" value="{{ code }}">
+                </div>
+                <div class="clear"></div>
+            </div>
+        </div>
+    </form>
+    {% endif %}
+</div>
+<script>
+    // $('.steps a').click(function (){
+    //     console.log('clicked');
+    //     $('.wizard>.actions>ul>li:first-of-type a').insertAfter('.sections_data.current .confirm-btn-wizard__btn');
+    // });
+    $(function(){
+
+        if($.isFunction($.fn.uniform)){
+            $(" .styled, input:radio.styled").uniform().removeClass('styled');
+        }
+        if($.isFunction($.fn.colorbox)){
+            $('.colorbox').colorbox({
+                width: 640,
+                height: 480
+            });
+        }
+        if($.isFunction($.fn.fancybox)){
+            $('.fancybox').fancybox({
+                width: 640,
+                height: 480
+            });
+        }
+    });
+    
+    $('.payment_selection .input-group .input-group-text label').click(function (e){
+        var $this= $(this);
+        var code = $this.attr("data-payment");
+        
+        if (code == $('#selected_payment_code').val()) {
+           return 0;
+        }
+        
+        $('.payment_selection .payment-method__toggle').slideUp();
+        $('#selected_payment_code').val(code);
+        $('.step_7').html("").removeClass('step_7');
+        $('#payment_method_content_' + code).addClass('step_7');
+        $('#payment_method_content_' + code).slideDown();
+        
+        return 1;
+        // $(this).next().slideToggle();
+       /**
+        if($this.parent().next().hasClass('toggling')){return;}
+        $this.parent().next().addClass('toggling')
+        $this.parent().next().stop().slideToggle(300,function(){
+            $this.parent().next().removeClass('toggling');
+        });
+        e.stopPropagation();
+        **/
+    });
+    
+    $('.pay-method[checked="checked"]').closest('.input-group-text').next().show();
+    /*$(document).ready(function (){
+        $('#payment_method_content_cod').remove();
+    });*/
+</script>
+{% endif %}

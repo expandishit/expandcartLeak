@@ -1,0 +1,364 @@
+{% if payment_methods %}
+
+<!-- List -->
+<section class="recomended-shipping">
+    <p class="title">
+        {{ lang('text_recomended') }}
+    </p>
+    <div class="grid">
+        {% for recommend in recommended_payment_methods.data %}  
+            {% if recommend.installed == 1 %}
+                <a href="{{ link('extension/payment/activate', 'code=' ~ recommend.code ~ '&activated=1' ~ '&payment_company=' ~ (recommend.type != "offline_methods" ? 1 : 0)) }}" class="recomend-box">
+            {% else %}
+            <a href="{{ link('extension/payment/install', 'extension=' ~ recommend.code ~ '&payment_company=' ~ (recommend.type != "offline_methods" ? 1 : 0)) }}" class="recomend-box">
+            {% endif %}
+                <img src="{{recommend.image}}" alt="{{recommend.image_alt}}" class="img">
+                <div class="info">
+                    <p class="recomend-title">
+                        {{recommend.title}}
+                        {# <span>Free</span> #}
+                    </p>
+                    <p class="recomend-countries">
+                        {{ lang('text_supported_in') }} :
+                        {% for countrie in recommend.supported_countries %}
+                            {{countrie.name}} {% if loop.index < recommend.supported_countries|length %},{% elseif loop.index >= recommend.supported_countries|length %}{% endif %}
+                        {% endfor %}
+                        {% if recommend.supported_countries|length == 0 %}{{lang('text_global')}}{% endif %}
+                    </p>
+                    <div class="recomend-desc">
+                        {{recommend.short_description|striptags}}
+                    </div>
+                </div>
+                <span class="special-sticker {{recommend.special_rate == 1 ? 'active' : ''}}">
+                    {{ lang('btn_special_rates') }}
+                </span>
+            </a>
+        {% endfor %}
+    </div>
+</section>
+
+{# split pament types #}
+{% set credit_type = [] %}
+{% set prepaid_type = [] %}
+{% set paypal_type = [] %}
+{% set buy_now_pay_later = [] %}
+{% set manual_type = [] %}
+{% for payment in payment_methods %}
+    {% if payment.type == "credit_cards" %}
+        {% set credit_type = credit_type|merge([payment]) %}
+    {% elseif payment.type == "offline_methods" %}
+        {% set manual_type = manual_type|merge([payment]) %}
+    {% elseif payment.type == "paypal" and payment.code != "paypal" and payment.code != "PayPal" %}
+        {% set paypal_type = paypal_type|merge([payment]) %}
+    {% elseif payment.type == "buy_now_pay_later" %}
+        {% set buy_now_pay_later = buy_now_pay_later|merge([payment]) %}
+    {% else %}
+        {% set prepaid_type = prepaid_type|merge([payment]) %}
+    {% endif %}
+{% endfor %}
+
+<section class="ship-by-type">
+
+    {% if credit_type|length > 0 %}
+        <div class="ship-type-head">
+            <p class="title">
+                {{ lang('text_credit_type') }} <span>({{ lang_printf('text_appe_length', credit_type|length) }})</span>
+            </p>
+            {% if credit_type|length > 3 %}
+            <button class="see-all" data-target="1">
+                <span class="more">{{ lang('btn_see_all') }}</span>
+                <span class="less">{{ lang('btn_see_less') }}</span>
+                <i class="fa fa-chevron-down" aria-hidden="true"></i>
+            </button>
+            {% endif %}
+        </div>
+        <div class="grid">
+            {% for payment in credit_type %}
+                {% if payment.installed == 1 %}
+                <a href="{{ link('extension/payment/activate', 'code=' ~ payment.code ~ '&activated=1' ~ '&payment_company=' ~ (payment.type != "offline_methods" ? 1 : 0)) }}" class="ship-box {{loop.index > 3 ? 'ship-collapse target1'}}">
+                {% else %}
+                <a href="{{ link('extension/payment/install', 'extension=' ~ payment.code ~ '&payment_company=' ~ (payment.type != "offline_methods" ? 1 : 0)) }}" class="ship-box {{loop.index > 3 ? 'ship-collapse target1'}}">
+                {% endif %}
+                    <img src="{{payment.image}}" alt="{{payment.image_alt}}" class="img">
+                    <div class="info">
+                        <p class="ship-title">
+                            {{payment.title}}
+                        </p>
+                        <div class="ship-desc">
+                            {{ lang('text_supported_in') }}: 
+                            {% for countrie in payment.supported_countries %}
+                                {{countrie.name}} {% if loop.index < payment.supported_countries|length %},{% elseif loop.index >= payment.supported_countries|length %}{% endif %}
+                            {% endfor %}
+                            {% if payment.supported_countries|length == 0 %}{{lang('text_global')}}{% endif %}
+                        </div>
+                        {% if (payment.special_rate == true) and (payment.installed != true) %}
+                        <span class="rate-label active">
+                            {{ lang('btn_special_rates') }}
+                        </span>
+                        {% endif %}
+                        {% if payment.installed == true %}
+                            {% if payment.status == 1 %}
+                            <span class="activated-label">
+                                <i class="fa fa-check" aria-hidden="true"></i>
+                                {{ lang('label_enabled') }}
+                            </span>
+                            {% else %}
+                            <span class="disable-label">
+                                <i class="fa fa-ban" aria-hidden="true"></i>
+                                {{ lang('label_disabled') }}
+                            </span>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    {% endif %}
+    {% if prepaid_type|length > 0 %}
+        <div class="ship-type-head">
+            <p class="title">
+                {{ lang('text_prepaid_type') }} <span>({{ lang_printf('text_appe_length', prepaid_type|length) }})</span>
+            </p>
+            {% if prepaid_type|length > 3 %}
+            <button class="see-all" data-target="2">
+                <span class="more">{{ lang('btn_see_all') }}</span>
+                <span class="less">{{ lang('btn_see_less') }}</span>
+                <i class="fa fa-chevron-down" aria-hidden="true"></i>
+            </button>
+            {% endif %}
+        </div>
+        <div class="grid">
+            {% for payment in prepaid_type %}
+                {% if payment.installed == 1 %}
+                <a href="{{ link('extension/payment/activate', 'code=' ~ payment.code ~ '&activated=1' ~ '&payment_company=' ~ (payment.type != "offline_methods" ? 1 : 0)) }}" class="ship-box {{loop.index > 3 ? 'ship-collapse target2'}}">
+                {% else %}
+                <a href="{{ link('extension/payment/install', 'extension=' ~ payment.code ~ '&payment_company=' ~ (payment.type != "offline_methods" ? 1 : 0)) }}" class="ship-box {{loop.index > 3 ? 'ship-collapse target2'}}">
+                {% endif %}
+                    <img src="{{payment.image}}" alt="{{payment.image_alt}}" class="img">
+                    <div class="info">
+                        <p class="ship-title">
+                            {{payment.title}}
+                        </p>
+                        <div class="ship-desc">
+                            {{ lang('text_supported_in') }}: 
+                            {% for countrie in payment.supported_countries %}
+                                {{countrie.name}} {% if loop.index < payment.supported_countries|length %},{% elseif loop.index >= payment.supported_countries|length %}{% endif %}
+                            {% endfor %}
+                            {% if payment.supported_countries|length == 0 %}{{lang('text_global')}}{% endif %}
+                        </div>
+                        {% if (payment.special_rate == true) and (payment.installed != true) %}
+                        <span class="rate-label active">
+                            {{ lang('btn_special_rates') }}
+                        </span>
+                        {% endif %}
+                        {% if payment.installed == true %}
+                            {% if payment.status == 1 %}
+                            <span class="activated-label">
+                                <i class="fa fa-check" aria-hidden="true"></i>
+                                {{ lang('label_enabled') }}
+                            </span>
+                            {% else %}
+                            <span class="disable-label">
+                                <i class="fa fa-ban" aria-hidden="true"></i>
+                                {{ lang('label_disabled') }}
+                            </span>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    {% endif %}
+    {% if paypal_type|length > 0 %}
+        <div class="ship-type-head">
+            <p class="title">
+                {{ lang('text_paypal_type') }} <span>({{ lang_printf('text_appe_length', paypal_type|length) }})</span>
+            </p>
+            {% if paypal_type|length > 3 %}
+            <button class="see-all" data-target="3">
+                <span class="more">{{ lang('btn_see_all') }}</span>
+                <span class="less">{{ lang('btn_see_less') }}</span>
+                <i class="fa fa-chevron-down" aria-hidden="true"></i>
+            </button>
+            {% endif %}
+        </div>
+        <div class="grid">
+            {% for payment in paypal_type %}
+                {% if payment.installed == 1 %}
+                <a href="{{ link('extension/payment/activate', 'code=' ~ payment.code ~ '&activated=1' ~ '&payment_company=' ~ (payment.type != "offline_methods" ? 1 : 0)) }}" class="ship-box {{loop.index > 3 ? 'ship-collapse target3'}}">
+                {% else %}
+                <a href="{{ link('extension/payment/install', 'extension=' ~ payment.code ~ '&payment_company=' ~ (payment.type != "offline_methods" ? 1 : 0)) }}" class="ship-box {{loop.index > 3 ? 'ship-collapse target3'}}">
+                {% endif %}
+                    <img src="{{payment.image}}" alt="{{payment.image_alt}}" class="img">
+                    <div class="info">
+                        <p class="ship-title">
+                            {{payment.title}}
+                        </p>
+                        <div class="ship-desc">
+                            {{ lang('text_supported_in') }}: 
+                            {% for countrie in payment.supported_countries %}
+                                {{countrie.name}} {% if loop.index < payment.supported_countries|length %},{% elseif loop.index >= payment.supported_countries|length %}{% endif %}
+                            {% endfor %}
+                            {% if payment.supported_countries|length == 0 %}{{lang('text_global')}}{% endif %}
+                        </div>
+                        {% if (payment.special_rate == true) and (payment.installed != true) %}
+                        <span class="rate-label active">
+                            {{ lang('btn_special_rates') }}
+                        </span>
+                        {% endif %}
+                        {% if payment.installed == true %}
+                            {% if payment.status == 1 %}
+                            <span class="activated-label">
+                                <i class="fa fa-check" aria-hidden="true"></i>
+                                {{ lang('label_enabled') }}
+                            </span>
+                            {% else %}
+                            <span class="disable-label">
+                                <i class="fa fa-ban" aria-hidden="true"></i>
+                                {{ lang('label_disabled') }}
+                            </span>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    {% endif %}
+    {% if buy_now_pay_later|length > 0 %}
+        <div class="ship-type-head">
+            <p class="title">
+                {{ lang('text_buy_now_pay_later') }} <span>({{ lang_printf('text_appe_length', buy_now_pay_later|length) }})</span>
+            </p>
+            {% if buy_now_pay_later|length > 3 %}
+            <button class="see-all" data-target="3">
+                <span class="more">{{ lang('btn_see_all') }}</span>
+                <span class="less">{{ lang('btn_see_less') }}</span>
+                <i class="fa fa-chevron-down" aria-hidden="true"></i>
+            </button>
+            {% endif %}
+        </div>
+        <div class="grid">
+            {% for payment in buy_now_pay_later %}
+                {% if payment.installed == 1 %}
+                <a href="{{ link('extension/payment/activate', 'code=' ~ payment.code ~ '&activated=1' ~ '&payment_company=' ~ (payment.type != "offline_methods" ? 1 : 0)) }}" class="ship-box {{loop.index > 3 ? 'ship-collapse target3'}}">
+                {% else %}
+                <a href="{{ link('extension/payment/install', 'extension=' ~ payment.code ~ '&payment_company=' ~ (payment.type != "offline_methods" ? 1 : 0)) }}" class="ship-box {{loop.index > 3 ? 'ship-collapse target3'}}">
+                {% endif %}
+                    <img src="{{payment.image}}" alt="{{payment.image_alt}}" class="img">
+                    <div class="info">
+                        <p class="ship-title">
+                            {{payment.title}}
+                        </p>
+                        <div class="ship-desc">
+                            {{ lang('text_supported_in') }}: 
+                            {% for countrie in payment.supported_countries %}
+                                {{countrie.name}} {% if loop.index < payment.supported_countries|length %},{% elseif loop.index >= payment.supported_countries|length %}{% endif %}
+                            {% endfor %}
+                            {% if payment.supported_countries|length == 0 %}{{lang('text_global')}}{% endif %}
+                        </div>
+                        {% if (payment.special_rate == true) and (payment.installed != true) %}
+                        <span class="rate-label active">
+                            {{ lang('btn_special_rates') }}
+                        </span>
+                        {% endif %}
+                        {% if payment.installed == true %}
+                            {% if payment.status == 1 %}
+                            <span class="activated-label">
+                                <i class="fa fa-check" aria-hidden="true"></i>
+                                {{ lang('label_enabled') }}
+                            </span>
+                            {% else %}
+                            <span class="disable-label">
+                                <i class="fa fa-ban" aria-hidden="true"></i>
+                                {{ lang('label_disabled') }}
+                            </span>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    {% endif %}
+    {% if manual_type|length > 0 %}
+        <div class="ship-type-head">
+            <p class="title">
+                {{ lang('text_manual_type') }} <span>({{ lang_printf('text_appe_length', manual_type|length) }})</span>
+            </p>
+            {% if manual_type|length > 3 %}
+            <button class="see-all" data-target="3">
+                <span class="more">{{ lang('btn_see_all') }}</span>
+                <span class="less">{{ lang('btn_see_less') }}</span>
+                <i class="fa fa-chevron-down" aria-hidden="true"></i>
+            </button>
+            {% endif %}
+        </div>
+        <div class="grid">
+            {% for payment in manual_type %}
+                {% if payment.installed == 1 %}
+                <a href="{{ link('extension/payment/activate', 'code=' ~ payment.code ~ '&activated=1' ~ '&payment_company=' ~ (payment.type != "offline_methods" ? 1 : 0)) }}" class="ship-box {{loop.index > 3 ? 'ship-collapse target3'}}">
+                {% else %}
+                <a href="{{ link('extension/payment/install', 'extension=' ~ payment.code ~ '&payment_company=' ~ (payment.type != "offline_methods" ? 1 : 0)) }}" class="ship-box {{loop.index > 3 ? 'ship-collapse target3'}}">
+                {% endif %}
+                    <img src="{{payment.image}}" alt="{{payment.image_alt}}" class="img">
+                    <div class="info">
+                        <p class="ship-title">
+                            {{payment.title}}
+                        </p>
+                        <div class="ship-desc">
+                            {{ lang('text_price') }}:
+                            {% if payment.price %}
+                                {{payment.price}}
+                            {% else %}
+                                {{ lang('text_free') }}
+                            {% endif %}
+                        </div>
+                        {% if (payment.special_rate == true) and (payment.installed != true) %}
+                        <span class="rate-label active">
+                            {{ lang('btn_special_rates') }}
+                        </span>
+                        {% endif %}
+                        {% if payment.installed == true %}
+                            {% if payment.status == 1 %}
+                            <span class="activated-label">
+                                <i class="fa fa-check" aria-hidden="true"></i>
+                                {{ lang('label_enabled') }}
+                            </span>
+                            {% else %}
+                            <span class="disable-label">
+                                <i class="fa fa-ban" aria-hidden="true"></i>
+                                {{ lang('label_disabled') }}
+                            </span>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    {% endif %}
+   
+</section>
+
+<script>
+    // slide up shipping boxes that over than 3 in first render
+    // $('.ship-box.ship-collapse').slideUp(0);
+        
+    // to open all collapse
+    $('.ship-box.ship-collapse').slideDown(0);
+    $('.ship-type-head .see-all').addClass('active');
+
+    // slide toggle shipping boxes that over than 3 on click
+    $('.ship-type-head .see-all').click(function() {
+        let targetBoxs = $(this).data('target')
+        $(this).toggleClass('active')
+        $('.ship-box.ship-collapse.target' + targetBoxs).slideToggle(0)
+    })
+</script>
+
+{% else %}
+
+    <h2 class="text-center">
+        <i class="far fa-frown fa-2x"></i> <br>
+        {{ lang('no_search_result') }}
+    </h2>
+
+{% endif %}

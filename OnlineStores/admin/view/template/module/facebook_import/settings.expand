@@ -1,0 +1,277 @@
+
+<!-- Start Form -->
+<div class="alert alert-danger hidden" id="errors"></div>
+<div class="alert alert-success hidden" id="success"></div>
+<div class="create-product-page">
+	<div class="panel-body pt-20 pb-20">
+		<fieldset>
+			<div id="panel1">
+				{% if facebook_token %}
+					<h5 class="text-semibold mb-20">
+						{{lang('fc_settings')}}
+					</h5>
+					<form action="/admin/module/facebook_import/settings" method="post" class="row mb-20">
+						<div class="col-md-6 form-group" style="padding: 10px" id="business-div">
+							<label>{{lang('settings_lbl_language')}}</label>
+							<select class="form-control" name="export_language">
+								{% for lang in languages %}
+									<option value="{{lang.code}}" {% if lang.code == export_language %} selected='selected' {% endif %} >{{lang.name}}</option>
+								{% endfor %}
+							</select>
+						</div>
+						<div class="col-md-6" style="padding: 10px" id="business-div">
+							<label>{{lang('settings_lbl_plain_desc')}}</label>
+							<select class="form-control" name="export_plain_desc">
+								<option value="1" {% if export_plain_desc == 1 %} selected='selected' {% endif %} >{{lang('settings_yes')}}</option>
+								<option value="0" {% if export_plain_desc == 0 %} selected='selected' {% endif %} >{{lang('settings_no')}}</option>
+							</select>
+							<span class="text-muted">{{lang('settings_lbl_plain_desc_help')}}</span>
+						</div>
+						<div class="col-md-6" style="padding: 10px" id="business-div">
+							<label>{{lang('settings_lbl_ignore_product_quantity')}}</label>
+							<select class="form-control" name="ignore_facebook_product_quantity">
+								<option value="1" {% if ignore_facebook_product_quantity == 1 %} selected='selected' {% endif %} >{{lang('settings_yes')}}</option>
+								<option value="0" {% if ignore_facebook_product_quantity == 0 %} selected='selected' {% endif %} >{{lang('settings_no')}}</option>
+							</select>
+							<span class="text-muted">{{lang('settings_lbl_ignore_product_quantity_help')}}</span>
+						</div>
+						<div class="col-md-12 text-center">
+							<br/>
+							<button class="btn btn-success">{{lang('settings_btn_save')}}</button>
+						</div>
+					</form>
+					<hr>
+					<h5 class="text-semibold mb-20">
+						{{lang('queue_title')}}
+					</h5>
+					<p><button  id="reset_current_queue" class="btn btn-danger">{{lang('reset_current_queue')}} </button></p>
+					<hr>
+
+					<h5 class="text-semibold mb-20">
+						{{lang('fc_sync')}}
+					</h5>
+					<div id="loader" class="hidden" style="padding: 0 0 20px;"><div class="inline-loader"></div></div>
+					<div class="alert alert-danger hidden" id="errors"></div>
+					<div class="alert alert-success hidden" id="success"></div>
+					<div class="row">
+						<div class="col-md-6" style="padding: 0 10px" id="business-div">
+								<div class="form-group">
+									<label class="control-label">{{lang('select_business')}}</label>
+									<select class="form-control">
+											<option></option>
+									</select>
+								</div>
+						</div>
+						<div class="col-md-6" style="padding: 0 10px " id="catalog-div">
+								<div class="form-group">
+									<label class="control-label">{{lang('catalog_select')}}</label>
+									<select class="form-control" disabled>
+											<option></option>
+									</select>
+								</div>
+						</div>
+						<div class="col-md-12 mb-10">
+							<button class="btn blue-white" id="syncBtn">{{lang('sync_all_btn')}}</button>
+						</div>
+					</div>
+					<hr>
+
+					<h5 class="text-semibold mb-10 mt-10">{{lang('previous_queues')}}</h5>
+					{% if queue_jobs|length > 0 %}
+						<table id="datatable-queues" class="table table-hover datatable-highlight" style="font-size: 10pt">
+							<thead>
+								<tr>
+									<th>{{lang('job_id')}}</th>
+									<th>{{lang('catalog_id')}}</th>
+									<th>{{lang('status')}}</th>
+									<th>{{lang('start_time')}}</th>
+									<th>{{lang('finish_time')}}</th>
+									<th>{{lang('product_count')}}</th>
+									<th>{{lang('operation')}}</th>
+								</tr>
+							</thead>
+							<tbody>
+								{% for queue_job in queue_jobs %}
+								<tr>
+									<td>{{queue_job['job_id']}}</td>
+									<td>{{queue_job['catalog_id']}}</td>
+									<td>
+										{% if queue_job['status'] == 'completed' %}
+										{% set class_ = 'success' %}
+										{% elseif queue_job['status'] == 'failed' %}
+										{% set class_ = 'danger' %}
+										{% else %}
+										{% set class_ = 'warning' %}
+										{% endif %}
+										<span class="label label-{{class_}}">{{ lang('queue_' ~ queue_job['status']) }}</span>
+									</td>
+									<td>{{queue_job['created_at']}}</td>
+									<td>{{queue_job['finished_at']}}</td>
+									<td>{{queue_job['product_count']}}</td>
+									<td>
+										<span class="label label-primary">{{ lang('queue_' ~ queue_job['operation']) }}</span>
+									</td>
+								</tr>
+								{% endfor %}
+							</tbody>
+						</table>
+					{% else %}
+						<h6 class="font-13 text-semibold p-15 info-alert">{{lang('no_queues')}}</h6>
+					{% endif %}
+					<hr>
+
+					<h5 class="text-semibold mb-20">
+						{{lang('fc_account')}}
+					</h5>
+					<p><a href="/admin/module/facebook_import/redirect_to_auth" class="button blue-white-empty mb-20">{{lang('settings_btn_reconnect_facebook')}}</a></p>
+					<p><a href="/admin/module/facebook_import/logout_facebook" class="hint-font font-color-light">{{lang('settings_btn_logout_facebook')}}</a></p>
+
+
+				{% else %}
+					{% include 'module/facebook_import/no_token.expand' %}
+				{% endif %}
+			</div>
+		</fieldset>
+	</div>
+</div>
+	<!-- /a legend -->
+<!-- End Form -->
+
+<!-- End Lower Buttons -->
+
+<div id="reset_current_queue_modal" class="modal fade">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-body">
+				<p><h3>{{ lang('reset_current_queue_alert') }}</h3></p>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" id="closeModal">{{ lang('reset_current_queue_close') }}</button>
+				<button type="button" class="btn btn-primary" id="reset_current_queue_process">{{ lang('reset_current_queue_ok') }}</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+
+{% block scripts %}
+	{% import _self as dtControls %}
+
+{% endblock scripts %}
+<script>
+	$(document).ready(function (){
+		$('#errors').addClass('hidden');
+		$('#success').addClass('hidden');
+
+		//load businesses
+		$('#loader').removeClass('hidden');
+		$.getJSON('/admin/module/facebook_import/getBusinesses', function(res) {
+			if(res.items.length > 0){
+				$.each(res.items,function( key, val ) {
+					$('#business-div select').append("<option value='" + val.id + "'>" + val.name + "</option>");
+				})
+			}else{
+				$('#errors').html(`<p>{{lang('no_businesses')}}</p>`);
+				$('#errors').removeClass('hidden');
+			}
+		}).done(function(){
+			$('#loader').addClass('hidden');
+		});
+
+		//load catalogs on business change
+		$('#business-div select').change(function(e){
+			$('#errors').addClass('hidden');
+			$('#success').addClass('hidden');
+
+			if(this.value == '' || this.value == null || this.value == undefined){
+				$('#catalog-div select').attr('disabled','disabled');
+			}else{
+				$('#catalog-div select').html('<option></option>');
+				$('#catalog-div select').attr('disabled','disabled');
+
+				$('#loader').removeClass('hidden');
+
+				$.getJSON('/admin/module/facebook_import/getCatalogs?business_id='+this.value, function(res) {
+					if(!res.owned_product_catalogs || res.owned_product_catalogs.data.length < 1){
+						$('#catalog-div select').attr('disabled','disabled');
+						$('#errors').removeClass('hidden');
+						$('#errors').html(`<p>{{lang('no_catalogs')}}</p>`);
+					}else{
+						$.each(res.owned_product_catalogs.data,function( key, val ) {
+							$('#catalog-div select').append("<option value='" + val.id + "'>" + val.name + "</option>");
+						});
+						$('#catalog-div select').removeAttr('disabled');
+					}
+				}).done(function(){
+					$('#loader').addClass('hidden');
+				});
+			}
+		});
+		//send sync request with selected products
+		$('#syncBtn').click(function () {
+			$('#errors').addClass('hidden');
+			$('#success').addClass('hidden');
+
+			if($('#business-div select').val() == '' || $('#business-div select').val() == null || $('#business-div select').val() == undefined){
+				$('#errors').html(`<p>{{lang('no_business_selected')}}</p>`);
+				$('#errors').removeClass('hidden');
+			}else if($('#catalog-div select').val() == '' || $('#catalog-div select').val() == null || $('#catalog-div select').val() == undefined){
+				$('#errors').html(`<p>{{lang('no_catalog_selected')}}</p>`);
+				$('#errors').removeClass('hidden');
+			}else{
+				//Send the request to export the products
+				$('#loader').removeClass('hidden');
+
+				$.ajax({
+					url: '/admin/module/facebook_import/handleSync',
+					method: "POST",
+					dataType: 'JSON',
+					data: {
+						catalog_id: $('#catalog-div select').val()
+					}
+				}).done(function(res){
+					if(res.status == 'success'){
+						$('#success').html(`<p>${res.message}</p>`);
+						$('#success').removeClass('hidden');
+					}else{
+						$('#errors').html(`<p>${res.message}</p>`);
+						$('#errors').removeClass('hidden');
+					}
+					$('#loader').addClass('hidden');
+					console.log(res);
+				});
+
+				$('#errors').addClass('hidden');
+			}
+
+
+		});
+		$('#reset_current_queue').click(function () {
+			$('#reset_current_queue_modal').modal('toggle');
+		});
+		$('#closeModal').click(function () {
+			$('#reset_current_queue_modal').modal('hide');
+			$('#success').addClass('hidden');
+			$('#errors').addClass('hidden');
+		});
+		$('#reset_current_queue_process').click(function (){
+			$('#success').addClass('hidden');
+			$('#errors').addClass('hidden');
+			$.ajax({
+				url: '/admin/module/facebook_import/resetCurrentJobs',
+				method: "GET",
+				dataType: 'JSON',
+			}).done(function(res){
+				if(res['success']){
+					$('#success').html(`<p>${res.message}</p>`);
+					$('#success').removeClass('hidden');
+				}else {
+					$('#errors').html(`<p>${res.message}</p>`);
+					$('#errors').removeClass('hidden');
+				}
+
+				$('#reset_current_queue_modal').modal('hide');
+			});
+		});
+	});
+</script>

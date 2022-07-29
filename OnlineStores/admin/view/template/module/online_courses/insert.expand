@@ -1,0 +1,664 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block title %}
+    {{ lang('insert_heading_title') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+<a class="btn btn-success" href="{{ link('catalog/product/update', 'product_id=' ~ product_id) }}">
+    {{ lang('back_to_product') }}
+</a>
+{% endblock headelements %}
+
+{% block content %}
+
+<style>
+.sessions {
+    padding-top: 5px;
+}
+
+.sessions .session {
+    border-right: 7px solid #ffb528;
+}
+</style>
+
+<div class="modal fade" id="new-session-modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="display: flex; justify-content: space-between;">
+                <h5 class="modal-title" id="newOptionLabel">{{ lang('course_contents') }}</h5>
+            </div>
+            <div class="modal-body">
+                <div class="modal-errors"></div>
+                <form data-action="{{ link('module/online_courses/store') }}" method="POST" id="new-session-form">
+                    <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                        <div class="tab-content col-md-12">
+                            {% for lng in languages %}
+                                <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}"
+                                     id="langTab{{ lng['code'] }}">
+                                    <div class="form-group" id="content_{{lng['code']}}-group">
+                                        <label class="control-label">
+                                            {{ lang('session_title') }}
+                                        </label>
+                                        <input type="text" name="session_title[{{ lng['language_id'] }}]"
+                                            class="form-control session-title" data-language="{{ lng['language_id'] }}">
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <div class="clearfix clear"></div>
+                        <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                            {% for language in languages %}
+                                <li class="{{ loop.first ? 'active' : '' }}">
+                                    <a href="#langTab{{ language['code'] }}" data-toggle="tab"
+                                       aria-expanded="false">
+                                        <img src="view/image/flags/{{ language['image'] }}"
+                                             title="{{ language['name'] }}" class="pull-right">
+                                        <div> {{ language['name'] }}</div>
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div class="form-group col-md-12">
+                        <label>{{ lang('download_count') }}</label>
+                        <input type="text" class="form-control" id="download-count" value="0" />
+                        <span class="help-block">{{ lang('download_count_help') }}</span>
+                    </div>
+                    <div class="form-group col-md-12">
+                        <label>{{ lang('session_file') }}</label>
+                        <input type="file" class="form-control" id="session-file" />
+                    </div>
+                    <input type="hidden" name="lesson_id" class="lesson-id" id="lesson-id-input" />
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ lang('button_cancel') }}</button>
+                <button type="button" class="btn btn-primary insert-session-trigger">{{ lang('button_save') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="update-session-modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="display: flex; justify-content: space-between;">
+                <h5 class="modal-title" id="newOptionLabel">{{ lang('course_contents') }}</h5>
+            </div>
+            <div class="modal-body">
+
+                <div class="modal-errors"></div>
+
+                <form data-action="{{ link('module/online_courses/updateSession') }}" method="POST"
+                    id="update-session-form">
+                    <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                        <div class="tab-content col-md-12">
+                            {% for lng in languages %}
+                                <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}"
+                                     id="updateLangTab{{ lng['code'] }}">
+                                    <div class="form-group" id="content_{{lng['code']}}-group">
+                                        <label class="control-label">
+                                            {{ lang('session_title') }}
+                                        </label>
+                                        <input type="text" name="session_title[{{ lng['language_id'] }}]"
+                                            class="form-control session-title session-title-{{ lng['language_id'] }}"
+                                            data-language="{{ lng['language_id'] }}">
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <div class="clearfix clear"></div>
+                        <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                            {% for language in languages %}
+                                <li class="{{ loop.first ? 'active' : '' }}">
+                                    <a href="#updateLangTab{{ language['code'] }}" data-toggle="tab"
+                                       aria-expanded="false">
+                                        <img src="view/image/flags/{{ language['image'] }}"
+                                             title="{{ language['name'] }}" class="pull-right">
+                                        <div> {{ language['name'] }}</div>
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div class="form-group col-md-12">
+                        <label>{{ lang('download_count') }}</label>
+                        <input type="text" class="form-control download-count" name="download_count" value="0" />
+                        <span class="help-block">{{ lang('download_count_help') }}</span>
+                    </div>
+
+                    <input type="hidden" class="session-id" name="session_id" />
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ lang('button_cancel') }}</button>
+                <button type="button" class="btn btn-primary update-session-trigger">{{ lang('button_edit') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="update-expiration-modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="display: flex; justify-content: space-between;">
+                <h5 class="modal-title" id="newOptionLabel">{{ lang('course_expiration') }}</h5>
+            </div>
+            <div class="modal-body">
+
+                <div class="modal-errors"></div>
+
+                <form data-action="{{ link('module/online_courses/updateExpiration') }}" method="POST"
+                    id="update-expiration-form">
+                    <div class="form-group col-md-12">
+                        <label>{{ lang('expiration_period') }}</label>
+                        <input type="text" class="form-control expiration_period"
+                            value="{{ expiration['period'] }}" name="expiration_period" />
+                        <span class="help-block">{{ lang('expiration_period_help') }}</span>
+                    </div>
+
+                    <div class="form-group col-md-12">
+                        <label>{{ lang('period_type') }}</label>
+                        <select class="select2 form-control period_type" name="period_type">
+                            <option value="h" {{ expiration['type'] == 'h' ? 'selected' : 'h' }}>
+                                {{ lang('period_h') }}
+                            </option>
+                            <option value="d" {{ expiration['type'] == 'd' ? 'selected' : 'd' }}>
+                                {{ lang('period_d') }}
+                            </option>
+                            <option value="m" {{ expiration['type'] == 'm' ? 'selected' : 'm' }}>
+                                {{ lang('period_m') }}
+                            </option>
+                        </select>
+                    </div>
+
+                    <input type="hidden" class="product_id" name="product_id" value="{{ product_id }}" />
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ lang('button_cancel') }}</button>
+                <button type="button" class="btn btn-primary update-expiration-trigger">{{ lang('button_edit') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="panel panel-white">
+    <div class="panel-heading">
+        <h6 class="panel-title"><span class="text-bold">{{ lang('course_contents') }}</span></h6>
+        <div class="heading-elements not-collapsible">
+            <button type="button" class="btn btn-primary" id="new-lesson">{{ lang('new_lesson') }}</button>
+            <button type="button" class="btn btn-warning"
+                data-toggle="modal" data-target="#update-expiration-modal">{{ lang('edit_expiration') }}</button>
+        </div>
+    </div>
+    <div id="course-container">
+        {% for lesson in lessons %}
+        <div class="panel-body">
+            <div class="form-group col-md-12 lesson lesson-{{ lesson['id'] }}" data-lesson-id="{{ lesson['id'] }}">
+                <div class="col-md-11">
+                    <input type="text" class="form-control saved lesson-title" data-copy="{{ lesson['title'] }}"
+                        value="{{ lesson['title'] }}" />
+                </div>
+                <div class="col-md-1 actions" style="padding: 0;">
+                    <button type="button" class="btn btn-xs btn-success"
+                        data-toggle="modal" data-target="#new-session-modal"
+                        id="new-session" data-lesson-id="{{ lesson['id'] }}">
+                        {{ lang('new_session') }}
+                    </button>
+                </div>
+                <div class="col-md-12 sessions">
+                    {% for session in lesson['sessions'] %}
+                    <div class="row">
+                        <div class="col-md-1"></div>
+                        <div class="form-group col-md-10 session session-{{ session['id'] }}"
+                            data-session-id="{{ session['id'] }}">
+                            <div class="col-md-8" id="session-title">
+                                {{ session['title'][language_id] }}
+                            </div>
+                            <div class="col-md-2" id="session-download-count">{{ session['download_count'] }}</div>
+                            <div class="col-md-2">
+                                <a class="btn btn-xs btn-primary" id="update-session"
+                                    data-toggle="modal" data-target="#update-session-modal"
+                                    data-title="{{ session['title']|json_encode(JSON_UNESCAPED_UNICODE)|escape }}"
+                                    data-count="{{ session['download_count'] }}"
+                                    data-session-id="{{ session['id'] }}">
+                                    <i class="fa fa-edit"></i>
+                                </a>
+                                <a class="btn btn-xs btn-success" target="_blank"
+                                    href="{{ session['file'] }}">
+                                    <i class="fa fa-eye"></i>
+                                </a>
+                                {#<a class="btn btn-xs btn-danger" id="remove-session"
+                                    data-session-id="{{ session['id'] }}">
+                                    <i class="fa fa-trash"></i>
+                                </a>#}
+                            </div>
+                        </div>
+                        <div class="col-md-1"></div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+
+<script id="lesson-template" type="text/html">
+<div class="panel-body">
+    <div class="form-group col-md-12 lesson" data-lesson-id=":lesson">
+        <div class="col-md-11"><input type="text" class="form-control lesson-title" /></div>
+        <div class="col-md-1 actions" style="padding: 0;">
+        <button type="button" class="btn btn-xs btn-success"
+            id="save-lesson" data-lesson-id=":lesson">
+            {{ lang('button_save') }}
+        </button>
+        </div>
+        <div class="col-md-12 row sessions"></div>
+    </div>
+</div>
+</script>
+
+<script id="session-template" type="text/html">
+<div class="row">
+    <div class="col-md-1"></div>
+    <div class="form-group col-md-10 session session-:session"
+        data-session-id=":session">
+        <div class="col-md-8" id="session-title">
+            :stringTitle
+        </div>
+        <div class="col-md-2" id="session-download-count">:count</div>
+        <div class="col-md-2">
+            <a class="btn btn-xs btn-primary" id="update-session"
+                data-toggle="modal" data-target="#update-session-modal"
+                data-title=":title"
+                data-count=":count"
+                data-session-id=":session">
+                <i class="fa fa-edit"></i>
+            </a>
+            <a class="btn btn-xs btn-success" target="_blank"
+                href=":link">
+                <i class="fa fa-eye"></i>
+            </a>
+            {#<a class="btn btn-xs btn-danger" id="remove-session"
+                data-session-id=":session">
+                <i class="fa fa-trash"></i>
+            </a>#}
+        </div>
+    </div>
+    <div class="col-md-1"></div>
+</div>
+</script>
+
+<script>
+
+$(document).ready(() => {
+
+    let courseContainer = $('#course-container');
+    let newLessonTrigger = $('#new-lesson');
+    var storeLesson = '{{ link("module/online_courses/storeLesson") }}';
+    var updateLessonLink = '{{ link("module/online_courses/updateLesson") }}';
+    var product_id = parseInt('{{ product_id }}');
+    var languageId = parseInt('{{ language_id }}');
+
+    let lessonTemplate = $('#lesson-template').html();
+    let sessionTemplate = $('#session-template').html();
+    let storeSessionModal = $('#new-session-modal');
+    let storeSessionForm = $('#new-session-form');
+    let updateSessionModal = $('#update-session-modal');
+    let updateSessionForm = $('#update-session-form');
+    let updateExpirationModal = $('#update-expiration-modal');
+    let updateExpirationForm = $('#update-expiration-form');
+
+    let lessonId = parseInt('{{ lastLessonId }}');
+    let sessionId = 1;
+
+    var spinner = function () {
+
+        let sp = $('#spinner', 'body');
+
+        if (sp.length > 0) {
+            sp.remove();
+        } else {
+            $('body').append(`<div id="spinner" style="display: flex;
+                position: absolute;
+                justify-content: center;
+                font-size: 50px;
+                text-align: center;
+                left: 0;
+                top: 0;
+                background-color: rgba(0,0,0,0.5);
+                z-index: 100000;
+                align-items: center;
+                height: 100%;"
+                class="col-md-12 form-group"><i class="fa fa-spinner fa-spin" style=""></i></div>`);
+        }
+    };
+
+    $('.select2').select2({minimumResultsForSearch: 10});
+
+    $('body').on('keyup', '.lesson-title.saved', function () {
+        let t = $(this);
+        let p = t.parents('.lesson');
+
+        if (t.val() !== t.attr('data-copy')) {
+            let button = p.find('#new-session');
+
+            let id = p.attr('data-lesson-id');
+
+            p.find('#new-session').remove();
+
+            p.find('.actions').css('padding', 0).html(`<button type="button" class="btn btn-xs btn-success"
+                id="update-lesson" data-lesson-id="${id}">
+                <i class="fa fa-check"></i>
+            </button>
+            <button type="button" class="btn btn-xs btn-warning"
+            data-lesson-id="${id}" id="cancel-update" style="margin: 0 2px;">X</button>`);
+        } else {
+            if (p.find('#cancel-update').length > 0) {
+                p.find('#cancel-update').trigger('click');
+            }
+        }
+    });
+
+    $('body').on('click', '#update-lesson', function () {
+
+        let t = $(this);
+        let p = t.parents('.lesson');
+
+        let id = p.attr('data-lesson-id');
+
+        let title = p.find('.lesson-title').val();
+
+        $.ajax({
+            url: updateLessonLink,
+            data: {lesson_id: id, title: title},
+            method: 'POST',
+            dataType: 'JSON',
+            success: (r) => {
+                if (typeof r.status !== 'undefined' && r.status == 'OK') {
+                    p.find('.actions').html('');
+
+                    p.find('.actions').append(`<button type="button" class="btn btn-xs btn-success"
+                        data-toggle="modal" data-target="#new-session-modal"
+                        id="new-session" data-lesson-id="${id}">
+                        {{ lang('new_session') }}
+                    </button>`);
+
+                    p.find('.lesson-title').attr('data-copy', title);
+                }
+            }
+        });
+    });
+
+    $('body').on('click', '#cancel-update', function () {
+
+        let t = $(this);
+        let p = t.parents('.lesson');
+
+        let id = p.attr('data-lesson-id');
+
+        p.find('.actions').html('');
+
+        p.find('.actions').append(`<button type="button" class="btn btn-xs btn-success"
+            data-toggle="modal" data-target="#new-session-modal"
+            id="new-session" data-lesson-id="${id}">
+            {{ lang('new_session') }}
+        </button>`);
+
+        p.find('.lesson-title').val(p.find('.lesson-title').data('copy'));
+    });
+
+    $('body').on('click', '#update-sessionaaa', function () {
+
+        let t = $(this);
+        let p = t.parents('.session');
+
+        let id = p.attr('data-lesson-id');
+
+        p.find('.actions').html('');
+
+        p.find('.actions').append(`<button type="button" class="btn btn-xs btn-success"
+            data-toggle="modal" data-target="#new-session-modal"
+            id="new-session" data-lesson-id="${id}">
+            {{ lang('new_session') }}
+        </button>`);
+
+        p.find('.lesson-title').val(p.find('.lesson-title').data('copy'));
+    });
+
+    $('body').on('click', '#new-lesson', function () {
+        let el = $(lessonTemplate);
+
+        courseContainer.append(el);
+
+        $(`.lesson`).on('click', '#save-lesson', function () {
+            let t = $(this);
+            let p = t.parent();
+            let title = p.parent().find('.lesson-title');
+            $.ajax({
+                url: storeLesson,
+                data: {title: title.val(), product_id: product_id},
+                method: 'POST',
+                dataType: 'JSON',
+                success: (r) => {
+
+                    if (typeof r.status !== 'undefined' && r.status == 'OK') {
+
+                        el.find('.lesson').attr('data-lesson-id', r.id);
+                        el.find('.lesson').addClass(`lesson-${r.id}`);
+
+                        t.remove();
+                        p.append(`<button type="button" class="btn btn-xs btn-success"
+                            data-toggle="modal" data-target="#new-session-modal"
+                            id="new-session" data-lesson-id="${r.id}">
+                            {{ lang('new_session') }}
+                        </button>`);
+
+                        title.attr('data-copy', title.val());
+                        title.addClass('saved');
+                    }
+                }
+            });
+        });
+
+        lessonId = lessonId + 1;
+    });
+
+    $('#update-session-modal').on('show.bs.modal', (e) => {
+        let r = $(e.relatedTarget), c = $(e.currentTarget);
+
+        let titleObj = r.data('title');
+
+        if (typeof r.data('title') == 'undefined') {
+            alert('Invalid attribute');
+            return;
+        }
+
+        if (typeof titleObj == 'string') {
+            titleObj = JSON.parse(unescape(r.data('title')));
+        }
+
+        if (typeof titleObj != 'object') {
+            alert('Invalid attribute');
+            return;
+        }
+
+        for (i in titleObj) {
+            let v = titleObj[i];
+            c.find(`.session-title-${i}`).val(v);
+        }
+
+        c.find('.download-count').val(r.attr('data-count'));
+        c.find('.session-id').val(r.data('session-id'));
+    });
+
+    $('#new-session-modal').on('show.bs.modal', (e) => {
+        let r = $(e.relatedTarget), c = $(e.currentTarget);
+
+        c.find('#lesson-id-input').val(r.data('lesson-id'));
+    });
+
+    $('#new-session-modal').on('hide.bs.modal', (e) => {
+        let r = $(e.relatedTarget), c = $(e.currentTarget);
+
+        c.find('#lesson-id-input').val(0);
+
+        c.find('input').val(null);
+
+        $('.modal-errors', c).html('');
+    });
+
+    $('.insert-session-trigger').click(function () {
+
+        spinner();
+
+        $('.insert-session-trigger').attr('disabled', true);
+
+        storeSessionModal.find('.modal-errors').html('');
+
+        var formData = new FormData();
+
+        $('.session-title', storeSessionForm).map(function(){
+            
+            formData.append(`session_title[${$(this).data('language')}]`, $(this).val());
+
+        });
+
+        formData.append('download_count', $('#download-count').val());
+        formData.append('product_id', product_id);
+        formData.append('lesson_id', $('#lesson-id-input').val());
+        formData.append('file', $('#session-file')[0].files[0]);
+
+        $.ajax({
+            url: storeSessionForm.attr('data-action'),
+            method: 'POST',
+            dataType: 'JSON',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (r) {
+                spinner();
+                if (typeof r.status !== 'undefined' && r.status === 'OK') {
+                    storeSessionModal.modal('toggle');
+                    $('.insert-session-trigger').attr('disabled', false);
+
+                    $(`.lesson.lesson-${r.lesson_id} .sessions`).append(
+                        sessionTemplate.replace(/:session/g, r.id)
+                            .replace(/:stringTitle/g, r.title)
+                            .replace(/:title/g, escape(r.titles))
+                            .replace(/:count/g, r.download_count)
+                            .replace(/:link/g, r.file)
+                            .replace(/:file_string/g, r.file_string)
+                    );
+
+                    return;
+                }
+
+                for (i in r.errors) {
+                    let e = r.errors[i];
+
+                    storeSessionModal.find('.modal-errors').append(`<div class="alert alert-danger">${e}</div>`);
+                }
+
+                $('.insert-session-trigger').attr('disabled', false);
+            }
+        });
+
+    });
+
+    $('.update-session-trigger').click(function () {
+
+        spinner();
+
+        $('.update-form-trigger').attr('disabled', true);
+
+        updateSessionModal.find('.modal-errors').html('');
+
+        $.ajax({
+            url: updateSessionForm.attr('data-action'),
+            method: 'POST',
+            dataType: 'JSON',
+            data: updateSessionForm.serialize(),
+            success: function (r) {
+                spinner();
+                if (typeof r.status !== 'undefined' && r.status === 'OK') {
+                    updateSessionModal.modal('toggle');
+                    $('.update-form-trigger').attr('disabled', false);
+
+                    let update = $(`.session.session-${r.data.id}`).find('#update-session');
+                    let title = $(`.session.session-${r.data.id}`).find('#session-title');
+                    let count = $(`.session.session-${r.data.id}`).find('#session-download-count');
+
+                    let titles = JSON.parse(r.data.title);
+
+                    console.log(r.data.download_count);
+
+                    update.data('title', titles);
+                    update.attr('data-count', r.data.download_count);
+                    title.html(titles[languageId]);
+                    count.html(r.data.download_count);
+
+                    return;
+                }
+
+                for (i in r.errors) {
+                    let e = r.errors[i];
+
+                    updateSessionModal.find('.modal-errors').append(`<div class="alert alert-danger">${e}</div>`);
+                }
+
+                $('.update-form-trigger').attr('disabled', false);
+            }
+        });
+
+    });
+
+    $('.update-expiration-trigger').click(() => {
+
+        spinner();
+
+        $('.update-form-trigger').attr('disabled', true);
+
+        updateExpirationModal.find('.modal-errors').html('');
+
+        $.ajax({
+            url: updateExpirationForm.attr('data-action'),
+            method: 'POST',
+            dataType: 'JSON',
+            data: updateExpirationForm.serialize(),
+            success: function (r) {
+                spinner();
+                if (typeof r.status !== 'undefined' && r.status === 'OK') {
+                    updateExpirationModal.modal('toggle');
+                    $('.update-form-trigger').attr('disabled', false);
+                    return;
+                }
+
+                for (i in r.errors) {
+                    let e = r.errors[i];
+
+                    updateExpirationModal.find('.modal-errors').append(`<div class="alert alert-danger">${e}</div>`);
+                }
+
+                $('.update-form-trigger').attr('disabled', false);
+            }
+        });
+    });
+});
+
+</script>
+
+{% endblock scripts %}

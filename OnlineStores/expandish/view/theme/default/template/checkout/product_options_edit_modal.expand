@@ -1,0 +1,349 @@
+
+<div id="modal_update_product" class="modal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form class="form-update-options product-add-form">
+                <div class="modal-header">
+                    <strong class="modal-title" id="exampleModalLabel">{{ lang('text_update_product') }}</strong>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                        <table>
+                            {% for product in products %}
+                                <tr id="trProduct{{ product['keyReplaced'] }}" style="display: none">
+
+                                    <td class="tb-product">
+                                        <div class="item">
+                                            <a href="{{ product['href'] }}" class="item-photo"><img src="{{ product['thumb'] }}" id="updateProductImage" alt=""></a>
+                                            <strong class="item-name" id="updateProductName">{{ product['name'] }}</strong>
+                                        </div>
+                                        <div class="product-options-wrapper">
+                                            <div class="options">
+                                                {% for option in product['allProductOptions'] %}
+                                                    <!-- ######################### Select -->
+
+                                                    {% if option.type == 'select' %}
+                                                        <div id="option-{{ option.product_option_id }}"
+                                                             class="option form-group">
+                                                            <label for="option[{{ option.product_option_id }}]">{{ option.name }} {{ option.required ? '<sup>*</sup>' : '' }} <span id="relational_option_loading-{{ option.option_id }}" style="display: none">&nbsp;&nbsp;<img src="/expandish/view/theme/default/image/spinners/spinner_1.gif"></span></label>
+                                                            <div class="control">
+                                                                <select name="option[{{ option.product_option_id }}]"
+                                                                        id="option[{{ option.product_option_id }}]"
+                                                                        class="opt-select-variation form-control relational_option_{{ option.option_id }}" onchange="{% if not is_knawat_product %} getSelectPrice(this.value,'{{ option.product_option_id }}', {{ option.option_id }}, {{ opt_relational_status }}) {% else %} getVariationPrice('{{product_id}}') {% endif %}"
+                                                                        {% if ( (opt_relational_status and option.option_id in opt_relational_parents)
+                                                                            or
+                                                                            (opt_relational_status and opt_elements_parents[option.option_id])
+                                                                            )
+                                                                        %}
+                                                                            {{ 'data-relations="' ~ option.option_id ~ '"' }}
+                                                                            {{ 'data-relationalparents="' ~ opt_elements_parents[option.option_id] ~ '"' }}
+                                                                            {{ 'data-relationalchild="' ~ opt_relational_relations[option.option_id] ~ '"' }}
+                                                                            {{ 'data-option_id="' ~ option.option_id ~ '"' }}
+                                                                        {% endif %}
+                                                                >
+                                                                    <option value="">{{ lang('text_select') }}</option>
+                                                                    {% if (not opt_relational_status) or (opt_relational_status and option.option_id not in opt_relational_childs) %}
+                                                                        {% for option_value in option.option_value %}
+                                                                            <option value="{{ option_value.product_option_value_id }}"
+                                                                                    {% if option_value.quantity <= 0 and not is_knawat_product %}disabled="disabled"{% endif %}
+                                                                                    data-option-value-id="{{option_value.option_value_id}}"
+
+                                                                                    {% if option_value.product_option_value_id in product['product_option_value_ids'] %}
+                                                                                            selected="selected"
+                                                                                    {% endif %}
+                                                                            >{{ option_value.name }}
+                                                                                <!-- Option Quantity Check -->
+                                                                                {% if option_value.quantity <= 0 and not product['is_knawat_product'] %}
+                                                                                    ({{ lang('text_notavailable') }})
+                                                                                {% endif %}
+                                                                                <!-- End Option Quantity Check   -->
+
+                                                                                {# OPTION PRICE #}
+                                                                                {% if config('config_show_option_prices') == '1' and not product['is_knawat_product'] %}
+                                                                                    {% if option_value.price %}
+                                                                                        ({{ option_value.price_prefix }}{{ option_value.price }})
+                                                                                    {% endif %}
+                                                                                {% endif %}
+                                                                                {# /OPTION PRICE #}
+                                                                            </option>
+                                                                        {% endfor %}
+                                                                    {% endif %}
+                                                                </select>
+                                                                <div id="relational_option_hidden_{{ option.option_id }}">
+                                                                    {% if (not opt_relational_status) or (opt_relational_status and option.option_id not in opt_relational_childs) %}
+                                                                        {% for option_value in option.option_value %}
+                                                                            <input type="hidden" id="select-price-{{ option_value.product_option_value_id }}" value="{{ option_value.price_value }}">
+                                                                            <input type="hidden" id="select-prifex-{{ option_value.product_option_value_id }}" value="{{ option_value.price_prefix }}">
+                                                                        {% endfor %}
+                                                                    {% endif %}
+                                                                </div>
+                                                            </div>
+                                                            <input type="hidden"
+                                                                   id="old_select_price-{{ option.product_option_id }}"
+                                                                   value="">
+                                                            <input type="hidden"
+                                                                   id="old_select_prefix-{{ option.product_option_id }}"
+                                                                   value="">
+                                                        </div>
+                                                    {% endif %}
+
+                                                    <!-- ######################### Radio -->
+
+                                                    {% if option.type == 'radio' %}
+                                                        <fieldset id="option-{{ option.product_option_id }}"
+                                                                  class="option form-group">
+                                                            <label for="option[{{ option.product_option_id }}]">{{ option.name }} {{ option.required ? '<sup>*</sup>' : '' }} </label>
+                                                            {% for option_value in option.option_value %}
+                                                                <div class="form-check">
+                                                                    <label class="form-check-label">
+                                                                        <input type="radio" class="form-check-input"
+                                                                               name="option[{{ option['product_option_id'] }}]"
+                                                                               id="option-value-{{ option_value['product_option_value_id'] }}"
+                                                                               value="{{ option_value['product_option_value_id'] }}" onclick="getRadioPrice('{{ option_value['price_value'] }}', '{{ option_value['price_prefix'] }}','{{ option.product_option_id }}', 'radio')"
+                                                                               {% if option_value.quantity <= 0 %}disabled="disabled"{% endif %}
+                                                                                {% if option_value['product_option_value_id'] in product['product_option_value_ids'] %}
+                                                                                        checked="checked"
+                                                                                {% endif %}
+                                                                        >
+                                                                        <span {% if option_value.quantity <= 0 %}class="over_line"{% endif %}>
+                                                                        {{ option_value['name'] }}
+                                                                    </span>
+                                                                        <span class="show-price">
+                                                                      {% if option_value.price %}
+                                                                          ({{ option_value.price_prefix }}{{ option_value.price }})&#x200E;
+                                                                      {% endif %}
+                                                                    </span>
+                                                                    </label>
+                                                                </div>
+                                                            {% endfor %}
+                                                            <input type="hidden"
+                                                                   id="old_radio_price-{{ option.product_option_id }}"
+                                                                   value="">
+                                                            <input type="hidden"
+                                                                   id="old_radio_prefix-{{ option.product_option_id }}"
+                                                                   value="">
+                                                        </fieldset>
+                                                    {% endif %}
+
+                                                    <!-- ######################### Checkbox -->
+
+                                                    {% if option.type == 'checkbox' %}
+                                                        <fieldset id="option-{{ option['product_option_id'] }}"
+                                                                  class="option form-group">
+                                                            <label for="option[{{ option['product_option_id'] }}]">{{ option['name'] }} {{ option.required ? '<sup>*</sup>' : '' }} </label>
+
+                                                            {% for option_value in option.option_value %}
+                                                                <div class="form-check">
+                                                                    <label class="form-check-label">
+                                                                        <input type="checkbox" class="form-check-input"
+                                                                               name="option[{{ option['product_option_id'] }}][]"
+                                                                               id="option-value-{{ option_value['product_option_value_id'] }}"
+                                                                               value="{{ option_value['product_option_value_id'] }}" onclick="getCheckboxPrice('{{ option_value['price_value'] }}', '{{ option_value['price_prefix'] }}',this.checked)"
+                                                                               {% if option_value.quantity <= 0 %}disabled="disabled"{% endif %}
+                                                                                {% if option_value['product_option_value_id'] in product['product_option_value_ids'] %}
+                                                                                    checked="checked"
+                                                                                {% endif %}
+                                                                        >
+                                                                        <span {% if option_value.quantity <= 0 %}class="over_line"{% endif %}>
+                                                                        {{ option_value['name'] }}
+                                                                    </span>
+                                                                        {% if option_value.price %}
+                                                                            ({{ option_value.price_prefix }}{{ option_value.price }})&#x200E;
+                                                                        {% endif %}
+                                                                    </label>
+                                                                </div>
+                                                            {% endfor %}
+                                                        </fieldset>
+                                                    {% endif %}
+
+                                                    <!-- ######################### Image -->
+
+                                                    {% if option.type == 'image' %}
+                                                        <fieldset id="option-{{ option['product_option_id'] }}"
+                                                                  class="option form-group">
+                                                            <label for="option[{{ option['product_option_id'] }}]">{{ option['name'] }} {{ option.required ? '<sup>*</sup>' : '' }} </label>
+
+                                                            {% for option_value in option.option_value %}
+                                                                <div class="form-check">
+                                                                    <label class="form-check-label">
+                                                                        <input type="radio" class="form-check-input"
+                                                                               name="option[{{ option['product_option_id'] }}]"
+                                                                               value="{{ option_value['product_option_value_id'] }}"
+                                                                               id="option-value-{{ option_value['product_option_value_id'] }}"  onclick="getRadioPrice('{{ option_value['price_value'] }}', '{{ option_value['price_prefix'] }}','{{ option.product_option_id }}', 'radio')"
+                                                                               {% if option_value.quantity <= 0 %}disabled="disabled"{% endif %}
+                                                                        />
+                                                                        <img src="{{ option_value['image'] }}"
+                                                                             alt="{{ option_value['name'] }}{{ option_value['price'] ? ' ' ~ option_value['price_prefix'] ~ option_value['price'] : ''}}"/>
+                                                                        <span {% if option_value.quantity <= 0 %}class="over_line"{% endif %}>
+                                                                        {{ option_value['name'] }}
+                                                                    </span>
+                                                                        {% if option_value.price %}
+                                                                            ({{ option_value.price_prefix }}{{ option_value.price }})&#x200E;
+                                                                        {% endif %}
+                                                                    </label>
+                                                                </div>
+                                                            {% endfor %}
+                                                            <input type="hidden"
+                                                                   id="old_radio_price-{{ option.product_option_id }}"
+                                                                   value="">
+                                                            <input type="hidden"
+                                                                   id="old_radio_prefix-{{ option.product_option_id }}"
+                                                                   value="">
+                                                        </fieldset>
+                                                    {% endif %}
+
+                                                    <!-- ######################### Text -->
+
+                                                    {% if option.type == 'text' %}
+                                                        <div id="option-{{ option['product_option_id'] }}"
+                                                             class="option form-group">
+                                                            <label for="option[{{ option['product_option_id'] }}]">{{ option['name'] }} {{ option.required ? '<sup>*</sup>' : '' }} </label>
+
+                                                            <div class="control">
+                                                                <input type="text" class="form-control"
+                                                                       name="option[{{ option['product_option_id'] }}]"
+                                                                       value="{{ option['option_value'] }}"/>
+                                                            </div>
+                                                        </div>
+                                                    {% endif %}
+
+                                                    <!-- ######################### Textarea -->
+
+                                                    {% if option.type == 'textarea' %}
+                                                        <div id="option-{{ option['product_option_id'] }}"
+                                                             class="option form-group">
+                                                            <label for="option[{{ option['product_option_id'] }}]">{{ option['name'] }} {{ option.required ? '<sup>*</sup>' : '' }} </label>
+
+                                                            <div class="control">
+                                                                <textarea class="form-control"
+                                                                          name="option[{{ option['product_option_id'] }}]"
+                                                                          cols="40"
+                                                                          rows="5">{{ option['option_value'] }}</textarea>
+                                                            </div>
+                                                        </div>
+                                                    {% endif %}
+
+                                                    <!-- ######################### File -->
+
+                                                    {% if option.type == 'file' %}
+                                                        <div id="option-{{ option['product_option_id'] }}"
+                                                             class="option form-group">
+                                                            <label for="option[{{ option['product_option_id'] }}]">{{ option['name'] }} {{ option.required ? '<sup>*</sup>' : '' }} </label>
+
+                                                            <div class="control">
+                                                                <input class="form-control button" type="button"
+                                                                       value="{{ lang('button_upload') }}"
+                                                                       id="button-option-{{ option['product_option_id'] }}"/>
+                                                                <span style="padding-left: 10px" id="filename-option-{{ option['product_option_id'] }}"></span>
+                                                                <input type="hidden"
+                                                                       name="option[{{ option['product_option_id'] }}]"
+                                                                       value=""/>
+                                                            </div>
+                                                        </div>
+                                                    {% endif %}
+
+                                                    <!-- ######################### Date -->
+
+                                                    {% if option.type == 'date' %}
+                                                        <div id="option-{{ option['product_option_id'] }}"
+                                                             class="option form-group">
+                                                            <label for="option[{{ option['product_option_id'] }}]">{{ option['name'] }} {{ option.required ? '<sup>*</sup>' : '' }} </label>
+
+                                                            <div class="control">
+                                                                <input class="form-control date" type="text"
+                                                                       name="option[{{ option['product_option_id'] }}]"
+                                                                       value="{{ option['option_value'] }}"/>
+                                                            </div>
+                                                        </div>
+                                                    {% endif %}
+
+                                                    <!-- ######################### Datetime -->
+
+                                                    {% if option.type == 'datetime' %}
+                                                        <div id="option-{{ option['product_option_id'] }}"
+                                                             class="option form-group">
+                                                            <label for="option[{{ option['product_option_id'] }}]">{{ option['name'] }} {{ option.required ? '<sup>*</sup>' : '' }} </label>
+
+                                                            <div class="control">
+                                                                <input class="form-control datetime" type="text"
+                                                                       name="option[{{ option['product_option_id'] }}]"
+                                                                       value="{{ option['option_value'] }}"/>
+                                                            </div>
+                                                        </div>
+                                                    {% endif %}
+
+                                                    <!-- ######################### Time -->
+
+                                                    {% if option.type == 'time' %}
+                                                        <div id="option-{{ option['product_option_id'] }}"
+                                                             class="option form-group">
+                                                            <label for="option[{{ option['product_option_id'] }}]">{{ option['name'] }} {{ option.required ? '<sup>*</sup>' : '' }} </label>
+
+                                                            <div class="control">
+                                                                <input class="form-control time" type="text"
+                                                                       name="option[{{ option['product_option_id'] }}]"
+                                                                       value="{{ option['option_value'] }}"/>
+                                                            </div>
+                                                        </div>
+                                                    {% endif %}
+
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <input type="hidden"  id="product_key" name="product_key" size="2" value="{{ product['key'] }}"/>
+                                    <input type="hidden"  id="product_id" name="product_id" size="2" value="{{ product['original_id'] }}"/>
+
+                                </tr>
+                            {% endfor %}
+
+
+                        </table>
+                    <div class="updateError"></div>
+                </div>
+                <div class="modal-footer">
+
+                    <input type="hidden" value="cart" name="comming_from">
+                    <button type="submit" id="button-cart" class="btn btn-primary">{{ lang('button_save') }}</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+<script>
+    $(document).ready(function(){
+        $("body").on("click",".edit-button",function(){
+            $(".updateError").html("");
+            $(".form-update-options table tr").css("display","none");
+            var productKey = $(this).attr("data-product_key");
+            $("#trProduct"+productKey).css("display","block");
+        });
+
+        $('#button-cart').bind('click', function() {
+
+            $.ajax({
+                url: 'index.php?route=checkout/cart/add',
+                type: 'post',
+                data: $('.product-add-form tr[style*="display: block"] input[type=\'text\'],.product-add-form .modal-footer  input[type=\'hidden\'], .product-add-form tr[style*="display: block"] input[type=\'hidden\'], .product-add-form tr[style*="display: block"] input[type=\'radio\']:checked, .product-add-form tr[style*="display: block"] input[type=\'checkbox\']:checked, .product-add-form tr[style*="display: block"] select, .product-add-form tr[style*="display: block"] textarea, #minimum_deposit_customer_price,#minimum_deposit_price'),
+                dataType: 'json',
+                success: function(json) {
+                    if (json['error']) {
+                        if (json['error']['option']) {
+                            var html = '';
+                            for (i in json['error']['option']) {
+                                html += '<span class="option_error">' + json['error']['option'][i] + '</span><br>';
+                            }
+                            $(".updateError").html(html);
+                        }
+                    }else{
+                        window.location.href = json['redirect'];
+                    }
+                }
+        });
+        return false;
+    });
+});
+</script>

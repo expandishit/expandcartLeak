@@ -1,0 +1,455 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% set dualMenuEnabled = true %}
+
+{% set bodyClasses = "has-detached-right" %}
+
+{% block title %}
+{{ lang('heading_title') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+{{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block secondarymenu %}
+    {% include 'module/custom_email_templates/menu.expand' with {'expand': '#custom_email_template', 'active': '#history'} %}
+{% endblock secondarymenu %}
+
+{% block headelements %}
+    <a id="button-history-remove" data-toggle="tooltip" title="{{ button_remove_all }}" class="btn btn-danger pull-right"><i class="fa fa-trash"></i> {{button_remove_all}}</a>
+{% endblock headelements %}
+
+{% block content %}
+<style>
+    .datatable-scroll-lg, .datatable-scroll, .datatable-scroll-sm{
+        overflow-x: scroll;
+    }
+</style>
+ <div class="col-md-12" id="error-area">
+ </div>
+<!-- Detached sidebar -->
+    <div class="sidebar-detached">
+        <div class="sidebar sidebar-default sidebar-separate">
+            <div class="sidebar-content">
+                <!-- Sidebar search -->
+                <div class="panel panel-white">
+                    <div class="panel-heading">
+                        <div class="panel-title text-semibold">
+                            <i class="icon-search4 text-size-base position-left"></i>
+                            {{ lang('text_search') }}
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <form id="filter_history">
+                            <div class="form-group" id="filter_subject-group">
+                                <label>{{ lang('entry_subject') }}</label>
+                                <input type="text" name="filter_subject" value="" placeholder="{{entry_subject}}" id="input-subject" class="form-control" />
+                            </div>
+                            <div class="form-group" id="filter_email-group">
+                                <label>{{ lang('entry_email') }}</label>
+                                <input type="text" name="filter_email" value="" placeholder="{{entry_email}}" id="input-email" class="form-control" />
+                            </div>
+                            <div class="form-group" id="filter_template_code-group">
+                                <label>{{ lang('entry_template_code') }}</label>
+                                <select name="filter_template_code" id="input-template-code" class="form-control">
+                                    <option value="*"></option>
+                                    {% for key,template in templates %}
+                                      <optgroup label="{{key}}">
+                                          {% for tpl in template['templates'] %}
+
+                                        {% set text=tpl['code'] ~ '-' ~  tpl['name'] %}
+                                            <option value="{{ tpl['code'] }}">{{ text }}</option>
+                                          {% endfor %}
+                                      </optgroup>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group" id="filter_attachment-group">
+                                <label>{{ lang('entry_attachment') }}</label>
+                                <select name="filter_attachment" id="input-attachment" class="form-control">
+                                      <option value="*"></option>
+                                      <option value="2">{{text_yes}}</option>
+                                      <option value="1">{{text_no}}</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="filter_date_added-group">
+                                <label>{{ lang('entry_date_added') }}</label>
+                                <input type="text" name="filter_date_added" value="" placeholder="{{entry_date_added}}" id="input-date-added" class="form-control" />
+                            </div>
+                            <button type="submit" class="btn bg-blue btn-block">
+                                <i class="icon-search4 text-size-base position-left"></i>
+                                {{ button_filter }}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <!-- /sidebar search -->
+            </div>
+        </div>
+    </div>
+    <!-- /detached sidebar -->
+
+    <div id="dialog-template-preview" class="modal fade ">
+        <div class="modal-dialog modal-md">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h5 class="modal-title">{{ lang('text_template_preview') }}</h5>
+                </div>
+                <div class="modal-body">
+                    <iframe frameborder="0"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Detached content -->
+    <div class="container-detached">
+        <div class="content-detached">
+            <div class="panel panel-flat">
+                <table class="table datatable-basic" id="datatable-language" >
+                    <thead>
+                    <tr>
+                        <th>{{ lang('column_subject') }}</th>
+                        <th>{{ lang('column_code') }}</th>
+                        <th>{{ lang('column_email') }}</th>
+                        <th>{{ lang('column_attachment') }}</th>
+                        <th>{{ lang('column_date_added') }}</th>
+                        <th>{{ lang('column_date_opened') }}</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                </table>
+                <div id="modal_default" class="modal fade">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                        <form action='{{url_post_status}}' method="post" class="form" >
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                <h5 class="modal-title">{{ lang('update_state_title') }}</h5>
+                            </div>
+                            <div class="modal-body">
+                                <div class="form-group-">
+                                    <label>{{ lang('entry_status') }}</label>
+                                    <select name="status" >
+                                        <option value="0" >{{ lang('Pending') }}</option>
+                                        <option value="1" >{{ lang('Complete') }}</option>
+                                    </select>
+                                    <span class="help-block"></span>
+                                </div>
+                                <input type="hidden" name="customer_reward_id" id="customer_reward_id" />
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-link" data-dismiss="modal">Close</button>
+                                <button type="submit" class="btn btn-primary">Save changes</button>
+                            </div>
+                         </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- /detached content -->
+{% endblock content %}
+{% block scripts %}
+    {{ parent() }}
+    {% import _self as dtControls %}
+    <script>
+    var total_stats_action = '{{ total_stats_action }}';
+    var action = '{{ action }}';
+
+    $(document).ready(function() {
+        $('select').select2();
+        $('.touchspinney').TouchSpin({
+            'postfix': '{{ current_currency_code }}',
+            'decimals': 2,
+        });
+        $('#input-date-added').pickadate({format: 'yyyy-mm-dd'});
+        $.extend($.fn.dataTable.defaults, {
+            autoWidth: false,
+            columnDefs: [{
+                orderable: false,
+                width: '100px',
+            }],
+            dom: '<"datatable-header"fl><"datatable-scroll-wrap"t><"datatable-footer"ip>',
+            language: locales['dt_language'],
+            drawCallback: function () {
+                $(this).find('tbody tr').slice(-3).find('.dropdown, .btn-group').addClass('dropup');
+            },
+            preDrawCallback: function () {
+                $(this).find('tbody tr').slice(-3).find('.dropdown, .btn-group').removeClass('dropup');
+            }
+        });
+
+        $('#datatable-language').DataTable({
+            "destroy": true,
+            "searching": false,
+            "processing": true,
+            "serverSide": true,
+            "language": {
+                "zeroRecords": "No records to display"
+            },
+            "ajax": {
+                url: action,
+                type: "post",
+                data:{
+                    'filter_store_id':{{ filter_store_id }},
+                    'format':'raw'
+                },
+                error: function (data) {  // error handling
+                    $("#datatable-language-error").html(" ");
+                    $("#datatable-language").append('<tbody id="datatable-language-error"><tr><th colspan="6">No data found in the server</th></tr></tbody>');
+                    $("#datatable-language_processing").css("display", "none");
+                }
+            },
+            columns: [
+                  {
+                      data: "subject",
+                  },
+                  {
+                      data: 'template',
+                  },
+                  {
+                      data: "email",
+                  },
+                  {
+                      data: "attachment",
+                  },
+                  {
+                      data: "date_added",
+                  },
+                  {
+                      data: "date_opened",
+                  },
+
+            ],
+            columnDefs: [
+                {
+                    targets: [6],
+                    orderable: false,
+                    data: "history_id",
+                    render: function (data, type, row) {
+                      
+                        return `<ul class="icons-list pull-right">
+                                <li class="dropdown">
+                                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                        <i class="icon-menu9"></i>
+                                    </a>
+                                    <ul class="dropdown-menu dropdown-menu-right">
+                                        <li><a id="button-template-preview"
+                                                data-history-id=`+data+` ><i class="fa fa-eye"></i>${locales['button_view']}</a>
+                                        </li>
+                                        <li> <a id="button-history-remove"
+                                                data-history-id=`+data+`><i class="fa fa-trash-o"></i>${locales['button_delete']}</a>
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        `;
+                    }
+                }
+             ]
+        });
+
+        $('#button-history-remove').on('click', function() {
+        	obj = $(this);
+
+        	if (typeof obj.data('history-id') !== 'undefined') {
+        		id = '&history_id=' + obj.data('history-id');
+        	} else {
+        		id = '';
+        	}
+
+        	$.ajax({
+        		url: '{{ link("module/custom_email_templates/remove")}}?store_id={{filter_store_id}}&format=raw' + id,
+        		type: 'post',
+        		dataType: 'json',
+        		success: function(json) {
+        			if (json['error']) {
+        			    $('#error_area').empty();
+        				$('#error_area').append('<div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> ' + json['error'] + '</div>');
+        			}
+        			if (json['success']) {
+
+                        notify('Success', 'success', json['success']);
+        			    reloadDT();
+        			}
+        		},
+        		error: function(xhr, ajaxOptions, thrownError) {
+        			alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+        		}
+        	});
+        });
+
+        $("#filter_history").submit(function (e) {
+            e.preventDefault(); // avoid to execute the actual submit of the form.
+            $('#datatable-language').DataTable({
+                "destroy": true,
+                "processing": true,
+                "serverSide": true,
+                "searching": false,
+                "language": {
+                    "zeroRecords": "No records to display"
+                },
+                "ajax": {
+                    url: action,
+                    type: "post",
+                    data:{
+                        'filter_store_id':{{ filter_store_id }},
+                        'format':'raw',
+                        'filter_subject':$('#input-subject').val(),
+                        'filter_email':$('#input-email').val(),
+                        'filter_template_code':$('#input-template-code').val(),
+                        'filter_attachment':$('#input-attachment').val(),
+                        'filter_date_added':$('#input-date-added').val(),
+                    },
+                    error: function (data) {  // error handling
+                        $("#datatable-language-error").html(" ");
+                        $("#datatable-language").append('<tbody id="datatable-language-error"><tr><th colspan="6">No data found in the server</th></tr></tbody>');
+                        $("#datatable-language_processing").css("display", "none");
+                    }
+                },
+                columns: [
+                      {
+                          data: "subject",
+                      },
+                      {
+                          data: 'code',
+                      },
+                      {
+                          data: "email",
+                      },
+                      {
+                          data: "attachment",
+                      },
+                      {
+                          data: "date_added",
+                      },
+                      {
+                          data: "date_opened",
+                      },
+                ],
+                columnDefs: [
+                    {
+                        targets: [6],
+                        orderable: false,
+                        data: "history_id",
+                        render: function (data, type, row) {
+
+                            return `<ul class="icons-list pull-right">
+                                    <li class="dropdown">
+                                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                            <i class="icon-menu9"></i>
+                                        </a>
+                                        <ul class="dropdown-menu dropdown-menu-right">
+                                            <li><a id="button-template-preview"
+                                                    data-history-id=`+data+` ><i class="fa fa-eye"></i>${locales['button_view']}</a>
+                                            </li>
+                                            <li> <a id="button-history-remove"
+                                                    data-history-id=`+data+`><i class="fa fa-trash-o"></i>${locales['button_delete']}</a>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            `;
+                        }
+                    }
+                ]
+            });
+        });
+        $(document).delegate('#button-template-preview', 'click', function() {
+            obj = $(this);
+
+            if (typeof obj.data('history-id') !== 'undefined') {
+                id = obj.data('history-id');
+                type = 'history';
+            } else if (typeof obj.data('template-id') !== 'undefined') {
+                id = obj.data('template-id');
+                type = 'template';
+            } else {
+                return false;
+            }
+            $('#dialog-template-preview').find('iframe').attr({
+                'src': '{{ link("module/custom_email_templates/preview")}}?&format=raw&type=' + type + '&id=' + id,
+                'width': '{{ iframe_width }}',
+                'height': '400'
+            });
+
+            $('#dialog-template-preview').modal('show');
+        });
+
+    });
+    function reloadDT(){
+        $('#datatable-language').DataTable({
+            "destroy": true,
+            "searching": false,
+            "processing": true,
+            "serverSide": true,
+            "language": {
+                "zeroRecords": "No records to display"
+            },
+            "ajax": {
+                url: action,
+                type: "post",
+                data:{
+                    'filter_store_id':{{ filter_store_id }},
+                    'format':'raw'
+                },
+                error: function (data) {  // error handling
+                    $("#datatable-language-error").html(" ");
+                    $("#datatable-language").append('<tbody id="datatable-language-error"><tr><th colspan="6">No data found in the server</th></tr></tbody>');
+                    $("#datatable-language_processing").css("display", "none");
+                }
+            },
+            columns: [
+                  {
+                      data: "subject",
+                  },
+                  {
+                      data: 'code',
+                  },
+                  {
+                      data: "email",
+                  },
+                  {
+                      data: "attachment",
+                  },
+                  {
+                      data: "date_added",
+                  },
+                  {
+                      data: "date_opened",
+                  }
+            ],
+            columnDefs: [
+                {
+                    targets: [6],
+                    orderable: false,
+                    data: "history_id",
+                    render: function (data, type, row) {
+                        return `<ul class="icons-list pull-right">
+                                <li class="dropdown">
+                                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                        <i class="icon-menu9"></i>
+                                    </a>
+                                    <ul class="dropdown-menu dropdown-menu-right">
+                                        <li><a id="button-template-preview"
+                                                data-history-id=`+data+` ><i class="fa fa-eye"></i>${locales['button_view']}</a>
+                                        </li>
+                                        <li> <a id="button-history-remove"
+                                                data-history-id=`+data+`><i class="fa fa-trash-o"></i>${locales['button_delete']}</a>
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        `;
+                    }
+                }
+            ]
+        });
+    }
+
+</script>
+{% endblock scripts %}

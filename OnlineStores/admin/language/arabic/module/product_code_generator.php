@@ -1,0 +1,31 @@
+<?php
+
+$_ = [
+    'product_code_generator_heading_title' => 'مخصص الاكواد',
+    'error_warning'         => 'تحذير: الرجاء مراجعة الحقول الخاطئة او المطلوبة !',
+    'text_settings' => 'الإعدادات',
+    'text_enabled' => 'مفعل',
+    'text_disabled' => 'غير مفعل',
+    'please_wait'=> 'أنتظر من فضلك ...',
+    'entry_status' => 'الحالة',
+    'entry_show_codes_in_success_pg' => 'اظهار الاكواد فى صفحة نجاح الطلب',
+    'entry_hide_codes_in_success_pg_postpaid' => 'اخفاء الاكواد فى حالة الدفع الآجل فى صفحة نجاح الطلب',
+    'entry_product' => 'المنتج',
+    'entry_product_code' => 'كود المنتج',
+    'entry_product_code_note' => ' كود كارت (ايتونز - جوجل - ...) من فضلك ضع كل كود في سطر منفصل',
+    'general_settings' => 'تخصيص أكواد المنتجات',
+    'button_add_code' => 'أضف كود جديد',
+    'error_entry_product_id' =>'حقل رقم المنتج مطلوب !',
+    'error_entry_product_code' =>'حقل أكواد المنتج مطلوب !',
+    'text_settings_success' =>'تم التعديل بنجاح',
+    'text_success' =>'تم التعديل بنجاح ',
+    'text_bulkdelete_success' =>'تم الحذف بنجاح',
+    'error_permission'     => 'تحذير: ليس لديك الصلاحيه للتعديل علي الاكواد !',
+    'text_bulkdelete_error'     => 'حدث خطأ غير متوقع',
+    'unexpected_error'     => 'حدث خطأ غير متوقع',
+    'column_code' =>'الكود',
+    'column_product' =>'المنتج',
+    'btn_new_code' =>'أضافة كود جديد',
+    'tab_archive' =>'الارشيف',
+
+];

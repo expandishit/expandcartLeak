@@ -1,0 +1,245 @@
+<div class="drop-img-component mb-15">
+    <div class="panel-heading w-100 pb-0 pt-0 border-none">
+        <h6 class="panel-title"><span class="text-bold">{{ lang('tab_image') }} </span><a class="heading-elements-toggle"><i class="icon-more"></i></a></h6>
+        <div class="heading-elements not-collapsible">
+            <ul class="list-inline heading-text">
+                <li><a class="dropzone-upload-image">{{ lang('panel_upload_new') }}</a></li>
+                <li id="dropzone-photo-manager"><a class="dropzone-photo-manager"  onclick="imageUploader('image', 'thmub', 'yes', 'dropzone-editor')">{{ lang('panel_select_from_media') }}</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="panel-body drop-img-container pr-0 pl-0">
+        <div class="dz-clickable dropzone product-dropzone dropzone-previews" id="product-dropzone">
+            <div class="dz-default dz-message">
+                <img src="view/assets/images/icons/image.svg" alt="">
+                <span>{{lang('browse_img')}}</span>
+            </div>
+        </div>
+        <div id="template-preview">
+            <div class="dz-preview dz-file-preview form-inline">
+                <div class="dz-image">
+                    <img data-dz-thumbnail />
+                </div>
+                <div class="dz-details">
+                    <div class="dz-size">
+                        <span data-dz-size=""><strong></strong></span>
+                    </div>
+                    <div class="dz-filename">
+                        <span data-dz-name=""></span>
+                    </div>
+                </div>
+                <div class="dz-progress"><span class="dz-upload" data-dz-uploadprogress></span></div>
+                <div class="dz-error-message"><span data-dz-errormessage></span></div>
+                <div class="dz-success-mark"></div>
+                <div class="dz-error-mark"></div>
+                <div class="row no-margin">
+                    <a class="dz-remove text-warning-600 pull-left dz-custom-icon" href="javascript:undefined;" data-popup="tooltip" data-original-title="Remove Image" data-dz-remove><i class="icon-trash"></i></a>
+                    <a class="dz-draggable pull-right text-default dz-custom-icon" href="javascript:undefined;" data-popup="tooltip" data-original-title="Drag to Reorder" data-dz-remove><i class="icon-menu3"></i></a>
+                </div>
+                {% if poip_installed is defined and poip_installed == true %}
+                    <select class="thumb-option-selector">
+                        <option value="-1">{{ lang('text_general_image') }}</option>
+                    </select>
+                {% endif %}
+
+                <input type="hidden" class="form-control image-sort-order" />
+            </div>
+        </div>
+            {# <div class="dropzone-upload-image">
+                <i class="fa fa-plus" aria-hidden="true"></i>
+                Browse or drop image
+            </div> #}
+        <div id="dropzone-inputs"></div>
+    </div>
+</div>
+
+
+
+{% if(config('rotate360_enable_module')) %}
+<div class="panel panel-flat">
+    <div class="panel-heading">
+        <h6 class="panel-title"><span class="text-bold">{{ lang('rotate360_Image') }}</span><a class="heading-elements-toggle"><i class="icon-more"></i></a></h6>
+        <div class="heading-elements not-collapsible">
+            <ul class="list-inline heading-text">
+                <li><a class="dropzone-upload-rotate360-image">{{ lang('panel_upload_new') }}</a></li>
+            </ul>
+        </div>
+        <input type="hidden" id="product_id" value="{{ product_id }}">
+    </div>
+    <div class="panel-body">
+        <div class="dz-clickable dropzone rotate360-dropzone dropzone-previews" id="rotate360-dropzone">
+        <div class="dz-default dz-message">
+                <span>Drop files to upload <span>or CLICK</span></span>
+            </div>
+        </div>
+    </div>
+    <div id="rotate360-template-preview">
+                <div class="dz-preview rotate360-dz-preview dz-file-preview form-inline">
+                    <div class="dz-image">
+                        <img data-dz-thumbnail />
+                    </div>
+                    <div class="dz-progress"><span class="dz-upload" data-dz-uploadprogress></span></div>
+                    <div class="dz-error-message"><span data-dz-errormessage></span></div>
+                    <div class="dz-success-mark"></div>
+                    <div class="dz-error-mark"></div>
+                    <div class="row no-margin">
+                        <a class="dz-remove text-warning-600 pull-left dz-custom-icon" href="javascript:undefined;" data-popup="tooltip" data-original-title="Remove Image" data-dz-remove><i class="icon-trash"></i></a>
+                        <a class="dz-draggable pull-right text-default dz-custom-icon" href="javascript:undefined;" data-popup="tooltip" data-original-title="Drag to Reorder" data-dz-remove><i class="icon-menu3"></i></a>
+                    </div>
+                    <input type="hidden" class="form-control image-sort-order" />
+                </div>
+            </div>
+</div>
+{% endif %}
+<script>
+    function imageUploader(field, thumb, editorFunc, callerName) {
+        $.startImageManager(field, thumb, editorFunc, callerName);
+    }
+    $(document).ready(function () {
+
+        var poipInstalled = '{{ poip_installed }}';
+
+        if (poipInstalled == true) {
+
+            for (img in images) {
+
+                var defaultValue = $('.thumb-option-selector:eq('+img+')').attr('data-img-default');
+
+                for (optId in optionValues) {
+
+                    for (optValId in allOptions[optId]['product_values']) {
+
+                        var optionValueData = allOptions[optId]['product_values'][optValId];
+
+                        var optionValueId = optionValueData['option_value_id'];
+
+                        var $selected = false;
+
+                        if (defaultValue == optionValueId) {
+                            $selected = true;
+                        }
+
+                        if (
+                            typeof optionValues[optId] != 'undefined' &&
+                            typeof optionValues[optId][optValId] != 'undefined'
+                        ) {
+                            newThumbOptionSelector({
+                                image: img,
+                                data: optionValueData,
+                                optionId: optId,
+                                optionValueId: optValId,
+                                selected: $selected,
+                                valueName: optionValues[optId][optValId]['name'],
+                                optionName: allOptions[optId]['name']
+                            });
+                        }
+                    }
+                }
+            }
+
+            triggerImageOptionChange();
+        }
+
+
+
+
+    });
+
+    function newThumbOptionSelector(obj) {
+
+        if (typeof obj['image'] == 'undefined') {
+            var selector = $('.thumb-option-selector');
+        } else {
+            var selector = $('.thumb-option-selector:eq(' + obj['image'] + ')');
+        }
+
+        if (typeof obj['selector'] != 'undefined') {
+            var selector = obj['selector'];
+        }
+
+        if (selector
+                .find('.thumb-option-selector-' + obj['optionValueId']).length > 0) {
+            return;
+        }
+
+        selector.append($('<option></option>', {
+            'text': obj['optionName'] + ' > ' + obj['valueName'],
+            'value': obj['data']['option_value_id'],
+            'class': 'thumb-option-selector-' + obj['data']['option_value_id'],
+            'data-option-id': obj['optionId'],
+            'data-option-value-id': obj['optionValueId'],
+            'selected': obj['selected']
+        }));
+    }
+
+    function triggerImageOptionChange() {
+        $('.thumb-option-selector').change(function () {
+
+            var $this = $(this);
+
+            var $selected = $(':selected', $this);
+
+            var $imgCount = $this.attr('data-img-count');
+
+            var $target = $this.attr('data-target');
+
+
+            if ($selected.val() != '-1') {
+                var optionId = $selected.attr('data-option-id');
+                var optionValueId = $selected.attr('data-option-value-id');
+
+                var optionName = ('product_option' +
+                    '[' + optionId + ']' +
+                    '[product_option_value]' +
+                    '[' + optionValueId + ']' +
+                    '[images]' +
+                    '[' + $this.parents('.dz-preview').find('.image-sort-order').val() + ']' +
+                    '[image]');
+
+                var sortOrderInput = ('product_option' +
+                    '[' + optionId + ']' +
+                    '[product_option_value]' +
+                    '[' + optionValueId + ']' +
+                    '[images]' +
+                    '[' + $this.parents('.dz-preview').find('.image-sort-order').val() + ']' +
+                    '[srt]');
+
+                $('#product_image_' + $imgCount).attr('name', optionName);
+
+                $this.parents('.dz-preview').find('.image-sort-order').attr('name', sortOrderInput);
+                $this.parents('.dz-preview').find('.image-sort-order').attr('data-type', 'option');
+
+
+            } else {
+                $('#product_image_' + $imgCount).attr('name', 'product_image[' + $imgCount + '][image]');
+
+                $this.parents('.dz-preview').find('.image-sort-order').attr('name', 'product_image[' + $imgCount + '][sort_order]');
+                $this.parents('.dz-preview').find('.image-sort-order').attr('data-type', 'general');
+
+
+            }
+
+            var productImage = $($(this).attr('data-target'));
+            var productImageCount = $(this).attr('data-img-count');
+
+            if ($selected.val() != '-1') {
+                var newName = productImage.attr('name').replace(/\[images]\[(\d+)]\[image]/g, function (m, m1) {
+                    return '[images][' + productImageCount + '][image]';
+                });
+
+                productImage.attr('data-type', 'option');
+            } else {
+                var newName = productImage.attr('name').replace(/product_image\[\d+]\[image]/g, function (m, m1) {
+                    return 'product_image[' + productImageCount + '][image]';
+                });
+
+                productImage.attr('data-type', 'general');
+            }
+
+            productImage.attr('name', newName);
+
+        });
+    }
+</script>
+
+

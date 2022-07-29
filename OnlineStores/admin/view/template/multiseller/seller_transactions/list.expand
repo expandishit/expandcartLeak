@@ -1,0 +1,284 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% set dualMenuEnabled = true %}
+
+{% set bodyClasses = "has-detached-left" %}
+
+{% block title %}
+    {{ heading }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block secondarymenu %}
+    {% include 'multiseller/menu.expand' with {'active': '#seller_transactions'} %}
+{% endblock secondarymenu %}
+
+{% block headelements %}
+{% endblock headelements %}
+
+{% block content %}
+    <!-- Detached sidebar -->
+    <div class="sidebar-detached">
+        <div class="sidebar sidebar-default sidebar-separate">
+            <div class="sidebar-content">
+                <!-- Sidebar search -->
+                <div class="panel panel-white">
+                
+                    <div class="panel-heading">
+                
+                        <div class="panel-title text-semibold">
+                
+                            <i class="icon-search4 text-size-base position-left"></i>
+                
+                            {{ heading_title }}
+                
+                        </div>
+                
+                    </div>
+                
+                    <div class="panel-body">
+                
+                        <form id="filter_report_seller_transactions">
+                
+                            <div class="form-group">
+                
+                                <label>{{ entry_date_start }}</label>
+                
+                                <input type="text" class="form-control daterange-basic"
+                
+                                       value="{{ filter_date_start }} - {{ filter_date_end }}" id="date_all"
+                
+                                       name="date_all">
+                            </div>
+                         
+                            <div class="form-group">
+                         
+                                <label>{{ entry_group }}</label>
+                         
+                                <select data-placeholder="Select your country" id="filter_group" class="select"
+                                      
+                                        name="filter_group">
+                                    
+                                    {% for group in group_sellers %}
+                                    
+                                        {% if group.seller_id == filter_group %}
+                                    
+                                            <option value="{{ group.seller_id }}"
+                                    
+                                                    selected="selected">{{ group.seller_name }}</option>
+                                    
+                                        {% else %}
+                                    
+                                            <option value="{{ group.seller_id }}">{{ group.seller_name }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                          
+                            <button type="submit" class="btn bg-blue btn-block">
+                          
+                                <i class="icon-search4 text-size-base position-left"></i>
+                          
+                                {{ button_filter }}
+                          
+                            </button>
+                       
+                        </form>
+                    </div>
+                </div>
+                <!-- /sidebar search -->
+            </div>
+        </div>
+    </div>
+    <!-- /detached sidebar -->
+
+    <!-- Detached content -->
+    <div class="container-detached">
+
+        
+        <div class="content-detached">
+            
+            <div class="panel panel-flat table-responsive">
+            
+            
+                <table class="table datatable-basic" id="datatableGrid">
+            
+                    <thead>
+            
+                    <tr>
+                        <th>{{ lang('ms_id') }}</th>
+                        
+                        <th>{{ lang('ms_net_amount') }}</th>
+
+                        <th>{{ lang('ms_catalog_sellers_total_earnings') }}</th>
+
+                        <th>{{ lang('Available balance') }}</th>
+
+                        <th>{{ lang('Total balance') }}</th>
+
+                        <th>{{ lang('ms_date') }}</th>
+
+                        <th>{{ lang('ms_description') }}</th>
+
+                    </tr>
+
+                    </thead>
+
+                </table>
+            </div>
+        </div>
+    </div>
+    <!-- /detached content -->
+
+
+    <script>
+    
+        var links = {};
+
+        links['dtHandler'] = '{{ link('multiseller/seller_transactions/getTableData') }}';
+    
+    </script>
+
+
+      <script src="view/javascript/pages/multiseller/seller_transactions_list.js?bn={{ BuildNumber }}"></script>
+
+    <script type="text/javascript">
+
+        //==================================================== Basic Date picker date range ================================
+        $('.daterange-basic').daterangepicker({
+
+            "autoApply": true,
+            // applyClass: 'bg-slate-600',
+            // cancelClass: 'btn-default',
+            ranges: locales['drp_ranges'],
+            locale: locales['drp_locale'],
+            opens: locales['drp_direction']
+
+        });
+
+        $('.daterangepicker-inputs').addClass('hidden');
+        //==================================================== Basic Date picker date range ================================
+        //==================================================== Basic datatable ================================
+       
+            
+
+            //==================================================== Basic datatable ================================
+
+            // ===================================================   submit form  ==================================
+        $(function () {
+            $("#filter_report_seller_transactions").submit(function (e) {
+
+                e.preventDefault(); // avoid to execute the actual submit of the form.
+                console.log('here');
+
+                $('#datatableGrid').DataTable({
+                    
+                    "destroy": true,
+                    
+                    processing: false,
+                    
+                    serverSide: false,
+                    
+                    stateSave: true,
+                    
+                    autoWidth: false,
+
+                    language: locales['dt_language'],
+        dom: '<"datatable-header"fB><"datatable-scroll-wrap"t><"datatable-footer"lip>',
+        language: locales['dt_language'],
+        lengthMenu: [[10, 25, 50, 100, 200], [10, 25, 50, 100, 200]],
+        ajax: {
+            url: "{{ action }}" , // json datasource
+            type: "post",  // method  , by default get
+            data: {
+                'date': $('#date_all').val(),
+                'filter_group': $('#filter_group').val(),
+                
+            },
+
+            error: function () {  // error handling
+                $("#reports-sales-error").html(" ");
+                $("#reports-sales").append('<tbody id="reports-sales-error"><tr><th colspan="6">No data found in the server</th></tr></tbody>');
+                $("#reports-sales_processing").css("display", "none");
+
+            }
+        },
+        select: {
+            style: 'multi',
+            selector: 'td:first-child'
+        },
+        buttons: [
+            {
+                extend: 'collection',
+                text: '<i class="icon-drawer-out"></i>',
+                className: 'btn btn-default btn-export',
+                buttons: [
+                    {
+                        extend: 'copyHtml5',
+                        text: locales['buttons']['copy'],
+                        exportOptions: {
+                            columns: ':visible'
+                        }
+                    },
+                    {
+                        extend: 'csvHtml5',
+                        text: locales['buttons']['export2csv'],
+                        fieldSeparator: ',',
+                        extension: '.csv',
+                        bom: "true",
+                        exportOptions: {
+                            columns: ':visible'
+                        }
+                    },
+                    {
+                        extend: 'excelHtml5',
+                        text: locales['buttons']['export2excel'],
+                        exportOptions: {
+                            columns: ':visible'
+                        }
+                    },
+                    {
+                        extend: 'pdfHtml5',
+                        text: locales['buttons']['export2pdf'],
+                        exportOptions: {
+                            columns: ':visible'
+                        }
+                    }
+                ]
+            },
+            {
+                extend: 'colvis',
+                text: '<i class="icon-grid3"></i>',
+                className: 'btn btn-default btn-colvis',
+                columns: [1,2,3,4]
+            }
+        ],
+        order: [[1, "asc"]],
+        columns: [
+            {data: 'balance_id'},
+            {data: 'amount'},
+            {data: 'net_earning'},
+            {data: 'avail'},
+            {data: 'balance'},
+            {data: 'date_created'},
+            {data: 'description'},
+        ],
+    });
+
+
+                console.log($('#filter_report_seller_transactions').serialize());
+
+                
+            });
+
+
+        });
+    </script>
+
+
+
+{% endblock content %}

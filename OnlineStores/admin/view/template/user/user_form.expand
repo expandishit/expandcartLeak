@@ -1,0 +1,284 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+
+{% block title %}
+    {{ lang('heading_title', 'user/user') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+    {% include "includes/buttons_top.expand" %}
+{% endblock headelements %}
+
+{% block content %}
+    <style>
+        .page-header-default {
+            background-color: transparent;
+        }
+        .page-header-content + .breadcrumb-line {
+            border: 0;
+        }
+    </style>
+    
+    <!-- Start Form -->
+    <form id="setting-payment" class="form" action="{{ action }}">
+        <!-- Status -->
+        <div class="col-md-3">
+            <div class="panel panel-flat">
+                <div class="panel-body">
+                    <fieldset>
+                        
+                        <legend class="text-semibold">
+                            <i class="fas fa-check-circle fa-lg position-left"></i>
+                            {{ lang('entry_status')|trim(':') }}
+                            <a class="control-arrow" data-toggle="collapse" data-target="#panel1">
+                                <i class="icon-circle-down2"></i>
+                            </a>
+                        </legend>
+
+                        <div class="collapse in" id="panel1" style="text-align:center;">
+                            <div class="form-group" id="cod_status-group">
+                                <img src="{{ thumb }}" width="70">
+                            </div>
+                            <div class="form-group" id="cod_status-group">
+                                <label class="control-label">{{ lang('entry_status') }}</label>
+                                <div class="checkbox checkbox-switchery">
+                                    <label>
+                                        <input type="checkbox" id="status" onchange="changeStatus(this);" name="status" class="switchery" {{ status == 1 or status is null ? 'checked' }} >
+                                        <span class="switchery-status">{{ status == 1 ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                    </label>
+                                </div>
+                                <span class="help-block"></span>
+                            </div>
+                        </div>
+                    </fieldset>
+                </div>
+            </div>
+        </div>
+        <!-- End of Status -->
+
+        <!-- Fields -->
+        <div class="col-md-9">
+            <div class="panel panel-flat">
+                <div class="panel-body">
+                    <fieldset>
+                        
+                        <legend class="text-semibold">
+                            <i class="fas fa-check-circle fa-lg position-left"></i>
+                            {{ lang('lbl_cod_settings', 'payment/cod') }}
+                            <a class="control-arrow" data-toggle="collapse" data-target="#fields-panel">
+                                <i class="icon-circle-down2"></i>
+                            </a>
+                        </legend>
+
+                        <div class="collapse in" id="fields-panel">
+                            <!-- Username -->
+                            <div class="form-group col-md-6" id="username-group">
+                                <label for="username" class="control-label">{{ lang('entry_username') }} <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="username" name="username" value="{{ username }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Username -->
+                            <!-- First Name -->
+                            <div class="form-group col-md-6" id="firstname-group">
+                                <label for="firstname" class="control-label">{{ lang('entry_firstname') }} <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="firstname" name="firstname" value="{{ firstname }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /First Name -->
+                            <!-- Last Name -->
+                            <div class="form-group col-md-6" id="lastname-group">
+                                <label for="lastname" class="control-label">{{ lang('entry_lastname') }} <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="lastname" name="lastname" value="{{ lastname }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Last Name -->
+                            <!-- Email -->
+                            <div class="form-group col-md-6" id="email-group">
+                                <label for="email" class="control-label">{{ lang('entry_email') }} <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="email" name="email" value="{{ email }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Email -->
+                            <!-- Password -->
+                            <div class="form-group col-md-6" id="password-group">
+                                <label for="password" class="control-label">{{ lang('entry_password') }} <span class="text-danger">*</span></label>
+                                <input type="password" class="form-control" id="password" name="password" value="{{ password }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Password -->
+                            <!-- Password Confirm -->
+                            <div class="form-group col-md-6" id="confirm-group">
+                                <label for="confirm" class="control-label">{{ lang('entry_confirm') }} <span class="text-danger">*</span></label>
+                                <input type="password" class="form-control" id="confirm" name="confirm" value="{{ confirm }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Password Confirm -->
+                            <!-- User Group -->
+                            <div class="form-group col-md-12" id="user_group_id-group">
+                                <label for="user_group_id" class="control-label">{{ lang('entry_user_group') }}</label>
+                                <select name="user_group_id" id="user_group_id" class="form-control">
+                                    {% for user_group in user_groups %}
+                                        <option value="{{ user_group['user_group_id'] }}" {% if user_group_id == user_group['user_group_id'] %} selected {% endif %}> 
+                                            {{ user_group['name'] }} 
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <span class="help-block"></span>
+                                <span class="text-muted">{{ langempty('entry_order_status_help') }}</span>
+                            </div>
+                            {% if show_outlet %}
+                            <div class="form-group col-md-12">
+                                <label class="control-label" for="input-user-group">{{ lang('entry_outlet') }}</label>
+                                <select name="outlet_id" id="input-user-group" class="form-control select">
+                                    <option value="0" selected="selected">{{ lang('none_assign') }}</option>
+                                    {% for outlet in outlets %}
+                                        {% if outlet['outlet_id'] == outlet_id %}
+                                            <option value="{{ outlet['outlet_id'] }}" selected="selected">{{ outlet['name'] }}</option>
+                                        {% else %}
+                                            <option value="{{ outlet['outlet_id'] }}">{{ outlet['name'] }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            {% endif %}
+
+                            <div class="form-group col-md-12" id="image-group">
+                                <label for="image" class="control-label">{{ lang('entry_image') }}</label>
+                                <input type="file" class="form-control file-input-image" data-show-caption="true" data-show-upload="false" accept="image/*">
+                                <input type="hidden" value="" name="image" id="image">
+                                <span class="help-block"></span>
+                                <span class="text-muted">{{ langempty('image_help') }}</span>
+                            </div>
+                            <!-- /User Group -->
+                            
+                        </div>
+                    </fieldset>
+                </div>
+            </div>
+        </div>
+        <!-- End of Fields -->
+
+    </form>
+    <!-- End Form -->
+
+<!-- Lower Buttons -->
+{% include "includes/buttons_bottom.expand" %}
+<!-- End Lower Buttons -->
+<script>
+    function changeStatus(checkbox)
+    {
+        var self = $(checkbox);
+        var switch_status = self.siblings('.switchery-status');
+
+        if ( self.is(':checked') )
+        {
+            switch_status.html("{{ lang('text_enabled') }}");
+        }
+        else
+        {
+            switch_status.html("{{ lang('text_disabled') }}");
+        }
+    }
+
+    $(document).ready(function() {
+        if ( $('#status').is(':checked') )
+        {
+            $('#status').siblings('.switchery-status').html("{{ lang('text_enabled') }}");
+        }
+        else
+        {
+            $('#status').siblings('.switchery-status').html("{{ lang('text_disabled') }}");
+        }
+
+        $('select').select2();
+        $('.touchspinney').TouchSpin({
+            'postfix': '{{ current_currency_code }}',
+            'decimals': 2,
+        });
+
+
+
+        // Modal template
+        var modalTemplate = '<div class="modal-dialog modal-lg" role="document">\n' +
+            '  <div class="modal-content">\n' +
+            '    <div class="modal-header">\n' +
+            '      <div class="kv-zoom-actions btn-group">{toggleheader}{fullscreen}{borderless}{close}</div>\n' +
+            '      <h6 class="modal-title">{heading} <small><span class="kv-zoom-title"></span></small></h6>\n' +
+            '    </div>\n' +
+            '    <div class="modal-body">\n' +
+            '      <div class="floating-buttons btn-group"></div>\n' +
+            '      <div class="kv-zoom-body file-zoom-content"></div>\n' + '{prev} {next}\n' +
+            '    </div>\n' +
+            '  </div>\n' +
+            '</div>\n';
+
+        // Buttons inside zoom modal
+        var previewZoomButtonClasses = {
+            toggleheader: 'btn btn-default btn-icon btn-xs btn-header-toggle',
+            fullscreen: 'btn btn-default btn-icon btn-xs',
+            borderless: 'btn btn-default btn-icon btn-xs',
+            close: 'btn btn-default btn-icon btn-xs'
+        };
+
+        // Icons inside zoom modal classes
+        var previewZoomButtonIcons = {
+            prev: '<i class="icon-arrow-left32"></i>',
+            next: '<i class="icon-arrow-right32"></i>',
+            toggleheader: '<i class="icon-menu-open"></i>',
+            fullscreen: '<i class="icon-screen-full"></i>',
+            borderless: '<i class="icon-alignment-unalign"></i>',
+            close: '<i class="icon-cross3"></i>'
+        };
+
+        // File actions
+        var fileActionSettings = {
+            zoomClass: 'btn btn-link btn-xs btn-icon',
+            zoomIcon: '<i class="icon-zoomin3"></i>',
+            dragClass: 'btn btn-link btn-xs btn-icon',
+            dragIcon: '<i class="icon-three-bars"></i>',
+            removeClass: 'btn btn-link btn-icon btn-xs',
+            removeIcon: '<i class="icon-trash"></i>',
+            indicatorNew: '<i class="icon-file-plus text-slate"></i>',
+            indicatorSuccess: '<i class="icon-checkmark3 file-icon-large text-success"></i>',
+            indicatorError: '<i class="icon-cross2 text-danger"></i>',
+            indicatorLoading: '<i class="icon-spinner2 spinner text-muted"></i>'
+        };
+
+
+
+        $('.file-input-image').fileinput({
+            {#uploadUrl: "{{ link('user/user/serializeimage') }}", // server upload action#}
+            {#uploadAsync: true,#}
+            previewFileType: 'image',
+            browseLabel: 'Select',
+            browseClass: 'btn bg-slate-700',
+            browseIcon: '<i class="icon-image2 position-left"></i> ',
+            removeLabel: 'Remove',
+            removeClass: 'btn btn-danger',
+            removeIcon: '<i class="icon-cancel-square position-left"></i> ',
+            uploadClass: 'btn bg-teal-400',
+            uploadIcon: '<i class="icon-file-upload position-left"></i> ',
+            layoutTemplates: {
+                icon: '<i class="icon-file-check"></i>',
+                modal: modalTemplate
+            },
+            initialCaption: "Please select image",
+            mainClass: 'input-group',
+            previewZoomButtonClasses: previewZoomButtonClasses,
+            previewZoomButtonIcons: previewZoomButtonIcons,
+            fileActionSettings: fileActionSettings
+        })
+            .on('fileimageloaded', function(event, previewId) {
+                var serializedImage = $('#' + previewId + ' img').attr('src');
+                $('#image').val(serializedImage);
+            });
+
+    });
+</script>
+{% endblock %}

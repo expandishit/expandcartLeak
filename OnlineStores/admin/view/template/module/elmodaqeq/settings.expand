@@ -1,0 +1,273 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block title %}
+    {{ lang('heading_title', 'module/elmodaqeq') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+    {% include "includes/buttons_top.expand" %}
+{% endblock headelements %}
+
+{% block content %}
+<style type="text/css">
+    .disabled{ opacity: 0.4; cursor: not-allowed;}
+    .disabled a{
+        pointer-events:none; 
+    }
+    .elmodaqeq-operations-buttons > li{
+        margin-bottom: 10px;
+        padding: 1px;
+    }
+    .elmodaqeq-operations-buttons > li > label {
+        padding-left: 7px;
+    }
+</style>
+
+<form action="{{ link('module/elmodaqeq/save', '', 'SSL') }}" class="form" method="post">
+    {# <input type="hidden" name="elmodaqeq[categories_inserted]" value="0"> #}
+    <input type="hidden" id="categories_inserted" name="elmodaqeq[categories_inserted]" value="{{ elmodaqeq.categories_inserted ?: 0 }}">
+
+    {# Status #}
+    <div class="col-md-7">
+
+        <div class="panel panel-white">
+
+            <!--Panel Title-->
+            <div class="panel-heading">
+                <h6 class="panel-title"><span class="text-bold">{{ lang('entry_settings') }}</span></h6>
+                <div class="heading-elements not-collapsible">
+                    <ul class="icons-list">
+                        <li><a data-action="collapse"></a></li>
+                    </ul>
+                </div>
+            </div>
+            <!--/Panel Title-->
+
+
+
+            <div class="panel-body">
+                <div class="collapse in" id="fields-panel">
+                    <div class="row">
+
+                        <div class="form-group col-md-3">
+                            <label class="control-label">{{ lang('entry_status') }}</label>
+                            <div class="checkbox checkbox-switchery no-margin">
+                                <label>
+                                    <input type="checkbox" onchange="changeStatus(this);" name="elmodaqeq[status]" class="switchery" value="{{elmodaqeq.status}}" {{ elmodaqeq.status == '1'   ? 'checked' }}>
+                                    <span class="switchery-status">{{ elmodaqeq.status == '1' ? lang('text_enabled') :  lang('text_disabled') }}</span>
+                                </label>
+                            </div>
+                            <span class="help-block"></span>
+                        </div>  
+
+
+
+                        <div class="form-group col-md-12">
+                            <label class="control-label">{{ lang('username') }}</label>
+                            <input type="text" class="form-control" name="elmodaqeq[username]" value="{{ elmodaqeq.username }}">
+                        </div>                     
+
+                        <div class="form-group col-md-12">
+                            <label class="control-label">{{ lang('password') }}</label>
+                            <input type="text" class="form-control" name="elmodaqeq[password]" value="{{ elmodaqeq.password }}">
+                        </div>      
+                    </div><!-- /Row -->
+                </div><!-- /collapse in-->
+            </div>
+            <!-- /panel body-->
+
+
+        </div><!-- /panel panel-white -->
+    </div>
+
+</form>
+
+{# Operations Buttons #}
+<div class="col-md-5 disabled" id="operations_div">
+    <div class="panel panel-white">
+       
+        <div class="panel-heading">
+            <h6 class="panel-title"><span class="text-bold">{{ lang('text_operations') }}</span></h6>
+            <div class="heading-elements not-collapsible">
+                <ul class="icons-list">
+                    <li><a data-action="collapse" class=""></a></li>
+                </ul>
+            </div>
+        </div>
+
+
+        <div class="panel-body">
+            <div class="collapse in" id="fields-panel">
+
+                <ul class="elmodaqeq-operations-buttons">
+                    <li>
+                        {# Import Categories from elmodaqeq #}
+                        <a id="import_categories" class="btn btn-success"><i class="icon-plus3"></i></a>
+                        <img style="display:none" class="import-categories-process" src="{{ link('view/image/knawat_ajax_loader.gif') }}" style="width:30px;" />
+                        <label for="import_categories">{{ lang('btn_import_categories') }}</label>
+                    </li>
+                    <li id="li_import_products" class="{{ elmodaqeq.categories_inserted == 0 ? 'disabled': '' }}">
+                        {# Import Products from elmodaqeq #}
+                        <a id="import_products" class="btn btn-primary" data-toggle="modal" data-target="#modal_import_products"><i class="icon-plus3"></i></a>
+                        <img style="display:none" class="import-products-process" src="{{ link('view/image/knawat_ajax_loader.gif') }}" style="width:30px;" />                            
+                        <label for="import_products">{{ lang('btn_import_products') }}</label>
+                    </li>
+                    <li id="li_sync_products" class="{{ elmodaqeq.categories_inserted == 0 ? 'disabled': '' }}">
+                        {# Sync Products between elmodaqeq and ExpandCart in price, quanitity, barcode, name ,description, category) #}
+                        <a id="sync_products" class="btn btn-danger"><i class="icon-loop"></i></a>                        
+                        <img style="display:none" class="sync-products-process" src="{{ link('view/image/knawat_ajax_loader.gif') }}" style="width:30px;" />                            
+                        <label for="sync_products">{{ lang('btn_sync_products') }}</label>
+                    </li>
+                    <li id="li_delete_products" class="{{ elmodaqeq.categories_inserted == 0 ? 'disabled': '' }}">
+                        {# Delete All elmodaqeq Products #}
+                        <a id="delete_products" class="btn btn-info"><i class="icon-trash"></i></a>                        
+                        <img style="display:none" class="delete-products-process" src="{{ link('view/image/knawat_ajax_loader.gif') }}" style="width:30px;" />                            
+                        <label for="delete_products">{{ lang('btn_delete_products') }}</label>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+
+        <div class="panel-footer">
+            <div class="footer-elements" style="padding: 10px;">
+                <span>{{ lang('text_total_imported') }}</span>
+                <span class="affected-rows-count"> 0</span>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript">
+    $(document).ready( () => {
+        operationsDivStatus();
+
+        // window.addEventListener("beforeunload", function(event) {
+        //     event.returnValue = "You have attempted to leave this page. Are you sure?";
+        // });
+
+        $('#import_categories').click(()=>{
+            
+            $('.affected-rows-count').html(0);
+            $('#import_categories').hide();
+            $('.import-categories-process').show();
+
+            $.ajax({
+                type: 'POST',
+                url : '{{ link("module/elmodaqeq/importCategories") }}'
+            }).done((res)=>{
+                let response = JSON.parse(res);
+                if(response.error_message){
+                    $('.footer-elements').html(response.error_message);
+                    return;
+                }
+                $('.affected-rows-count').html(response.count);
+                if(response.categories_inserted == 1){
+                    $('li#li_import_products').removeClass('disabled');
+                    $('li#li_sync_products').removeClass('disabled');
+                    $('#categories_inserted').val(1);
+                }
+            }).fail((jqXHR, textStatus)=>{
+                alert( "Request failed: " + textStatus );
+            }).always(()=>{
+                $('#import_categories').show();
+                $('.import-categories-process').hide();
+            });
+
+        });
+
+        $('#import_products').click(()=>{
+            
+            $('.affected-rows-count').html(0);
+            $('#import_products').hide();
+            $('.import-products-process').show();
+
+            $.ajax({
+                type: 'POST',
+                url : '{{ link("module/elmodaqeq/importProducts") }}'
+            }).done((res)=>{
+                if(typeof res == 'number')
+                    $('.affected-rows-count').html(res);
+                else
+                    $('.footer-elements').html(res);
+            }).fail((jqXHR, textStatus)=>{
+                alert( "Request failed: " + textStatus );
+            }).always(()=>{
+                $('#import_products').show();
+                $('.import-products-process').hide();
+            });;
+
+        });
+
+        $('#sync_products').click(()=>{
+  
+            $('.affected-rows-count').html(0);
+            $('#sync_products').hide();
+            $('.sync-products-process').show();
+
+            $.ajax({
+                type: 'POST',
+                url : '{{ link("module/elmodaqeq/syncProducts") }}'
+            }).done((res)=>{
+                let response = JSON.parse(res);
+                if(response.error_message){
+                    $('.footer-elements').html(response.error_message);
+                    return;
+                }
+                $('.affected-rows-count').html(response.new_products);             
+            }).fail((jqXHR, textStatus)=>{
+                alert( "Request failed: " + textStatus );
+            }).always(()=>{
+                $('#sync_products').show();
+                $('.sync-products-process').hide();
+            });;;
+
+        });
+
+        $('#delete_products').click(()=>{
+            
+            $('.affected-rows-count').html(0);
+            $('#delete_products').hide();
+            $('.delete-products-process').show();
+            confirmMessage(function () {
+                $.ajax({
+                    type: 'POST',
+                    url : '{{ link("module/elmodaqeq/deleteProducts") }}'
+                }).done((res)=>{
+                $('.affected-rows-count').html(res);
+                }).fail((jqXHR, textStatus)=>{
+                    alert( "Request failed: " + textStatus );
+                }).always(()=>{
+                    $('#delete_products').show();
+                    $('.delete-products-process').hide();
+                });
+            });
+        });        
+    });
+    
+    const changeStatus = checkbox => {
+        let status = $(checkbox).is(':checked') ? "{{ lang('text_enabled') }}" : "{{ lang('text_disabled') }}";
+        $(checkbox).siblings('.switchery-status').html(status);
+    };
+
+    const operationsDivStatus = () => {
+        if( $("input[name='elmodaqeq[status]']").val() != '1'){
+            $('#operations_div').addClass('disabled');
+        }
+        else{
+            $('#operations_div').removeClass('disabled');
+        }
+    };
+</script>
+{% endblock %}
+

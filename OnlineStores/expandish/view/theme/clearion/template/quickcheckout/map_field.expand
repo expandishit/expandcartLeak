@@ -1,0 +1,241 @@
+ <style>
+      /* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+      #map_{{ name }} {
+        height: 300px;
+        width: 100%;
+      }
+
+      .pac-card {
+        margin: 10px 10px 0 0;
+        border-radius: 2px 0 0 2px;
+        box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        outline: none;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        background-color: #fff;
+        font-family: Roboto;
+      }
+
+      #pac-container {
+        padding-bottom: 12px;
+        margin-right: 12px;
+      }
+
+      .pac-controls {
+        display: inline-block;
+        padding: 5px 11px;
+      }
+
+      .pac-controls label {
+        font-family: Roboto;
+        font-size: 13px;
+        font-weight: 300;
+      }
+
+      #title {
+        color: #fff;
+        background-color: #4d90fe;
+        font-size: 25px;
+        font-weight: 500;
+        padding: 6px 12px;
+      }
+      #target {
+        width: 345px;
+      }
+    </style>
+
+
+<div id="{{ field['id'] }}_input" 
+     class="password-input sort-item {{ not field['display']? 'qc-hide' : '' }} {{ field['class']? field['class'] : '' }}"
+     data-sort="{{ field['sort_order'] }}">
+	
+	<label for="{{ name }}_{{ field['id'] }}">
+		<span class="required {{ not field['require'] ? 'qc-hide' : '' }}">*</span> 
+		<span class="text">{{ field['title'] }} </span>
+			{{ field['tooltip'] ? '<i class="icon-help" rel="tooltip" data-help="' ~ field['tooltip'] ~ '"></i>' : '' }}
+	</label>
+
+	<!--Begin Google Maps Code-->
+	<input 
+		type="hidden" 
+		id="{{ name }}_lat" 
+		name="{{ name }}[lat]" 
+		value="{{google_map_default_lat}}">
+
+	<input 
+		type="hidden" 
+		id="{{ name }}_lng" 
+		name="{{ name }}[lng]" 
+		value="{{google_map_default_lng}}">
+
+	<div class="row">
+		<div class="col-lg-4 col-md-12 col-xl-4 col-sm-12" style="padding: 10px;">
+			<button class="btn btn-success btn-block" onclick="getCurrentUserCoords()">
+				{{ lang('get_my_location_btn') }}
+			</button>
+		</div>
+		<div class="col-lg-8 col-md-12 col-xl-8 col-sm-12">
+			<div class="text-input">
+				<label for="{{ name }}_{{ field['id'] }}" style="width: 100% !important;">{{ lang('location_search_placeholder') }}</label>
+			</div>
+		</div>
+		<div class="col-lg-12 col-md-12 col-xl-12 col-sm-12">
+			<div class="text-input">
+				<input
+						id="{{ name }}_{{ field['id'] }}"
+						name="{{ name }}[{{ field['id'] }}]"
+						type="text"
+						placeholder="{{ lang('location_search_placeholder') }}"
+						class="form-control controls"
+						style="width: 100%;padding: 5px;">
+			</div>
+		</div>
+	</div>
+
+	<!--End Google Maps Code-->
+	<div id="map_{{ name }}"></div>    
+</div>
+
+
+{% if google_map_api_key and google_map_api_key != '' %}
+<script src="https://maps.googleapis.com/maps/api/js?key={{ google_map_api_key }}&libraries=places&callback=initMap"
+		async defer></script>  
+
+{% endif %}
+<script>
+	let lat = parseFloat(document.getElementById("{{ name }}_lat").value);
+	let lng = parseFloat(document.getElementById("{{ name }}_lng").value);
+	let defaultCoords = {lat: lat, lng: lng};
+	let userCoords = defaultCoords;
+	let map, infoWindow, marker, geocoder,autocomplete, defaultZoom;
+
+	document.getElementById('{{ name }}_{{ field['id'] }}').value = '';
+
+	function initMap() {
+		defaultZoom = 16;
+		infoWindow = new google.maps.InfoWindow;
+		geocoder = new google.maps.Geocoder;
+
+		map = new google.maps.Map(document.getElementById('map_{{ name }}'), {
+			center: defaultCoords,
+			zoom: defaultZoom
+		});
+		
+		marker = new google.maps.Marker({
+			position: defaultCoords,
+			map: map,
+			draggable: true,
+		});
+
+
+		autocomplete = new google.maps.places.Autocomplete(document.getElementById('{{ name }}_{{ field['id'] }}'));
+
+		// Bind the map's bounds (viewport) property to the autocomplete object,
+		// so that the autocomplete requests use the current map bounds for the
+		// bounds option in the request.
+		autocomplete.bindTo('bounds', map);
+
+		// Set the data fields to return when the user selects a place.
+		autocomplete.setFields(['address_components', 'geometry', 'icon', 'name']);
+
+		marker.setMap(map);
+
+		autocomplete.addListener('place_changed', function() {
+			marker.setVisible(false);
+
+			var place = autocomplete.getPlace();
+			
+			if (!place.geometry) {
+				// User entered the name of a Place that was not suggested and
+				// pressed the Enter key, or the Place Details request failed.
+				// window.alert("No details available for input: '" + place.name + "'");
+				return;
+			}
+
+			// If the place has a geometry, then present it on a map.
+			if (place.geometry.viewport) {
+				map.fitBounds(place.geometry.viewport);
+			} else {
+				map.setCenter(place.geometry.location);
+				map.setZoom(defaultZoom);  // Why 17? Because it looks good.
+			}
+
+			marker.setPosition(place.geometry.location);
+			marker.setVisible(true);
+
+			var address = '';
+			if (place.address_components) {
+				address = [
+				(place.address_components[0] && place.address_components[0].short_name || ''),
+				(place.address_components[1] && place.address_components[1].short_name || ''),
+				(place.address_components[2] && place.address_components[2].short_name || '')
+				].join(' ');
+			}
+
+			document.getElementById('address').value = address;
+		});
+
+
+
+
+		map.addListener('click',function(e){
+			defaultCoords = {lat: e.latLng.lat(),lng: e.latLng.lng()}
+			marker.setPosition(defaultCoords);
+			map.setCenter(defaultCoords);
+			marker.setVisible(true);
+			geocodeLatLng(geocoder, map, infoWindow);
+		});
+
+		marker.addListener('dragend',function(){
+			geocodeLatLng(geocoder, map, infoWindow);
+			defaultCoords = marker.getPosition();
+		});
+	}
+
+	function getCurrentUserCoords(){
+		//check if geolocation is available
+		if (navigator.geolocation) { 
+			navigator.geolocation.getCurrentPosition(function(position){
+				if(position.coords.latitude){
+					defaultCoords = userCoords = {lat: parseFloat(position.coords.latitude) , lng: parseFloat(position.coords.longitude) };
+					
+					// infoWindow.setPosition(userCoords);
+					// infoWindow.setContent('You are here.');
+					// infoWindow.open(map);
+					map.setCenter(userCoords);
+
+					marker.setPosition(userCoords);
+
+					geocodeLatLng(geocoder, map, infoWindow);
+				}
+			});   
+		}
+	}
+	
+	function geocodeLatLng(geocoder, map, infowindow) {
+		var latlng = defaultCoords;
+
+		geocoder.geocode({'location': latlng}, function(results, status) {
+			if (status === 'OK') {
+				if (results[0]) {
+					document.getElementById("shipping_address_address_1").value = results[0].formatted_address;
+					// on update map update settings and shipping cart
+				    updateSettings();
+				    refreshStep(4);
+				    refreshStep(6);
+					// infowindow.setContent(results[0].formatted_address);
+					// infowindow.open(map, marker);
+				} else {
+					window.alert('No results found');
+				}
+			} else {
+				window.alert('Geocoder failed due to: ' + status);
+			}
+		});
+	}
+
+</script>
+
+
+    

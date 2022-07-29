@@ -1,0 +1,208 @@
+{% macro _datepicker(object, method = 'daterange') %}
+    {% set class = (object['class'] ?: 'datepicker_' ~ random()) %}
+
+    {% macro rangeScript(object, class) %}
+        <script>
+            $('.{{ class }}').daterangepicker({
+                applyClass: '{{ object['applyClass'] ?: 'bg-slate-600' }}',
+                cancelClass: '{{ object['cancelClass'] ?: 'btn-default' }}',
+                showWeekNumbers: {{ object['showWeekNumber'] is defined ? object['showWeekNumber'] : 'false' }},
+                timePicker: {{ object['timePicker'] is defined ? object['timePicker'] : 'false' }},
+                showDropdowns: {{ object['showDropdowns'] is defined ? object['showDropdowns'] : 'false' }},
+                timePickerIncrement: {{ object['timePickerIncrement'] is defined ? object['timePickerIncrement'] : 'false' }},
+                opens: '{{ object['opens'] ?: 'left' }}',
+                locale: {
+                    direction: '{{ object['direction'] ?: 'ltr' }}',
+                    format: '{{ object['format'] ?: 'MM/DD/YYYY' }}',
+                    applyLabel: {{ object['applyLabel'] is defined ? object['applyLabel']|json_encode : 'false' }},
+                    cancelLabel: {{ object['cancelLabel'] is defined ? object['cancelLabel']|json_encode : 'false' }},
+                    startLabel: {{ object['startLabel'] is defined ? object['startLabel']|json_encode : 'false' }},
+                    endLabel: {{ object['endLabel'] is defined ? object['endLabel']|json_encode : 'false' }},
+                    customRangeLabel: {{ object['customRangeLabel'] is defined ? object['customRangeLabel']: 'false' }},
+                    daysOfWeek: {{ object['daysOfWeek'] is defined ? object['daysOfWeek']|json_encode : 'false' }},
+                    monthNames: {{ object['monthNames'] is defined ? object['monthNames']|json_encode : 'false' }},
+                },
+                ranges: {{ object['ranges'] is defined ? object['ranges']|json_encode : 'false' }}
+            });
+        </script>
+    {% endmacro rangeScript %}
+
+    {% macro pickerScript(object, class) %}
+        <script>
+            $('.{{ class }}').pickadate({
+                today: '{{ object['today'] is defined ? object['today'] : false }}',
+                close: '{{ object['close'] is defined ? object['close'] : false }}',
+                clear: '{{ object['clear'] is defined ? object['clear'] : false }}',
+                format: '{{ object['format'] is defined ? object['format'] : false }}',
+                formatSubmit: '{{ object['formatSubmit'] is defined ? object['formatSubmit'] : false }}',
+                hiddenPrefix: '{{ object['hiddenPrefix'] is defined ? object['hiddenPrefix'] : false }}',
+                hiddenSuffix: '{{ object['hiddenSuffix'] is defined ? object['hiddenSuffix'] : false }}',
+                selectYears: {{ object['selectYears'] is defined ? object['selectYears'] : 'false' }},
+                selectMonths: {{ object['selectMonths'] is defined ? object['selectMonths'] : 'false' }},
+                min: {{ object['min'] is defined ? object['min']|json_encode : 'false' }},
+                max: {{ object['max'] is defined ? object['max']|json_encode : 'false' }},
+                disable: {{ object['disable'] is defined ? object['disable']|json_encode : 'false' }},
+            });
+        </script>
+    {% endmacro pickerScript %}
+
+    {% macro timeScript(object, class) %}
+        <script>
+            $('.{{ class }}').pickatime({
+                format: '{{ object['format'] }}',
+                formatSubmit: '{{ object['formatSubmit'] }}',
+                hiddenPrefix: '{{ object['hiddenPrefix'] is defined ? object['hiddenPrefix'] : false }}',
+                hiddenSuffix: '{{ object['hiddenSuffix'] is defined ? object['hiddenSuffix'] : false }}',
+                formatLabel: '{{ object['formatLabel'] is defined ? object['formatLabel'] : false }}',
+                hiddenName: {{ object['hiddenName'] is defined ? object['hiddenName'] : 'true' }},
+                interval: {{ object['interval'] is defined ? object['interval'] : 'false' }},
+                min: {{ object['min'] is defined ? object['min']|json_encode : 'false' }},
+                max: {{ object['max'] is defined ? object['max']|json_encode : 'false' }},
+                disable: {{ object['disable'] is defined ? object['disable']|json_encode : 'false' }},
+            });
+        </script>
+    {% endmacro timeScript %}
+
+    <div class="form-group">
+        <label>{{ object['label'] }}</label>
+        <div class="input-group">
+            <span class="input-group-addon"><i class="icon-calendar22"></i></span>
+            <input type="text" class="form-control {{ class }}" name="{{ object['name'] }}">
+        </div>
+    </div>
+
+    {% if method == 'daterange' %}
+        {{ _self.rangeScript(object, class) }}
+    {% elseif method == 'datepicker' %}
+        {{ _self.pickerScript(object, class) }}
+    {% elseif method == 'timepicker' %}
+        {{ _self.timeScript(object, class) }}
+    {% endif %}
+
+{% endmacro _datepicker %}
+
+{% macro dateRange(object) %}
+
+    {% if object['name'] is defined %}
+        {{ _self._datepicker(object) }}
+    {% endif %}
+
+{% endmacro dateRange %}
+
+{% macro dateTimeRange(object) %}
+
+    {% if object['name'] is defined %}
+        {% set object = object|merge({'timePicker': 'true'}) %}
+
+        {% if object['format'] is not defined %}
+            {% set object = object|merge({'format': 'MM/DD/YYYY h:mm a'}) %}
+        {% endif %}
+
+        {{ _self._datepicker(object) }}
+    {% endif %}
+{% endmacro dateTimeRange %}
+
+{% macro datePicker(object) %}
+
+    {% if object['name'] is defined %}
+
+        {% if object['format'] is not defined %}
+            {% set object = object|merge({'format': 'yyyy/mm/dd'}) %}
+            {% set object = object|merge({'formatSubmit': 'yyyy/mm/dd'}) %}
+        {% endif %}
+
+        {{ _self._datepicker(object, 'datepicker') }}
+    {% endif %}
+{% endmacro datePicker %}
+
+{% macro timePicker(object) %}
+
+    {% if object['name'] is defined %}
+
+        {% if object['format'] is not defined %}
+            {% set object = object|merge({'format': 'HH:i'}) %}
+            {% set object = object|merge({'formatSubmit': 'HH:i'}) %}
+        {% endif %}
+
+        {{ _self._datepicker(object, 'timepicker') }}
+    {% endif %}
+{% endmacro timePicker %}
+
+{#
+
+## How to use?
+
+Instead of passing additional elements as an object to the macro, I have created a shortcuts to handle each case that
+extends a private macro -so to speak, after all the _datepicker macro is not private- and implements a specific
+implementation for each case.
+
+Each shortcut macro MUST pass a required element [name] that will be used in the server side,
+if not passed nothing will be shown,
+the rest of elements is optional and pre-defined in case if not passed to the macro, it used to control/decorate
+the macro.
+
+There are a public parameters that will be used for all shortcut macros these parameters are :
+- name: required string,
+- class: required but if not implemented it will be auto generated,
+- label: the label that will be used to identify the input,
+
+{% import "controls/datepickers.expand" as datepickers %}
+
+{{ dateRange({
+    'name': 'input_name'
+    'class': 'dateRange_class',
+    'label': 'dateRange Block',
+    'applyClass': 'css class to decorate the apply input',
+    'cancelClass': 'css class to decorate the cancel input',
+    'showWeekNumbers': 'boolean to show weeks numbers or not, by default will be false',
+    'showDropdowns': 'boolean to show years and months as a drop down, by default will be false',
+    'opens': 'the direction of the date range pop-up, by default will be left',
+    'direction': 'the direction of the date range pop-up, by default will be ltr',
+    'format': 'the format of the input, by default will be MM/DD/YYYY',
+    'applyLabel': 'the string of the apply input by default will be Apply',
+    'cancelLabel': 'the string of the cancel input by default will be Cacnel',
+    'startLabel': 'the string of the start label by default will be Start',
+    'endLabel': 'the string of the end label by default will be End',
+    'customRangeLabel': 'the string of the customer range label',
+    'daysOfWeek': 'an array of the locale of names of the days, by default will be english',
+    'monthNames': 'an array of the locale of months names, by default will be english',
+    'ranges': 'array of a pre-defined ranges, by default will be empty'
+}) }}
+
+dateTimeRange have the same options as dateRange but with only one additional option
+and a behavior change in format input.
+
+{{ dateTimeRange({
+    ...
+    'timePickerIncrement': 'an int value to set the increment value of the time, by default will be 30 minutes',
+    'format': 'the format of the input, by default will be MM/DD/YYYY h:mm a',
+}) }}
+
+{{ datePicker({
+    'today': 'to add a locale to the today input or to remove it by set it to an empty',
+    'close': 'to add a locale to the close input or to remove it by set it to an empty',
+    'clear': 'to add a locale to the clear input or to remove it by set it to an empty',
+    'format': 'the format that will be shown in the input, by default it will be yyyy/mm/dd',
+    'formatSubmit': 'the format that will be submitted to the server, by default it will be yyyy/mm/dd',
+    'hiddenPrefix': 'a hidden prefix to prefix the name attribute',
+    'hiddenSuffix': 'a hidden suffix to suffix the name attribute',
+    'selectYears': 'boolean value to enable change years using a drop down menu',
+    'selectMonths': 'boolean value to enable change months using a drop down menu',
+    'min': 'an array of date components to set the minimum allowed date as [2014,3,20]',
+    'max': 'an array of date components to set the maximum allowed date as [2014,3,20]',
+    'disable': 'an array to disable specific dates, for example [2015,8,3]',
+}) }}
+
+{{ timePicker({
+    'format': 'the format that will be shown in the input, by default it will be yyyy/mm/dd',
+    'formatSubmit': 'the format that will be submitted to the server, by default it will be yyyy/mm/dd',
+    'hiddenPrefix': 'a hidden prefix to prefix the name attribute',
+    'hiddenSuffix': 'a hidden suffix to suffix the name attribute',
+    'hiddenName': 'if true a new hidden input will be created',
+    'interval': 'an int value to set the increment value of the time, by default will be 30 minutes',
+    'min': 'an array of date components to set the minimum allowed date as [2014,3,20]',
+    'max': 'an array of date components to set the maximum allowed date as [2014,3,20]',
+    'disable': 'an array to disable specific dates, for example [2015,8,3]',
+}) }}
+
+#}

@@ -1,0 +1,354 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% set bodyClasses = "has-detached-right" %}
+
+{% block title %}
+    {{ lang('heading_title') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+{% endblock headelements %}
+
+{% block content %}
+    <style>
+        .content-group-sm h6, .content-group-sm h5{
+            margin-top: 0;
+        }
+        .row {
+            display: -webkit-box;
+            display: -webkit-flex;
+            display: -ms-flexbox;
+            display:         flex;
+            flex-wrap: wrap;
+        }
+        .row > [class*='col-'] {
+            display: flex;
+            flex-direction: column;
+        }
+        .thumbnail {
+            height: 100%;
+        }
+    </style>
+    <style>
+        .page-header-default .page-title {
+            max-width: 1520px;
+            margin: auto;
+            padding: 15px 0;
+            border-bottom: 1px solid #E0DDEF;
+        }
+        .page-header {
+            padding: 0 48px
+        }
+        .page-header-default {
+            background-color: transparent;
+            box-shadow: none;
+        }
+        .page-header-content + .breadcrumb-line {
+            border: 0;
+        }
+        @media (max-width: 768px) {
+            .page-header-default .page-title {
+                padding: 15px;
+            }
+
+            .page-header {
+                padding: 0
+            }
+        }
+    </style>
+
+    {% if cant_uninstall == true %}
+        <div class="alert alert-danger alert-dismissible">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+
+            {{ lang('general_error_text') }} : {{ lang('text_cant_uninstall') }}
+        </div>
+    {% endif %}
+
+    <div class="list-wrapper apps-list-wrapper">
+        <div class="content-inner">
+
+            <form id="formy" action="{{ link('marketplace/home') }}" class="shipping-filter">
+                <div class="search-input">
+                    <i class="fa fa-search" aria-hidden="true"></i>
+                    <input value="{{ lookup }}" type="text" class="input" name="lookup" placeholder="{{ lang('searching_for') }}">
+                </div>
+
+                <div class="dropdown">
+                    <button class="ship-filter-button" id="type-btn" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        {{ lang('label_type') }}
+                        <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <label class="custom-check">
+                                <input {{ application is defined ? 'checked' : '' }} type="checkbox" class="hide" name="application" value="1">
+                                <i class="fa fa-check" aria-hidden="true"></i>
+                                <span>{{ lang('label_app') }} ({{ counts['apps'] }})</span>
+                            </label>
+                        </li>
+                        <li>
+                            <label class="custom-check">
+                                <input {{ service is defined ? 'checked' : '' }} type="checkbox" class="hide" name="service" value="1">
+                                <i class="fa fa-check" aria-hidden="true"></i>
+                                <span>{{ lang('label_service') }} ({{ counts['services'] }})</span>
+                            </label>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="dropdown">
+                    <button class="ship-filter-button" id="category-btn" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        {{ lang('label_categories') }}
+                        <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        {% for c in categories %}
+                        <li>
+                            <label class="custom-check">
+                                <input {{ c in selectedCategories ? 'checked' : '' }} type="checkbox" class="hide" name="category[]" value="{{ c }}">
+                                <i class="fa fa-check" aria-hidden="true"></i>
+                                <span>{{ lang('label_' ~ c) }}</span>
+                            </label>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="dropdown">
+                    <button class="ship-filter-button" id="price-btn" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        {{ lang('label_price') }}
+                        <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <label class="custom-check">
+                                <input {{ free is defined ? 'checked' : '' }} type="checkbox" class="hide" name="free" value="1">
+                                <i class="fa fa-check" aria-hidden="true"></i>
+                                <span>{{ lang('text_free') }}</span>
+                            </label>
+                        </li>
+                        <li>
+                            <label class="custom-check">
+                                <input {{ paid is defined ? 'checked' : '' }} type="checkbox" class="hide" name="paid" value="1">
+                                <i class="fa fa-check" aria-hidden="true"></i>
+                                <span>{{ lang('text_paid') }}</span>
+                            </label>
+                        </li>
+                    </ul>
+                </div>
+                <div class="dropdown">
+                    <button class="ship-filter-button" id="status-btn" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        {{ lang('label_status') }}
+                        <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <label class="custom-check">
+                                <input {{ installed is defined ? 'checked' : '' }} type="checkbox" class="hide" name="installed" value="1">
+                                <i class="fa fa-check" aria-hidden="true"></i>
+                                <span>{{ lang('text_installed') }}</span>
+                            </label>
+                        </li>
+                        <li>
+                            <label class="custom-check">
+                                <input {{ purchased is defined ? 'checked' : '' }} type="checkbox" class="hide" name="purchased" value="1">
+                                <i class="fa fa-check" aria-hidden="true"></i>
+                                <span>{{ lang('text_purchased') }}</span>
+                            </label>
+                        </li>
+                        <li>
+                            <label class="custom-check">
+                                <input {{ isbundle is defined ? 'checked' : '' }} type="checkbox" class="hide" name="isbundle" value="1">
+                                <i class="fa fa-check" aria-hidden="true"></i>
+                                <span>{{ lang('text_bundled') }}</span>
+                            </label>
+                        </li>
+                        <li>
+                            <label class="custom-check">
+                                <input {{ isnew is defined ? 'checked' : '' }} type="checkbox" class="hide" name="isnew" value="1">
+                                <i class="fa fa-check" aria-hidden="true"></i>
+                                <span>{{ lang('text_new') }}</span>
+                            </label>
+                        </li>
+                    </ul>
+                </div>
+            </form>
+
+            <!-- Detached content -->
+            <div class="container-detached">
+                <div class="shipping-container">
+                    {%
+                        include 'marketplace/app_services_snippet.expand'
+                        with { 'avaliableModules': avaliableModules, 'pagination': pagination, 'lookup':lookup,'remove_recommended_services':remove_recommended_services }
+                    %}
+                </div>
+            </div>
+            <!-- /detached content -->
+        </div>
+    </div>
+
+    <div id="modal_quantity" class="modal fade">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h5 class="modal-title" id="modal_quantity_title"></h5>
+                </div>
+
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="form-group col-md-12" id="modal_quantity_quantity-group">
+                            <label class="control- col-md-2">{{ lang('text_quantity') }}</label>
+                            <input type="text" value="1" class="serviceQuantity col-md-8" id="modal_quantity_quantity">
+                        </div>
+                        {#<div class="form-group col-md-6">#}
+                            {#<input type="text" value="1" class="serviceQuantity" id="modal_quantity_quantity">#}
+                        {#</div>#}
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <a href="#" target="_blank" id="modal_quantity_btnbuy" class="btn btn-primary">{{ lang('text_buy') }}</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+
+        function ajaxish_filter()
+        {
+            var form_data = $('#formy').serialize();
+            var form_data_array = $('#formy').serializeArray();
+            var datas = [];
+
+            form_data += '&ajaxish=true';
+
+            for ( i in form_data_array )
+            {
+                temp_obj = {};
+
+                temp_obj.key = form_data_array[i].name;
+                temp_obj.value = form_data_array[i].value;
+
+                datas.push(temp_obj);
+            }
+
+            $.ajax({
+                url: "{{ link('marketplace/home') }}",
+                type: "GET",
+                data: form_data,
+                success: function (resp) {
+                    let lookup_val = $("input[name=lookup]").val();
+                    $('.shipping-container').html(resp);
+                    updateURLQueryParams( datas );
+                    bindBuyQuantity();
+                    if (lookup_val != ""){
+                        $('.recomended-shipping').hide();
+                    }else {
+                        $('.recomended-shipping').show();
+                    }
+                }
+            });
+        }
+
+        $(document).on('change', 'input[type=checkbox]', function(e) {
+
+            e.preventDefault();
+
+            var name = $(this).attr('name');
+
+            if ( name == 'application' )
+            {
+                $('input[name=service]').prop('checked', false);
+                $('input[name=service]').parents('.checkbox').find('span').removeClass('checked');
+            }
+            else if ( name == 'service' )
+            {
+                $('input[name=application]').prop('checked', false);
+                $('input[name=application]').parents('.checkbox').find('span').removeClass('checked');
+            }
+
+            ajaxish_filter();
+        });
+
+        $(document).on('keyup', 'input[name=lookup]', function (e) {
+            var $val = $('input[name=lookup]').val();
+
+            if ( $val == '' )
+            {
+                ajaxish_filter();
+            }
+        });
+
+        $(document).on('keypress', 'input[name=lookup]', function(e) {
+
+            if ( e.which == '13' )
+            {
+                e.preventDefault();
+                ajaxish_filter();
+            }
+        });
+
+        var quantityModal = $('#modal_quantity').modal('hide');
+        $(function() {
+            bindBuyQuantity();
+            $('#modal_quantity_quantity').on('change', function() {
+                //debugger;
+                var buylink = $('#modal_quantity_btnbuy').data('buylink');
+                var quantity = $('#modal_quantity_quantity').val();
+                $('#modal_quantity_btnbuy').attr('href', buylink + '%26configoption[1]%3D' + quantity)
+            });
+        });
+
+        function bindBuyQuantity() {
+            $('.buy-quantity').on('click', function(e) {
+                //debugger;
+                e.preventDefault();
+                $('h5#modal_quantity_title').text($(this).data('title'));
+                $('#modal_quantity_btnbuy').data('buylink', $(this).attr('href'));
+                $('#modal_quantity_quantity').val('1');
+
+                $('#modal_quantity_btnbuy').attr('href', $(this).attr('href') + '%26configoption[1]%3D1')
+                quantityModal.modal('show');
+
+            });
+
+
+            $('#modal_quantity_btnbuy').on('click', function(e) {
+//                e.preventDefault();
+//                var buylink = $(this).data('buylink');
+//                var quantity = $('#modal_quantity_quantity').val();
+//                openInNewTab(buylink + '%26configoption[1]%3D' + quantity);
+                quantityModal.modal('hide');
+            });
+        }
+        $(".serviceQuantity").TouchSpin({
+            min: 1,
+        });
+
+//        $(".orderService").on('click', function (e) {
+//            e.preventDefault();
+//
+//            var $val = $(".serviceQuantity", $(this).parent()).val();
+//
+//            var win = window.open($(this).attr('href') + '%26configoption[1]%3D' + $val, '_blank');
+//            win.focus();
+//        });
+
+//        function openInNewTab(url) {
+//            window.open(url, '_blank');
+//            //win.focus();
+//        }
+    </script>
+
+{% endblock content %}

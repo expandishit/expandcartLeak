@@ -1,0 +1,166 @@
+{% extends "base.expand" %}
+
+{% set isFrameless = true %}
+
+{% block framelessContent %}
+    <link rel="stylesheet" type="text/css" href="view/stylesheet/shipping_lable.css?bn={{ BuildNumber }}" />
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        div.content-wrapper {
+            width: 1024px;
+            margin: auto !important;
+        }
+
+        body, td, th {
+            font-family: 'Cairo', sans-serif;
+
+        }
+        .product td, .store td{
+            font-size: 10px;
+        }
+        .product td{
+            vertical-align: top;
+        }
+        .store td td:first-child {
+            width: 40%;
+        }
+        .store td td:first-child b {
+            font-weight: normal;
+        }
+        .config_invoice_width{
+            width: {{config_invoice_width}}px;
+            margin: auto;
+        }
+        .heading td {
+            background: transparent;
+        }
+    </style>
+    {% for key , order in orders %}
+        <div class="printablePage {{ (config_invoice_width is not empty) ? 'config_invoice_width' : ''  }}" style="direction:{{ print_lang == 'ar' ? 'rtl' : 'ltr' }}">
+            <table class="store">
+                <tr>
+                    <td style="vertical-align: middle;">
+                        <img src="{{ logo }}" alt="logo" style="height: {{ logo_height ?: 50 }}px;"/></td>
+                </tr>
+            </table>
+
+            <hr>
+
+            <table class="store">
+                <tr>
+                    <td class="">
+                        {{ order['store_name'] }}<br />
+                        {{ order['store_address'] }}<br />
+                        {{ lang('text_telephone') }}: <bdo dir='ltr'> {{ order['store_telephone'] }}</bdo><br />
+                        {% if order['store_fax'] %}
+                            {{ lang('text_fax') }}: {{ order['store_fax'] }}<br />
+                        {% endif %}
+                        {{ order['store_email'] }}<br />
+                        {{ order['store_url'] }}</td>
+                    <td align="right" valign="top">
+                        <table>
+
+                            <tr>
+                                <td style="padding-left: 10px; padding-right: 10px;"><b>{{ lang('text_date_added') }}:</b></td>
+                                <td>{{ order['date_added'] }}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding-left: 10px; padding-right: 10px;"><b>{{ lang('text_time_added') }}:</b></td>
+                                <td>{{ order['time_added'] }}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding-left: 10px; padding-right: 10px;"><b>{{ lang('text_order_id') }}:</b></td>
+                                <td>{{ order['order_id'] }}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding-left: 10px; padding-right: 10px;"><b>{{ lang('text_payment_method') }}:</b></td>
+                                <td>{{ order['payment_method'] }}</td>
+                            </tr>
+
+                            {% if order['shipping_method'] %}
+                                <tr>
+                                    <td style="padding-left: 10px; padding-right: 10px;"><b>{{ lang('text_shipping_method') }}:</b></td>
+                                    <td>{{ order['shipping_method'] }}</td>
+                                </tr>
+                            {% endif %}
+
+                            {% if(delivery_slot) %}
+                                <tr>
+                                    <td style="padding-left: 10px; padding-right: 10px;"><b>{{ lang('text_delivery_day') }}:</b></td>
+                                    <td>{{ order_delivery_slot['day_name'] }}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding-left: 10px; padding-right: 10px;"><b>{{ lang('text_delivery_date') }}:</b></td>
+                                    <td>{{ order_delivery_slot['delivery_date'] }}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding-left: 10px; padding-right: 10px;"><b>{{ lang('text_delivery_slot') }}:</b></td>
+                                    <td class="slot-dir-left">{{ order_delivery_slot['slot_description'] }}</td>
+                                </tr>
+
+                            {% endif %}
+                            {% if tax_number is defined %}
+                                <tr>
+                                    <td style="padding-left: 10px; padding-right: 10px;"><b>{{ lang('text_tax_number') }}:</b></td>
+                                    <td>{{ tax_number }}</td>
+                                </tr>
+                            {% endif %}
+                            {% if order['invoice_no_barcode'] is not empty %}
+                                <tr>
+                                    <td style="padding-left: 10px; padding-right: 10px;"><b>{{ lang('text_invoice_no_barcode') }}:</b></td>
+                                    <td><img src="data:image/png;base64, {{ order['invoice_no_barcode'] }}" style="width:185px;height:35px"/></td>
+                                </tr>
+                            {% endif %}
+                        </table></td>
+                </tr>
+            </table>
+            <table class="address">
+                <tr class="heading">
+                    <td width="50%"><b>{{ lang('column_customer') }}</b></td>
+                    <td width="50%"><b>{{ lang('text_ship_to') }}</b></td>
+                </tr>
+                <tr>
+                    <td>
+                        {{ lang('text_customer', 'sale/order') }}: {{ order['firstname'] }} {{ order['lastname'] }}<br/>
+                        {{ lang('text_email') }}: {{ order['email'] }}<br/>
+                        {{ lang('text_telephone') }}:<bdo dir='ltr'> {{ order['telephone'] }}</bdo>
+
+                                {% if order['fax'] %}
+                                    <br/>
+                                    {{ text_fax }}: {{ order['fax'] }}
+                                {% endif %}
+
+                                {% if order['payment_company_id'] %}
+                                    <br/>
+                                    {{ lang('text_company_id') }}: {{ order['payment_company_id'] }}
+                                {% endif %}
+
+                                {% if order['payment_tax_id'] %}
+                                    <br/>
+                                    {{ lang('text_tax_id') }}: {{ order['payment_tax_id'] }}
+                                {% endif %}
+                                </td>
+                                <td>{{ order['shipping_address'] }}
+                                    {% if custom_fields[order.order_id]['shipping_address'] %}
+                                        <br/>
+                                        {% for sfd in custom_fields[order.order_id]['shipping_address'] %}
+                                            {{ sfd['field_title'] }}: {{ sfd['value'] }}
+                                        {% endfor %}
+                                    {% endif %}
+                                </td>
+                                </tr>
+                                </table>
+                                {% if(order['delivery_info']) %}
+                                    <table class="deliveryInfo">
+                                        <tr class="heading">
+                                            <td width="50%"><b>{{ lang('delivery_info') }}</b></td>
+                                        </tr>
+                                        <tr>
+                                            <td style="word-break: break-word;">{{ order['delivery_info'] }}</td>
+                                        </tr>
+                                    </table>
+                                    <br/>
+                                {% endif %}          
+                                </div>
+                            {% endfor %}
+{% endblock framelessContent %}

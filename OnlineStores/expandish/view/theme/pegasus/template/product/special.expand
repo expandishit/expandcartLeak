@@ -1,0 +1,228 @@
+{{ script('js/jquery/jquery.total-storage.min.js') }}
+{% set mfSettings = config(mega_filter_settings) %}
+{% if mfSettings %}
+    {% if mfilter_json %}
+        <div id="mfilter-json" style="display:none">{{ mfilter_json|base64_encode }}</div>
+    {% endif %}
+    <div id="mfilter-content-container">
+{% endif %}
+
+
+
+{# Notification Div #}
+<div id="notification" class="container"></div>
+
+<div id="content">
+    <div class="bread-crumb">
+        <div class="container">
+            {% for breadcrumb in breadcrumbs %}
+                    {% if loop.last %}
+                    <span>{{ breadcrumb['text'] }}</span>
+                    {% else %}
+                        <a href="{{ breadcrumb['href'] }}">{{ breadcrumb['text'] }}</a>
+                    {% endif %}
+                {%endfor%}
+        </div>
+    </div>
+    <!-- /breadcrumbs --> 
+
+    
+    <!-- <div class="content-contact-page">
+        <div class="container"> 
+            <h2 class="title30 mont-font">{{ lang('heading_title') }}</h2>
+        </div>
+    </div> -->
+    {% if products %}
+    <div class="content-pages">
+        <div class="container">
+            
+            <div class="row">
+                {% if modules.filter.enabled or modules.mega_filter.enabled %}
+                <div class="col-md-3 col-sm-4 col-xs-12">
+                    <div class="sidebar-left sidebar-shop">
+                        <div id="mfilter-content-container">    </div>
+                    </div>
+                </div>
+                {% endif %}
+                <div class="{{modules.filter.enabled or modules.mega_filter.enabled ? 'col-md-8 col-lg-9 col-xl-10' : 'col-md-12'}}">
+                    <div class="content-shop">
+                        <div class="sort-pagi-bar clearfix">
+                            <h2 class="title18 mont-font pull-left">{{ lang('heading_title') }}</h2>
+                            <div class="sort-view pull-right">
+                                <div class="view-type pull-left">
+                                    <a onclick="$('.content-list-sidebar').hide(); $('.content-grid-sidebar').show(); $('.grid-view').addClass('active'); $('.list-view').removeClass('active'); return false;" href="" class="grid-view active"><i class="fa fa-th-large" aria-hidden="true"></i></a>
+                                    <a onclick="$('.content-list-sidebar').show(); $('.content-grid-sidebar').hide(); $('.grid-view').removeClass('active'); $('.list-view').addClass('active'); return false;" href="#" class="list-view"><i class="fa fa-th-list" aria-hidden="true"></i></a>
+                                </div>
+                                <div class="sort-bar select-box">
+                                    <label>{{ lang('text_sort') }}</label>
+                                    <select onchange="location = this.value;">
+                                    {% for sortst in sorts %}
+                                        {% if sortst.value == sort ~ '-' ~ order %}
+                                            <option value="{{ sortst.href }}" selected="selected">{{ sortst.text }}</option>
+                                        {% else %}
+                                            <option value="{{ sortst.href }}">{{ sortst.text }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="sort-bar select-box">
+                                    <label>{{ lang('text_limit') }}</label>
+                                    <select onchange="location = this.value;">
+                                        {% for limitst in limits %}
+                                            {% if limitst.value == limit %}
+                                                <option value="{{ limitst.href }}" selected="selected">{{ limitst.text }}</option>
+                                            {% else %}
+                                                <option value="{{ limitst.href }}">{{ limitst.text }}</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="content-grid-sidebar">
+                            <div class="row">
+                                {% for item_product in products %}
+                                <div class="col-md-4 col-sm-6 col-xs-12">
+                                    <div class="item-product item-product-grid">
+                                        <div class="product-thumb box-hover-dir">
+                                            <img src="{{image(item_product.image,400,400)}}" alt="" class="img-responsive" >
+                                            <div class="info-product-hover-dir">
+                                                <div class="inner-product-hover-dir">
+                                                    <div class="content-product-hover-dir">
+                                                        <a href="{{ item_product.href }}" class="quickview-link">{{lang('quick_view')}} <i class="fa fa-arrow-circle-right" aria-hidden="true"></i></a>
+                                                        {% if config('config_review_status') == '1'  %}
+                                                        <div class="product-rate flipRating" style="background:none;">
+                                                            <img src="{{ asset('images/stars-' ~ item_product.rating ~ '.png') }}" alt="{{ lang('text_reviews')|format(reviews_count) }}"/>
+                                                        </div>
+                                                        {% endif %}
+                                                        <div class="product-extra-link">
+                                                        {% if viewAddToCart %}
+                                                            <a href="#"  class="addcart-link" onclick="event.preventDefault(); addToCart({{ item_product.product_id }},1, {{ ('-1' in item_product.price) or ('-1' in item_product.special) ? 'true' : 'false' }}); return false;"><i class="fa fa-shopping-basket" aria-hidden="true"></i><span>{{ ('-1' in item_product.price) or ('-1' in item_product.special) ? lang('button_req_quote') : lang('button_cart') }}</span></a>
+                                                             {% endif %}
+                                                            <a href="#"  class="wishlist-link" onclick="event.preventDefault(); addToWishList('{{ item_product.product_id }}',1); return false;"><i class="fa fa-heart" aria-hidden="true"></i><span>{{lang('button_wishlist')}}</span></a>
+                                                            <a href="#"  class="compare-link" onclick="event.preventDefault(); addToCompare('{{ item_product.product_id }}',1); return false;"><i class="fa fa-stumbleupon" aria-hidden="true"></i><span>{{lang('button_compare')}}</span></a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="product-info">
+                                            <h3 class="product-title"><a href="{{ item_product.href }}">{{ item_product.name }}</a></h3>
+                                            {% if config('show_brands') and item_product.manufacturer %}
+                                                <h5 class="product-title"><a href="{{ item_product.manufacturer_href }}" id="brand_sections" alt"{{ item_product.manufacturer }}">{{ item_product.manufacturer }}</a></h5>
+                                            {% endif %}
+                                            {% if config('config_review_status') == '1'  %}
+                                            <div class="product-rate" style="background:none;">
+                                                <img src="{{ asset('images/stars-' ~ item_product.rating ~ '.png') }}" alt="{{ lang('text_reviews')|format(reviews_count) }}"/>
+                                            </div>
+                                            {% endif %}
+                                            {% if ('-1' in item_product.price) or ('-1' in item_product.special) %}
+                                            <div class="product-price">
+                                            <ins><span class="clickable" onclick="contact_us('{{ item_product.product_id }}');">{{ lang('button_req_quote') }}</span></ins>
+                                            <div id="enquiry-{{ item_product.product_id }}"  style="display:none">{{ item_product.name }}</div>
+                                            </div>
+                                            {% else %}
+                                            <div class="product-price">
+                                                {% if item_product.special != '' %}
+                                                <del><span>{{ item_product.price }}</span></del>
+                                                <ins><span>{{ item_product.special }}</span></ins>
+                                                {% else %}
+                                                <ins><span>{{ item_product.price }}</span></ins>
+                                                {% endif %}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div class="content-list-sidebar" style="display:none;">
+                            {% for item_product in products %}
+                            <div class="item-product-list">
+                                <div class="row">
+                                    <div class="col-md-3 col-sm-6 col-xs-12">
+                                        <div class="product-thumb product-thumb-gallery">
+                                            <a href="{{ item_product.href }}" class="product-thumb-link"><img src="{{image(item_product.image,400,400)}}" alt="" class="img-responsive" ></a>
+                                            <a href="{{ item_product.href }}" class="quickview-link "><i class="fa fa-search" aria-hidden="true"></i></a>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-5 col-sm-6 col-xs-12">
+                                        <div class="product-info">
+                                            <h3 class="product-title"><a href="{{ item_product.href }}">{{ item_product.name }}</a></h3>
+                                            {% if config('show_brands') and item_product.manufacturer %}
+                                                <h5 class="product-title"><a href="{{ item_product.manufacturer_href }}" id="brand_sections" alt"{{ item_product.manufacturer }}">{{ item_product.manufacturer }}</a></h5>
+                                            {% endif %}
+                                            {% if config('config_review_status') == '1'  %}
+                                            <div class="product-rate" style="background:none;">
+                                                <img src="{{ asset('images/stars-' ~ item_product.rating ~ '.png') }}" alt="{{ lang('text_reviews')|format(reviews_count) }}"/>
+                                            </div>
+                                            {% endif %}
+                                            {% if ('-1' in item_product.price) or ('-1' in item_product.special) %}
+                                            <div class="product-price">
+                                            <ins><span class="clickable" onclick="contact_us('{{ item_product.product_id }}');">{{ lang('button_req_quote') }}</span></ins>
+                                            <div id="enquiry-{{ item_product.product_id }}"  style="display:none">{{ item_product.name }}</div>
+                                            </div>
+                                            {% else %}
+                                            <div class="product-price">
+                                                {% if item_product.special != '' %}
+                                                <del><span>{{ item_product.price }}</span></del>
+                                                <ins><span>{{ item_product.special }}</span></ins>
+                                                {% else %}
+                                                <ins><span>{{ item_product.price }}</span></ins>
+                                                {% endif %}
+                                            </div>
+                                            {% endif %}
+                                            <div class="product-extra-link">
+                                             {% if viewAddToCart %}
+                                                    <a href="#"  class="addcart-link" onclick="event.preventDefault(); addToCart({{ item_product.product_id }},1, {{ ('-1' in item_product.price) or ('-1' in item_product.special) ? 'true' : 'false' }}); return false;"><i class="fa fa-shopping-basket" aria-hidden="true"></i><span>{{ ('-1' in item_product.price) or ('-1' in item_product.special) ? lang('button_req_quote') : lang('button_cart') }}</span></a>
+                                                     {% endif %}
+                                                    <a href="#"  class="wishlist-link" onclick="event.preventDefault(); addToWishList('{{ item_product.product_id }}',1); return false;"><i class="fa fa-heart" aria-hidden="true"></i><span>{{lang('button_wishlist')}}</span></a>
+                                                    <a href="#"  class="compare-link" onclick="event.preventDefault(); addToCompare('{{ item_product.product_id }}',1); return false;"><i class="fa fa-stumbleupon" aria-hidden="true"></i><span>{{lang('button_compare')}}</span></a>
+                                            </div>
+                                        </div>
+                                        
+                                    </div>
+                                    <div class="col-md-4 col-sm-12 col-xs-12">
+                                        <div class="product-more-info">
+                                            <p class="desc">
+                                                {{ item_product.description }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="pagi-nav-bar text-center radius">
+                            {{ pagination }}
+                            <!-- <a href="#" class="btn-circle prev-page"><i class="fa fa-arrow-circle-left" aria-hidden="true"></i></a>
+                            <a href="#" class="inline-block">1</a>
+                            <a href="#" class="current-page inline-block">2</a>
+                            <a href="#" class="inline-block">3</a>
+                            <a href="#" class="inline-block">4</a>
+                            <a href="#" class="btn-circle next-page"><i class="fa fa-arrow-circle-right" aria-hidden="true"></i></a> -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="text-center content-pages"> 
+        <br/><br/><br/>
+        <img src="./expandish/view/theme/{{Template_Name}}/images/empty-category-icon.png" alt="empty category icon" class="img-responsive-inline" />
+        <div class="divider divider--lg"></div>
+        <h4 class="color">{{lang('text_empty')}}</h4>		          
+    </div>
+    {% endif %}
+
+    <!-- End Content Pages -->
+</div>
+
+
+{% if mfSettings %}
+  </div>
+{% endif %}

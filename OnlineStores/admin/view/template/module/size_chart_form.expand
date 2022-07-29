@@ -1,0 +1,283 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block title %}
+    {{ lang("heading_title") }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+    {% include "includes/buttons_top.expand" %}
+{% endblock headelements %}
+
+{% block content %}
+    
+        <div class="row">
+        <div class="col-md-12">
+            <div class="alert alert-danger alert-styled-left alert-bordered hidden">
+                <button type="button" class="close" data-dismiss="alert"><span>×</span><span class="sr-only">Close</span></button>
+                {{ lang("import_error_warning") }}
+            </div>
+            <div class="alert alert-success alert-styled-left alert-bordered hidden">
+                <button type="button" class="close" data-dismiss="alert"><span>×</span><span class="sr-only">Close</span></button>
+                {{ lang("import_success") }}
+            </div>
+        </div>
+            <div class="col-md-12">
+                <div class="panel panel-flat">
+                    <div class="panel-body">
+                        <fieldset>
+
+                            <legend class="text-semibold">
+                                <i class="fas fa-check-circle fa-lg position-left"></i>
+                                {{ lang("size_chart_data") }}
+                                <a class="control-arrow" data-toggle="collapse" data-target="#fields-panel">
+                                    <i class="icon-circle-down2"></i>
+                                </a>
+                            </legend>
+
+                            <div class="collapse in" id="fields-panel">
+                                <!-- Start Form -->
+                                <form method="post" class="form" action="{{ action }}">
+
+                                    <input type="hidden" name="size_chart_id" value="{{chart.size_chart.id}}">
+
+                                    <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                                        <div class="tab-content">
+
+                                                <div class="tabbable {{languages|length > 1 ? 'langs-tabs-right' : ''}} col-md-12 duplicate-area">
+                                                    {% if languages|length > 1 %}
+                                                    <ul class="nav nav-tabs-lang">
+                                                        {% for language in languages %}
+                                                            <li class="{{ loop.first ? 'active' : '' }}">
+                                                                <a href="#prouctDetailslangTab{{ language['language_id'] }}" data-toggle="tab"
+                                                                aria-expanded="false">
+                                                                    <img src="view/image/flags/{{ language['image'] }}"
+                                                                        title="{{ language['name'] }}" class="">
+                                                                    <div> {{ lang('code_' ~  language['code']) }}</div>
+                                                                </a>
+                                                            </li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                    {% endif %}
+                                                    <div class="tab-content">
+                                                        {% for lng in languages %}
+                                                            <div class="tab-pane {{ loop.first ? 'active' : '' }}"
+                                                                id="prouctDetailslangTab{{ lng['language_id'] }}">
+                                                                <div class="form-group"
+                                                                    id="name_{{ lng['language_id'] }}-group">
+                                                                    <label class="control-label label-row">
+                                                                        <span>
+                                                                            {{ lang('entry_name') }} <span class="text-danger">*</span>
+                                                                        </span>
+                                                                    </label>
+                                                                    <input type="text" class="form-control"
+                                                                        id="name_{{ lng['language_id'] }}"
+                                                                        name="size_chart_description[{{ lng['language_id'] }}][name]"
+                                                                        value="{{ chart.size_chart_details[lng['language_id']]['name']|escape}}"
+                                                                    >
+                                                                </div>
+                                                                <div class="form-group m-0"
+                                                                    id="description_{{ lng['language_id'] }}-group">
+                                                                    <label class="control-label">
+                                                                        {{ lang('entry_description') }} <span class="text-danger">*</span>
+                                                                    </label>
+                                                                    <textarea
+                                                                            name="size_chart_description[{{ lng['language_id'] }}][description]"
+                                                                            id="description_{{ lng['language_id'] }}"
+                                                                            class="summernote-fixed-height {{loop.index != 1 ? 'duplicate-input' : ''}}"
+                                                                    >{{ chart.size_chart_details[lng['language_id']]['description'] }}</textarea>
+                                                                    <span class="help-block"></span>
+                                                                    <span class="text-muted">
+                                                                        {{ langempty('entry_description_help') }}
+                                                                    </span>
+                                                                </div>
+
+                                                            </div>
+                                                        {% endfor %}
+                                                    </div>
+                                                </div>
+                                            
+                                                <div class="form-group col-md-12">
+                                                    <label class="control-label">{{ lang('entry_chart_sizes') }} <span class="text-danger">*</span></label>
+                                                    <br>
+                                                    <input type="text" class="form-control" value="{{ chart.size_chart.chart_row_size ? chart.size_chart.chart_row_size : 3 }}" name="chart_row_size" style="text-align: center;width: 10%; display: inline-block; ">
+                                                    X
+                                                    <input type="text" class="form-control" value="{{ chart.size_chart.chart_col_size ? chart.size_chart.chart_col_size : 3 }}" name="chart_col_size" style="text-align: center;width: 10%; display: inline-block; ">
+                                                    <br><br>
+                                                    <table id="chart-size-table" class="table table-bordered">
+                                                        <thead>
+                                                        <tr></tr>  
+                                                        </thead>
+                                                        <tbody></tbody>
+                                                    </table>
+                                                    <span class="help-block"></span>
+                                                    <span class="text-muted"></span>
+                                                </div>
+                                                
+                                                <div class="tab-pane has-padding active">
+                                                <div class="form-group col-md-12" id="category-group">
+                                                    <label class="control-label label-row" style="display: inline-block;">
+                                                        {{ lang('entry_category') }}
+                                                    </label>
+                                                    <span class="text-danger">*</span>
+                                                    <select class="category-autocomplete autocomplete form-control" multiple="multiple"
+                                                            name="product_category[]">
+                                                        {% for el in product_categories %}
+                                                            <option value="{{ el['category_id'] }}" {{ el['category_id'] in chart.size_chart_categories ? 'selected' }}>{{ el['name'] }}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                                <div class="form-group col-md-12">
+                                                    <label class="control-label">{{ lang('entry_product') }}</label>
+                                                    <span class="text-danger">*</span>
+                                                    <select class="product-autocomplete autocomplete form-control" id="products-products" name="product_id[]"  multiple="multiple">
+                                                        {% for el in products %}
+                                                            <option value="{{ el['product_id'] }}" {{ el['product_id'] in chart.size_chart_products ? 'selected' }}>{{ el['name'] }}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                                <div class="form-group col-md-12">
+                                                    <label class="control-label">{{ lang('entry_country') }}</label>
+                                                    <select class="country-autocomplete autocomplete form-control" id="country_id" name="country_id[]"  multiple="multiple">
+                                                        {% for country in countries %}
+                                                            <option value="{{ country['country_id'] }}" {{ country['country_id'] in chart.size_chart_countries ? 'selected' }}>{{ country['name'] }}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                                <!-- End Form -->
+                            </div>
+                        </fieldset>
+                    </div>
+                </div>
+                {% include "includes/buttons_bottom.expand" %}
+            </div>
+        </div>
+    <script>
+    $(document).ready(function () {
+        $('select, .autocomplete').not(".thumb-option-selector").select2({
+            minimumResultsForSearch: 6,
+        });
+        
+        $('.category-autocomplete').on('change', function (e) {
+            $('.category-autocomplete').val($(this).val()).trigger('change.select2')
+        });  
+        $('.product-autocomplete').on('change', function (e) {
+            $('.product-autocomplete').val($(this).val()).trigger('change.select2')
+        });$('.country-autocomplete').on('change', function (e) {
+            $('.country-autocomplete').val($(this).val()).trigger('change.select2')
+        });
+
+        var imageManagerButton = function (context) {
+        var ui = $.summernote.ui;
+
+        // create button
+        var button = ui.button({
+            contents: '<i class="note-icon-picture"/>',
+            tooltip: '{{ lang('text_image') }}',
+            click: function (e) {
+                var textareael = $(this).closest('.form-group').find('textarea.summernote-fixed-height').attr('name');
+                $.startImageManager(textareael, null, "summernoteImageManagerCallback", 'callerName');
+                $('body').removeClass('modal-open');
+            }
+        });
+
+        return button.render();
+    }
+
+    $('.summernote-fixed-height').summernote({
+            height: 300,
+            callbacks: {
+                onChange: function(contents, $editable) {
+                    $($editable).find("p").find("img").css("max-width", "100%")
+                    $($editable).find(".block-tabs").find("iframe").css("height", "100%")
+                    $(this).parents('.has-error').removeClass('has-error').find('.help-block').html('')
+                }
+            },
+
+            {% if base.lang == 'ar' %}
+            lang: "ar-AR",
+            {% endif %}
+
+            toolbar: [
+                ['style', ['style']],
+                ['font', ['bold', 'underline', 'clear']],
+                ['fontname', ['fontname']],
+                ['fontsize', ['fontsize']],
+                ['color', ['color']],
+                ['para', ['ul', 'ol', 'paragraph']],
+                ['table', ['table']],
+                ['insert',['ltr','rtl']],
+                ['insert', ['link', 'imagemanager', 'videoAttributes','emoji','codeview']],
+                ['view', ['fullscreen']],
+            ],
+            buttons: {
+                imagemanager: imageManagerButton
+                },
+            popover: {
+                image: [
+
+                    ['imagesize', ['imageSize100', 'imageSize50', 'imageSize25']],
+                    ['float', ['floatLeft', 'floatRight', 'floatNone']],
+                    ['remove', ['removeMedia']],
+                    ['custom', ['imageAttributes']],
+                ],
+            },
+            imageAttributes:{
+                icon:'<i class="note-icon-pencil"/>',
+                removeEmpty:true, // true = remove attributes | false = leave empty if present
+                disableUpload: true, // true = don't display Upload Options | Display Upload Options
+                disableAttributes: true,
+                disableLink: false,
+                disableImage: false,
+            }
+        });
+
+        
+        function creatTable() {
+            
+            const rows = parseInt($("input[name='chart_row_size']").val());
+            const cols = parseInt($("input[name='chart_col_size']").val());
+
+            let chart_sizes = '{{chart.size_chart.chart_sizes}}';
+            if (chart_sizes.length !== 0) {
+                chart_sizes = JSON.parse(chart_sizes);
+            } else {
+                chart_sizes = null;
+            }
+
+            for	(let i = 0; i < cols; i++) {
+                $("#chart-size-table thead tr").append(`<th style="padding:0;"><input type="text" value="${chart_sizes && chart_sizes[0][i] ? chart_sizes[0][i]: ''}" name="chart_sizes[0][${i}]" placeholder="{{lang('type_here')}}" style="text-align: center;width: 100%;height: 35px;border: none;outline: none;background-color: #f9f9f9;"/></th>`);
+            }
+
+            for	(let i = 1; i < rows; i++) {
+                let cells = "";
+                for	(let j = 0; j < cols; j++) {
+                    cells += `<td style="padding:0;"><input type="text" value="${chart_sizes && chart_sizes[i] && chart_sizes[i][j] ? chart_sizes[i][j]: ''}" name="chart_sizes[${i}][${j}]" placeholder="{{lang('type_here')}}" style="text-align: center;width: 100%;height: 35px;border: none;outline: none;${j === 0 ? 'background-color: #f9f9f9;' : ''}"/></td>`;
+                }
+                $("#chart-size-table tbody").append(`<tr>${cells}</tr>`);
+                cells = "";
+            }
+        }
+
+        creatTable();
+
+        $("input[name='chart_row_size'], input[name='chart_col_size']").on('keyup', function () {
+            $("#chart-size-table thead tr").html('');
+            $("#chart-size-table tbody").html('');
+            creatTable();
+        });
+
+
+    });
+    </script>
+
+{% endblock %}

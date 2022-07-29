@@ -1,0 +1,128 @@
+
+<script type="text/javascript">
+    let cardInfoModal = `<div class="modal" id="cardInfoModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-danger hidden" id="card-form-alert"></div>
+
+        <form id="card-info-form" style="max-width: 350px; margin: 0 auto">
+            <input type="hidden" id="payment_url" name="payment_url" value="">
+
+            <div class="row">
+                <div class="card_number_group col-md-12">
+                    <input type="text" name="cc_number" placeholder="Card Number" class="card_number form-control" autocomplete="cc-number" required>
+                    <img src="" class="visa" style="width: 60px; height: 40px; margin:0;padding:0">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 col-xs-6 monthcol" style="padding: 0px;">
+                    <div class="card_number_group month">
+                        <input type="number" min="01" size="2" maxlength="2" max="12" name="cc_exp_month" placeholder="Expiry Month (MM)" class="form-control" autocomplete="cc-exp-month">
+                    </div>
+                </div>
+                <div class="col-md-6 col-xs-6" style="padding: 0px;">
+                    <div class="card_number_group">
+                        <input type="number" min="20" size="2" maxlength="2"  name="cc_exp_year" placeholder="Expiry Year (YY)" class="form-control" autocomplete="cc-exp-year">
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="card_number_group col-md-12">
+                    <input type="number" min="0" name="cc_cvv" placeholder="Card Security Code (CVV)" class="form-control">
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="card_number_group col-md-12">
+                    <input type="text" name="cc_name" placeholder="Name on card" class="form-control" autocomplete="cc-name">
+                </div>
+            </div>
+
+            <div class="row">
+                <button id="card-info-form-submit" class="btn" type="button">{{ lang('text_pay_now')}}</button>
+            </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>`;
+    $('body').append(cardInfoModal);
+    //Validate card info inputs limits
+    $('input[name="cc_exp_month"] , input[name="cc_exp_year"] ').on('keydown keyup', function(e){
+        //exclude backspace, delete, tab buttons...
+        if ($(this).val().length >= 2 && ![8, 46, 9].includes(e.keyCode) ) { 
+            e.preventDefault();
+        }
+    });    
+
+    $('input[name="cc_cvv"]').on('keydown keyup', function(e){
+        //exclude backspace & delete buttons...
+        if ($(this).val().length >= 3 && ![8, 46, 9].includes(e.keyCode)) { 
+            e.preventDefault();
+        }
+    });
+
+    $('input[name="cc_number"]').on('keydown keyup', function(e){
+        //exclude backspace & delete buttons...
+        var charCode = (e.which) ? e.which : e.keyCode;
+
+        if ( $(this).val().length >= 19 && ![8, 46, 9].includes(charCode) ){
+            e.preventDefault();
+            return false;
+        }
+        
+        if ( (charCode < 48 || charCode > 57) && ![8, 46, 9].includes(charCode)){
+            e.preventDefault();
+            return false;
+        }
+
+        if ( charCode >= 48 && charCode <= 57 ){
+            //format card number
+            $(this).val(function (index, value) {
+                return value.replace(/\W/gi, '').replace(/(.{4})/g, '$1 ');
+            });
+        }
+    });
+
+
+    //submit button action
+    $('#card-info-form-submit').on('click', function(e, wasTriggeredByCode){
+        //prevent call this event after click confirm button
+        if (wasTriggeredByCode) return;
+
+        $('#card-form-alert').addClass('hidden');
+
+        console.log('card-info-form-submit clicked');
+        $.ajax({
+            url: "{{link('payment/my_fatoorah/directPayment')}}",
+            data: $("#card-info-form").serialize(),
+            type: 'POST',
+            dataType: 'json'
+        }).done(function(response){
+            // console.log(response); return;
+            if( response.success == '1'){
+                window.location = response.redirect_url;
+            }
+            if(response.success == '0' && response.message != ''){
+                $('#card-form-alert').html(response.message);
+                $('#card-form-alert').removeClass('hidden');
+            }
+        });
+    });
+    
+    $(function() {
+        $('#cardInfoModal').modal({
+            // backdrop: false,
+            keyboard: false,
+            show: false,
+        });
+    });
+</script>

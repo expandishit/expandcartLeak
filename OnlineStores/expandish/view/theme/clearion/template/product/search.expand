@@ -1,0 +1,374 @@
+{{ script('js/jquery/jquery.total-storage.min.js') }}
+    {% set mfSettings = config(mega_filter_settings) %}
+        {% if mfSettings %}
+            {% if mfilter_json %}
+                <div id="mfilter-json" style="display:none">{{ mfilter_json|base64_encode }}</div>
+            {% endif %}
+        <div id="mfilter-content-container">
+    {% endif %}
+
+    <!-- breadcrumb -->
+    <div class="breadcrumb-page">
+        <ol class="breadcrumb">
+            {% for breadcrumb in breadcrumbs %}
+                {% if loop.last %}
+                    <li class="active">{{ breadcrumb['text'] }}</li>
+                {% else %}
+                    <li><a href="{{ breadcrumb['href'] }}">{{ breadcrumb['text'] }}</a></li>
+                {% endif %}
+            {% endfor %}
+        </ol>
+    </div> <!-- breadcrumb -->
+
+    <div class="page-title-base">
+        <h1 class="title-base">{{ search != '' ? lang('heading_title') ~ '-' ~ search : lang('heading_title') }}</h1>
+    </div>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="search-params">
+
+                {% if search %}
+                <div class="form-group">
+                    <input type="text" name="search" value="{{ search }}" class="form-control" />
+                </div>
+                {% else %}
+                <div class="form-group">
+                    <input type="text" name="search" value="{{ search }}" class="form-control" onclick="this.value = '';" onkeydown="this.style.color = '000000'" style="color: #999;" />
+                </div>
+                {% endif %}
+
+                <div class="form-group">
+                    <select name="category_id" class="form-control minimal">
+                        <option value="0">{{ lang('text_category') }}</option>
+                        {% for category_1 in categories %}
+                            {% if category_1['category_id'] == category_id %}
+                                <option value="{{ category_1['category_id'] }}" selected="selected">{{ category_1['name'] }}</option>
+                            {% else %}
+                                <option value="{{ category_1['category_id'] }}">{{ category_1['name'] }}</option>
+                            {% endif %}
+                            {% for category_2 in category_1['children'] %}
+                                {% if category_2['category_id'] == category_id %}
+                                    <option value="{{ category_2['category_id'] }}" selected="selected">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ category_2['name'] }}</option>
+                                {% else %}
+                                    <option value="{{ category_2['category_id'] }}">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ category_2['name'] }}</option>
+                                {% endif %}
+                                {% for category_3 in category_2['children'] %}
+                                    {% if category_3['category_id'] == category_id %}
+                                        <option value="{{ category_3['category_id'] }}" selected="selected">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ category_3['name'] }}</option>
+                                    {% else %}
+                                        <option value="{{ category_3['category_id'] }}">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ category_3['name'] }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endfor %}
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    {% if sub_category %}
+                        <input type="checkbox" name="sub_category" value="1" id="sub_category" checked="checked" />
+                    {% else %}
+                        <input type="checkbox" name="sub_category" value="1" id="sub_category" />
+                    {% endif %}
+                    <label for="sub_category">{{ lang('text_sub_category') }}</label>
+                </div>
+
+                <div class="form-group">
+                    {% if description %}
+                    <input type="checkbox" name="description" value="1" id="description" checked="checked" />
+                    {% else %}
+                    <input type="checkbox" name="description" value="1" id="description" />
+                    {% endif %}
+                    <label for="description">{{ lang('entry_description') }}</label>
+                </div>
+
+                {%  if search_by_city is defined and search_by_city['status'] == 1 %}
+                <div class="form-group">
+                    <label for="specific_city_for_search">{{ lang('specific_city_for_search') }}</label>
+                    <input id="specific_city_for_search" type="checkbox" {% if city_id is not null %}checked="checked"{% endif %} />
+                    <select id="search_in_city" name="search_in_city" {% if city_id is null%}style="display: none;" disabled="true"{% endif %}>
+                        {% for zone in search_by_city['zones'] %}
+                            <option value="{{ zone['zone_id'] }}" {% if city_id is not null and zone['zone_id'] == city_id %} selected {% endif %}>{{ zone['name'] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+
+            </div>
+            <div class="buttons">
+                <div class="right"><input type="button" value="{{ lang('button_search') }}" id="button-search" class="btn btn-inline btn-block" /></div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <h4>{{ lang('text_search') }}</h4>
+            {% if products %}
+            <!-- Toolbar -->
+            <div class=" toolbar-products toolbar-top">
+                <div class="modes">
+                    <strong class="label">{{ lang('text_display') }}</strong>
+                    <a href="#" onclick="$('.products-grid').show(); $('.products-list').hide(); $('.mode-list').removeClass('active'); $('.mode-grid').addClass('active'); return false;" class="modes-mode active mode-grid" title="{{ lang('text_grid') }}">
+                        <span>{{ lang('text_grid') }}</span>
+                    </a>
+                    <a href="#" onclick="$('.products-list').show(); $('.products-grid').hide(); $('.mode-grid').removeClass('active'); $('.mode-list').addClass('active'); return false;" class="modes-mode mode-list" title="{{ lang('text_list') }}">
+                        <span>{{ lang('text_list') }}</span>
+                    </a>
+                </div><!-- View as -->
+        
+                <div class="toolbar-option">
+                    <div class="toolbar-sorter ">
+                        <label class="label">{{ lang('text_sort') }}</label>
+                        <select onchange="location = this.value;" class="sorter-options form-control">
+                            {% for sortst in sorts %}
+                                {% if sortst['value'] == sort ~ '-' ~ order %}
+                                <option value="{{ sortst['href'] }}" selected="selected">{{ sortst['text'] }}</option>
+                                {% else %}
+                                <option value="{{ sortst['href'] }}">{{ sortst['text'] }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div><!-- Short by -->
+        
+                    <div class="toolbar-limiter">
+                        <label class="label">
+                            <span>{{ lang('text_limit') }}</span>
+                        </label>
+        
+                        <select class="limiter-options form-control" onchange="location = this.value;">
+                            {% for limitst in limits %}
+                                {% if limitst['value'] == limit %}
+                                    <option value="{{ limitst['href'] }}" selected="selected">{{ limitst['text'] }}</option>
+                                {% else %}
+                                    <option value="{{ limitst['href'] }}">limitst['text']</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div><!-- Show per page -->
+                </div>
+        
+                {{ pagination }}
+        
+            </div><!-- Toolbar -->
+            
+            <!-- Grid Products -->
+            <div class="products  products-grid">
+                <ol class="product-items row">
+                    {% for product in products %}
+                        <li class="col-sm-4 product-item product-item-opt-0">
+                            <div class="product-item-info">
+                                {% if product.image %}
+                                    <div class="product-item-photo">
+                                        <a href="{{ product.href }}" class="product-item-img"><img src="{{ image(product.image, 160, 160) }}" title="{{ product.name }}" alt="{{ product.name }}"></a>
+                                    </div>
+                                {% endif %}
+                                <div class="product-item-detail">
+                                    <strong class="product-item-name"><a href="{{ product.href }}">{{ product.name }}</a></strong>
+        
+                                    
+                                    {% if product.price and ('-1' not in product.price) and ('-1' not in product.special) %}
+                                        <div class="product-item-price">
+                                            {% if not product.special %}
+                                                <span class="price">{{ product.price }}</span>
+                                            {% else %}
+                                                <span class="price">{{ product.special }}</span>
+                                                <span class="old-price">{{ product.price }}</span>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+        
+                                    <div class="product-item-actions">
+                                     {% if product['viewAddToCart'] %}
+                                            <a href="#" onclick="event.preventDefault(); addToCart({{ product.product_id }},1, {{ ('-1' in product.price) or ('-1' in product.special) ? 'true' : 'false' }}); return false;" class="btn btn-cart"><span>{{ ('-1' in product.price) or ('-1' in product.special) ? lang('button_req_quote') : lang('button_cart') }}</span></a>
+                                             {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ol><!-- list product -->
+            </div> <!-- Grid Products -->
+        
+            <!-- List Products -->
+            <div class="products  products-list" style="display: none;">
+                <ol class="product-items row">
+                    {% for product in products %}
+                    <li class="col-sm-12 product-item product-item-opt-0">
+                        <div class="product-item-info">
+                            {% if product.image %}
+                            <div class="product-item-photo">
+                                <a href="{{ product.href }}" class="product-item-img"><img src="{{ image(product.image, 160, 160) }}" title="{{ product.name }}" alt="{{ product.name }}"></a>
+                            </div>
+                            {% endif %}
+                            <div class="product-item-detail">
+                                <strong class="product-item-name"><a href="{{ product.href }}">{{ product.name }}</a></strong>
+        
+                                {% if product.price and ('-1' not in product.price) and ('-1' not in product.special) %}
+                                    <div class="product-item-price">
+                                        {% if not product.special %}
+                                        <span class="price">{{ product.price }}</span>
+                                        {% else %}
+                                        <span class="price">{{ product.special }}</span>
+                                        <span class="old-price">{{ product.price }}</span>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+        
+                                {% if product.description %}
+                                    <div class="product-item-des">
+                                        {{ product.description }}
+                                    </div>
+                                {% endif %}
+        
+                                <div class="product-item-actions">
+                                  {% if product['viewAddToCart'] %}
+                                        <a href="#" onclick="event.preventDefault(); addToCart({{ product.product_id }},1, {{ ('-1' in product.price) or ('-1' in product.special) ? 'true' : 'false' }}); return false;" class="btn btn-cart"><span>{{ ('-1' in product.price) or ('-1' in product.special) ? lang('button_req_quote') : lang('button_cart') }}</span></a>
+                                         {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ol><!-- list product -->
+            </div> <!-- List Products -->
+        
+            <!-- Toolbar -->
+            <div class=" toolbar-products toolbar-bottom">
+        
+                <div class="modes">
+                    <strong class="label">{{ lang('text_display') }}</strong>
+                    <strong class="modes-mode active mode-grid" title="{{ lang('text_grid') }}">
+                        <span>{{ lang('text_grid') }}</span>
+                    </strong>
+                    <a href="List_Products.html" title="{{ lang('text_list') }}" class="modes-mode mode-list">
+                        <span>{{ lang('text_list') }}</span>
+                    </a>
+                </div><!-- View as -->
+        
+                <div class="toolbar-option">
+                    <div class="toolbar-sorter ">
+                        <label class="label">{{ lang('text_sort') }}</label>
+                        <select onchange="location = this.value;" class="sorter-options form-control">
+                            {% for sortsb in sorts %}
+                            {% if sortsb['value'] == sort ~ '-' ~ order %}
+                            <option value="{{ sortsb['href'] }}" selected="selected">{{ sortsb['text'] }}</option>
+                            {% else %}
+                            <option value="{{ sortsb['href'] }}">{{ sortsb['text'] }}</option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div><!-- Short by -->
+        
+                    <div class="toolbar-limiter">
+                        <label class="label">
+                            <span>{{ lang('text_limit') }}</span>
+                        </label>
+        
+                        <select class="limiter-options form-control" onchange="location = this.value;">
+                            {% for limitsb in limits %}
+                            {% if limitsb['value'] == limit %}
+                            <option value="{{ limitsb['href'] }}" selected="selected">{{ limitsb['text'] }}</option>
+                            {% else %}
+                            <option value="{{ limitsb['href'] }}">{{ limitsb['text'] }}</option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div><!-- Show per page -->
+                </div>
+        
+                {{ pagination }}
+        
+            </div><!-- Toolbar -->
+            {% else %}
+        
+            <div class="content alert alert-warning">{{ lang('text_empty') }}</div>
+
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="pull-left">
+                        <a href="{{ link('common/home') }}" class="btn btn-info">{{ lang('button_continue') }}</a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+    </div>
+    <hr> 
+
+    {% if mfSettings %}
+        </div>
+    {% endif %}
+
+<script type="text/javascript"><!--
+    var lableb_installed = '{{lableb_search_installed}}';
+    $('#specific_city_for_search').click(function (e) {
+        var checked = $(this).is(':checked');
+        var selMenu = $('#search_in_city');
+        if (checked) {
+            selMenu.show();
+            selMenu.attr('disabled', false);
+        } else {
+            selMenu.hide();
+            selMenu.attr('disabled', true);
+        }
+    });
+
+$('#content input[name=\'search\']').keydown(function(e) {
+	if (e.keyCode == 13) {
+		$('#button-search').trigger('click');
+	}
+});
+
+$('select[name=\'category_id\']').bind('change', function() {
+	if (this.value == '0') {
+		$('input[name=\'sub_category\']').attr('disabled', 'disabled');
+		$('input[name=\'sub_category\']').removeAttr('checked');
+	} else {
+		$('input[name=\'sub_category\']').removeAttr('disabled');
+	}
+});
+
+$('select[name=\'category_id\']').trigger('change');
+
+$('#button-search').bind('click', function() {
+	url = 'index.php?route=product/search';
+
+	var search = $('#content input[name=\'search\']').val();
+	
+	if(lableb_installed){
+        search = search ? search : '*';
+        url = 'index.php?route=product/search&lableb_search=' + encodeURIComponent(search);
+    }else{
+        if(search){
+            url += '&search=' + encodeURIComponent(search);
+        }
+    }
+
+	var category_id = $('#content select[name=\'category_id\']').val();
+	
+	if (category_id > 0) {
+		url += '&category_id=' + encodeURIComponent(category_id);
+	}
+	
+	var sub_category = $('#content input[name=\'sub_category\']:checked').val();
+	
+	if (sub_category) {
+		url += '&sub_category=true';
+	}
+		
+	var filter_description = $('#content input[name=\'description\']:checked').val();
+	
+	if (filter_description) {
+		url += '&description=true';
+	}
+
+    var search_by_city = $('#specific_city_for_search').is(':checked');
+    if (search_by_city) {
+        var city = $('#search_in_city').val();
+        if (city != 'null') {
+            url += '&city=' + city;
+        }
+    }
+
+	location = url;
+});
+//--></script> 

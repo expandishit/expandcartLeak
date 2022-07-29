@@ -1,0 +1,85 @@
+<div class="alert alert-danger" id="sadad-error" role="alert"></div>
+        
+<div class="right" id="generate-otp">
+  <label for="msisdn">{{msisdn}}</label>
+  <input type="text" name="msisdn" id="msisdn" placeholder="msisdn" class="optFiled">
+  <br><br>
+  <label for="birth_year">{{birth_year}}</label>
+  <input type="text" name="birth_year" id="birth_year" placeholder="birth_year" class="optFiled">
+  <button class="btn btn-primary" id="request-otp" style="display: inline-block !important;"  disabled="disabled">{{send_otp}}</button>
+</div>
+
+<div class="right" id="submit-otp" style="display: none;">
+  <label for="msisdn" style="max-width: 50px;">{{otp}}</label>
+  <input type="text" name="otp" id="otp" placeholder="otp">
+  <button class="btn btn-primary" id="button-confirm" style="display: inline-block !important;">{{confirm_order}}</button>
+</div>
+<script>
+
+$(document).ready(function() {
+  $('.optFiled').on('keyup', function() {
+    let empty = false;
+
+    $('.optFiled').each(function() {
+      empty = $(this).val().length == 0;
+    });
+
+    if (empty)
+      $('#request-otp').attr('disabled', 'disabled');
+    else
+      $('#request-otp').attr('disabled', false);
+  });
+});
+
+$('#sadad-error').addClass('hidden');
+
+var transaction_id = undefined;
+$('#request-otp').bind('click', function() {
+	$.ajax({ 
+		type: 'post',
+		url: 'index.php?route=payment/sadad/requestPaymentOTP',
+    data: {
+      msisdn: $("#msisdn").val(),
+      birth_year: $("#birth_year").val()
+    },
+		success: function(data) {
+      data = JSON.parse(data);
+      if (!data.success) {
+        $('#sadad-error').removeClass('hidden');
+        $('.alert-danger').text(data.message);
+        return;
+      }
+
+      $('#sadad-error').addClass('hidden');
+      $('#generate-otp').css('display', 'none');
+      $('#submit-otp').css('display', 'block');
+
+      transaction_id = data.transaction_id;
+
+		}		
+	});
+});
+
+$('#button-confirm').bind('click', function() {
+	$.ajax({ 
+		type: 'post',
+		url: 'index.php?route=payment/sadad/confirmPayment',
+    data: {
+      otp: $("#otp").val(),
+      transaction_id: transaction_id,
+    },
+		success: function(data) {
+
+      data = JSON.parse(data);
+      if (!data.success) {
+        $('#sadad-error').removeClass('hidden');
+        $('.alert-danger').text(data.message);
+        return;
+      }
+      $('#submit-otp').css('display', 'none');
+
+      location.href = 'index.php?route=payment/sadad/redirectSuccess';
+		}		
+	});
+});
+</script>

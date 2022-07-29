@@ -1,0 +1,341 @@
+{% import "controls/forms.expand" as forms %}
+{% set dualMenuEnabled = false %}
+<style type="text/css">
+.separator {display: flex;align-items: center;text-align: center; color: #999999;margin-bottom: 15px;}.separator::before, .separator::after {content: '';flex: 1;border-bottom: 1px solid #e8e8e8;}.separator::before {margin-right: .25em;}.separator::after {margin-left: .25em;}
+</style>
+{# Start Form #}
+<form id="form-beez" class="form" action="{{ link('shipping/beez/save', '' , 'SSL') }}" method="POST">
+  <div class="row">
+    {# Status #}
+    <div class="col-md-3">
+        <div class="panel panel-white">
+            <div class="panel-heading">
+                <h6 class="panel-title"><span class="text-bold">{{ lang('entry_status')|trim(':') }}</span></h6>
+                <div class="heading-elements not-collapsible">
+                    <ul class="icons-list">
+                        <li><a data-action="collapse" class=""></a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="collapse in" id="panel1">
+
+
+                    <div class="form-group col-md-12">
+                        <label class="control-label">{{ lang('entry_status') }}</label>
+                        <div class="checkbox checkbox-switchery">
+                            <label>
+                                <input type="checkbox" onchange="changeStatus(this);" name="beez[status]" class="switchery" {{ beez.status not in ['0', 0, 'off'] or beez.status is null ? 'checked' }}>
+                                <span class="switchery-status">{{ beez.status not in ['0', 0, 'off'] or beez.status is null ? lang('text_enabled') : lang('text_disabled') }}</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <hr style="width: 100%; border: 1px solid #e8e8e8;">
+
+                    <div class="form-group col-md-12">
+                        <label class="control-label">{{ lang('entry_debugging_mode') }}</label>
+                        <div class="checkbox checkbox-switchery">
+                            <label>
+                                <input type="checkbox" onchange="changeStatus(this);" name="beez[debugging_mode]" class="switchery" {{ beez.debugging_mode not in ['0', 0, 'off'] or beez.debugging_mode is null ? 'checked' }}>
+                                <span class="switchery-status">{{ beez.debugging_mode not in ['0', 0, 'off'] or beez.debugging_mode is null ? lang('text_enabled') : lang('text_disabled') }}</span>
+                            </label>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="panel panel-white">
+            <div class="panel-heading">
+                <h6 class="panel-title"><span class="text-bold">{{ lang('entry_contact_beez') }}</span></h6>
+                <div class="heading-elements not-collapsible">
+                    <ul class="icons-list">
+                        <li><a data-action="collapse" class=""></a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel-body">
+                <a href="https://beezlogistics.com/contact/" target="blank">
+                  <img style="width: 100%" src="view/image/shipping/beez.png">
+                </a>
+            </div>
+        </div>
+    </div>
+    {# End of Status #}
+
+
+
+    <div class="col-md-9">
+        <div class="panel panel-white">
+        	<div class="panel-heading">
+                <h6 class="panel-title"><span class="text-bold">{{ lang('text_settings') }}</span></h6>
+                <div class="heading-elements not-collapsible">
+                    <ul class="icons-list">
+                        <li><a data-action="collapse" class=""></a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="collapse in" id="fields-panel">
+
+                	{# beez API Key #}
+                    <div class="form-group col-md-12">
+                        <label for="api_key" class="control-label">{{ lang('entry_api_key') }} <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="api_key" name="beez[api_key]" value="{{ beez.api_key }}">
+                        <span class="help-block"></span>
+                    </div>
+                    {# /beez API Key #}
+
+
+                    {# beez Account Number #}
+                    <div class="form-group col-md-12">
+                        <label for="account_number" class="control-label">{{ lang('entry_account_number') }} <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="account_number" name="beez[account_number]" value="{{ beez.account_number }}">
+                        <span class="help-block"></span>
+                    </div>
+                    {# /beez Password #}
+
+
+                    {# After Shipping Status #}
+                    <div class="form-group col-md-6">
+                        <label for="beez_after_creation_status" class="control-label">{{ lang('entry_after_creation_status') }}</label>
+                        <select name="beez[after_creation_status]" id="beez_after_creation_status" class="form-control">
+                            {% for order_status in order_statuses %}
+                                <option value="{{ order_status['order_status_id'] }}" {{ beez.after_creation_status == order_status['order_status_id'] ? 'selected' :'' }}>
+                                    {{ order_status['name'] }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <span class="help-block"></span>
+                    </div>
+                    {# /After Shipping Status #}
+
+
+                    {# Tax Classes #}
+                    <div class="form-group col-md-6">
+                        <label for="beez_tax_class_id" class="control-label">{{ lang('entry_tax_class') }}</label>
+                        <select name="beez[tax_class_id]" id="beez_tax_class_id" class="form-control">
+                            <option value="0">{{ lang('text_none') }}</option>
+                            {% for tax_class in tax_classes %}
+                                <option value="{{ tax_class['tax_class_id'] }}"
+                                        {{ beez.tax_class_id == tax_class['tax_class_id'] ? 'selected' : '' }}>
+                                    {{ tax_class['title'] }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <span class="help-block"></span>
+                        <span class="text-muted">{{ langempty('entry_tax_class_help') }}</span>
+                    </div>
+                    {# /Tax Classes #}
+
+
+                    {# Cost Block #}
+                    <div class="col-md-12">
+                        <div class="panel panel-white">
+                            <div class="panel-heading">
+                                <h6 class="panel-title"><span class="text-bold">{{ lang('head_global_settings') }}</span></h6>
+                                <div class="heading-elements not-collapsible">
+                                    <ul class="icons-list">
+                                        <li><a data-action="collapse" class=""></a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="panel-body">
+                                <div class="collapse in" id="panel2">
+                                    <div class="form-group">
+                                        <div class="tabbable nav-tabs-vertical nav-tabs-left">
+                                            <ul class="nav nav-tabs nav-tabs-highlight">
+                                                <li class="active">
+                                                    <a href="#tab_general" data-toggle="tab">
+                                                        <i class="icon-menu7 position-left"></i> {{ lang('tab_general') }}
+                                                    </a>
+                                                </li>
+                                                {% for zone in geo_zones %}
+                                                    <li>
+                                                        <a href="#tab_{{ zone['geo_zone_id'] }}" data-toggle="tab">
+                                                            <i class="icon-menu7 position-left"></i> {{ zone['name'] }}
+                                                        </a>
+                                                    </li>
+                                                {% endfor %}
+                                            </ul>
+                                            <div class="tab-content">
+                                                <div class="tab-pane active has-padding active" id="tab_general">
+                                                    <div class="form-group" id="weight_tax_class_id-group">
+                                                        <label for="beez_general_rate"
+                                                               class="control-label">{{ lang('entry_general_price') }}</label> <span class="text-danger">*</span>
+                                                        <input class="form-control" name="beez[price][beez_general_rate]"
+                                                               value="{{ beez['price']['beez_general_rate'] }}"
+                                                               id="beez_general_rate">
+                                                        <span class="help-block">{{ lang('entry_general_price_note') }}</span>
+                                                    </div>
+                                                </div>
+
+                                                {% for zone in geo_zones %}
+                                                    {% set rate = beez_price['beez_geo_zone_id_' ~ zone['geo_zone_id'] ~ '_rate'] %}
+                                                    {% set status = beez_price['beez_geo_zone_id_' ~ zone['geo_zone_id'] ~ '_status'] %}
+                                                    <div class="tab-pane has-padding"
+                                                         id="tab_{{ zone['geo_zone_id'] }}">
+                                                        <div class="form-group"
+                                                             id="weight_{{ zone['geo_zone_id'] }}_rate-group">
+                                                            <label for="beez_geo_zone_id_{{ zone['geo_zone_id'] }}_rate"
+                                                                   class="control-label">{{ lang('entry_rate') }}</label>
+
+                                                            <textarea name="beez[price][beez_geo_zone_id_{{ zone['geo_zone_id'] }}_rate]"
+                                                                      cols="40" class="form-control"
+                                                                      id="beez_geo_zone_id_{{ zone['geo_zone_id'] }}_rate"
+                                                                      rows="5">{{ rate }}</textarea>
+                                                            <span class="help-block"></span>
+                                                            <span class="text-muted">{{ langempty('entry_rate_help') }}</span>
+                                                        </div>
+
+                                                        <div class="form-group"
+                                                             id="weight_{{ zone['geo_zone_id'] }}_status-group">
+                                                            <label for="weight_{{ zone['geo_zone_id'] }}_status"
+                                                                   class="control-label">{{ lang('entry_status') }}</label>
+                                                            <!-- Switchery -->
+                                                            <div class="checkbox checkbox-switchery">
+                                                                <label>
+                                                                    <input type="checkbox" onchange="changeStatus(this);" name="beez[price][beez_geo_zone_id_{{ zone['geo_zone_id'] }}_status]" class="switchery" {{ status in [1, '1', 'on'] ? 'checked' }}>
+                                                                    <span class="switchery-status">{{ status in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                                                </label>
+                                                            </div>
+                                                            <!-- /Switchery -->
+                                                        </div>
+                                                    </div>
+                                                {% endfor %}
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {# /Cost Block #}
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+ 	<!-- Gateway Presentation Fields -->
+    <div class="col-md-9 col-md-offset-3">
+        <div class="panel panel-white">
+            <div class="panel-heading">
+                <h6 class="panel-title"><span class="text-bold">{{ lang('entry_presentation') }}</span></h6>
+                <div class="heading-elements not-collapsible">
+                    <ul class="icons-list">
+                        <li><a data-action="collapse" class=""></a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="collapse in" id="fields-panel">
+
+                    {# Shipping Method Title #}
+					<div class="col-md-12">
+                        <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                            <div class="tab-content">
+                                {% for lng in languages %}
+                                    <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}" id="beez_display_name_{{ lng['language_id'] }}">
+                                        <div class="form-group col-md-6">
+                                            <label for="beez_display_name" class="control-label">{{ lang('entry_display_name') ~ ' (' ~ lng['name'] ~ ')'}}</label>
+                                            <input type="text" class="form-control" id="beez_display_name" name="beez[display_name][{{ lng['language_id'] }}]" value="{{ beez['display_name'][lng['language_id']] }}" >
+                                            <span class="help-block">{{ lang('text_display_name_help') }}</span>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+
+                            <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                                {% for language in languages %}
+                                    <li class="{{ loop.first ? 'active' : '' }}">
+                                        <a href="#beez_display_name_{{ language['language_id'] }}" data-toggle="tab" aria-expanded="false">
+                                            <img src="view/image/flags/{{ language['image'] }}"
+                                                title="{{ language['name'] }}" class="pull-right">
+                                            <div> {{ language['name'] }}</div>
+                                        </a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+					{# /Shipping Method Title #}
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Gateway Presentation -->
+
+
+
+    {# Status Mapping #}
+    <div class="col-md-9 pull-right">
+        <div class="panel panel-white">
+                <div class="panel-heading">
+                <h6 class="panel-title"><span class="text-bold">{{ lang('beez_statuses_mapping') }}</span></h6>
+                <small>{{ lang('beez_statuses_help_text')}}</small>
+                <div class="heading-elements not-collapsible">
+                    <ul class="icons-list">
+                        <li><a data-action="collapse" class=""></a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="collapse in" id="fields-panel">
+                   
+                    {# Adding All statuses button/Link #}
+                    {% if not are_statuses_added %}
+                    <div class="form-group col-md-12">
+                        <label for="add_all_statuses">{{ lang('lbl_add_all_statuses') }}</label>
+                        <a href="{{ link('shipping/beez/addAllStatuses') }}" class="btn btn-primary" id="add_all_statuses"> {{ lang('text_add_all_statuses') }}</a>
+                        <span class="help-block">{{ lang('text_add_all_statuses_help') }}</span>
+                    </div>
+                    
+                    <div class="separator" style="width: 100%;"> {{ lang('text_or') }} </div>                    
+                    {% endif %}
+                    
+
+                    {% for key , status in beez['statuses'] %}
+                    <input type="hidden" name="beez[statuses][{{key}}][name][en]" value="{{ status['name']['en']}}">
+                    <input type="hidden" name="beez[statuses][{{key}}][name][ar]" value="{{ status['name']['ar']}}">
+                    <!-- After Shipping Status -->
+                    <div class="form-group col-md-6">
+                        <label for="beez_after_creation_status" class="control-label">{{ status['name'][config('config_language')]}}</label>
+                        <select name="beez[statuses][{{key}}][expandcartid]" id="beez_after_creation_status" class="form-control">
+                            {% for order_status in order_statuses %}
+                                <option value="{{ order_status['order_status_id'] }}" {{ status['expandcartid'] == order_status['order_status_id'] ? 'selected' :'' }}> 
+                                    {{ order_status['name'] }} 
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <span class="help-block"></span>
+                    </div>
+                    <!-- /After Shipping Status -->
+                    {% endfor %}
+                
+                </div>
+            </div>
+        </div>
+    </div>
+    {# /Status Mapping #}
+  </div>
+</form>
+{# End Form #}
+
+
+
+<script type="text/javascript">
+
+    $('select').select2();
+
+    const changeStatus = checkbox => {
+        $(checkbox).siblings('.switchery-status').html( $(checkbox).is(':checked') ? "{{ lang('text_enabled') }}" : "{{ lang('text_disabled') }}" );
+    };
+
+</script>

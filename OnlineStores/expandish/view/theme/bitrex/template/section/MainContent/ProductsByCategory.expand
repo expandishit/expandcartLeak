@@ -1,0 +1,104 @@
+{% set products_per_item = 4 %}
+{% set allFeaturedCategories = getFeaturedCategories(fields['ProductsByCategory_Select']['field_value'], 595, 738) %}
+
+<div class="product-box6 product-box7" style="background: url('{{ fields.ProductsByCategory_BGImage.field_value }}') no-repeat fixed center center;" id="section-{{ section_id }}">
+	<div class="container">
+		<div class="title-box1 text-center">
+			<h2 class="title30"><span>{{ fields.ProductsByCategory_Title.field_value }}</span></h2>
+		</div>
+		<div class="title-box5">
+			<ul class="list-none">
+
+				{% for category in allFeaturedCategories %}
+				<li {% if loop.index == 1 %}class="active"{% endif %}>
+					<a href="#{{ category['category_id'] }}" data-toggle="tab" >
+						{{ category['name'] }}
+					</a>
+				</li>
+				{% endfor %}
+
+			</ul>
+		</div>
+
+
+		<div class="tab-content">
+
+
+			{% for category in allFeaturedCategories %}
+
+
+
+
+			{% if fields.ProductsByCategory_Type.field_value == 'getLatestProductsByCategoryId' %}
+				{% set categoryProducts = getLatestProductsByCategoryId(category['category_id'], fields['ProductsByCategory_Limit']['field_value'], 500, 600) %}
+
+			{% elseif fields.ProductsByCategory_Type.field_value == 'getBestSellerProductsByCategoryId' %}
+				{% set categoryProducts = getBestSellerProductsByCategoryId(category['category_id'], fields['ProductsByCategory_Limit']['field_value'], 500, 600) %}
+
+			{% elseif fields.ProductsByCategory_Type.field_value == 'getSpecialProductsByCategoryId' %}
+				{% set categoryProducts = getSpecialProductsByCategoryId(category['category_id'], fields['ProductsByCategory_Limit']['field_value'], 500, 600) %}
+
+			{% endif %}
+
+			<div id="{{ category['category_id'] }}" class="tab-pane {% if loop.index == 1 %}active{% endif %}">
+				<div class="product-slider3">
+					<div class="wrap-item arrow-style3" data-pagination="false" data-navigation="true" data-itemscustom="[[0,1],[480,2],[768,3],[1366,4]]">
+
+						{% for itemProducts in categoryProducts|batch(1, 'NO-ITEM') %}
+						{% for product in itemProducts %}
+						<div class="item">
+							<div class="row" style="margin: 0;">
+
+								<div class="col-xs-12">
+									<div class="item-product item-product7 none-shadow" style="min-height: 320px;">
+										<div class="product-thumb">
+											<a href="{{ product.href }}" class="product-thumb-link"><img class="img-responsive" src="{{ product.thumb }}" alt=""></a>
+											<div class="product-extra-link">
+												<a href="#" class="compare-link" onclick="addToCompare({{ product.product_id }}, 1); return false;"><i class="fa fa-file-o" aria-hidden="true"></i></a>
+												{% if ('-1' in product.price) or ('-1' in product.special) %}
+												<a href="#" class="addcart-link" onclick="contact_us('{{ product.product_id }}');"><i class="fa fa-opencart" aria-hidden="true"></i></a>
+												{% else %}
+												  {% if customer.isCustomerAllowedToAdd_cart and ( config('config_hide_add_to_cart') != 1 or product.quantity >0 )  %}
+												<a href="#" class="addcart-link" onclick="addToCart({{ product.product_id }}, 1); return false;"><i class="fa fa-opencart" aria-hidden="true"></i></a>
+												{% endif %}
+												{% endif %}
+												<a href="#" class="wishlist-link" onclick="addToWishList({{ product.product_id }}); return false;"><i class="fa fa-heart-o" aria-hidden="true"></i></a>
+											</div>
+											<a href="{{ product.href }}" class="quickview-link"><i class="fa fa-search" aria-hidden="true"></i></a>
+											<div class="product-rate">
+												<div class="product-rating" style="width:100%"></div>
+											</div>
+										</div>
+										<div class="product-info">
+											{% if config('show_brands') %}
+											<h3 class="product-title"><a href="{{ product.manufacturer_href }}">{{ product.manufacturer }}</a></h3>
+											{% endif %}
+											<h3 class="product-title"><a href="{{ product.href }}">{{ product.name }}</a></h3>
+											<div class="product-price">
+												{% if ('-1' in product.price) or ('-1' in product.special) %}
+													<ins><span class="clickable" onclick="contact_us('{{ product.product_id }}');">{{ lang('button_req_quote') }}</span></ins>
+													<div id="enquiry-{{ product.product_id }}"  style="display:none">{{ product.name }}:</div>
+												{% elseif product.special %}
+													<del><span>{{ product.price }}</span></del>
+													<ins><span>{{ product.special }}</span></ins>
+												{% else %}
+													<ins><span>{{ product.price }}</span><ins>
+												{% endif %}
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<!-- End Row -->
+						</div>
+						{% endfor %}
+						<!-- End Item -->
+						{% endfor %}
+					</div>
+				</div>
+			</div>
+			<!-- End Tab -->
+			{% endfor %}
+		</div>
+	</div>
+</div>

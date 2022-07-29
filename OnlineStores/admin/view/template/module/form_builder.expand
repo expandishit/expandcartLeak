@@ -1,0 +1,575 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block title %}
+    {{ lang('form_builder_heading_title') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+    <a href="{{ cancel }}" class="btn btn-default">{{ lang('button_cancel') }}</a>
+    <a class="btn btn-primary" onclick="$('.form').submit();">
+        <i class="far fa-save fa-lg position-left"></i>{{ lang('button_save') }}
+    </a>
+{% endblock headelements %}
+
+
+{% block content %}
+
+<form action="{{ links['submit'] }}" method="post" enctype="multipart/form-data" id="form-warehouse" class="form">
+    <!-- Status -->
+    <div class="col-md-3">
+        <div class="panel panel-white">
+            <div class="panel-heading">
+                <h6 class="panel-title"><span class="text-bold">{{ lang('entry_settings')|trim(':') }}</span></h6>
+                <div class="heading-elements not-collapsible">
+                    <ul class="icons-list">
+                        <li><a data-action="collapse" class=""></a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="collapse in" id="panel1">
+                    <div class="form-group">
+                        <label>{{ lang('entry_status') }}</label>
+                        <div class="checkbox checkbox-switchery">
+                            <label>
+                                <input type="checkbox" onchange="changeStatus(this);"
+                                       name="settings[status]" class="switchery"
+                                        {{ settings['status'] == 1 ? 'checked' : '' }}>
+                                <span class="switchery-status">
+                                        {{ settings['status'] == 1 ? lang('text_enabled') : lang('text_disabled') }}
+                                    </span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label">{{ lang('entry_reply_email') }} <span class="text-danger">*</span></label>
+                        <input class="form-control" type="email" name="settings[email]" value="{{settings['email'] }}" />
+                        <span class="help-block"></span>
+                        <span class="text-muted">{{ langempty('text_reply_email_help') }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- End of Status -->
+    <div class="col-md-9">
+        <div class="panel panel-white">
+            <div class="panel-heading">
+                    <h6 class="panel-title"><span class="text-bold">{{ lang('text_form_data') }}</span><a class="heading-elements-toggle"><i class="icon-more"></i></a></h6>
+                <div class="heading-elements not-collapsible">
+                    <ul class="icons-list">
+                        <li><a data-action="collapse" class=""></a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="collapse in" id="pnl-general">
+                    <div class="form-group">
+                        <!-- Multi Language Information -->
+                        <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                            <div class="tab-content">
+                                {% for language in languages %}
+                                    <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}" id="langTab{{ language['language_id'] }}">
+                                        <!-- form title -->
+                                        <div class="form-group" id="title_{{ language['language_id'] }}-group">
+                                            <label for="title_{{ language['language_id'] }}" class="control-label">{{ lang('entry_form_title') }} <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="title_{{ language['language_id'] }}" name="settings[{{ language['language_id']}}][form_title]" size="100" value="{{ settings[language['language_id']]['form_title'] }}">
+                                            <span class="help-block"></span>
+                                        </div>
+                                        <!-- /form title -->
+                                        <!-- desc  -->
+                                        <div class="form-group m-0" id="description_{{ language['language_id'] }}-group">
+                                            <label class="control-label">{{ lang('entry_form_desc') }}<span class="text-danger">*</span></label>
+                                            <textarea name="settings[{{ language['language_id']}}][form_desc]" id="description_{{ language['language_id'] }}" class="summernote-fixed-height {{loop.index != 1 ? 'duplicate-input' : ''}}"
+                                            >{{ settings[language['language_id']]['form_desc'] }}</textarea>
+                                            <span class="help-block"></span>
+                                            <span class="text-muted">{{ langempty('entry_description_help') }}</span>
+                                        </div> 
+                                        <!-- /desc -->
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                                {% for language in languages %}
+                                    <li class="{{ loop.first ? 'active' : '' }}">
+                                        <a href="#langTab{{ language['language_id'] }}" data-toggle="tab" aria-expanded="false">
+                                            <img src="view/image/flags/{{ language['image'] }}" title="{{ language['name'] }}" class="pull-right">
+                                            <div> {{ language['name'] }}</div>
+                                        </a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    <!-- /Multi language information -->
+                </div>
+            </div>
+        </div>
+        <div class="inputs-div">
+        {% set globalInputKey = 0 %}
+        {% set optionKey = 0 %}
+        {% for inputKey,inputData in settings['fields'] %}
+        {% set globalInputKey = inputKey %}
+        <div class="panel panel-flat" id="input-panel-{{inputKey}}">                        
+            <div class="panel-body">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="type" class="control-label">{{ lang('entry_field_type') }}</label>
+                        <select name="settings[fields][{{ inputKey }}][type]" class="form-control select" data-id="{{inputKey}}">
+                            {% for label,value in fieldTypes %}
+                                <option value="{{ value }}" {{ value == inputData['type'] ? 'selected' : '' }}>
+                                    {{ lang(label) }}
+                                </option>
+                            {% endfor %}                            
+                        </select>
+                        <span class="help-block"></span>
+                    </div>
+                </div> 
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>{{ lang('entry_required') }}</label>
+                        <div class="checkbox checkbox-switchery">
+                            <label>
+                                <input type="checkbox" onchange="changeStatus(this);"
+                                       name="settings[fields][{{ inputKey }}][required]" class="switchery"
+                                        {{ inputData['required'] == 1 ? 'checked' : '' }}>
+                                        <span class="switchery-status">
+                                        {{ inputData['required'] == 1 ? lang('text_enabled') : lang('text_disabled') }}
+                                    </span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <br>
+                    <button class='btn btn-danger' onclick="removeItem('#input-panel-{{inputKey}}');"><i class='icon-trash' ></i></button>             
+                </div> 
+
+                <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                    <div class="tab-content">
+                        {% for language in languages %}
+                            <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}" id="langTab-{{inputKey}}{{ language['language_id'] }}">
+                                <!-- field title -->
+                                <div class="form-group col-md-12" id="field_title_{{ language['language_id'] }}-group">
+                                    <label for="field_title_{{ language['language_id'] }}" class="control-label">{{ lang('entry_field_title') }} <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="field_title_{{ language['language_id'] }}" name="settings[fields][{{inputKey}}][title][{{ language['language_id']}}]" size="100" value="{{ inputData['title'][language['language_id']] }}">
+                                    <span class="help-block"></span>
+                                </div>
+                                <!-- /field title -->
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                        {% for language in languages %}
+                            <li class="{{ loop.first ? 'active' : '' }}">
+                                <a href="#langTab-{{inputKey}}{{ language['language_id'] }}" data-toggle="tab" aria-expanded="false">
+                                    <img src="view/image/flags/{{ language['image'] }}" title="{{ language['name'] }}" class="pull-right">
+                                    <div> {{ language['name'] }}</div>
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>    
+                                         
+                <table id="datatableGrid-{{inputKey}}" class="table table-hover datatable-highlight">
+                    {% set optionsCounter = inputData["values"]|length %}
+                    <a class='btn btn-default' onclick="addOptionValue('{{inputKey}}');" id="add-option-btn-{{inputKey}}"><i class='icon-plus3'></i> {{ lang('button_add_option_value') }}</a> 
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th>{{ lang('entry_option_value') }}</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% if optionsCounter > 0 %}
+                        {% for ovKey,option in inputData["values"] %}
+                              {% set optionKey = optionKey + 1 %}
+                              <tr id="option-value-row-{{inputKey}}-{{ ovKey }}">
+                                  <td class="align-top">
+                                      <a class='btn btn-default btn-xs' onclick="removeOption('#option-value-row-{{inputKey}}-{{ ovKey }}','{{inputKey}}');"><span><i class='icon-trash'></i></span></a>
+                                  </td>
+                                  <td>
+                                      <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                                          <div class="tab-content">
+                                              {% for language in languages %}
+                                                   <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}" id="langTab-{{inputKey}}-{{ ovKey }}-{{ language['language_id'] }}">
+                                                    <div class="form-group" id="option_value_{{ ovKey }}_{{ language['language_id'] }}-group">
+                                                    <input type="text" class="form-control" name="settings[fields][{{inputKey}}][values][{{ovKey}}][{{ language['language_id']}}]"
+                                                    value="{{option[language['language_id']]}}"/>
+                                                    <span class="help-block"></span>
+                                                    </div>
+                                                  </div>
+                                              {% endfor %}
+                                          </div>
+
+                                          <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                                              {% for language in languages %}
+                                                  <li class="{{ loop.first ? 'active' : '' }}">
+                                                      <a href="#langTab-{{ inputKey }}-{{ ovKey }}-{{ language['language_id'] }}" data-toggle="tab" aria-expanded="false">
+                                                          <img src="view/image/flags/{{ language['image'] }}" title="{{ language['name'] }}" class="pull-right">
+                                                          <div> {{ language['name'] }}</div>
+                                                      </a>
+                                                  </li>
+                                              {% endfor %}
+                                          </ul>
+                                      </div>
+                                  </td>
+                              </tr>
+                        {% endfor %}
+                    {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endfor %}
+        </div>
+       <h6 class="text-center"><a class="button btn btn-primary add-new-input" href="#">{{ lang('text_add_new_field') }}</a></h6>
+    </div>
+
+</div>
+</form>
+
+<script src="view/javascript/pages/catalog/product/summernote-video-plugin/summernote-video-plugin.js"></script>
+<script>
+
+    $(document).ready(function(){
+        // Loop through each select input
+        $(".select").each(function(){
+        var select_id = $(this).data('id');
+            if(this.value == "text" || this.value == "textarea" || this.value == "file" || this.value == "email" ){
+                $('#add-option-btn-'+select_id).hide();
+                $('#datatableGrid-'+select_id).hide(); 
+            }
+        });
+    });
+
+    $(document).on('change','.select',function(){
+       var select_id = $(this).data('id');
+        if(this.value == "text" || this.value == "textarea" || this.value == "file" || this.value == "email"){
+            $('#add-option-btn-'+select_id).hide();
+            $('#datatableGrid-'+select_id).hide(); 
+        }
+        else{
+            $('#add-option-btn-'+select_id).show();
+            $('#datatableGrid-'+select_id).show();       
+        }
+    });
+
+    $(".add-new-input").click(function(e){
+        e.preventDefault();
+        addInput();
+    });
+
+    var newOptionKey = '{{ optionKey + 1}}';
+    var newInputKey = '{{ globalInputKey + 1}}';
+
+    function addOptionValue(inputKey)
+    {
+        html = '';
+        html += `<tr id="option-value-row-${inputKey}-${newOptionKey}">
+                <td style="vertical-align: top;">
+                    <a class='btn btn-default btn-xs' onclick="removeOption('#option-value-row-${inputKey}-${newOptionKey}','${inputKey}');"><i class='icon-trash'></i></a>
+                </td>`;
+        html += `
+            <td>
+                <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                    <div class="tab-content">
+                        {% for language in languages %}
+                            <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}" id="langTab-${inputKey}-${newOptionKey}-{{ language['language_id'] }}">
+                                <div class="form-group" id="option_value_${newOptionKey}_{{ language['language_id'] }}-group">
+                                    <input type="text" class="form-control" 
+                                    name="settings[fields][${inputKey}][values][${newOptionKey}][{{ language['language_id']}}]"
+                                    value=""/>
+                                    <span class="help-block"></span>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                        {% for language in languages %}
+                            <li class="{{ loop.first ? 'active' : '' }}">
+                                <a href="#langTab-${inputKey}-${newOptionKey}-{{ language['language_id'] }}" 
+                                data-toggle="tab" aria-expanded="false">
+                                    <img src="view/image/flags/{{ language['image'] }}" title="{{ language['name'] }}" class="pull-right">
+                                    <div> {{ language['name'] }}</div>
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </td>
+        </tr>`;
+
+        $('#datatableGrid-'+inputKey).find('tbody').prepend(html);
+        newOptionKey++;
+    }
+    
+    function addInput() {
+        html = '';
+        html += `<div class="panel panel-flat" id="input-panel-${newInputKey}">
+            <div class="panel-body">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="type" class="control-label">{{ lang('entry_field_type') }}</label>
+                        <select name="settings[fields][${newInputKey}][type]" class="form-control select" data-id="${newInputKey}">
+                            {% for label,value in fieldTypes %}
+                                <option value="{{ value }}" {{ label == inputData['type'] ? 'selected' : '' }}>
+                                    {{ lang(label) }}
+                                </option>
+                            {% endfor %}                            
+                        </select>
+                        <span class="help-block"></span>
+                    </div>
+                </div> 
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>{{ lang('entry_required') }}</label>
+                        <div class="checkbox checkbox-switchery">
+                            <label>
+                                <input type="checkbox" onchange="changeStatus(this);"
+                                       name="settings[fields][${newInputKey}][required]" class="switchery"
+                                        {{ inputData['required'] == 1 ? 'checked' : '' }}>
+                                        <span class="switchery-status"  id="required-${newInputKey}">
+                                        {{ inputData['required'] == 1 ? lang('text_enabled') : lang('text_disabled') }}
+                                    </span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <br>
+                    <button class='btn btn-danger' onclick="removeItem('#input-panel-${newInputKey}');"><i class='icon-trash' ></i></button>             
+                </div> 
+                <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                    <div class="tab-content">
+                        {% for language in languages %}
+                            <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}" id="langTab-${newInputKey}{{ language['language_id'] }}">
+                                <div class="form-group col-md-12" id="field_title_{{ language['language_id'] }}-group">
+                                    <label for="field_title_{{ language['language_id'] }}" class="control-label">{{ lang('entry_field_title') }} <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="field_title_{{ language['language_id'] }}" name="settings[fields][${newInputKey}][title][{{ language['language_id']}}]" size="100" value="">
+                                    <span class="help-block"></span>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                        {% for language in languages %}
+                            <li class="{{ loop.first ? 'active' : '' }}">
+                                <a href="#langTab-${newInputKey}{{ language['language_id'] }}" data-toggle="tab" aria-expanded="false">
+                                    <img src="view/image/flags/{{ language['image'] }}" title="{{ language['name'] }}" class="pull-right">
+                                    <div> {{ language['name'] }}</div>
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>    
+                <table id="datatableGrid-${newInputKey}" class="table table-hover datatable-highlight">
+                    <a class='btn btn-default' onclick="addOptionValue('${newInputKey}');" id="add-option-btn-${newInputKey}"><i class='icon-plus3'></i> {{ lang('button_add_option_value') }}</a> 
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th>{{ lang('entry_option_value') }}</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                      <tr id="option-value-row-${newInputKey}-${newOptionKey}">
+                          <td>
+                              <a class='btn btn-default btn-xs' onclick="removeOption('#option-value-row-${newInputKey}-${newOptionKey}','${newInputKey}');"><i class='icon-trash'></i></a>
+                          </td>
+                          <td>
+                              <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                                  <div class="tab-content">
+                                      {% for language in languages %}
+                                           <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}" id="langTab-${newInputKey}-${newOptionKey}-{{ language['language_id'] }}">
+                                            <div class="form-group" id="option_value_${newOptionKey}_{{ language['language_id'] }}-group">
+                                            <input type="text" class="form-control" name="settings[fields][${newInputKey}][values][${newOptionKey}][{{ language['language_id']}}]"
+                                            value=""/>
+                                            <span class="help-block"></span>
+                                            </div>
+                                          </div>
+                                      {% endfor %}
+                                  </div>
+                                  <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                                      {% for language in languages %}
+                                          <li class="{{ loop.first ? 'active' : '' }}">
+                                              <a href="#langTab-${newInputKey}-${newOptionKey}-{{ language['language_id'] }}" data-toggle="tab" aria-expanded="false">
+                                                  <img src="view/image/flags/{{ language['image'] }}" title="{{ language['name'] }}" class="pull-right">
+                                                  <div> {{ language['name'] }}</div>
+                                              </a>
+                                          </li>
+                                      {% endfor %}
+                                  </ul>
+                              </div>
+                          </td>
+                      </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        `;
+        $('.inputs-div').append(html);
+        $('.select').select2();
+        $('#add-option-btn-'+newInputKey).hide();
+        $('#datatableGrid-'+newInputKey).hide(); 
+        newInputKey++;       
+    }
+
+
+    function removeItem(row)
+    {
+        $(row).remove().draw();
+    }
+
+    function removeOption(row,table_input_key)
+    {
+        //datatableGrid-{{inputKey}}
+        var table_id = "datatableGrid-"+table_input_key;
+        var rowCount = $('#'+table_id+' tr').length;
+        rowCount = rowCount - 2;
+        if(rowCount >= 1)
+            $(row).remove().draw();
+        else
+            $(row).find('input').val('');
+        //$this.siblings().find('input').val('');
+    }
+
+    function changeStatus(checkbox)
+    {
+        var self = $(checkbox);
+        var switch_status = self.siblings('.switchery-status');
+
+        if ( self.is(':checked') )
+        {
+            switch_status.html("{{ lang('text_enabled') }}");
+        }
+        else
+        {
+            switch_status.html("{{ lang('text_disabled') }}");
+        }
+    }
+    jQuery(function () {
+        var imageManagerButton = function (context) {
+            var ui = $.summernote.ui;
+
+            // create button
+            var button = ui.button({
+                contents: '<i class="note-icon-picture"/>',
+                tooltip: '{{ lang('text_image') }}',
+                click: function (e) {
+                    // invoke insertText method with 'hello' on editor module.
+                    //context.invoke('editor.insertText', 'hello');
+                    var textareael = $(this).closest('.form-group').find('textarea.summernote-fixed-height').attr('name');
+                    $.startImageManager(textareael, null, "summernoteImageManagerCallback", 'callerName');
+                    $('body').removeClass('modal-open');
+                }
+            });
+
+            return button.render();   // return button as jquery object
+        }
+        // Default initialization
+        jQuery('.summernote-fixed-height').summernote({
+            height: 200,
+            callbacks: {
+                onChange: function(contents, $editable) {
+                    console.log('onChange:', contents, $editable);
+                    $($editable).find("p").find("img").css("max-width", "100%")
+                    $($editable).find(".block-tabs").find("iframe").css("height", "100%")
+                }
+            },
+
+            {% if base.lang == 'ar' %}
+            lang: "ar-AR",
+            {% endif %}
+
+            toolbar: [
+                ['style', ['style']],
+                ['font', ['bold', 'underline', 'clear']],
+                ['fontname', ['fontname']],
+                ['fontsize', ['fontsize']],
+                ['color', ['color']],
+                ['para', ['ul', 'ol', 'paragraph']],
+                ['table', ['table']],
+                // ['insert', ['link', 'imagemanager', 'video']],
+                ['insert',['ltr','rtl']],
+                ['insert', ['link', 'imagemanager', 'videoAttributes','emoji','codeview']],
+                ['view', ['fullscreen']],
+                //['mybutton', ['myVideo']]
+                //['insert', ['emoji']],
+                //['tool', ['undo', 'redo']]
+            ],
+            buttons: {
+                imagemanager: imageManagerButton
+                //myVideo: youtuvevideo
+            },
+            popover: {
+                image: [
+
+                    ['imagesize', ['imageSize100', 'imageSize50', 'imageSize25']],
+                    ['float', ['floatLeft', 'floatRight', 'floatNone']],
+                    ['remove', ['removeMedia']],
+                    ['custom', ['imageAttributes']],
+                ],
+            },
+            imageAttributes:{
+                icon:'<i class="note-icon-pencil"/>',
+                removeEmpty:true, // true = remove attributes | false = leave empty if present
+                disableUpload: true, // true = don't display Upload Options | Display Upload Options
+                disableAttributes: true,
+                disableLink: false,
+                disableImage: false,
+            }
+        });
+
+        $(".touchspin-quantity-control").TouchSpin({
+            min: 0,
+            max: Infinity,
+            initval: 1
+        });
+
+
+        $(".touchspin-minus-control").TouchSpin({
+            min: -Infinity,
+            max: Infinity,
+            initval: 0
+        });
+
+        $(".touchspin-money-minus").TouchSpin({
+            'postfix': defaultCurrency,
+            min: -Infinity,
+            max: Infinity,
+            initval: 0,
+            decimals: 2,
+            step: 0.01
+        });
+
+        $('#barcode').change(function () {
+
+            var $barcode = $(this).val();
+
+            $.ajax({
+                url: '{{ link('catalog/product/barcode') }}',
+                method: 'POST',
+                dataType: 'JSON',
+                data: {barcode: $barcode},
+                success: function (response) {
+                    if (response['status'] == 'success') {
+                        if (!response['barcode']) {
+                            $('#barcode_image').hide();
+                        } else {
+                            $('#barcode_image').show();
+                            $('#barcode_image').attr('src', 'data:image/png;base64,' + response['barcode']);
+                        }
+                    }
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

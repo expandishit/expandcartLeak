@@ -1,0 +1,1271 @@
+{% extends "base.expand" %}
+{% import "controls/forms.expand" as forms %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+
+{% block title %}
+    {{ lang('heading_title_expandpay', 'extension/payment') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block secondarymenu %}
+{% endblock secondarymenu %}
+
+{% block content %}
+
+<style>
+    .content-wrapper {
+        background-color: #f8f9ff;
+    }
+
+    .page-header-default {
+        background-color: transparent;
+    }
+    .page-header-content + .breadcrumb-line {
+        border: 0;
+    }
+
+    .end-side-holder.tab-content .tab-pane {
+        display: none;
+    }
+    .end-side-holder.tab-content .tab-pane.active {
+        display: block;
+    }
+
+
+    #Documents .help-block{
+        word-break: break-word;
+    }
+</style>
+
+{% if request.get['from_merge'] == 'yes' %}
+    <div class="alert alert-info">
+        {{ lang('redirected_from_merge_message') }}
+    </div>
+{% endif %}
+
+{% if code == 'my_fatoorah' %}
+    {% include "payment/my_fatoorah_register.expand" %}
+{% endif %}
+
+<div class="alert alert-danger" style="display: none;" id="errors-fallback"></div>
+
+<div class="alert alert-danger" style="display: none;" id="errors-fallback"></div>
+
+    <div class="modal fade" id="modal-deactivate-ps">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger">
+                    <button type="button" class="close" data-dismiss="modal">×</button>
+                    <h4 class="modal-title">{{ lang('entry_deactivate_payment_method') }} <span id="ps-title"></span></h4>
+                </div>
+                <div class="modal-body">
+                    <p>{{ lang('entry_deactivate_message') }}</p>
+        
+                    <p>{{ lang('entry_deactivate_message_conf') }}</p>
+                </div>
+                <div class="modal-footer">
+                    <span class="server-loading" style="display:none;"><i class="fa fa-refresh fa-spin"></i></span>
+                    <button type="button" class="btn btn-danger" psid="" id="deactivate-ps">{{ lang('entry_remove_app') }}</button>
+                    <button type="button" class="btn btn-link" onclick="$('#modal-deactivate-ps').modal('toggle');">{{ lang('entry_cancel') }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- stars expandpay activation tabs -->
+
+
+    <div class="panel panel-white two-side-holder">
+        <ul class="nav nav-tabs expandpay-steps-holder pointer-events-none start-side-holder">
+            <li class="expandpay-steps-item" id='first_step'>
+                <a href="#Country" data-toggle="tab">
+                    <p class="item-title"><i class="fas fa-check check-icon"></i> {{ lang('entry_country_business') }} </p>
+                </a>
+             </li>
+             <li class="expandpay-steps-item" id='second_step'>
+                <a href="#BusinessType" data-toggle="tab">
+                    <p class="item-title"><i class="fas fa-check check-icon"></i> {{ lang('entry_business ') }} </p>
+                </a>
+             </li>
+             <li class="expandpay-steps-item">
+                <a href="#CreateAccount" data-toggle="tab">
+                    <p class="item-title"><i class="fas fa-check check-icon"></i> {{ lang('entry_create_account') }} </p>
+                </a>
+             </li>
+             <li class="expandpay-steps-item" id='file_upload_step'>
+                <a href="#Documents" data-toggle="tab">
+                    <p class="item-title"><i class="fas fa-check check-icon"></i> {{ lang('entry_documents') }} </p>
+                </a>
+             </li>
+             <li class="expandpay-steps-item verfication-tab verfication-pending"> <!-- replace this class  verfication-done & verfication-error & verfication-pending-->
+                <a href="#Verfication" data-toggle="tab">
+                    <p class="item-title"><i class="fas fa-check check-icon"></i> {{ lang('entry_verification') }}
+                        
+                    </p>
+                </a>
+             </li>
+        </ul>
+        <div class="tab-content end-side-holder">
+            <form id='createAccountForm' action="{{link('extension/expandpay/register')}}">
+                <div class="tab-pane" id="Country"> <!-- add class form-readonly for disable it  -->
+                    <div class="panel-body">
+                    <h5 class="bold text-center tab-content-title">{{ lang('country_dec') }}</h5>
+                <div class="country-item-holder">
+                    <div class="country-item active" data-country="Fawaterak-required" country-name="country-egy">
+                        <input class="country-input hidden" name='country' value="eg" type="checkbox" checked>
+                        <i class="far fa-check-circle check-icon"></i>
+                        <div class="flag-holder">
+                            <img src="view/image/expayflags/Egypt-flag.jpg">
+                        </div>
+                        <span class="country-name">{{lang('egypt_name')}}</span>
+                    </div>
+
+                    <div class="country-item {{white_list ? 'country-item-soon' : ''}}" data-country="MyFatoorah-required" country-name="country-ksa">
+                        <span class="label_soon">{{ lang('country_item_soon') }}</span>
+                        <input class="country-input hidden" name='country' value="sa" type="checkbox">
+                        <i class="far fa-check-circle check-icon"></i>
+                        <div class="flag-holder">
+                            <img src="view/image/expayflags/ksa-flag.jpg">
+                        </div>
+                        <span class="country-name">{{ lang('saudia_name') }}</span>
+                    </div>
+
+                    <div class="country-item {{white_list ? 'country-item-soon' : ''}}" data-country="MyFatoorah-required" country-name="country-kuw">
+                        <span class="label_soon">{{ lang('country_item_soon') }}</span>
+                        <input class="country-input hidden" name='country' value="kw" type="checkbox">
+                        <i class="far fa-check-circle check-icon"></i>
+                        <div class="flag-holder">
+                            <img src="view/image/expayflags/Kuwait-flag.jpg">
+                        </div>
+                        <span class="country-name">{{ lang('kuwait_name') }}</span>
+                    </div>
+
+                    <div class="country-item {{white_list ? 'country-item-soon' : ''}}" data-country="MyFatoorah-required" country-name="country-bah">
+                        <span class="label_soon">{{ lang('country_item_soon') }}</span>
+                        <input class="country-input hidden" name='country' value="bh" type="checkbox">
+                        <i class="far fa-check-circle check-icon"></i>
+                        <div class="flag-holder">
+                            <img src="view/image/expayflags/Bahrain-flag.jpg">
+                        </div>
+                        <span class="country-name">{{ lang('bahrain_name') }}</span>
+                    </div>
+
+                    <div class="country-item {{white_list ? 'country-item-soon' : ''}}" data-country="MyFatoorah-required" country-name="country-uae">
+                        <span class="label_soon">{{ lang('country_item_soon') }}</span>
+                        <input class="country-input hidden" name='country' value="ae" type="checkbox">
+                        <i class="far fa-check-circle check-icon"></i>
+                        <div class="flag-holder">
+                            <img src="view/image/expayflags/UAE-flag.jpg">
+                        </div>
+                        <span class="country-name">{{ lang('uae_name') }}</span>
+                    </div>
+
+                    <div class="country-item {{white_list ? 'country-item-soon' : ''}}" data-country="MyFatoorah-required" country-name="country-qtr">
+                        <span class="label_soon">{{ lang('country_item_soon') }}</span>
+                        <input class="country-input hidden" name='country' value="qa" type="checkbox">
+                        <i class="far fa-check-circle check-icon"></i>
+                        <div class="flag-holder">
+                            <img src="view/image/expayflags/qatar-flag.jpg">
+                        </div>
+                        <span class="country-name">{{ lang('qatar_name') }}</span>
+                    </div>
+                </div>
+
+                <div class="gray-hint">
+                    <i class="fa fa-info-circle" aria-hidden="true"></i>
+                    {{ lang('country_hint') }}
+                  </div>
+                </div>
+                <div class="expandpay-arrows-holder">
+                    <a class="btn btn-default expandpay-btnPrevious hidden-btn-area" ><i class="fa fa-angle-left" aria-hidden="true"></i> {{ lang('entry_back') }} </a>
+                    <a class="btn btn-primary expandpay-btnNext static-next" >{{ lang('entry_next') }}<i class="fa fa-angle-right" aria-hidden="true"></i></a>
+                    <a class="btn btn-primary dynamic-next" id='countryNextButton' >
+                        <button type="button" class="btn btn-primary btn-sm custom-alert-onBtn countryloader alert-loading" style="display: none;"><i class="fas fa-spinner fa-spin"></i></button>
+                        <button type="button" class="btn btn-success btn-sm custom-alert-onBtn countryloader alert-done" style="display: none;"><i class="far fa-check-circle check-icon"></i></button>
+                        {{ lang('entry_next') }}<i class="fa fa-angle-right" aria-hidden="true"></i></a>
+                </div>
+                </div>
+                <div class="tab-pane" id="BusinessType"> <!-- add class form-readonly for disable it  -->
+                    <div class="panel-body">
+                    <h5 class="bold text-center tab-content-title">{{ lang('business_dec') }}</h5>
+                    <div class="BusinessType-item-holder">
+                        <div class="BusinessType-item active" acc-type="Individual-required">
+                            <input class="BusinessType-input hidden" name='type' value="individual" type="checkbox" checked>
+                            <i class="far fa-check-circle check-icon"></i>
+                            <div class="flag-holder">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="41.568" height="48" viewBox="0 0 41.568 48">
+                                    <g id="ic_business" transform="translate(-126.144 -43.995)">
+                                      <path id="Path_17660" data-name="Path 17660" d="M146.428,45.155,127.144,56.281V78.55l5.563,3.224,1.38.78,12.341,7.137,12.34-7.137,1.38-.78,5.563-3.224V56.281Zm0,9.777a5.36,5.36,0,1,1-5.369,5.352A5.369,5.369,0,0,1,146.428,54.932Zm0,33.019-10.677-6.163a10.968,10.968,0,0,1,21.354,0Z" transform="translate(0.5 0.58)" fill="#a1d0ff"/>
+                                      <g id="Group_8768" data-name="Group 8768" transform="translate(126.144 43.995)">
+                                        <path id="Path_17661" data-name="Path 17661" d="M146.928,44l-20.784,12V80l6.809,3.93L146.928,92l13.961-8.067L167.712,80V55.991Zm0,44.536-10.677-6.163a10.968,10.968,0,0,1,21.354,0Zm17.784-10.272-4.438,2.563a13.94,13.94,0,0,0-26.691,0l-4.438-2.563V57.731l17.784-10.272,17.784,10.272Z" transform="translate(-126.144 -43.995)" fill="#3b90f4"/>
+                                        <path id="Path_17662" data-name="Path 17662" d="M135.422,57.535a6.866,6.866,0,1,0,6.865-6.866A6.873,6.873,0,0,0,135.422,57.535Zm10.731,0a3.866,3.866,0,1,1-3.866-3.867A3.87,3.87,0,0,1,146.153,57.535Z" transform="translate(-121.505 -40.658)" fill="#3b90f4"/>
+                                      </g>
+                                    </g>
+                                  </svg>
+                            </div>
+                            <span class="BusinessType-name">{{ lang('expandpay_home_busienss') }}</span>
+                            <span class="BusinessType-dec">{{ lang('text_as_individuals') }}</span>
+                        </div>
+
+                        <div class="BusinessType-item" acc-type="Company-required">
+                            <input class="BusinessType-input hidden" name='type' value="business" type="checkbox">
+                            <i class="far fa-check-circle check-icon"></i>
+                            <div class="flag-holder">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="53.635" height="48" viewBox="0 0 53.635 48">
+                                    <g id="Ic_Registered_business" data-name="Ic_Registered business" transform="translate(-184 -165.681)">
+                                      <path id="Path_17663" data-name="Path 17663" d="M232.107,180.9v17.5a3.362,3.362,0,0,1-3.352,3.352H189.7a3.362,3.362,0,0,1-3.352-3.352l.017-17.549C192.853,183.616,212.246,190.27,232.107,180.9Z" transform="translate(1.589 10.256)" fill="#a1d0ff"/>
+                                      <path id="Path_17664" data-name="Path 17664" d="M201.376,176.278a3.409,3.409,0,1,0,3.407,3.409A3.412,3.412,0,0,0,201.376,176.278Z" transform="translate(9.443 7.165)" fill="#3b90f4"/>
+                                      <path id="Path_17665" data-name="Path 17665" d="M221.845,174.353v-8.672H199.792v8.672H184v16.691l.888.474c.089.047.568.3,1.383.674v16.461a5.032,5.032,0,0,0,5.028,5.028h39.036a5.032,5.032,0,0,0,5.028-5.028V192.2c.461-.23.929-.441,1.383-.684l.888-.474V174.353Zm-18.7-5.32h15.348v5.32H203.144Zm-15.792,8.672h46.931v11.315a49.273,49.273,0,0,1-22.532,5.3h0a60.573,60.573,0,0,1-24.4-5.33Zm24.4,19.967h0c1.644,0,3.263-.094,4.871-.235v12.891H205.013V197.277A59.878,59.878,0,0,0,211.748,197.673Zm-22.124,10.98v-15.07a64.881,64.881,0,0,0,12.038,3.23v13.516H191.3A1.677,1.677,0,0,1,189.623,208.653Zm42.388,0a1.677,1.677,0,0,1-1.676,1.676H219.974V197.041a51.914,51.914,0,0,0,12.038-3.32Z" transform="translate(0)" fill="#3b90f4"/>
+                                    </g>
+                                  </svg>
+                            </div>
+                            <span class="BusinessType-name">{{ lang('expandpay_register_busienss') }}</span>
+                            <span class="BusinessType-dec">{{ lang('text_as_companies') }}</span>
+                        </div>
+                </div>
+                </div>
+                <div class="expandpay-arrows-holder">
+                    <a class="btn btn-default expandpay-btnPrevious" ><i class="fa fa-angle-left" aria-hidden="true"></i> {{ lang('entry_back') }} </a>
+                    <a class="btn btn-primary expandpay-btnNext" id='busnissNextButton'>{{ lang('entry_next') }} <i class="fa fa-angle-right" aria-hidden="true"></i></a>
+                </div>
+                </div>
+                <div class="tab-pane" id="CreateAccount"> <!-- add class form-readonly for disable it  -->
+                    <div class="panel-body">
+                        <div class="row m-0">
+                            <h5 class="bold tab-content-title col-md-12">{{ lang('create_account_dec') }}</h5>
+                        </div>
+                        <div class="row m-0">
+                            <div class="alert alert-danger d-none" id="register_error"></div>
+                        </div>
+                        <div class="row m-0">
+                            <div class="form-group col-md-6">
+                                <label class="control-label">{{ lang('entry_full_name') }}<span class="text-danger ml-5">*</span></label>
+                                <input type="text" name='full_name' class="form-control" value="{{merchant_data['full_name'] ? merchant_data['full_name'] : full_name}}" placeholder="">
+                                <span class="help-block"></span>
+                            </div>
+
+                            <div class="form-group col-md-6 valdation-phone">
+                                <label class="control-label">{{ lang('entry_mobile') }}<span class="text-danger ml-5">*</span></label>
+                                <div class="international-telephone-holder">
+                                <input type="text" name='phone' class="form-control international-telephone" placeholder="" oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');">
+                                <span class="help-block"></span>
+                                <span class="ValidNumberMsg text-danger" style="display: none;">{{ lang('valid_number_msg') }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row m-0">
+                            <div class="form-group col-md-6">
+                                <label class="control-label">{{ lang('entry_email') }}<span class="text-danger ml-5">*</span></label>
+                                <input type="email" name='email' autocomplete="disable" class="form-control input-disabled-style" value="{{merchant_data['email'] ? merchant_data['email'] : ''}}" placeholder="">
+                                <span class="help-block"></span>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label class="control-label">{{ lang('entry_business_name') }}<span class="text-danger ml-5">*</span></label>
+                                <input type="text" name='business_name' class="form-control" value="{{merchant_data['business_name'] ? merchant_data['business_name'] : config_name}}" placeholder="">
+                                <span class="help-block"></span>
+                            </div>
+                        </div>
+
+                        <div class="row m-0">
+                            <div class="form-group col-md-6">
+                                <label class="control-label">{{ lang('store_address') }}<span class="text-danger ml-5">*</span></label>
+                                <input type="text" name='address_1' class="form-control" value="{{merchant_data['address_1'] ? merchant_data['address_1']:config_address }}" placeholder="">
+                                <span class="help-block"></span>
+                            </div>
+                        </div>
+                        <div class="form-group col-md-12">
+                            <h6 class="bold">{{ lang('expandpay_register_bank') }} </h6>
+                        </div>
+
+
+                        <div class="row m-0">
+                            <div class="form-group col-md-6">
+                                <label for="bank-name" class="control-label">{{ lang('entry_bank_name') }}<span class="text-danger ml-5">*</span></label>
+                                <select name="bank_name" id="bank-name" class="form-control required-field-toSubmit">
+                                    <option selected value="">{{ lang('entry_please_select') }}</option>
+                                    {%if merchant_data['custom_fields']['bank_name']%}
+                                        <option selected>{{merchant_data['custom_fields']['bank_name']}}</option>
+                                    {%endif%}
+                                </select>
+                                <span class="help-block"></span>
+                                <span class="text-muted"></span>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label class="control-label">{{ lang('entry_bank_name_branch') }}<span class="text-danger ml-5">*</span></label>
+                                <input type="text" name='bank_branch_name' class="form-control" value="{{merchant_data['custom_fields']['bank_branch_name']}}" placeholder="">
+                                <span class="help-block"></span>
+                            </div>
+                        </div>
+
+                        <div class="row m-0">
+                            <div class="form-group col-md-6">
+                                <label class="control-label">{{ lang('entry_account_holder_name') }}<span class="text-danger ml-5">*</span></label>
+                                <input type="text" name='account_holder_name' class="form-control" value="{{merchant_data['custom_fields']['account_holder_name']}}" placeholder="">
+                                <span class="help-block"></span>
+                            </div>
+
+                            <div class="form-group col-md-6">
+                                <label class="control-label">{{ lang('entry_bank_account') }}<span class="text-danger ml-5">*</span></label>
+                                <input type="number" name='bank_account' class="form-control" value="{{merchant_data['custom_fields']['bank_account']}}" placeholder="">
+                                <span class="help-block"></span>
+                            </div>
+                        </div>
+
+                        <div class="row m-0">
+                            <div class="form-group col-md-6 item-country-changed MyFatoorah-required">
+                                <label class="control-label">IBAN / Swift Code <span class="text-danger ml-5">*</span></label>
+                                <input type="text" name='IBAN' class="form-control" value="{{merchant_data['custom_fields']['iban']}}" placeholder="">
+                                <span class="help-block"></span>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="expandpay-arrows-holder">
+                        <a class="btn btn-default expandpay-btnPrevious" ><i class="fa fa-angle-left" aria-hidden="true"></i> {{ lang('entry_back') }} </a>
+                        <a class="btn btn-primary expandpay-btnNext static-next" >{{ lang('entry_next') }}<i class="fa fa-angle-right" aria-hidden="true"></i></a>
+                        <a class="btn btn-primary dynamic-next" id="craeteAccountSubmitButton">
+                            <button type="button" class="btn btn-primary btn-sm custom-alert-onBtn createloader alert-loading" style="display: none;"><i class="fas fa-spinner fa-spin"></i></button>
+                            {{ lang('entry_next') }} <i class="fa fa-angle-right" aria-hidden="true"></i></a>
+                    </div>
+                    
+                </div>
+            </form>
+            <div class="tab-pane" id="Documents"> <!-- add class form-readonly for disable it  -->
+                
+                <div class="form-data-hide" style="display: none;">
+                    <div class="form-country country-egy Individual-required">
+                        <div class="form-group col-md-6">
+                            <label for="national_id" class="control-label">{{ lang('entry_national_id') }}<span class="text-danger ml-5">*</span></label>
+                            <label class="file-input-styled" title="">
+                                <input type="file" class="form-control" id="national_id" name="national_id" accept="image/png,image/jpeg,image/jpg" onchange="this.parentNode.setAttribute('title', this.value.replace(/^.*[\\/]/, ''))">
+                            </label>
+                            <span class="help-block"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-country country-egy Company-required">
+                        <div class="form-group col-md-6">
+                            <label for="national_id" class="control-label">{{ lang('entry_national_id') }}<span class="text-danger ml-5">*</span></label>
+                            <label class="file-input-styled" title="">
+                                <input type="file" class="form-control" id="national_id" name="national_id" accept="image/png,image/jpeg,image/jpg" onchange="this.parentNode.setAttribute('title', this.value.replace(/^.*[\\/]/, ''))">
+                            </label>
+                            <span class="help-block"></span>
+                        </div>
+
+                        <div class="form-group col-md-6">
+                            <label for="commercial_id" class="control-label">{{ lang('entry_commercial_id') }}<span class="text-danger ml-5">*</span></label>
+                            <label class="file-input-styled" title="">
+                                <input type="file" class="form-control" id="commercial_id" name="commercial_id" accept="image/png,image/jpeg,image/jpg" onchange="this.parentNode.setAttribute('title', this.value.replace(/^.*[\\/]/, ''))">
+                            </label>
+                            <span class="help-block"></span>
+                        </div>
+
+                        <div class="form-group col-md-6">
+                            <label for="tax_id" class="control-label">{{ lang('entry_tax_field') }}<span class="text-danger ml-5">*</span></label>
+                            <label class="file-input-styled" title="">
+                                <input type="file" class="form-control" id="tax_id" name="tax_id" accept="image/png,image/jpeg,image/jpg" onchange="this.parentNode.setAttribute('title', this.value.replace(/^.*[\\/]/, ''))">
+                            </label>
+                            <span class="help-block"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-country country-ksa">
+                        <div class="form-group col-md-6">
+                            <label for="commercial_license_1" class="control-label">{{lang('entry_registration_field')}}<span class="text-danger ml-5">*</span></label>
+                            <label class="file-input-styled" title="">
+                                <input type="file" class="form-control" id="commercial_license_1" name="commercial_license_1" accept="image/png,image/jpeg,image/jpg,image/bmp,image/gif,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.doc,.docx" onchange="this.parentNode.setAttribute('title', this.value.replace(/^.*[\\/]/, ''))">
+                            </label>
+                            <span class="help-block"></span>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="civil_id_4" class="control-label">{{lang('entry_auth_front_id')}}<span class="text-danger ml-5">*</span></label>
+                            <label class="file-input-styled" title="">
+                                <input type="file" class="form-control" id="civil_id_4" name="civil_id_4" accept="image/png,image/jpeg,image/jpg,image/bmp,image/gif,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.doc,.docx" onchange="this.parentNode.setAttribute('title', this.value.replace(/^.*[\\/]/, ''))">
+                            </label>
+                            <span class="help-block"></span>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="civil_id_back_5" class="control-label">{{lang('entry_auth_back_id')}}<span class="text-danger ml-5">*</span></label>
+                            <label class="file-input-styled" title="">
+                                <input type="file" class="form-control" id="civil_id_back_5" name="civil_id_back_5" accept="image/png,image/jpeg,image/jpg,image/bmp,image/gif,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.doc,.docx" onchange="this.parentNode.setAttribute('title', this.value.replace(/^.*[\\/]/, ''))">
+                            </label>
+                            <span class="help-block"></span>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="others_7" class="control-label">{{lang('entry_back_account_field')}}<span class="text-danger ml-5">*</span></label>
+                            <label class="file-input-styled" title="">
+                                <input type="file" class="form-control" id="others_7" name="others_7" accept="image/png,image/jpeg,image/jpg,image/bmp,image/gif,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.doc,.docx" onchange="this.parentNode.setAttribute('title', this.value.replace(/^.*[\\/]/, ''))">
+                            </label>
+                            <span class="help-block"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-country country-kuw Individual-required">
+                        <div class="form-group col-md-6">
+                            <label for="civil_id_4" class="control-label">{{ lang('entry_civil_front_id') }}<span class="text-danger ml-5">*</span></label>
+                            <label class="file-input-styled" title="">
+                                <input type="file" class="form-control" id="civil_id_4" name="civil_id_4" accept="image/png,image/jpeg,image/jpg" onchange="this.parentNode.setAttribute('title', this.value.replace(/^.*[\\/]/, ''))">
+                            </label>
+                            <span class="help-block"></span>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="civil_id_back_5" class="control-label">{{ lang('entry_civil_back_id') }}<span class="text-danger ml-5">*</span></label>
+                            <label class="file-input-styled" title="">
+                                <input type="file" class="form-control" id="civil_id_back_5" name="civil_id_back_5" accept="image/png,image/jpeg,image/jpg" onchange="this.parentNode.setAttribute('title', this.value.replace(/^.*[\\/]/, ''))">
+                            </label>
+                            <span class="help-block"></span>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="others_7" class="control-label">{{ lang('entry_instagram_account') }}<span class="text-danger ml-5">*</span></label>
+                            <label class="file-input-styled" title="">
+                                <input type="file" class="form-control" id="others_7" name="others_7" accept="image/png,image/jpeg,image/jpg" onchange="this.parentNode.setAttribute('title', this.value.replace(/^.*[\\/]/, ''))">
+                            </label>
+                            <span class="help-block"></span>
+                        </div>
+                    </div>
+                    <div class="form-country country-kuw Company-required">
+                        <div class="form-group col-md-6">
+                            <label for="commercial_license_1" class="control-label">{{lang('entry_commercial_license')}}<span class="text-danger ml-5">*</span></label>
+                            <label class="file-input-styled" title="">
+                                <input type="file" class="form-control" id="commercial_license_1" name="commercial_license_1" accept="image/png,image/jpeg,image/jpg,image/bmp,image/gif,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.doc,.docx" onchange="this.parentNode.setAttribute('title', this.value.replace(/^.*[\\/]/, ''))">
+                            </label>
+                            <span class="help-block"></span>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="signature_auth_2" class="control-label">{{lang('entry_signature_auth_kuw')}}<span class="text-danger ml-5">*</span></label>
+                            <label class="file-input-styled" title="">
+                                <input type="file" class="form-control" id="signature_auth_2" name="signature_auth_2" accept="image/png,image/jpeg,image/jpg,image/bmp,image/gif,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.doc,.docx" onchange="this.parentNode.setAttribute('title', this.value.replace(/^.*[\\/]/, ''))">
+                            </label>
+                            <span class="help-block"></span>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="signature_auth_3" class="control-label">{{lang('entry_mof')}}<span class="text-danger ml-5">*</span></label>
+                            <label class="file-input-styled" title="">
+                                <input type="file" class="form-control" id="signature_auth_3" name="signature_auth_3" accept="image/png,image/jpeg,image/jpg,image/bmp,image/gif,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.doc,.docx" onchange="this.parentNode.setAttribute('title', this.value.replace(/^.*[\\/]/, ''))">
+                            </label>
+                            <span class="help-block"></span>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="civil_id_4" class="control-label">{{lang('entry_partner_civil_front')}}<span class="text-danger ml-5">*</span></label>
+                            <label class="file-input-styled" title="">
+                                <input type="file" class="form-control" id="civil_id_4" name="civil_id_4" accept="image/png,image/jpeg,image/jpg,image/bmp,image/gif,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.doc,.docx" onchange="this.parentNode.setAttribute('title', this.value.replace(/^.*[\\/]/, ''))">
+                            </label>
+                            <span class="help-block"></span>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="civil_id_back_5" class="control-label">{{lang('entry_partner_civil_back')}}<span class="text-danger ml-5">*</span></label>
+                            <label class="file-input-styled" title="">
+                                <input type="file" class="form-control" id="civil_id_back_5" name="civil_id_back_5" accept="image/png,image/jpeg,image/jpg,image/bmp,image/gif,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.doc,.docx" onchange="this.parentNode.setAttribute('title', this.value.replace(/^.*[\\/]/, ''))">
+                            </label>
+                            <span class="help-block"></span>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="others_7" class="control-label">{{lang('entry_company_website_kuw')}}<span class="text-danger ml-5">*</span></label>
+                            <label class="file-input-styled" title="">
+                                <input type="file" class="form-control" id="others_7" name="others_7" accept="image/png,image/jpeg,image/jpg,image/bmp,image/gif,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.doc,.docx" onchange="this.parentNode.setAttribute('title', this.value.replace(/^.*[\\/]/, ''))">
+                            </label>
+                            <span class="help-block"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-country country-bah">
+                        <div class="form-group col-md-6">
+                            <label for="commercial_license_1" class="control-label">{{lang('entry_cr_business_field')}}<span class="text-danger ml-5">*</span> </label>
+                            <label class="file-input-styled" title="">
+                                <input type="file" class="form-control" id="commercial_license_1" name="commercial_license_1" accept="image/png,image/jpeg,image/jpg,image/bmp,image/gif,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.doc,.docx" onchange="this.parentNode.setAttribute('title', this.value.replace(/^.*[\\/]/, ''))">
+                            </label>
+                            <span class="help-block"></span>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="civil_id_4" class="control-label">{{lang('entry_auth_front_id')}}<span class="text-danger ml-5">*</span></label>
+                            <label class="file-input-styled" title="">
+                                <input type="file" class="form-control" id="civil_id_4" name="civil_id_4" accept="image/png,image/jpeg,image/jpg,image/bmp,image/gif,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.doc,.docx" onchange="this.parentNode.setAttribute('title', this.value.replace(/^.*[\\/]/, ''))">
+                            </label>
+                            <span class="help-block"></span>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="civil_id_back_5" class="control-label">{{lang('entry_auth_back_id')}}<span class="text-danger ml-5">*</span></label>
+                            <label class="file-input-styled" title="">
+                                <input type="file" class="form-control" id="civil_id_back_5" name="civil_id_back_5" accept="image/png,image/jpeg,image/jpg,image/bmp,image/gif,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.doc,.docx" onchange="this.parentNode.setAttribute('title', this.value.replace(/^.*[\\/]/, ''))">
+                            </label>
+                            <span class="help-block"></span>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="others_7" class="control-label">{{lang('entry_details_bank_field')}}<span class="text-danger ml-5">*</span> </label>
+                            <label class="file-input-styled" title="">
+                                <input type="file" class="form-control" id="others_7" name="others_7" accept="image/png,image/jpeg,image/jpg,image/bmp,image/gif,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.doc,.docx" onchange="this.parentNode.setAttribute('title', this.value.replace(/^.*[\\/]/, ''))">
+                            </label>
+                            <span class="help-block"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-country country-uae">
+                        <div class="form-group col-md-6">
+                            <label for="commercial_license_1" class="control-label">{{lang('entry_trade_license_field')}}<span class="text-danger ml-5">*</span></label>
+                            <label class="file-input-styled" title="">
+                                <input type="file" class="form-control" id="commercial_license_1" name="commercial_license_1" accept="image/png,image/jpeg,image/jpg,image/bmp,image/gif,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.doc,.docx" onchange="this.parentNode.setAttribute('title', this.value.replace(/^.*[\\/]/, ''))">
+                            </label>
+                            <span class="help-block"></span>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="civil_id_4" class="control-label">{{lang('entry_emairates_id_front')}}<span class="text-danger ml-5">*</span></label>
+                            <label class="file-input-styled" title="">
+                                <input type="file" class="form-control" id="civil_id_4" name="civil_id_4" accept="image/png,image/jpeg,image/jpg,image/bmp,image/gif,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.doc,.docx" onchange="this.parentNode.setAttribute('title', this.value.replace(/^.*[\\/]/, ''))">
+                            </label>
+                            <span class="help-block"></span>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="civil_id_back_5" class="control-label">{{lang('entry_emairates_id_back')}}<span class="text-danger ml-5">*</span></label>
+                            <label class="file-input-styled" title="">
+                                <input type="file" class="form-control" id="civil_id_back_5" name="civil_id_back_5" accept="image/png,image/jpeg,image/jpg,image/bmp,image/gif,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.doc,.docx" onchange="this.parentNode.setAttribute('title', this.value.replace(/^.*[\\/]/, ''))">
+                            </label>
+                            <span class="help-block"></span>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="others_7" class="control-label">{{lang('entry_social_screen_field')}}<span class="text-danger ml-5">*</span></label>
+                            <label class="file-input-styled" title="">
+                                <input type="file" class="form-control" id="others_7" name="others_7" accept="image/png,image/jpeg,image/jpg,image/bmp,image/gif,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.doc,.docx" onchange="this.parentNode.setAttribute('title', this.value.replace(/^.*[\\/]/, ''))">
+                            </label>
+                            <span class="help-block"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-country country-qtr">
+                        <div class="form-group col-md-6">
+                            <label for="parties_contract_6" class="control-label">{{lang('entry_trade_license_field')}}<span class="text-danger ml-5">*</span> </label>
+                            <label class="file-input-styled" title="">
+                                <input type="file" class="form-control" id="parties_contract_6" name="parties_contract_6" accept="image/png,image/jpeg,image/jpg,image/bmp,image/gif,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.doc,.docx" onchange="this.parentNode.setAttribute('title', this.value.replace(/^.*[\\/]/, ''))">
+                            </label>
+                            <span class="help-block"></span>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="commercial_license_1" class="control-label">{{lang('entry_comm_registration')}}Commercial Registration<span class="text-danger ml-5">*</span></label>
+                            <label class="file-input-styled" title="">
+                                <input type="file" class="form-control" id="commercial_license_1" name="commercial_license_1" accept="image/png,image/jpeg,image/jpg,image/bmp,image/gif,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.doc,.docx" onchange="this.parentNode.setAttribute('title', this.value.replace(/^.*[\\/]/, ''))">
+                            </label>
+                            <span class="help-block"></span>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="civil_id_4" class="control-label">{{lang('entry_qatar_id_front')}}<span class="text-danger ml-5">*</span></label>
+                            <label class="file-input-styled" title="">
+                                <input type="file" class="form-control" id="civil_id_4" name="civil_id_4" accept="image/png,image/jpeg,image/jpg,image/bmp,image/gif,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.doc,.docx" onchange="this.parentNode.setAttribute('title', this.value.replace(/^.*[\\/]/, ''))">
+                            </label>
+                            <span class="help-block"></span>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="civil_id_back_5" class="control-label">{{lang('entry_qatar_id_back')}}<span class="text-danger ml-5">*</span></label>
+                            <label class="file-input-styled" title="">
+                                <input type="file" class="form-control" id="civil_id_back_5" name="civil_id_back_5" accept="image/png,image/jpeg,image/jpg,image/bmp,image/gif,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.doc,.docx" onchange="this.parentNode.setAttribute('title', this.value.replace(/^.*[\\/]/, ''))">
+                            </label>
+                            <span class="help-block"></span>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="signature_auth_2" class="control-label">{{lang('entry_auth_sign_field')}}<span class="text-danger ml-5">*</span></label>
+                            <label class="file-input-styled" title="">
+                                <input type="file" class="form-control" id="signature_auth_2" name="signature_auth_2" accept="image/png,image/jpeg,image/jpg,image/bmp,image/gif,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.doc,.docx" onchange="this.parentNode.setAttribute('title', this.value.replace(/^.*[\\/]/, ''))">
+                            </label>
+                            <span class="help-block"></span>
+                        </div>
+                    </div>
+                </div>
+                <form id="uploadForm" name='test' action="{{link('extension/expandpay/upload')}}">
+                    <div class="panel-body">
+                        <h6 class="bold tab-content-title col-md-12">{{ lang('documents_dec') }}
+                        <br>
+                        <p class="doc-upload-notes item-country-changed Fawaterak-required">{{ lang('doc_upload_notes_fawaterak') }}</p>
+                        <p class="doc-upload-notes item-country-changed MyFatoorah-required">{{ lang('doc_upload_notes_myfatoorah') }}</p>
+                        </h6>
+                        
+                        <div class="alert alert-danger col-md-12" role="alert" style="display: none;">
+                            <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
+                            {{ lang('verification_error_dec') }}
+                        </div>
+                        <div class="form-data-show">
+
+                        </div>
+                    </div>
+                    <div class="expandpay-arrows-holder">
+                        <a class="btn btn-default expandpay-btnPrevious" ><i class="fa fa-angle-left" aria-hidden="true"></i> {{ lang('entry_back') }} </a>
+                        <a class="btn btn-primary expandpay-btnNext static-next" >{{ lang('entry_next') }}<i class="fa fa-angle-right" aria-hidden="true"></i></a>
+                        <!--<button type="button" class="btn btn-primary dynamic-next hiddenSubmit" id="uploadSubmitButton">{{ lang('entry_submit_app') }}<i class="fa fa-angle-right" aria-hidden="true"></i></button>-->
+                        <a class="btn btn-primary dynamic-next hiddenSubmit" id="uploadSubmitButton">
+                            <button type="button" class="btn btn-primary btn-sm custom-alert-onBtn createloader alert-loading" style="display: none;"><i class="fas fa-spinner fa-spin"></i></button>
+                            {{ lang('entry_submit_app') }} <i class="fa fa-angle-right" aria-hidden="true"></i></a>
+
+                    </div>
+                </form>
+            </div>
+            <div class="tab-pane" id="Verfication">  
+                <div class="item-verfication-holder verfication-pending"> <!-- replace this class  verfication-done & verfication-error & verfication-pending-->
+                    <div class="item-verfication item-verfication-pending">
+                        <svg style="margin: auto;" xmlns="http://www.w3.org/2000/svg" width="98.801" height="98.862" viewBox="0 0 98.801 98.862">
+                            <g id="Group_7339" data-name="Group 7339" transform="translate(-746 -314.139)">
+                              <g id="wall-clock" transform="translate(745.843 314.139)">
+                                <g id="Group_7324" data-name="Group 7324" transform="translate(16.605 16.478)">
+                                  <path id="Path_12072" data-name="Path 12072" d="M118.293,85.34h0A32.953,32.953,0,0,0,85.34,118.293h0a32.953,32.953,0,0,0,32.953,32.953h0a32.953,32.953,0,0,0,32.953-32.953h0A32.954,32.954,0,0,0,118.293,85.34Zm0,36.249a3.294,3.294,0,0,1-3.3-3.3h0a3.294,3.294,0,0,1,3.3-3.3h0a3.3,3.3,0,0,1,0,6.591Z" transform="translate(-85.34 -85.34)" fill="rgba(255,223,168,0.66)"/>
+                                  <circle id="Ellipse_1135" data-name="Ellipse 1135" cx="3.295" cy="3.295" r="3.295" transform="translate(29.656 29.656)" fill="#ffdfa8"/>
+                                </g>
+                                <path id="Path_12073" data-name="Path 12073" d="M1.748,49.409h.058a1.648,1.648,0,0,0,1.648-1.592A46.137,46.137,0,0,1,78.1,13.183H69.332a1.648,1.648,0,0,0,0,3.3h13.2a1.658,1.658,0,0,0,.379-.076,1.607,1.607,0,0,0,.249-.054c.046-.02.081-.061.125-.086a1.588,1.588,0,0,0,.4-.282l.016-.012a1.854,1.854,0,0,0,.114-.18,1.656,1.656,0,0,0,.216-.344,1.574,1.574,0,0,0,.082-.407,1.247,1.247,0,0,0,.041-.208V1.649a1.648,1.648,0,1,0-3.3,0v9.543A49.419,49.419,0,0,0,.158,47.707,1.648,1.648,0,0,0,1.748,49.409Z" transform="translate(0 0)" fill="#155ebc"/>
+                                <g id="Group_7325" data-name="Group 7325" transform="translate(0.394 49.507)">
+                                  <path id="Path_12074" data-name="Path 12074" d="M106.722,449.268a46.921,46.921,0,0,1-3.977-2.636,1.647,1.647,0,0,0-2.04,2.587c.026.021.054.041.082.061a49.882,49.882,0,0,0,4.256,2.826,1.648,1.648,0,1,0,1.679-2.837Z" transform="translate(-81.021 -409.613)" fill="#155ebc"/>
+                                  <path id="Path_12075" data-name="Path 12075" d="M65.422,412.475a1.651,1.651,0,1,0-2.472,2.19h0a49.866,49.866,0,0,0,3.59,3.638,1.648,1.648,0,0,0,2.223-2.432A46.052,46.052,0,0,1,65.422,412.475Z" transform="translate(-50.729 -381.889)" fill="#155ebc"/>
+                                  <path id="Path_12076" data-name="Path 12076" d="M38.363,375.332a46.728,46.728,0,0,1-2.584-4.009,1.65,1.65,0,1,0-2.859,1.648,49.9,49.9,0,0,0,2.768,4.286,1.648,1.648,0,0,0,2.674-1.925Z" transform="translate(-26.654 -348.465)" fill="#155ebc"/>
+                                  <path id="Path_12077" data-name="Path 12077" d="M150.857,474.286a45.972,45.972,0,0,1-4.431-1.761,1.648,1.648,0,1,0-1.463,2.953l.086.04a48.748,48.748,0,0,0,4.752,1.892,1.648,1.648,0,1,0,1.056-3.122Z" transform="translate(-116.501 -430.654)" fill="#155ebc"/>
+                                  <path id="Path_12078" data-name="Path 12078" d="M16.818,329.094a46.273,46.273,0,0,1-1.705-4.449,1.648,1.648,0,0,0-3.18.867,1.25,1.25,0,0,0,.049.152,49.484,49.484,0,0,0,1.826,4.778,1.648,1.648,0,1,0,3.014-1.335Z" transform="translate(-9.849 -310.486)" fill="#155ebc"/>
+                                  <path id="Path_12079" data-name="Path 12079" d="M4.15,281.952A1.647,1.647,0,0,0,5.418,280a46.894,46.894,0,0,1-.745-4.711,1.649,1.649,0,0,0-3.279.348,49.742,49.742,0,0,0,.8,5.045,1.647,1.647,0,0,0,1.954,1.27Z" transform="translate(-1.385 -270.451)" fill="#155ebc"/>
+                                  <path id="Path_12080" data-name="Path 12080" d="M494.691,256.4a1.623,1.623,0,0,0-1.7,1.539.47.47,0,0,0,0,.049,46.316,46.316,0,0,1-.414,4.752,1.648,1.648,0,0,0,1.4,1.857,1.53,1.53,0,0,0,.231.016,1.648,1.648,0,0,0,1.629-1.42,50.038,50.038,0,0,0,.443-5.09A1.648,1.648,0,0,0,494.691,256.4Z" transform="translate(-397.717 -256.394)" fill="#155ebc"/>
+                                  <path id="Path_12081" data-name="Path 12081" d="M462.857,355.232a1.647,1.647,0,0,0-2.2.766,45.96,45.96,0,0,1-2.3,4.18,1.648,1.648,0,0,0,2.8,1.735,49.223,49.223,0,0,0,2.46-4.48,1.647,1.647,0,0,0-.764-2.2Z" transform="translate(-369.936 -336.015)" fill="#155ebc"/>
+                                  <path id="Path_12082" data-name="Path 12082" d="M430.393,399.107a46.126,46.126,0,0,1-3.106,3.625,1.649,1.649,0,1,0,2.389,2.274h0a50.015,50.015,0,0,0,3.325-3.88,1.647,1.647,0,1,0-2.579-2.051l-.03.038Z" transform="translate(-344.683 -371.022)" fill="#155ebc"/>
+                                  <path id="Path_12083" data-name="Path 12083" d="M199.381,489.681a46.374,46.374,0,0,1-4.7-.807,1.648,1.648,0,0,0-.727,3.215h0a49.151,49.151,0,0,0,5.037.865,1.58,1.58,0,0,0,.2.012,1.648,1.648,0,0,0,.191-3.284Z" transform="translate(-155.735 -443.951)" fill="#155ebc"/>
+                                  <path id="Path_12084" data-name="Path 12084" d="M392.495,435.949a47.025,47.025,0,0,1-3.79,2.913,1.652,1.652,0,0,0,1.878,2.719,50.407,50.407,0,0,0,4.053-3.131,1.648,1.648,0,0,0-2.142-2.5v0Z" transform="translate(-313.343 -400.957)" fill="#155ebc"/>
+                                  <path id="Path_12085" data-name="Path 12085" d="M483.822,307.042a1.647,1.647,0,0,0-2,1.2,46.541,46.541,0,0,1-1.382,4.566,1.648,1.648,0,0,0,3.1,1.117,49.608,49.608,0,0,0,1.483-4.89,1.648,1.648,0,0,0-1.2-2S483.823,307.042,483.822,307.042Z" transform="translate(-387.864 -297.223)" fill="#155ebc"/>
+                                  <path id="Path_12086" data-name="Path 12086" d="M300.283,484.515a46.092,46.092,0,0,1-4.63,1.137,1.648,1.648,0,0,0,.62,3.238,48.883,48.883,0,0,0,4.963-1.221,1.648,1.648,0,0,0-.953-3.154Z" transform="translate(-237.755 -440.419)" fill="#155ebc"/>
+                                  <path id="Path_12087" data-name="Path 12087" d="M249.852,494.006c-1.318.112-2.668.165-4.012.165h-.753a1.706,1.706,0,0,0-1.679,1.618,1.648,1.648,0,0,0,1.618,1.677h.814c1.44,0,2.883-.064,4.284-.185a1.648,1.648,0,1,0-.189-3.29l-.091.008Z" transform="translate(-196.676 -448.111)" fill="#155ebc"/>
+                                  <path id="Path_12088" data-name="Path 12088" d="M348.448,464.81a46.6,46.6,0,0,1-4.294,2.073,1.648,1.648,0,0,0,1.239,3.055l.036-.015a49.65,49.65,0,0,0,4.6-2.221,1.648,1.648,0,0,0-1.582-2.892Z" transform="translate(-277.139 -424.404)" fill="#155ebc"/>
+                                </g>
+                                <g id="Group_7326" data-name="Group 7326" transform="translate(14.958 14.831)">
+                                  <path id="Path_12089" data-name="Path 12089" d="M111.408,76.807a34.6,34.6,0,1,0,34.6,34.6A34.6,34.6,0,0,0,111.408,76.807Zm1.648,65.823v-4.859a1.648,1.648,0,1,0-3.3,0v4.859a31.292,31.292,0,0,1-29.574-29.574h4.859a1.648,1.648,0,0,0,0-3.3H80.186A31.292,31.292,0,0,1,109.76,80.186v4.859a1.648,1.648,0,1,0,3.3,0V80.186a31.292,31.292,0,0,1,29.574,29.574H137.77a1.648,1.648,0,0,0,0,3.3h4.859A31.292,31.292,0,0,1,113.056,142.63Z" transform="translate(-76.807 -76.807)" fill="#ff7d00"/>
+                                  <path id="Path_12090" data-name="Path 12090" d="M195.682,161.852V146.72a1.648,1.648,0,0,0-3.3,0v15.132a4.946,4.946,0,0,0-2.992,2.992h-8.542a1.648,1.648,0,0,0,0,3.3H189.4a4.931,4.931,0,1,0,6.287-6.287Zm-1.648,6.288a1.648,1.648,0,1,1,1.648-1.648A1.648,1.648,0,0,1,194.035,168.139Z" transform="translate(-159.434 -131.891)" fill="#ff7d00"/>
+                                </g>
+                              </g>
+                            </g>
+                          </svg>
+                        <p class="title">
+                            {{ lang('verification_pending_title') }}
+                        </p>
+                        <p class="dec">
+                            {{ lang('verification_pending_dec') }}
+                        </p>
+                    </div>
+    
+                    <div class="item-verfication item-verfication-done">
+                        <svg style="margin: auto;" xmlns="http://www.w3.org/2000/svg" width="100.298" height="116.465" viewBox="0 0 100.298 116.465">
+                            <g id="fireworks" transform="translate(-0.5)">
+                              <path id="Path_12093" data-name="Path 12093" d="M96.212,477.613a1.682,1.682,0,0,1-1.206-2.853l2.09-2.153a1.682,1.682,0,0,1,2.413,2.342L97.418,477.1a1.674,1.674,0,0,1-1.207.511Zm0,0" transform="translate(-72.641 -364.708)" fill="#ff4e61"/>
+                              <path id="Path_12094" data-name="Path 12094" d="M195.94,114.527a1.682,1.682,0,0,1-1.206-2.852l2.091-2.154a1.681,1.681,0,1,1,2.412,2.342l-2.091,2.154A1.677,1.677,0,0,1,195.94,114.527Zm0,0" transform="translate(-149.685 -84.214)" fill="#ff4e61"/>
+                              <path id="Path_12095" data-name="Path 12095" d="M408.094,81.658a1.681,1.681,0,0,1-1.207-2.852l2.091-2.154a1.682,1.682,0,0,1,2.413,2.342L409.3,81.148A1.677,1.677,0,0,1,408.094,81.658Zm0,0" transform="translate(-313.579 -58.822)" fill="#5c73bc"/>
+                              <path id="Path_12096" data-name="Path 12096" d="M408.094,445.039a1.681,1.681,0,0,1-1.207-2.852l2.091-2.154a1.682,1.682,0,0,1,2.413,2.342l-2.091,2.154A1.677,1.677,0,0,1,408.094,445.039Zm0,0" transform="translate(-313.579 -339.544)" fill="#fa0"/>
+                              <path id="Path_12097" data-name="Path 12097" d="M57.362,94.177a1.681,1.681,0,0,1-1.206-2.852l2.091-2.154a1.681,1.681,0,0,1,2.412,2.342l-2.091,2.154a1.677,1.677,0,0,1-1.207.51Zm0,0" transform="translate(-42.629 -68.494)" fill="#fa0"/>
+                              <path id="Path_12098" data-name="Path 12098" d="M6.6,260.089a1.681,1.681,0,0,1-1.206-2.852l2.09-2.154A1.682,1.682,0,0,1,9.9,257.425l-2.091,2.154a1.675,1.675,0,0,1-1.207.51Zm0,0" transform="translate(-3.414 -196.664)" fill="#2dc471"/>
+                              <path id="Path_12099" data-name="Path 12099" d="M172.919,197.695l-5.458,2.956a1.942,1.942,0,0,1-2.8-2.1l1.042-6.261a2.024,2.024,0,0,0-.554-1.759l-4.416-4.435a2,2,0,0,1,1.07-3.391l6.1-.913a1.932,1.932,0,0,0,1.453-1.088l2.73-5.7a1.906,1.906,0,0,1,3.461,0l2.729,5.7a1.935,1.935,0,0,0,1.453,1.088l6.1.913A2,2,0,0,1,186.9,186.1l-4.415,4.435a2.024,2.024,0,0,0-.555,1.759l1.042,6.261a1.942,1.942,0,0,1-2.8,2.1l-5.458-2.956a1.878,1.878,0,0,0-1.8,0Zm0,0" transform="translate(-123.332 -134.346)" fill="#ffd02f"/>
+                              <path id="Path_12100" data-name="Path 12100" d="M214.529,411.278a1.681,1.681,0,0,1-1.681-1.681V383.3a1.681,1.681,0,1,1,3.362,0V409.6A1.681,1.681,0,0,1,214.529,411.278Zm0,0" transform="translate(-164.044 -294.813)" fill="#5c73bc"/>
+                              <path id="Path_12101" data-name="Path 12101" d="M214.5,346h-.026a1.682,1.682,0,1,1,0-3.363h.026a1.682,1.682,0,0,1,0,3.363Zm0,0" transform="translate(-163.999 -264.697)" fill="#5c73bc"/>
+                              <path id="Path_12102" data-name="Path 12102" d="M214.5,320.577h-.034a1.681,1.681,0,0,1,.007-3.362h.034a1.681,1.681,0,0,1-.007,3.362Zm0,0" transform="translate(-163.999 -245.058)" fill="#fa0"/>
+                              <path id="Path_12103" data-name="Path 12103" d="M20.23,156.332a1.677,1.677,0,0,1-1.207-.51L.976,137.229a1.681,1.681,0,0,1,2.412-2.342L21.436,153.48a1.682,1.682,0,0,1-1.207,2.852Zm0,0" transform="translate(0 -103.81)" fill="#ff4e61"/>
+                              <path id="Path_12104" data-name="Path 12104" d="M108.242,247.019a1.682,1.682,0,0,1-1.2-2.857l.019-.019a1.681,1.681,0,0,1,2.405,2.35l-.018.019A1.679,1.679,0,0,1,108.242,247.019Zm0,0" transform="translate(-81.935 -188.217)" fill="#fa0"/>
+                              <path id="Path_12105" data-name="Path 12105" d="M125.694,264.995a1.681,1.681,0,0,1-1.206-2.852l.018-.02a1.682,1.682,0,0,1,2.413,2.343l-.019.019a1.677,1.677,0,0,1-1.207.51Zm0,0" transform="translate(-95.417 -202.104)" fill="#5c73bc"/>
+                              <path id="Path_12106" data-name="Path 12106" d="M347.534,153.425a1.681,1.681,0,0,1-1.206-2.852l18.047-18.592a1.682,1.682,0,0,1,2.413,2.342l-18.048,18.592a1.677,1.677,0,0,1-1.207.51Zm0,0" transform="translate(-266.795 -101.565)" fill="#fa0"/>
+                              <path id="Path_12107" data-name="Path 12107" d="M320.751,244.117a1.674,1.674,0,0,1-1.2-.5l-.019-.019a1.681,1.681,0,1,1,2.4-2.357l.019.019a1.682,1.682,0,0,1-1.2,2.86Zm0,0" transform="translate(-246.09 -185.975)" fill="#ff4e61"/>
+                              <path id="Path_12108" data-name="Path 12108" d="M303.3,262.094a1.677,1.677,0,0,1-1.207-.51l-.019-.019a1.682,1.682,0,0,1,2.413-2.343l.019.019a1.682,1.682,0,0,1-1.207,2.853Zm0,0" transform="translate(-232.609 -199.863)" fill="#fa0"/>
+                              <path id="Path_12109" data-name="Path 12109" d="M294.948,28.287a1.682,1.682,0,0,1-1.458-2.515L306.425,3.1a1.681,1.681,0,0,1,2.921,1.667L296.411,27.44a1.682,1.682,0,0,1-1.463.848Zm0,0" transform="translate(-226.172 -1.744)" fill="#62d38f"/>
+                              <path id="Path_12110" data-name="Path 12110" d="M275.742,138.862a1.675,1.675,0,0,1-.862-.238l-.022-.013a1.682,1.682,0,0,1,1.726-2.886l.022.013a1.681,1.681,0,0,1-.865,3.124Zm0,0" transform="translate(-211.317 -104.667)" fill="#fa0"/>
+                              <path id="Path_12111" data-name="Path 12111" d="M263.235,160.779a1.673,1.673,0,0,1-.866-.242l-.022-.013a1.681,1.681,0,1,1,1.736-2.88l.022.013a1.682,1.682,0,0,1-.87,3.121Zm0,0" transform="translate(-201.655 -121.598)" fill="#2dc471"/>
+                              <path id="Path_12112" data-name="Path 12112" d="M90.318,28.287a1.681,1.681,0,0,1-1.463-.849L75.92,4.771A1.681,1.681,0,0,1,78.841,3.1L91.776,25.771a1.682,1.682,0,0,1-1.458,2.515Zm0,0" transform="translate(-58.093 -1.743)" fill="#5c73bc"/>
+                              <path id="Path_12113" data-name="Path 12113" d="M153.377,138.862a1.681,1.681,0,0,1-.868-3.122l.023-.013a1.681,1.681,0,0,1,1.732,2.882l-.022.013A1.675,1.675,0,0,1,153.377,138.862Zm0,0" transform="translate(-116.802 -104.667)" fill="#ff4e61"/>
+                              <path id="Path_12114" data-name="Path 12114" d="M165.885,160.779a1.682,1.682,0,0,1-.873-3.12l.022-.013a1.682,1.682,0,1,1,1.743,2.876l-.022.013A1.673,1.673,0,0,1,165.885,160.779Zm0,0" transform="translate(-126.464 -121.598)" fill="#fa0"/>
+                              <path id="Path_12115" data-name="Path 12115" d="M367.386,300.338l-3.531,2.639a1.364,1.364,0,0,1-2.166-1.175l.115-4.493a1.423,1.423,0,0,0-.562-1.175l-3.528-2.643a1.423,1.423,0,0,1,.415-2.486l4.183-1.276a1.386,1.386,0,0,0,.91-.913l1.351-4.273a1.349,1.349,0,0,1,2.423-.362l2.471,3.7a1.355,1.355,0,0,0,1.124.61l4.363,0a1.41,1.41,0,0,1,1.082,2.263l-2.656,3.565a1.441,1.441,0,0,0-.216,1.29l1.346,4.276a1.385,1.385,0,0,1-1.755,1.759l-4.112-1.5a1.332,1.332,0,0,0-1.257.188Zm0,0" transform="translate(-275.523 -219.067)" fill="#ffd02f"/>
+                              <path id="Path_12116" data-name="Path 12116" d="M255.8,386.877a1.681,1.681,0,0,1-1.681-1.681,40.552,40.552,0,0,1,9.55-26.911,34.976,34.976,0,0,1,9.665-8.068,1.682,1.682,0,0,1,1.522,3,32.335,32.335,0,0,0-8.727,7.369c-5.738,6.76-8.647,15.041-8.647,24.611a1.681,1.681,0,0,1-1.681,1.681Zm0,0" transform="translate(-195.927 -270.412)" fill="#ff4e61"/>
+                              <path id="Path_12117" data-name="Path 12117" d="M79.223,343.952,81.9,347.5A1.351,1.351,0,0,0,84.3,347l1.106-4.348a1.392,1.392,0,0,1,.857-.966l4.1-1.526a1.424,1.424,0,0,0,.275-2.506l-3.672-2.428a1.421,1.421,0,0,1-.627-1.138l-.14-4.493a1.36,1.36,0,0,0-2.229-1.043L80.6,331.4a1.335,1.335,0,0,1-1.245.263l-4.19-1.251a1.389,1.389,0,0,0-1.652,1.862l1.585,4.188a1.442,1.442,0,0,1-.142,1.3l-2.45,3.719a1.406,1.406,0,0,0,1.208,2.194l4.355-.259a1.35,1.35,0,0,1,1.157.541Zm0,0" transform="translate(-55.44 -253.566)" fill="#ffd02f"/>
+                              <path id="Path_12118" data-name="Path 12118" d="M157.281,434.705a1.681,1.681,0,0,1-1.681-1.681,38.393,38.393,0,0,0-4.516-18.592,1.682,1.682,0,0,1,2.954-1.609,41.731,41.731,0,0,1,4.924,20.2,1.681,1.681,0,0,1-1.681,1.681Zm0,0" transform="translate(-116.172 -318.24)" fill="#fa0"/>
+                              <path id="Path_12119" data-name="Path 12119" d="M238.278,40.113a4.514,4.514,0,1,0-4.512,4.649A4.582,4.582,0,0,0,238.278,40.113Zm0,0" transform="translate(-176.719 -27.398)" fill="#ffd02f"/>
+                              <path id="Path_12120" data-name="Path 12120" d="M342.433,431.027a4.514,4.514,0,1,0-4.511,4.648A4.581,4.581,0,0,0,342.433,431.027Zm0,0" transform="translate(-257.183 -329.391)" fill="#5c73bc"/>
+                              <path id="Path_12121" data-name="Path 12121" d="M19.55,438.2a3.62,3.62,0,1,0-3.619,3.728A3.674,3.674,0,0,0,19.55,438.2Zm0,0" transform="translate(-9.125 -335.639)" fill="#62d38f"/>
+                              <path id="Path_12122" data-name="Path 12122" d="M63.593,275.693a3.62,3.62,0,1,0-3.619,3.728A3.674,3.674,0,0,0,63.593,275.693Zm0,0" transform="translate(-43.15 -210.101)" fill="#5c73bc"/>
+                              <g id="Group_7337" data-name="Group 7337" transform="translate(30.541)">
+                                <path id="Path_12123" data-name="Path 12123" d="M186.261,3.728a3.62,3.62,0,1,0-7.237,0,3.62,3.62,0,1,0,7.237,0Zm0,0" transform="translate(-168.455)" fill="#ff4e61"/>
+                                <path id="Path_12124" data-name="Path 12124" d="M340.645,140.221a3.621,3.621,0,1,0-3.619,3.727A3.675,3.675,0,0,0,340.645,140.221Zm0,0" transform="translate(-287.721 -105.444)" fill="#ff4e61"/>
+                                <path id="Path_12125" data-name="Path 12125" d="M134.246,14.011a1.682,1.682,0,0,1-1.207-2.852L135.13,9a1.681,1.681,0,1,1,2.412,2.342l-2.09,2.154A1.678,1.678,0,0,1,134.246,14.011Zm0,0" transform="translate(-132.565 -6.562)" fill="#ff4e61"/>
+                              </g>
+                            </g>
+                          </svg>
+                        <p class="title">
+                            {{ lang('verification_done_title') }}
+                        </p>
+                        <p class="dec">
+                            {{ lang('verification_done_dec') }}
+                        </p>
+
+                        <a class="btn btn-primary next-arrow-btn" id="configure-btn">
+                            {{ lang('verification_btn_configure') }}
+                            <i class="fa fa-angle-right" aria-hidden="true"></i>
+                        </a>
+                    </div>
+    
+                    <div class="item-verfication item-verfication-error">
+                        <svg style="margin: auto;" xmlns="http://www.w3.org/2000/svg" width="49.454" height="44.37" viewBox="0 0 49.454 44.37">
+                            <g id="alert" transform="translate(0 0)">
+                              <g id="Group_7329" data-name="Group 7329" transform="translate(0 0)">
+                                <g id="Group_7328" data-name="Group 7328" transform="translate(0 0)">
+                                  <path id="Path_12091" data-name="Path 12091" d="M48.665,61.963l-18.9-32.74a5.815,5.815,0,0,0-10.072,0L.788,61.962a5.815,5.815,0,0,0,5.036,8.723h37.8a5.815,5.815,0,0,0,5.036-8.723Zm-2.509,4.367a2.888,2.888,0,0,1-2.527,1.459H5.824A2.918,2.918,0,0,1,3.3,63.411l18.9-32.74a2.918,2.918,0,0,1,5.054,0l18.9,32.74A2.888,2.888,0,0,1,46.156,66.329Z" transform="translate(0 -26.315)" fill="#c40000"/>
+                                </g>
+                              </g>
+                              <g id="Group_7331" data-name="Group 7331" transform="translate(23.278 14.459)">
+                                <g id="Group_7330" data-name="Group 7330" transform="translate(0 0)">
+                                  <rect id="Rectangle_5324" data-name="Rectangle 5324" width="2.897" height="14.487" fill="#c40000"/>
+                                </g>
+                              </g>
+                              <g id="Group_7333" data-name="Group 7333" transform="translate(22.795 31.843)">
+                                <g id="Group_7332" data-name="Group 7332">
+                                  <path id="Path_12092" data-name="Path 12092" d="M237.934,355.99a1.932,1.932,0,1,0,1.932,1.932A1.934,1.934,0,0,0,237.934,355.99Z" transform="translate(-236.002 -355.99)" fill="#c40000"/>
+                                </g>
+                              </g>
+                            </g>
+                          </svg>
+                        <p class="title">
+                            {{ lang('verification_error_title') }}
+                        </p>
+                        <p class="dec">
+                            {{ lang('verification_error_dec') }}
+                        </p>
+                    </div>
+                </div>
+                
+            <div class="expandpay-arrows-holder">
+                <a class="btn btn-default expandpay-btnPrevious" ><i class="fa fa-angle-left" aria-hidden="true"></i> {{ lang('entry_back') }} </a>
+                <a class="btn btn-primary expandpay-btnNext  hidden-btn-area" >{{ lang('entry_next') }} <i class="fa fa-angle-right" aria-hidden="true"></i></a>
+            </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- custom-alert  -->
+    <!-- <button type="button" class="btn btn-primary btn-sm custom-alert alert-loading" style="display: none;"><i class="fas fa-spinner fa-spin"></i></button>
+    <button type="button" class="btn btn-success btn-sm custom-alert alert-done" style="display: none;"><i class="far fa-check-circle check-icon"></i></button> -->
+
+    
+    <!-- end expandpay activation tabs -->
+
+<script>
+    var payment_code = '{{code}}';
+    var deactivateURL = '{{link("extension/expandpay/expandpay_uninstall")}}';
+    $(document).on('click', '.md-trigger', function () {
+        $('#modal-deactivate-ps').find('#deactivate-ps').attr('psid', $(this).attr('psid'));
+        $('#modal-deactivate-ps').find('#ps-title').html($(this).attr('ps-title'));
+    });
+    $("#deactivate-ps").click(function () {
+        $('#deactivate-ps').parent().find('.server-loading').show();
+        window.location.replace(deactivateURL);
+        console.log(deactivateURL + $("#deactivate-ps").attr('psid'))
+    });
+
+    $(document).ready(function() {
+        $(".acc-btn.no-have").click(function() {
+            if('undefined' !== typeof is_my_fatoorah_approved && is_my_fatoorah_approved == false && payment_code == 'my_fatoorah')
+                $('#MyFatoorahRegisterModal').modal('toggle');
+            else
+                $('.ship-create-cover').slideDown()
+        })
+
+        $('select').select2();
+        $('.touchspinney').TouchSpin({
+            'postfix': '{{ current_currency_code }}',
+            'decimals': 2,
+            'min': 0,
+            'max': Infinity
+        });
+        $('.touchy').TouchSpin({
+            min: 1,
+            max: 99,
+        });
+    });
+
+    function changeStatus(checkbox)
+        {
+            var self = $(checkbox);
+            var switch_status = self.siblings('.switchery-status');
+
+            if ( self.is(':checked') )
+            {
+                switch_status.html("{{ lang('text_enabled') }}");
+            }
+            else
+            {
+                switch_status.html("{{ lang('text_disabled') }}");
+            }
+        }
+</script>
+
+<script>
+/// expandpay ui
+
+$(document).ready(function() {
+    var telInput = jQuery(".international-telephone");
+    // run input number flags function
+    try{
+        let iti = telInput.intlTelInput({
+            initialCountry: "{{expandpay_country_code ? expandpay_country_code : 'eg'}}",
+            utilsScript: "{{ link('view/build/js/utils.js') }}"
+        });
+    }catch(e){
+        console.log(e.message)
+    }
+    errorMsg = $(".valdation-phone");
+     // on blur: validate
+      var reset = function () {
+    telInput.removeClass("error");
+    errorMsg.removeClass("has-warning");
+    errorMsg.removeClass("has-success");
+    };
+    
+    telInput.blur(function () {
+        reset();
+    
+        if ($.trim(telInput.val())) {
+            if (telInput.intlTelInput("isValidNumber")) {
+                errorMsg.addClass("has-success");
+                $('.ValidNumberMsg').hide();
+            } else {
+                errorMsg.addClass("has-warning");
+                $('.ValidNumberMsg').show();
+            }
+        }
+    });
+
+    /// next and prev btn
+    //NextStep
+    function nextStep(){
+        $('.nav-tabs > .active').next('li').find('a').trigger('click');
+        var getActiveStep=$(".start-side-holder li.active a").attr("href");
+        $(".end-side-holder .tab-pane").removeClass('active');
+        $(getActiveStep).addClass('active');
+    };
+
+    //PrevStep
+    function PrevStep(){
+        $('.nav-tabs > .active').prev('li').find('a').trigger('click');
+        var getActiveStep=$(".start-side-holder li.active a").attr("href");
+        $(".end-side-holder .tab-pane").removeClass('active');
+        $(getActiveStep).addClass('active');
+    };
+
+
+    $('.expandpay-btnNext').click(function(){
+        nextStep();
+    });
+
+    $('.expandpay-btnPrevious').click(function(){
+        PrevStep();
+    });
+
+    /// Active country
+    dataCountry();
+    $('.country-item-holder .country-item').click(function(e) {
+        $('.country-item-holder .country-item').removeClass('active').find('.country-input').prop('checked', false);
+        $(this).addClass('active').find('.country-input').prop('checked', true);
+        localStorage.setItem("activeDivCountry", $(this).index('.country-item-holder .country-item'));
+        appendToForm();
+        dataCountry();
+    });
+
+    /// start to select form between fawaterk and myFatoorah
+    function dataCountry(){
+        var selectedval=$(".country-item-holder .country-item.active").attr("data-country");
+        $(".item-country-changed").hide().find('input').prop('disabled', true);
+        var classvar='.item-country-changed.'+selectedval;
+        $(classvar).show().find('input').prop('disabled', false);
+    };
+    /// end to select form between fawaterk and myFatoorah
+
+    var activeIndexCountry = localStorage.getItem("activeDivCountry");
+    if (activeIndexCountry) {
+        $('.country-item-holder .country-item').removeClass('active').eq(activeIndexCountry).addClass('active')
+    }
+    $('.country-item-holder .country-item.active').trigger( "click" );
+
+
+    /// Active BusinessType
+
+    $('.BusinessType-item-holder .BusinessType-item').click(function(e) {
+        $('.BusinessType-item-holder .BusinessType-item').removeClass('active').find('.BusinessType-input').prop('checked', false);
+        $(this).addClass('active').find('.BusinessType-input').prop('checked', true);
+        localStorage.setItem("activeDivBusiness", $(this).index('.BusinessType-item-holder .BusinessType-item'));
+        appendToForm();
+    });
+    var activeIndexBusiness = '{{merchant_data['type']}}' == 'business' ? 1 : 0;
+    if (activeIndexBusiness) {
+        $('.BusinessType-item-holder .BusinessType-item').removeClass('active').eq(activeIndexBusiness).addClass('active')
+    }
+    $('.BusinessType-item-holder .BusinessType-item.active').trigger( "click" );
+
+    // get mail from welcome screen
+    var login_mail = localStorage.getItem("login_mail");
+    var merchant_mail = "{{merchant_data['email']}}"
+    if(merchant_mail === ""){
+        $("input[name='email']").val(login_mail);
+    }
+    /// Fields Append To Form
+
+    function appendToForm(){
+        var getActiveCountry=$(".country-item-holder .country-item.active").attr("country-name");
+        var getActiveBusiness=$(".BusinessType-item-holder .BusinessType-item.active").attr("acc-type");
+        if(!getActiveBusiness){
+            var getActiveBusiness= '{{merchant_data['type']}}'
+            if(getActiveBusiness == 'business'){
+                getActiveBusiness = 'Company-required'
+            }else{
+                getActiveBusiness = 'Individual-required'
+            }
+
+        }
+        if ($(".form-data-hide .form-country."+getActiveCountry).hasClass(getActiveBusiness)) {
+            var selectedFields='.form-data-hide .form-country.'+getActiveCountry+'.'+getActiveBusiness;
+            $(".form-data-show").html($(selectedFields).html());
+        }else {
+            var selectedFields='.form-data-hide .form-country.'+getActiveCountry;
+            $(".form-data-show").html($(selectedFields).html());
+        }
+    };
+    appendToForm();
+
+    ////// hide submit if the required fields are empty ( Create Account  ).
+
+    function emptyInputCreate(){
+        var empty = false;
+        $('#CreateAccount .form-group input:not(:disabled),#CreateAccount .form-group .required-field-toSubmit').each(function() {
+            if ($(this).val() == '') {
+                    empty = true;
+                }
+        });
+            if (empty || !telInput.intlTelInput("isValidNumber")) {
+            $('#craeteAccountSubmitButton').addClass('hiddenSubmit');
+        } else {
+            $('#craeteAccountSubmitButton').removeClass('hiddenSubmit');
+        }
+    };
+    $('#CreateAccount .form-group input:not(:disabled)').keyup(function() {
+        emptyInputCreate();
+    });
+
+    $('#CreateAccount .form-group .required-field-toSubmit').change(function() {
+        emptyInputCreate();
+    });
+    emptyInputCreate();
+
+    ////// hide submit if the required fields are empty (upload  Documents ).
+
+    function emptyInputDoc(){
+        $('#uploadForm  .form-group input:not(:disabled)').change(function() {
+
+            var empty = false;
+            $('#uploadForm  .form-group input:not(:disabled)').each(function() {
+                if ($(this).val() == '') {
+                    empty = true;
+                }
+            });
+
+            if (empty) {
+                $('#uploadSubmitButton').addClass('hiddenSubmit');
+            } else {
+                $('#uploadSubmitButton').removeClass('hiddenSubmit');
+            }
+        });
+    };
+    
+    emptyInputDoc();
+
+    // get banksList and cities depend on country
+    $('#countryNextButton').click(function(){
+        $('select[name=city]').empty()
+        $('select[name=bank_name]').empty()
+        $('.alert-loading.countryloader').show();
+        $(this).css('pointer-events','none');
+        var country = $('.country-item.active').children('input').val()
+        $action = '{{link('extension/expandpay/getBankListAndCities')}}';
+        var data = {country:country}
+        $.ajax({
+            url: $action,
+            data: data,
+            dataType: 'JSON',
+            method: 'POST',
+            success: function (response){
+                /*
+                for(zone in response.zones){
+                    $('select[name=city]').append('<option>'+response.zones[zone].name+'</option>');
+                }
+                */
+                if(response.banksList == 'PROVIDER_ERROR'){
+                    $('select[name=bank_name]').append('<option>'+response.banksList+'</option>')
+                }else{
+                    localStorage.setItem("step1", 1);
+                    localStorage.setItem("country",$('.country-item.active').children('input').val())
+                    if(response.banksList.constructor == Object){
+                        for(bank in response.banksList){
+                            $('select[name=bank_name]').append(`<option value='${bank}'>${response.banksList[bank]}</option>`)
+                        }
+
+                    }else{
+                        for(bank in response.banksList){
+                            var bankValue = response.banksList[bank].Value +' '+ response.banksList[bank].Text;
+                            $('select[name=bank_name]').append(`<option value='${bankValue}'>${response.banksList[bank].Text}</option>`)
+                        }
+
+                    }
+                }
+                $('.alert-loading.countryloader').hide();
+                $('.alert-done.countryloader').show();
+                $('#countryNextButton').css('pointer-events','none');
+                setTimeout(function(){
+                    $('#countryNextButton').removeAttr('style');
+                    $('.alert-done.countryloader').hide();
+                    $('.nav-tabs > .active').next('li').find('a').trigger('click')
+                },200)
+            }
+        });
+    })
+
+    function getBankList(data){
+        $('select[name=city]').empty()
+        $('select[name=bank_name]').empty()
+        // $('.alert-loading.countryloader').show();
+        $(this).css('pointer-events','none');
+        $action = '{{link('extension/expandpay/getBankListAndCities')}}';
+
+        $.ajax({
+            url: $action,
+            data: data,
+            dataType: 'JSON',
+            method: 'POST',
+            async:true,
+            success: function (response){
+                /*
+                for(zone in response.zones){
+                    $('select[name=city]').append('<option>'+response.zones[zone].name+'</option>');
+                }
+                */
+               $('select[name=bank_name]').html('<option selected value="">{{ lang("entry_please_select") }}</option>');
+                if(response.banksList == 'PROVIDER_ERROR'){
+                    $('select[name=bank_name]').append('<option>'+response.banksList+'</option>')
+                }else{
+                    localStorage.setItem("step1", 1);
+                    localStorage.setItem("country",$('.country-item.active').children('input').val())
+                    if(response.banksList.constructor == Object){
+                        for(bank in response.banksList){
+                            $('select[name=bank_name]').append('<option>'+response.banksList[bank]+'</option>')
+                        }
+
+                    }else{
+                        for(bank in response.banksList){
+                            var bankValue = response.banksList[bank].Value +' '+ response.banksList[bank].Text;
+                            $('select[name=bank_name]').append(`<option value='${bankValue}'>${response.banksList[bank].Text}</option>`)
+                        }
+
+                    }
+                }
+            }
+        });
+
+    }
+    $('#busnissNextButton').click(function(){
+        localStorage.setItem("step2", 1);
+        localStorage.removeItem("step1");
+    })
+    
+    ////// upload files
+    $('#craeteAccountSubmitButton').click(function(e){
+        e.preventDefault();
+        $('.alert-loading.createloader').show();
+        // $("input").parent().removeClass('has-error');
+        $("input").closest('.form-group').removeClass('has-error');
+        // $("input").next().empty();
+        $("input").closest('.form-group').find('.help-block').empty();  
+        var formData = new FormData($("#createAccountForm")[0]);
+        var getDialCode = telInput.intlTelInput('getSelectedCountryData').dialCode;
+        var getCountryCode = telInput.intlTelInput('getSelectedCountryData').iso2;
+        formData.append("expandpay_country_code",getCountryCode);
+        formData.append("phone_code",getDialCode);
+        var $form = $('#createAccountForm');
+        var $action = $form.attr('action');
+        var $data = $form.serialize();
+        $.ajax({
+            url: $action,
+            data: formData,
+            dataType: 'JSON',
+            method: 'POST',
+            processData: false,
+            contentType: false,
+            success: function (response) {
+                $('.alert-loading.createloader').hide();
+                if (response.success == 1) {
+                    nextStep();
+                    $('#createAccountForm .tab-pane').addClass('form-readonly');
+                    localStorage.removeItem("step1");
+                    localStorage.removeItem("step2");
+                    appendToForm();
+                    emptyInputDoc();
+                } else {
+                    if(response.error.toUpperCase() == "NOT_ALLOWED"){
+                        $('#register_error').removeClass('d-none');
+                        $('#register_error').append(response.errors[0]);
+                        $('html, body').animate({
+                            scrollTop: $("#register_error").offset().top
+                        }, 500);
+
+                    }
+                    for (err in response.errors) {
+
+                        if(err.includes(".", 1)){
+                            err_name = err.split(".");
+                            $("input[name='"+err_name[1]+"']").closest('.form-group').addClass('has-error');
+                            $("input[name='"+err_name[1]+"']").closest('.form-group').find('.help-block').append(response.errors[err])
+
+                        }
+                        var error = response.errors[err];
+                        // $("input[name='"+err+"']").parent().addClass('has-error');
+                        $("input[name='"+err+"']").closest('.form-group').addClass('has-error');
+                        // $("input[name='"+err+"']").next().append(response.errors[err])
+                        $("input[name='"+err+"']").closest('.form-group').find('.help-block').append(response.errors[err])
+                    }
+                    $('html, body').animate({
+                        scrollTop: $("#CreateAccount").offset().top
+                    }, 500);
+                }
+            }
+        });
+
+    });
+    $('#uploadSubmitButton').click(function (event) {
+        $('.alert-loading.createloader').show();
+        var $form = $('#uploadForm');
+        var formData = new FormData($("#uploadForm")[0]);
+        var $action = $form.attr('action');
+        var $data = $form.serialize();
+        $('.modal-errors').html('');
+        $("input").closest('.form-group').removeClass('has-error');
+        $("input").closest('.form-group').find('.help-block').empty();
+
+        $.ajax({
+            url: $action,
+            data: formData,
+            dataType: 'JSON',
+            method: 'POST',
+            processData: false,
+            contentType: false,
+            success: function (response) {
+                $('.alert-loading.createloader').hide();
+                if (response.success == 1) {
+                    $('#MyFatoorahRegisterModal').modal('toggle');
+                    nextStep();
+                    $('#Documents').addClass('form-readonly');
+                    $('.item-verfication-error').hide();
+                    $('.item-verfication-pending').show();
+
+                } else {
+                    
+                    for(err in response.fails){
+                        $("input[name='"+err+"']").closest('.form-group').addClass('has-error');
+                        $("input[name='"+err+"']").closest('.form-group').find('.help-block').append(response.fails[err])
+                    }
+
+                }
+            }
+        });
+    });
+    $('#configure-btn').click(function(){
+        $.ajax({
+            url: '{{link('extension/expandpay/expandpay_configure')}}',
+            data: {expandpay_configure:1},
+            dataType: 'JSON',
+            method: 'POST',
+            processData: true,
+            success: function (response) {
+
+                {#***************** Start ExpandCartTracking #347723  ****************#}
+                //track enable application button
+                trackUrl('Enabled ExpandPay');
+                {#***************** End ExpandCartTracking #347723  ****************#}
+                window.location.href = '{{link('extension/expandpay/setting')}}';
+            }
+        });
+
+    })
+    // open tabs depend on data status
+    var file_status = '{{files_uploaded}}';
+    var merchantStatus = '{{merchantStatus}}';
+    switch(file_status){
+        case '0':
+            if(merchantStatus == 'rejected'){
+                $('.expandpay-steps-holder > .verfication-tab').addClass('active')
+                $('#Verfication').addClass('active')
+
+            }else{
+                $('#file_upload_step').addClass('active')
+                $('#Documents').addClass('active')
+            }
+            break;
+        case '1':
+            $('.expandpay-steps-holder > .verfication-tab').addClass('active')
+            $('#Verfication').addClass('active')
+            $('#Documents.tab-pane').addClass('form-readonly');
+            break;
+        default:
+            $('#first_step').addClass('active')
+            $('#Country').addClass('active')
+            break;
+    }
+        var form_status = '{{form_submitted}}';
+        if(form_status == 1){
+            $('#createAccountForm .tab-pane').addClass('form-readonly');
+        }
+    // check if step 1 is submitted
+    var step1 = localStorage.getItem("step1");
+    if(step1 == '1'){
+        getBankList({country:localStorage.getItem("country")})
+
+        $('#first_step').removeClass('active')
+        $('#first_step').next().addClass('active')
+        $('#Country').removeClass('active')
+        $('#BusinessType').addClass('active')
+    }
+    // check if step 2 is submitted
+    var step2 = localStorage.getItem("step2");
+    if(step2 == '1'){
+        getBankList({country:localStorage.getItem("country")})
+
+        $('#first_step').removeClass('active')
+        $('#second_step').removeClass('active')
+        $('#second_step').next().addClass('active')
+        $('#Country').removeClass('active')
+        $('#BusinessType').removeClass('active')
+        $('#CreateAccount').addClass('active')
+
+    }
+
+    // display UI depent on merchant activation status
+    switch(merchantStatus){
+        case 'active':
+            $('.item-verfication-pending').hide();
+            $('.item-verfication-done').show();
+            $('.verfication-tab').addClass('verfication-done')
+            break;
+        case 'rejected':
+            $('.item-verfication-pending').hide();
+            $('.item-verfication-error').show();
+            $('.verfication-tab').addClass('verfication-error')
+            break;
+    }
+
+    $('.expandpay-arrows-holder .btn').click(function(){
+        var stepActive=$(".expandpay-steps-item.active a").attr("href");
+        $(".end-side-holder .tab-pane").removeClass('active');
+        $(stepActive).addClass('active');
+    });
+
+    var telephone = "{{merchant_data['phone'] ? merchant_data['phone'] : telephone}}"
+    // set phone value after page is fully reload
+    $(window).on('load', function() {
+        telInput.val(telephone);
+    });
+    window.onbeforeunload = confirmExit;
+    function confirmExit()
+    {
+        localStorage.removeItem("step1");
+        localStorage.removeItem("step2");
+
+        return undefined;
+    }
+});
+</script>
+{% endblock content %}

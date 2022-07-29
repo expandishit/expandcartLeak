@@ -1,0 +1,168 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% set dualMenuEnabled = true %}
+
+{% block title %}
+    {{ lang('heading_title', 'module/mega_filter') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block secondarymenu %}
+    {% include 'module/mega_filter_menu.expand' with {'expand': '#mega_filter', 'active': '#layout'} %}
+{% endblock secondarymenu %}
+
+{% block headelements %}
+    {% include "includes/buttons_top.expand" %}
+{% endblock headelements %}
+
+{% block content %}
+<?php
+
+	$HTTP_URL = '';
+	
+	if( class_exists( 'MijoShop' ) ) {
+		$HTTP_URL = HTTP_CATALOG . 'opencart/admin/';
+	}
+
+?>
+
+<!--<link type="text/css" href="<?php echo $HTTP_URL; ?>view/stylesheet/mf/css/bootstrap.css" rel="stylesheet" />-->
+<link type="text/css" href="<?php echo $HTTP_URL; ?>view/stylesheet/mf/css/style.css" rel="stylesheet" />
+
+<script type="text/javascript">
+	$ = jQuery = $.noConflict(true);
+</script>
+
+<script type="text/javascript" src="<?php echo $HTTP_URL; ?>view/stylesheet/mf/js/jquery.min.js"></script>
+
+<script type="text/javascript">
+	var $$			= $.noConflict(true),
+		$jQuery		= $$;
+</script>
+
+<!--<script type="text/javascript" src="<?php echo $HTTP_URL; ?>view/stylesheet/mf/js/bootstrap.js"></script>-->
+
+<div id="content">
+	<div class="mega-filter-pro">
+		<div class="box">
+			<div class="heading">
+				<h1><img src="view/image/module.png" alt="" /> <?php echo $heading_title; ?></h1>
+			</div>
+			
+			<div class="content">
+				<div class="text-center"><?php echo $text_installation_in_progress; ?></div>
+				<div class="progress">
+					<div class="progress-bar" style="width:0%"></div>
+				</div>
+				<div class="text-center progress-info"><?php echo $text_loading; ?>...</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript">
+	var MF_AJAX_PARAMS = '<?php echo $HTTP_URL ? "&option=com_mijoshop&format=raw" : ""; ?>';
+	
+	jQuery().ready(function(){
+		function update( data ) {
+			var txt = '<?php echo $text_step; ?>: ' + data.step + '/' + data.steps + ', <?php echo $text_progress; ?>: ' + data.progress + '%';
+			
+			if( typeof data._progress != 'undefined' && data._progress > 0 ) {
+				txt += ' - ' + data._progress + '%';
+			}
+			
+			jQuery('.progress-info').text(txt);
+			jQuery('.progress-bar').css('width',data.progress+'%');
+		}
+		
+		function base64_decode(data) {
+			var b64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+			var o1, o2, o3, h1, h2, h3, h4, bits, i = 0,
+			  ac = 0,
+			  dec = '',
+			  tmp_arr = [];
+
+			if (!data) {
+			  return data;
+			}
+
+			data += '';
+
+			do { // unpack four hexets into three octets using index points in b64
+			  h1 = b64.indexOf(data.charAt(i++));
+			  h2 = b64.indexOf(data.charAt(i++));
+			  h3 = b64.indexOf(data.charAt(i++));
+			  h4 = b64.indexOf(data.charAt(i++));
+
+			  bits = h1 << 18 | h2 << 12 | h3 << 6 | h4;
+
+			  o1 = bits >> 16 & 0xff;
+			  o2 = bits >> 8 & 0xff;
+			  o3 = bits & 0xff;
+
+			  if (h3 == 64) {
+				tmp_arr[ac++] = String.fromCharCode(o1);
+			  } else if (h4 == 64) {
+				tmp_arr[ac++] = String.fromCharCode(o1, o2);
+			  } else {
+				tmp_arr[ac++] = String.fromCharCode(o1, o2, o3);
+			  }
+			} while (i < data.length);
+
+			dec = tmp_arr.join('');
+
+			return dec.replace(/\0+$/, '');
+	  }
+	
+		function install() {
+			jQuery.ajax({
+				type: 'post',
+				url: '<?php echo $progress_action; ?>'.replace(/&amp;/g,'&')+MF_AJAX_PARAMS,
+				success: function( response ){
+					var $tmp = jQuery('<tmp>').html( response ),
+						data = jQuery.parseJSON( base64_decode( $tmp.find('#json-encode').html() ) );
+
+					if( data.success == '1' ) {
+						update({
+							'step'		: data.steps,
+							'steps'		: data.steps,
+							'progress'	: 100
+						});
+
+						window.location.href = '<?php echo $main_action; ?>'.replace(/&amp;/g, '&');
+					} else {					
+						if( data.progress == 0 && data.step && data.step != data.steps ) {
+							update({
+								'step'		: data.step-1,
+								'steps'		: data.steps,
+								'progress'	: 100
+							});
+
+							setTimeout(function(){
+								update( data );
+
+								setTimeout(function(){
+									install();
+								}, 500);
+							}, 500);
+						} else {
+							update( data );
+							install();
+						}
+					}
+				},
+				error: function() {
+					location.reload();
+				}
+			});
+		}
+		
+		install();
+	});
+</script>
+
+{% endblock %}

@@ -1,0 +1,483 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block title %}
+    {{ lang('heading_title', 'module/zopim_live_chat') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+    {% include "includes/buttons_top.expand" %}
+{% endblock headelements %}
+
+{% block content %}
+    
+    <!-- Start Form -->
+    <form id="setting-payment" class="form" action="{{ action }}">
+        <!-- Status -->
+        <div class="col-md-4">
+            <div class="panel panel-flat">
+                <div class="panel-body">
+                    <fieldset>
+                        
+                        <legend class="text-semibold">
+                            <i class="fas fa-check-circle fa-lg position-left"></i>
+                            {{ lang('entry_layout')|trim(':') }}
+                            <a class="control-arrow" data-toggle="collapse" data-target="#panel1">
+                                <i class="icon-circle-down2"></i>
+                            </a>
+                        </legend>
+
+                        <div class="collapse in" id="panel1">
+
+                            {% set module_row = 0 %}
+
+                            {% for module in modules %}
+                                <div id="module-row{{ module_row }}">
+                                    <div class="form-group col-md-7">
+                                        <select name="zopim_live_chat_module[{{ module_row }}][layout_id]" class="form-control">
+                                            {% for layout in layouts %}
+                                                <option value="{{ layout['layout_id'] }}" {{ layout['layout_id'] == module['layout_id'] ? 'selected' }}>{{ layout['name'] }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="form-group col-md-3">
+                                        <div class="checkbox checkbox-switchery text-center no-margin" style="padding-top:8px">
+                                            <label>
+                                                <input type="checkbox" onchange="changeStatus(this);" name="zopim_live_chat_module[{{ module_row }}][status]" class="switchery" {{ module['status'] in ['1', 1, 'on'] ? 'checked' }}>
+                                                <span class="switchery-status">{{ module['status'] in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="form-group col-md-2">
+                                        <button class="btn btn-danger" onclick="$('#module-row{{ module_row }}').remove();" data-popup="tooltip" title="{{ lang('button_remove') }}"><i class="icon-trash"></i></button>
+                                    </div>
+                                </div>
+                                {% set module_row = module_row + 1 %}
+                            {% endfor %}
+                        </div>
+                    </fieldset>
+
+                    <div class="text-center">
+                        <button onclick="addModule();" class="btn btn-labeled btn-xs btn-success"><b><i class="icon-plus3"></i></b> {{ lang('button_add_module') }}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End of Status -->
+
+        {# Hidden Fields #}
+            <input type="hidden" name="zopim_salt" value="{{ zopim_salt }}" size="30">
+            <input type="hidden" name="zopim_code" value="{{ zopim_code }}" size="30">
+        {# /Hidden Fields #}
+
+        <!-- Fields -->
+        <div class="col-md-8">
+            <div class="panel panel-flat">
+                <div class="panel-body">
+                    <fieldset>
+                        
+                        <legend class="text-semibold">
+                            <i class="fas fa-check-circle fa-lg position-left"></i>
+                            {{ lang('text_general_setting') }}
+                            <a class="control-arrow" data-toggle="collapse" data-target="#fields-panel">
+                                <i class="icon-circle-down2"></i>
+                            </a>
+                        </legend>
+
+                        <div class="collapse in" id="fields-panel">
+                            <!-- Username -->
+                            <div class="form-group col-md-6">
+                                <label for="zopim_username" class="control-label">{{ lang('entry_username') }}</label>
+                                <input type="text" class="form-control" id="zopim_username" name="zopim_username" value="{{ zopim_username }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Username -->
+                            <!-- Password -->
+                            <div class="form-group col-md-6">
+                                <label for="zopim_password" class="control-label">{{ lang('entry_password') }}</label>
+                                <input type="password" class="form-control" id="zopim_password" name="zopim_password" value="{{ zopim_password }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Password -->
+                            <!-- Code -->
+                            <div class="form-group col-md-12">
+                                <label for="zopim_code" class="control-label">{{ lang('entry_code') }}</label>
+                                <input type="text" class="form-control" id="zopim_code" name="zopim_code" value="{{ zopim_code }}">
+                                <span class="help-block">{{ lang("entry_zopim_how_to_get_code") }}</span>
+                            </div>
+                            <!-- /Code -->
+                            <!-- Use SSL -->
+                            <div class="form-group col-md-12 text-center">
+                                <div class="checkbox checkbox-switchery text-center no-margin">
+                                    <label class="control-label" for="zopim_usessl">{{ lang('entry_usessl') }}</label>
+                                    &nbsp;&nbsp;&nbsp;&nbsp;
+                                    <label>
+                                        <input type="checkbox" onchange="changeStatus(this);" class="switchery" {{ zopim_usessl in ['1', 1, 'on'] ? 'checked' }} name="zopim_usessl" id="zopim_usessl">
+                                        <span class="switchery-status">{{ zopim_usessl in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                    </label>
+                                    <br><br>
+                                    <span class="text-muted">{{ lang('text_SSL_uncheck_help') }}</span>
+                                </div>
+                            </div>
+                            <!-- /Use SSL -->
+                            
+                            <br><hr style="border:1px solid #e8e8e8;">
+
+                            <!-- Zopim Dashboard -->
+                            <div class="form-group col-md-6">
+                                <a href="{{ zopimDashboard }}">{{ lang('text_zopim_dashboard') }}</a>
+                                <span class="help-block">{{ zopim_accountDetails }} <br> {{ lang('text_zopim_dash_help2') }}</span>
+                            </div>
+                            <!-- /Zopim Dashboard -->
+                            <!-- Zopim Affiliate -->
+                            <div class="form-group col-md-6 text-center">
+                                <span class="text-muted">{{ lang('text_zopim_aff') }}</span>
+                            </div>
+                            <!-- /Zopim Affiliate -->
+
+                            <!-- Zopim Store -->
+                            <div class="form-group col-md-12">
+                                <label for="zopim_store" class="control-label">{{ lang('entry_store') }}</label>
+                                <input type="text" class="form-control" id="zopim_store" name="zopim_store" value="{{ zopim_store }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Zopim Store -->
+                            <!-- Zopim Language -->
+                            <div class="form-group col-md-6">
+                                <label for="zopim_language" class="control-label">{{ lang('entry_language') }}</label>
+                                <select name="zopim_language" id="zopim_language" class="form-control" onchange="updateWidget();">
+                                    {% for key, value in zopimLanguage %}
+                                        <option value="{{ key }}" {{ zopim_language == key ? 'selected' }}>{{ value }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <!-- /Zopim Language -->
+                            <!-- Zopim Position -->
+                            <div class="form-group col-md-6">
+                                <label for="zopim_position" class="control-label">{{ lang('entry_position') }}</label>
+                                <select name="zopim_position" id="zopim_position" class="form-control" onchange="updateWidget();">
+                                    {% for key, value in zopimPosition %}
+                                        <option value="{{ key }}" {{ zopim_position == key ? 'selected' }}>{{ value }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <!-- /Zopim Position -->
+                            <br>
+                            <!-- Hide chat bar when offline -->
+                            <div class="form-group col-md-12">
+                                <div class="checkbox checkbox-switchery text-center no-margin">
+                                    <label class="control-label" for="zopim_hideonoffline">{{ lang('entry_hideOnOffline') }}</label>
+                                    &nbsp;&nbsp;&nbsp;&nbsp;
+                                    <label>
+                                        <input type="checkbox" onchange="changeStatus(this);greetingsChanged();" class="switchery" {{ zopim_hideonoffline in ['1', 1, 'on'] ? 'checked' }} name="zopim_hideonoffline" id="zopim_hideonoffline">
+                                        <span class="switchery-status">{{ zopim_hideonoffline in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <!-- /Hide chat bar when offline -->
+                        </div>
+                        <div class="col-md-12">
+
+                            <br><hr style="border:1px solid #e8e8e8;">
+                            <h5 class="text-center">{{ lang('text_bubble_setting') }}</h5>
+
+                            <!-- Enable bubble -->
+                            <div class="form-group col-md-12">
+                                <label for="zopim_bubbleEnable" class="control-label">{{ lang('entry_BubbleEnable') }}</label>
+                                <select name="zopim_bubbleEnable" id="zopim_bubbleEnable" class="form-control" onchange="updateBubbleStatus();">
+                                    {% for key, value in zopimBublemodes %}
+                                        <option value="{{ key }}" {{ zopim_bubbleEnable == key ? 'selected' }}>{{ value }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <!-- /Enable Bubble -->
+                            <!-- Zopim Help Bubble Title -->
+                            <div class="form-group col-md-6">
+                                <label for="zopim_bubbletitle" class="control-label">{{ lang('entry_BubbleTitle') }}</label>
+                                <input type="text" class="form-control" id="zopim_bubbletitle" name="zopim_bubbletitle" value="{{ zopim_bubbletitle }}" id="zopim_bubbletitle" onKeyup="updateSoon()">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Zopim Help Bubble Title -->
+                            <!-- Zopim Help Bubble Text -->
+                            <div class="form-group col-md-6">
+                                <label for="zopim_bubbletext" class="control-label">{{ lang('entry_BubbleText') }}</label>
+                                <input type="text" class="form-control" id="zopim_bubbletext" name="zopim_bubbletext" value="{{ zopim_bubbletext }}" id="zopim_bubbletext" onKeyup="updateSoon()">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Zopim Help Bubble Text -->
+                        </div>
+
+                        <div class="col-md-12">
+                            <h5 class="text-center">{{ lang('text_greeting_setting') }}</h5>
+
+                            <div class="checkbox checkbox-switchery text-center no-margin">
+                                <label class="control-label" for="zopim_usessl">{{ lang('entry_UseGreetings') }}</label>
+                                &nbsp;&nbsp;&nbsp;&nbsp;
+                                <label>
+                                    <input type="checkbox" onchange="changeStatus(this);greetingsChanged();" class="switchery" {{ zopim_UseGreetings in ['1', 1, 'on'] ? 'checked' }} name="zopim_UseGreetings" id="zopim_UseGreetings">
+                                    <span class="switchery-status">{{ zopim_UseGreetings in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                </label>
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-12">
+                            <br><hr style="border:1px solid #e8e8e8;">
+
+                            <h5 class="text-center">{{ lang('text_greeting_short') }}</h5>
+                            <!-- Zopim Help Online Greeting -->
+                            <div class="form-group col-md-6">
+                                <label for="zopim_OnlineShort" class="control-label">{{ lang('entry_OnlineShort') }}</label>
+                                <input type="text" class="form-control" id="zopim_OnlineShort" name="zopim_OnlineShort" value="{{ zopim_OnlineShort }}" id="zopim_OnlineShort" onKeyup="updateSoon()">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Zopim Help Online Greeting -->
+                            <!-- Zopim Help Away Greeting -->
+                            <div class="form-group col-md-6">
+                                <label for="zopim_AwayShort" class="control-label">{{ lang('entry_AwayShort') }}</label>
+                                <input type="text" class="form-control" id="zopim_AwayShort" name="zopim_AwayShort" value="{{ zopim_AwayShort }}" id="zopim_AwayShort" onKeyup="updateSoon()">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Zopim Help Away Greeting -->
+                            <!-- Zopim Help Offline Greeting -->
+                            <div class="form-group col-md-6">
+                                <label for="zopim_OfflineShort" class="control-label">{{ lang('entry_OfflineShort') }}</label>
+                                <input type="text" class="form-control" id="zopim_OfflineShort" name="zopim_OfflineShort" value="{{ zopim_OfflineShort }}" id="zopim_OfflineShort" onKeyup="updateSoon()">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Zopim Help Offline Greeting -->
+                        </div>
+                        <div class="col-md-12">
+                            <br><hr style="border:1px solid #e8e8e8;">
+
+                            <h5 class="text-center">{{ lang('text_greeting_long') }}</h4>
+                            <!-- Zopim Help Chat Panel Online -->
+                            <div class="form-group col-md-6">
+                                <label for="zopim_OnlineLong" class="control-label">{{ lang('entry_OnlineLong') }}</label>
+                                <input type="text" class="form-control" id="zopim_OnlineLong" name="zopim_OnlineLong" value="{{ zopim_OnlineLong }}" id="zopim_OnlineLong" onKeyup="updateSoon()">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Zopim Help Chat Panel Online -->
+                            <!-- Zopim Help Chat Panel Away -->
+                            <div class="form-group col-md-6">
+                                <label for="zopim_AwayLong" class="control-label">{{ lang('entry_AwayLong') }}</label>
+                                <input type="text" class="form-control" id="zopim_AwayLong" name="zopim_AwayLong" value="{{ zopim_AwayLong }}" id="zopim_AwayLong" onKeyup="updateSoon()">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Zopim Help Chat Panel Away -->
+                            <!-- Zopim Help Chat Panel Offline -->
+                            <div class="form-group col-md-6">
+                                <label for="zopim_OfflineLong" class="control-label">{{ lang('entry_OfflineLong') }}</label>
+                                <input type="text" class="form-control" id="zopim_OfflineLong" name="zopim_OfflineLong" value="{{ zopim_OfflineLong }}" id="zopim_OfflineLong" onKeyup="updateSoon()">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Zopim Help Chat Panel Offline -->
+                        </div>
+                    </fieldset>
+                </div>
+            </div>
+        </div>
+        <!-- End of Fields -->
+
+    </form>
+    <!-- End Form -->
+
+<!-- Lower Buttons -->
+{% include "includes/buttons_bottom.expand" %}
+<!-- End Lower Buttons -->
+<script>
+    $(document).ready(function() {
+        $('select').select2();
+        $('.touchspinney').TouchSpin({
+            'postfix': '{{ current_currency_code }}',
+            'decimals': 2,
+        });
+        switchery();
+    });
+</script>
+<script>
+    var module_row = parseInt("{{ module_row }}");
+
+    function switchery()
+    {
+        if (Array.prototype.forEach)
+        {
+            var elems = Array.prototype.slice.call(document.querySelectorAll('.switchery'));
+            elems.forEach(function(html) {
+                var switchery = new Switchery(html);
+            });
+        }
+        else {
+            var elems = document.querySelectorAll('.switchery');
+            for (var i = 0; i < elems.length; i++) {
+                var switchery = new Switchery(elems[i]);
+            }
+        }
+
+        $('[data-popup="tooltip"]').tooltip();
+    }
+
+    function addModule()
+    {  
+       event.preventDefault();
+       html = '';
+       html += `<div id="module-row${module_row}">
+                    <div class="form-group col-md-7">
+                        <select name="zopim_live_chat_module[${module_row}][layout_id]" class="form-control">
+                            {% for layout in layouts %}
+                                <option value="{{ layout['layout_id'] }}" {{ layout['layout_id'] == module['layout_id'] ? 'selected' }}>{{ layout['name'] }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group col-md-3">
+                        <div class="checkbox checkbox-switchery text-center no-margin" style="padding-top:8px">
+                            <label>
+                                <input type="checkbox" onchange="changeStatus(this);" class="switchery" name="zopim_live_chat_module[${module_row}][status]" checked>
+                                <span class="switchery-status">{{ lang('text_enabled') }}</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group col-md-2">
+                        <button class="btn btn-danger" onclick="$('#module-row${module_row}').remove();" title="{{ lang('button_remove') }}" data-popup="tooltip"><i class="icon-trash"></i></button>
+                    </div>
+                    <hr>
+                </div>
+                `;
+            
+        $('#panel1').prepend(html);
+        $('select').select2();
+        $('.switch').bootstrapSwitch();
+        switchery();
+        module_row++;
+    }
+
+    function changeStatus(checkbox)
+    {
+        var self = $(checkbox);
+        var switch_status = self.siblings('.switchery-status');
+
+        if ( self.is(':checked') )
+        {
+            switch_status.html("{{ lang('text_enabled') }}");
+        }
+        else
+        {
+            switch_status.html("{{ lang('text_disabled') }}");
+        }
+    }
+
+</script>
+
+{% if zopim_code and zopim_code != 'error' %}
+<!-- Start of  Zendesk Widget script -->
+<script id="ze-snippet" src="https://static.zdassets.com/ekr/snippet.js?key=<?php echo $zopim_code; ?>"> </script>
+<!-- End of  Zendesk Widget script -->
+
+    <script type="text/javascript"> 
+     zE(function(){
+        $zopim( function() {
+            $zopim.livechat.bubble.setTitle('<?php echo $zopim_bubbletitle; ?>');
+            $zopim.livechat.bubble.setText('<?php echo $zopim_bubbletext; ?>');
+            $zopim.livechat.setName('Visitor <?php echo $zopim_store; ?>');
+        });
+        });
+    </script>
+
+    <script type="text/javascript">
+
+        function updateWidget()
+        {
+
+            var lang = document.getElementById('zopim_language').options[ document.getElementById('zopim_language').options.selectedIndex ].value;
+            $zopim.livechat.setLanguage(lang);
+            $zopim.livechat.setName('Visitor');
+            $zopim.livechat.setEmail('');
+
+            if (document.getElementById("zopim_hideonoffline").checked)
+            {
+                $zopim.livechat.button.setHideWhenOffline(true);
+            }
+            else
+            {
+                $zopim.livechat.button.setHideWhenOffline(false);
+            }
+
+            $zopim.livechat.window.setColor(document.getElementById("zopim_color").value);
+            $zopim.livechat.window.setTheme(document.getElementById("zopim_theme").value);
+
+            $zopim.livechat.bubble.setTitle(document.getElementById("zopim_bubbletitle").value);
+            $zopim.livechat.bubble.setText(document.getElementById("zopim_bubbletext").value);
+
+            $zopim.livechat.setGreetings({
+            'online': [document.getElementById("zopim_OnlineShort").value, document.getElementById("zopim_OnlineLong").value],
+            'offline': [document.getElementById("zopim_OfflineShort").value, document.getElementById("zopim_OfflineLong").value],
+            'away': [document.getElementById("zopim_AwayShort").value, document.getElementById("zopim_AwayLong").value]
+            });
+        }
+
+        function updatePosition()
+        {
+            var position = document.getElementById('zopim_position').options[ document.getElementById('zopim_position').options.selectedIndex ].value;
+            $zopim.livechat.button.setPosition(position);
+        }
+
+        function updateBubbleStatus()
+        {
+            var value = document.getElementById("zopim_bubbleEnable").value;
+            switch (value)
+            {
+                case 'default':
+                    $zopim.livechat.bubble.reset();
+                    break;
+                case 'show':
+                    $zopim.livechat.bubble.show();
+                    break;
+                case 'hide':
+                    $zopim.livechat.bubble.hide();
+                    break;
+            }
+        }
+
+        function greetingsChanged()
+        {
+            var inputs = ['zopim_OnlineShort', 'zopim_AwayShort', 'zopim_OfflineShort',
+            'zopim_OnlineLong' , 'zopim_AwayLong', 'zopim_OfflineLong'];
+            var isDisabled = false;
+
+            if (document.getElementById('zopim_UseGreetings').checked) 
+            isDisabled = false;
+            else 
+            isDisabled = true;
+
+            for (var i=0; i<inputs.length; i++)
+            {
+                var el = document.getElementById(inputs[i]);
+                el.disabled = isDisabled;
+            }
+
+            updateWidget();
+        }
+
+        var timer;
+        function updateSoon()
+        {
+            clearTimeout(timer);
+            timer = setTimeout("updateWidget()", 300);
+        }
+    </script>
+{% else %}
+    <script>
+        function updateBubbleStatus() {}
+        function updateWidget() {}
+        function greetingsChanged() {}
+        function updatePosition() {}
+        function updateSoon() {}
+    </script>
+
+{% endif %}
+{% endblock %}

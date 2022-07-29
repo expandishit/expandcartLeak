@@ -1,0 +1,542 @@
+<style>
+    .title-base {
+        font-size: 26px;
+    }
+</style>
+
+{% if success %}
+    <br>
+    <div class="alert alert-success alert-dismissible" role="alert">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        {{ success }}
+    </div>
+{% endif %}
+
+<style>
+
+    .breadcrumb-page {
+        display: none;
+    }
+
+#calendar .days-grid {
+    display: flex;
+    justify-content: space-between;
+    margin-top:30px;
+}
+
+#calendar .day, .navigator {
+    border: 1px solid #ccc;
+    padding: 15px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#slots {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+
+    margin-bottom: 100px;
+}
+
+#slots .slot {
+    width: 49%;
+    text-align: center;
+    padding: 20px 40px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin: 3px 0px;
+    cursor: pointer;
+}
+
+.slot:hover {
+    border: 1px solid dodgerblue !important;
+    color: dodgerblue;
+}
+
+
+.is-required:after {
+    content: " *";
+    color: red;
+}
+
+#info-modal .reservation-info .reservation-head i {margin-top: 10px; margin-bottom: 10px;}
+#info-modal .reservation-info .reservation-head {font-size: 6rem;}
+#info-modal .reservation-info div {width: 100%;}
+#info-modal .reservation-info table thead th {
+    text-align: center;
+    font-weight: 500;
+    font-size: 2rem;
+}
+
+#info-modal .reservation-info table tbody td {
+    width: 50%;
+}
+
+#info-modal .reservation-info {
+    text-align: center;
+    display: flex;
+    flex-wrap: wrap;
+    min-height: 300px;
+    align-content: space-evenly;
+}
+
+.disabled {
+    color: #ccc;
+    font-weight: bold;
+}
+
+    .title-base-latest {
+        text-align: center;
+        margin: 26px 0 20px 0;
+    }
+
+
+    .modal {
+        text-align: center;
+        z-index: 9999999;
+    }
+
+    @media screen and (max-width: 1199px) {
+        .modal-backdrop {
+            z-index: -1 !important;
+        }
+    }
+    @media screen and (min-width: 768px) {
+        .modal:before {
+            display: inline-block;
+            vertical-align: middle;
+            content: " ";
+            height: 100%;
+        }
+    }
+
+    .modal-dialog {
+        display: inline-block;
+        vertical-align: middle;
+    }
+
+
+</style>
+
+<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css" />
+
+<div id="content" class="container">
+    <!--========= Posts ===========================-->
+    <div class="row">
+    <div class="col-md-12">
+        <h2 class="title-base-latest">{{ lang('slots_reservations') }}</h2>
+        <div class="row">
+            {#<div id="calendar" style="display: none;"></div>#}
+            <div id="calendar">
+                <div class="days-grid"></div>
+                <div class="col-md-12 date-picker"></div>
+            </div>
+            <div id="slots">
+                {#% for slot in allSlots %}
+                <div class="slot">{{ slot }}</div>
+                {% endfor %#}
+            </div>
+        </div>
+    </div></div>
+</div>
+
+<div class="modal fade" id="reservation-modal" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title">{{ lang('reservation_info') }}</h4>
+            </div>
+            <div class="modal-body">
+                <div class="modal-errors col-md-12"></div>
+                <form id="reservation-info-form">
+                    <div class="row">
+                        <div class="col-md-4 col-sm-12 col-xs-12">
+                            <label>{{ lang('reservation_date') }}</label>
+                            <input readonly class="form-control reservation_date" name="reservation_date" />
+                        </div>
+                        <div class="col-md-4 col-sm-12 col-xs-12">
+                            <label>{{ lang('reservation_slot') }}</label>
+                            <input readonly class="form-control reservation_slot" name="reservation_slot" />
+                        </div>
+                        <div class="col-md-4 col-sm-12 col-xs-12">
+                            <label>{{ lang('available_seats') }}</label>
+                            <input readonly class="form-control available" name="available" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label{{ 'name' in fields ? ' is-required' : '' }}">
+                            {{ lang('fields_name') }}
+                        </label>
+                        <input type="text" name="name" class="name form-control" />
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label{{ 'email' in fields ? ' is-required' : '' }}">
+                        {{ lang('fields_email') }}
+                        </label>
+                        <input type="text" name="email" class="email form-control" />
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label{{ 'phone' in fields ? ' is-required' : '' }}">
+                        {{ lang('fields_phone') }}
+                        </label>
+                        <input type="text" name="phone" class="phone form-control" />
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer text-left">
+                <button type="button" class="btn btn-danger pull-left" data-dismiss="modal">
+                    {{ lang('button_close') }}
+                </button>
+                <button type="button" class="btn btn-primary reservation-info-form-trigger">
+                    {{ lang('button_save') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="warning-modal" role="dialog">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-body">{{ lang('today_is_off') }}</div>
+            <div class="modal-footer text-left">
+                <button style="width: 100%;" type="button" class="btn btn-danger pull-left" data-dismiss="modal">
+                    {{ lang('button_close') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="info-modal" role="dialog" data-backdrop="static">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="reservation-info">
+                    <div class="reservation-head form-group">
+                        <h3>{{ lang('reservation_done') }}</h3>
+                        <i class="fa fa-check-circle"></i>
+                    </div>
+                    <div class="form-group">
+                        <table class="table table-hover datatable-highlight">
+                            <thead>
+                                <tr><th colspan="5">{{ lang('reservation_info') }}</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>{{ lang('reservation_code') }}</td>
+                                    <td class="reservation_code">...</td>
+                                </tr>
+                                <tr>
+                                    <td>{{ lang('reservation_time') }}</td>
+                                    <td class="reservation_time">...</td>
+                                </tr>
+                                <tr>
+                                    <td>{{ lang('reservation_name') }}</td>
+                                    <td class="reservation_name">...</td>
+                                </tr>
+                                <tr>
+                                    <td>{{ lang('reservation_email') }}</td>
+                                    <td class="reservation_email">...</td>
+                                </tr>
+                                <tr>
+                                    <td>{{ lang('reservation_phone') }}</td>
+                                    <td class="reservation_phone">...</td>
+                                </tr>
+                                <tr>
+                                    <td id="email-heading" colspan="2" style="text-align: center; display: none;"></td>
+                                </tr>
+                                <tr>
+                                    <td id="sms-heading" colspan="2" style="text-align: center; display: none;"></td>
+                                </tr>
+                                <tr id="link">
+                                    <td colspan="2" style="text-align: center;">
+                                        {{ lang('reservation_link') }} <a href="" class="preview_link"></a>
+                                        <br />
+                                        {{ lang('reservation_hint') }}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer text-left">
+                <a style="width: 100%;" class="btn btn-primary" href="{{ link('common/home') }}">
+                    {{ lang('continue_shopping') }}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment-with-locales.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
+
+<script>
+
+var getSlotsUrl = '{{ link("module/slots_reservations/getSlots") }}';
+var submitReservationUrl = '{{ link("module/slots_reservations/store") }}';
+
+var mailSentTo = "{{ lang_printf('email_sent_to', '##') }}";
+var smsSentTo = "{{ lang_printf('sms_sent_to', '##') }}";
+var locales = {};
+locales['day_off_message'] = "{{ lang('today_is_off') }}";
+locales['slot_off_message'] = "{{ lang('slot_is_off') }}";
+
+$('.reservation-info-form-trigger').click(() => {
+
+    $('.reservation-info-form-trigger').attr('disabled', true);
+
+    let _d = $('#reservation-info-form').serialize();
+
+    $('#reservation-modal').find('.modal-errors').html('');
+
+    $.ajax({
+        url: submitReservationUrl,
+        method: 'POST',
+        data: _d,
+        dataType: 'JSON',
+        success: (r) => {
+            if (typeof r.status != 'undefined' && r.status == 'OK') {
+                $('#reservation-modal').modal('toggle');
+                $('#info-modal').find('.reservation_code').html(r.data.code);
+                $('#info-modal').find('.reservation_name').html(r.data.name);
+                $('#info-modal').find('.reservation_email').html(r.data.email);
+                $('#info-modal').find('.reservation_phone').html(r.data.phone);
+                $('#info-modal').find('.reservation_time').html(r.data.reservation_time);
+                $('#info-modal').find('.preview_link').attr('href', r.data.preview_link);
+                $('#info-modal').find('.preview_link').html(`\{${r.data.code}\}`);
+                if (typeof r.data.emailed != 'undefined' && r.data.emailed == true) {
+                    $('#info-modal').find('#email-heading').show();
+                    $('#info-modal').find('#email-heading').html(mailSentTo.replace(/\#\#/, r.data.email));
+                }
+                if (typeof r.data.sms_sent != 'undefined' && r.data.sms_sent == true) {
+                    $('#info-modal').find('#sms-heading').show();
+                    $('#info-modal').find('#sms-heading').html(mailSentTo.replace(/\#\#/, r.data.phone));
+                }
+                $('#info-modal').modal('toggle');
+                $('.reservation-info-form-trigger').attr('disabled', false);
+            } else {
+                for (i in r.errors) {
+                    let e = r.errors[i];
+                    $('#reservation-modal').find('.modal-errors').append(`<div class="alert alert-danger">${e}</div>`);
+                }
+
+                $('.reservation-info-form-trigger').attr('disabled', false);
+            }
+        }
+    });
+});
+
+$('#reservation-modal').on('show.bs.modal', function (e) {
+
+    $("html, body").animate({ scrollTop: 0 }, "slow");
+
+    let c = $(e.currentTarget), r = $(e.relatedTarget);
+
+    c.find('.reservation_date').val(r.data('date'));
+    c.find('.reservation_slot').val(r.data('slot'));
+    c.find('.available').val(r.data('available'));
+});
+
+$('#warning-modal').on('show.bs.modal', function (e) {
+
+    $("html, body").animate({ scrollTop: 0 }, "slow");
+
+    let c = $(e.currentTarget), r = $(e.relatedTarget);
+
+    c.find('.modal-body').html(r.data('message'));
+});
+
+let Calendar = function (obj) {
+
+    this.config = obj;
+
+    this.daysContainer = $('.days-grid', $(`#${obj.daysRoot}`));
+    this.slotsContainer = $(`#${obj.slotsRoot}`);
+
+    this.currentDay = this.config.initDate;
+
+    this.initWeek = function (day) {
+        let date = moment(day).subtract('4', 'days');
+        let days = {};
+
+        for (i = 0; i < 7; i++) {
+            let day = date.add('1', 'days');
+            let dow = (parseInt(day.format("d")) + 2) % 7;
+            if (dow == 0) {
+                dow = 7;
+            }
+
+            let workDay = -1;
+
+            if (typeof this.config.daysObj[dow] != 'undefined') {
+                if (this.config.daysObj[dow].work_day == 1) {
+                    workDay = 1;
+                } else {
+                    workDay = 0;
+                }
+            }
+
+            days[i] = {
+                'format': day.format("Y-MM-D"),
+                'dow': dow,
+                'work_day': workDay
+            };
+        }
+
+        return days;
+    };
+
+    this.renderDays = function (currentDay) {
+
+        let disabledDays = [];
+
+        for (i in this.config.daysObj) {
+            let _d = this.config.daysObj[i];
+
+            if (typeof _d.work_day == 'undefined' || _d.work_day == 0) {
+                disabledDays.push(i - 2);
+            }
+        }
+
+        if (window.matchMedia("(min-width: 300px) and (max-width: 1199px)").matches) {
+
+            $('#calendar .date-picker').append('<input readonly class="datepicker form-control" />');
+
+            $('.datepicker').val(moment().format("Y-MM-D"));
+
+            $('.datepicker').datepicker({
+                format: 'yyyy-mm-dd',
+                autoclose: true,
+                defaultViewDate: 'today',
+                startDate: 'today',
+                daysOfWeekDisabled: disabledDays,
+            }).on('changeDate', function (e) {
+                let d = moment(e.date).format("Y-MM-D");
+                changeDay(d);
+            });
+
+        } else if (window.matchMedia("(min-width: 1200px)").matches) {
+            this.weekView(currentDay);
+        }
+    };
+
+    this.weekView = function (currentDay) {
+
+        this.daysContainer.html('');
+
+        let cd;
+
+        if (currentDay != false) {
+            cd = currentDay;
+        } else {
+            cd = this.config.initDate;
+        }
+
+        let days = this.initWeek(cd);
+        for (i in days) {
+            let day = days[i];
+            if (moment().diff(day.format, 'days') <= 0 && day.work_day == 1) {
+            this.daysContainer.append(`<div class="day" data-day="${day.dow}" onclick="changeDay('${day.format}')">${day.format}</div>`);
+            } else if (moment().diff(day.format, 'days') <= 0  && day.work_day == 0) {
+                this.daysContainer.append(`<div style="cursor: not-allowed" data-toggle="modal"
+                    data-target="#warning-modal"
+                    data-type="day-off"
+                    data-message="${locales['day_off_message']}"
+                    class="day disabled" data-day="${day.dow}">${day.format}</div>`);
+            } else {
+                this.daysContainer.append(`<div style="cursor: not-allowed" class="day disabled" data-day="${day.dow}">${day.format}</div>`);
+            }
+        }
+
+        let ncd = moment(cd);
+        let nextDay = ncd.add('1', 'days').format("Y-MM-D");
+        let prevDay = ncd.subtract('2', 'days').format("Y-MM-D");
+
+        this.daysContainer.prepend(`<div class="navigator prev" onclick="silentChangeDay('${prevDay}')"><</div>`);
+        this.daysContainer.append(`<div class="navigator next" onclick="silentChangeDay('${nextDay}')">></div>`);
+    };
+
+    this.renderSlots = function (slots) {
+        this.slotsContainer.html('');
+        for (i in slots) {
+            let slot = slots[i];
+            if (typeof slot.work_day != 'undefined' && slot.work_day == 1) {
+                if (slot.available > 0) {
+                    this.slotsContainer.append(`<div class="slot" data-toggle="modal" data-target="#reservation-modal"
+                        data-available="${slot.available}"
+                        data-date="${this.currentDay}" data-slot="${slot.format}">${slot.format}</div>`);
+                } else {
+                    this.slotsContainer.append(`<div data-toggle="modal" data-target="#warning-modal"
+                        data-type="slot-off" data-message="${locales['slot_off_message']}"
+                        class="slot disabled">${slot.format}</div>`);
+                }
+            } else {
+                this.slotsContainer.append(`<div>${locales['day_off_message']}</div>`);
+                break;
+            }
+        }
+    };
+
+    this.changeDay = function (_d) {
+        if (this.currentDay != _d) {
+            $.ajax({
+                url: getSlotsUrl,
+                data: {day: _d},
+                method: 'POST',
+                dataType: 'JSON',
+                success: (r) => {
+                    this.currentDay = _d;
+                    // this.renderDays(r.data.day_date);
+                    this.renderSlots(r.data.slots);
+                }
+            });
+        }
+    };
+
+    this.silentChangeDay = function (_d) {
+        this.renderDays(_d);
+    }
+};
+
+let c = new Calendar({
+    'daysRoot': 'calendar',
+    'slotsRoot': 'slots',
+    'initDate': '{{ "now"|date("Y-m-d") }}',
+    'daysObj': JSON.parse('{{ days|json_encode }}')
+});
+
+function changeDay(d) {
+    c.changeDay(d);
+}
+
+function silentChangeDay(d) {
+    c.silentChangeDay(d);
+}
+
+c.renderDays(false);
+c.renderSlots(JSON.parse('{{ allSlots|json_encode }}'));
+
+// Calendar.render
+
+/*function renderCalendar(calendar) {
+    for (i in [1,2,3,4,5,6,7]) {
+        let date = new Date();
+        calendar.append(`<div class="day">Day ${i}</div>`);
+    }
+
+    calendar.prepend('<div class="navigator next"><</div>');
+    calendar.append('<div class="navigator prev">></div>');
+}
+
+let calendar = $('#calendar');
+let now = Date.now();*/
+
+</script>

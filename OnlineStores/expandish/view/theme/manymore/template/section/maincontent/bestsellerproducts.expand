@@ -1,0 +1,151 @@
+{% set bestseller_products = getBestSellerProducts(30, 170, 193) %}
+{% if fields.rows.field_value >= 1 %}
+{% set products_per_item = fields.rows.field_value %}
+{% else %}
+{% set products_per_item = 1 %}
+{% endif %}
+{% set latest_products = bestseller_products|chunk(products_per_item) %}
+{% set items_count = latest_products|length %}
+
+{% set css_class = ' ' %}
+{% if products_per_item > 1 %}
+{% set css_class = 'fixProduct' %}
+{% endif %}
+
+
+{% if items_count > 0 %}
+<div class="category-color color-brown" id="section-{{ section_id }}">
+  <div class="header-cat-color">
+    {% if fields.displaysectiontitle.field_value == 1 %} <h2 class="title18">{{ fields.sectiontitle.field_value | strip_tags| htmlspecialchars_decode }} </h2>{% endif %}
+    <!-- <a href="#" class="cat-color-link wobble-top">more</a> -->
+  </div>
+  <div class="section-loader">
+    <div class="content-cat-color">
+      <div class="clearfix">
+        <div class="banner-cat-color">
+          {% if fields.sidead.field_value != '' %}
+          <div class="banner-cat-color-thumb">
+            <a href="{{ fields.sideadlink.field_value }}"><img src="{{ fields.sidead.field_value }}"
+                alt="{{ fields.sectiontitle.field_value }}" /></a>
+          </div>
+          {% endif %}
+          <div class="banner-cat-color-info">
+            <h2>{{ fields.sectiontitle.field_value }}</h2>
+            <a href="{{ featured_categories.name }}" class="pulse-grow">{{ fields.sideadlinktext.field_value }}</a>
+          </div>
+        </div>
+        <div class="slider-cat-color">
+          <div class="wrap-item" data-itemscustom="[[0,2.50],[480,2.50],[768,2.50],[1024,3],[1200,5]]"
+            data-pagination="false" data-navigation="true">
+            {% for item_products in latest_products %}
+            <div class="item">
+              {% for item_product in item_products %}
+              <div class="item-product item-product4 {{css_class}}">
+                {% if item_product.special != '' %}
+                <span class="saleoff">-{{item_product.saving}}%</span>
+                {% endif %}
+                <div class="product-thumb">
+                  <a href="{{ item_product.href }}" class="product-thumb-link">
+                    <img src="{{ item_product.thumb }}" alt="{{ item_product.name }}" />
+                  </a>
+                  <div class="product-extra-link">
+                   {% if viewAddToCart %}
+                    {% if config('show_quantity') %}
+                    <a class="addcart-link" title="Add to Cart" href="javascript://"
+                      onclick="addToCartQty({{ item_product.product_id }}, 'cat_{{ section_id }}'); return false;">
+                      <i class="fa fa-shopping-basket" aria-hidden="true"></i>
+                    </a>
+                    {% else %}
+                    <a href="#"
+                      onclick="event.preventDefault(); addToCart({{ item_product.product_id }},1, {{ ('-1' in specialproduct.price) or ('-1' in specialproduct.special) ? 'true' : 'false' }}); return false;"
+                      class="addcart-link"><i class="fa fa-shopping-basket" aria-hidden="true"></i></a>
+                    {% endif %}
+                     {% endif %}
+                    <a href="#" onclick="event.preventDefault(); addToWishList('{{ item_product.product_id }}',1); return false;"
+                      class="wishlist-link"><i class="fa fa-heart" aria-hidden="true"></i></a>
+                    <a href="#" onclick="event.preventDefault(); addToCompare('{{ item_product.product_id }}',1); return false;"
+                      class="compare-link"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                  </div>
+                </div>
+                <div class="product-info">
+                  <h3 class="product-title"><a href="{{ item_product.href }}">{{ item_product.name }}</a></h3>
+                  {% if config('show_brands') and item_product.manufacturer %}
+                  <h5 class="product-title"><a href="{{ item_product.manufacturer_href }}" id="brand_sections"
+                      alt"{{ item_product.manufacturer }}">{{ item_product.manufacturer }}</a></h5>
+                  {% endif %}
+                  {% if ('-1' in item_product.price) or ('-1' in item_product.special) %}
+                  <ins><span class="clickable"
+                      onclick="contact_us('{{ item_product.product_id }}');">{{ lang('button_req_quote') }}</span></ins>
+                  <div id="enquiry-{{ item_product.product_id }}" style="display:none">{{ item_product.name }}:</div>
+                  {% else %}
+                  <div class="product-price">
+                    {% if item_product.special != '' %}
+                    <del><span>{{ item_product.price }}</span></del>
+                    <ins><span class="special_price">{{ item_product.special }}</span></ins>
+                    {% else %}
+                    <ins><span>{{ item_product.price }}</span></ins>
+                    {% endif %}
+                  </div>
+                  {% endif %}
+
+                  {# Stock Status Lable #}
+                  {% set statuses = config("config_stock_status_display_badge") %}
+                  {% if product.quantity <= 0 and product.stock_status_id in statuses %}
+                  <h5><span class="label label-default">{{ product.stock_status }}</span></h5>
+                  {% endif %}
+
+
+                </div>
+                {% if config('show_quantity') %}
+                <div class="row quantity-show">
+                  <div class="col-md-8">
+                    <!-- Show Quantity box -->
+                    <div class="block-product-info" style="margin-top: 0">
+                      <table class="variations-table">
+                        <tr>
+                          {#<td class="table-label">{{ lang('text_Quantity') }}:</td>#}
+                          <td class="table-value">
+                            <div class="box-qty">
+                              <a class="quantity-minus"
+                                onclick="$('#qty_cat_{{ section_id }}{{ item_product.product_id }}').val(
+                                 arseInt($('#qty_cat_{{ section_id }}{{ item_product.product_id }}').val()) > 0 ? parseInt($('#qty_cat_{{ section_id }}{{ item_product.product_id }}').val())- 1 : 0)"><i
+                                  class="fa fa-minus fa-fw" aria-hidden="true"></i></a>
+                              <input type="text" class="form-control qty qty-val input-qty quantity" name="quantity"
+                                id="qty_cat_{{ section_id }}{{ item_product.product_id }}" name="qty{{ item_product.product_id }}"
+                                value="1" maxlength="12" minlength="1" min="1">
+                              <a class="quantity-plus"
+                                onclick="$('#qty_cat_{{ section_id }}{{ item_product.product_id }}').val(
+                                parseInt($('#qty_cat_{{ section_id }}{{ item_product.product_id }}').val()) + 1 )"><i
+                                  class="fa fa-plus fa-fw" aria-hidden="true"></i></a>
+                            </div>
+                          </td>
+                        </tr>
+                      </table>
+                    </div>
+                    <!-- /Show Quantity box -->
+                  </div>
+                  <div class="col-md-4">
+                   {% if viewAddToCart %}
+                    <a class="addcart-link btn btn-card-custom btn-sm btn-block" title="Add to Cart" href="javascript://"
+                      onclick="addToCartQty({{ item_product.product_id }}, 'cat_{{ section_id }}'); return false;">
+                      <i class="fa fa-shopping-basket fa-fw" aria-hidden="true"></i>
+                    </a>
+                     {% endif %}
+                  </div>
+                </div>
+                {% endif %}
+              </div>
+              {% endfor %}
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- End Content Cat Color -->
+  </div>
+</div>
+<!-- End Category Color -->
+{% endif %}
+<!--best sales-->
+

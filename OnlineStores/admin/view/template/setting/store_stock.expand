@@ -1,0 +1,162 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block secondarymenu %}
+    {% include 'setting/settingmenu.expand' with {'expand': '#advanced', 'active': '#stock'} %}
+{% endblock secondarymenu %}
+
+{% block title %}
+    {{ lang('mn_setting_menu_stock_s') }}
+{% endblock title %}
+
+{% block styles %}
+	{% if base.direction == "ltr" %}
+    <link href="view/assets/css/LTR/icons/icomoon2/style.css" rel="stylesheet" type="text/css">
+	{% else %}
+    <link href="view/assets/css/RTL/icons/icomoon2/style.css" rel="stylesheet" type="text/css">
+	{% endif %}	
+{% endblock styles %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+    {% include "includes/buttons_top.expand" %}
+{% endblock headelements %}
+
+{% block content %}
+    <style>
+        .page-header-default {
+            background-color: transparent;
+        }
+        .page-header-content + .breadcrumb-line {
+            border: 0;
+        }
+    </style>
+    
+    <div class="container">
+        <!-- Start Form -->
+        <form id="setting-payment" class="form" action="{{ action }}">
+            <!-- Fields -->
+            <div class="col-md-12">
+                <div class="panel panel-flat">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">{{ lang('heading_stock_colors') }}</h3>
+                    </div>
+                    <div class="panel-body">
+                        <!-- Stock Checkout -->
+                        <div class="form-group col-md-6" id="store_stock-group">
+                            <label for="config_custom_stock_status_colors" class="control-label">{{ lang('stock_switch_description') }}</label>
+                            <div class="checkbox checkbox-switchery">
+                                <label>
+                                    <input type="checkbox" onchange="changeStatus(this);" name="config_custom_stock_status_colors" class="switchery" {{ config_custom_stock_status_colors in ['1', 1, 'on'] ? 'checked' }}>
+                                    <span class="switchery-status">{{ config_custom_stock_status_colors in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                </label>
+                            </div>
+                        </div>
+                        <!-- /Stock Checkout -->
+
+                        <!-- Default In-Stock Status -->
+                        <div class="form-group col-md-6" id="store_stock-group">
+                            <label for="config_instock_status_id" class="control-label">{{ lang('instock_status_label') }}</label>
+                            <div class="checkbox checkbox-switchery">
+                                <select name="config_instock_status_id" id="config_instock_status_id" class="form-control">
+                                    {% for stock_status in stock_statuses %}
+                                        <option value="{{ stock_status['stock_status_id'] }}" {{ config_instock_status_id == stock_status['stock_status_id'] ? 'selected' }}>{{ stock_status['name'] }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <!-- /Default In-Stock Status -->
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>{{ lang('tbl_status_name') }}</th>
+                                    <th>{{ lang('tbl_status_current_color') }}</th>
+
+                                    <th>{{ lang('tbl_status_actions') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for stock_status in stock_statuses %}
+                                <tr>
+                                    <td>
+                                        {{ stock_status['name'] }}
+                                    </td>
+                                    <td>
+                                        <input 
+                                        type="hidden" 
+                                        data-status-id="{{ stock_status['stock_status_id'] }}"
+                                        value="{{ stock_status['default_color'] }}"
+                                        readonly>
+                                        <input 
+                                        type="text" 
+                                        data-status-id="{{ stock_status['stock_status_id'] }}"
+                                        class="current_color_picker" 
+                                        value="{{ stock_status['current_color'] }}"
+                                        name="stock_status_color_{{ stock_status['stock_status_id'] }}">
+                                    </td> 
+                                    <td>
+                                        <button type="button" data-status-id="{{ stock_status['stock_status_id'] }}" class="btn btn-primary reset_btn"><i class="fa fa-undo"></i> {{ lang('tbl_reset_btn') }}</button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <!-- End of Fields -->
+        </form>
+        <!-- End Form -->
+    </div>
+
+<!-- Lower Buttons -->
+{% include "includes/buttons_bottom.expand" %}
+<!-- End Lower Buttons -->
+<script>
+    $(document).ready(function(){
+        $('.default_color_picker').spectrum({
+            preferredFormat: "hex",
+            disabled: true,
+            showInitial: true
+        });
+        $('.current_color_picker').spectrum({
+            preferredFormat: "hex",
+            showInitial: true
+        });
+
+        $('.reset_btn').click(function(e){
+            var color = $(this).parent().parent().find('input[type=hidden]').val();
+            $(this).parent().parent().find('.current_color_picker').spectrum("set", color);
+        });
+    });
+    function changeStatus(checkbox)
+    {
+        var self = $(checkbox);
+        var switch_status = self.siblings('.switchery-status');
+
+        if ( self.is(':checked') )
+        {
+            switch_status.html("{{ lang('text_enabled') }}");
+        }
+        else
+        {
+            switch_status.html("{{ lang('text_disabled') }}");
+        }
+    }
+
+    $(document).ready(function() {
+        $('select').select2();
+        $('.touchy').TouchSpin({
+            max: 99999,
+        });
+        $('.touchspinney').TouchSpin({
+            'postfix': '{{ current_currency_code }}',
+            'decimals': 2,
+        });
+    });
+</script>
+{% endblock %}

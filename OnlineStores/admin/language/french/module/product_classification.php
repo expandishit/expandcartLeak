@@ -1,0 +1,71 @@
+<?php
+
+$_  = [ 
+    'product_classification_heading_title'  => 'Classification des produits', 
+    'error_warning'    => 'Avertissement: Assurez-vous de revoir des champs incorrects ou obligatoires!', 
+    'text_settings'  => 'Paramètres', 
+    'text_enabled'  => 'Activé', 
+    'text_disabled'  => 'Désactivé', 
+    'please_wait' => 'Veuillez patienter ...', 
+
+    'entry_form_title'  => 'Titre de recherche', 
+    'entry_status'  => 'Statut', 
+    'entry_brand'  => 'Marque', 
+    'entry_brands'  => 'Marques', 
+    'entry_years'  => 'Années', 
+    'entry_model'  => 'Modèle', 
+    'entry_models'  => 'Modèles', 
+    'entry_year'  => 'Année', 
+    'entry_year_from'  => 'Année de', 
+    'entry_year_to'  => 'Année à', 
+    'entry_year_note'  => 'Les années précédentes ne seront pas répétées', 
+    'entry_select_brand'  => 'Sélectionner la marque', 
+    'entry_select_model'  => 'Sélectionner le modèle', 
+    'entry_year_from_note'  => 'Exemple: 2000', 
+    'entry_year_to_note'  => 'Exemple: 2020', 
+    'general_settings'  => 'Personnaliser les codes de produit', 
+    'text_settings_success'  => 'Paramètres mis à jour avec succès', 
+    'text_success'  => 'Paramètres mis à jour avec succès', 
+    'text_bulkdelete_success'  => 'Code supprimé avec succès', 
+    // error
+    'error_name'      => 'Nom de la marque doit être compris entre 2 et 32 caractères!', 
+    'error_permission'      => 'Avertissement: vous n\'avez pas la permission de modifier les codes!', 
+    'text_bulkdelete_error'      => "Une erreur inattendue S\'est produite", 
+    'unexpected_error'      => "Une erreur inattendue S\'est produite", 
+    'error_brand_required'      => 'Marque est requise', 
+    'error_year_required'      => 'Le nom de l\'année est requis et seuls les numéros sont autorisés ', 
+    'error_years_required'      => 'Ans est requis', 
+    'error_year_from_required'      => 'L\'année à partir de est requise et seuls les chiffres sont autorisés et la longueur minimale des nombres est de 4', 
+    'error_year_to_required'      => 'L\'année à est requise et seuls les chiffres sont autorisés et la longueur minimale des nombres est de 4', 
+    'error_year_exists'      => "Année existe avant", 
+    'error_model_required'      => 'Nom du modèle est requis', 
+
+    'column_brand_name'  => 'Marque', 
+    'column_model_name'  => 'Modèle', 
+    'btn_new_brand'  => 'Ajouter une nouvelle marque', 
+    'btn_new_model'  => 'Ajouter un nouveau modèle', 
+    'column_year_name'  => 'Année', 
+    'btn_new_year'  => 'Ajouter une nouvelle année', 
+
+
+    'pc_menu_brand'  => 'Marques', 
+    'pc_menu_model'  => 'Modèles', 
+    'pc_menu_year'  => 'Années', 
+    'pc_menu_settings'  => 'Paramètres', 
+    'brand_heading_title'  => 'Marques', 
+    'brand_heading_brand_add'  => 'Ajouter une nouvelle marque', 
+    'brand_heading_brand_update'  => 'Mettre à jour la marque', 
+
+    'year_heading_title'  => 'Années', 
+    'year_heading_year_add'  => 'Ajouter une nouvelle année', 
+    'year_heading_year_update'  => 'Update année', 
+    'year_heading_year_add_models'  => 'Ajouter une année modèle', 
+    'btn_year_models'  => 'Modèles d\'année de vue', 
+    'button_add_product_classification'  => 'Ajouter une nouvelle classification', 
+
+    'model_heading_title'  => 'Modèles', 
+    'model_heading_model_add'  => 'Ajouter un modèle', 
+    'model_heading_model_update'  => 'Mettre à jour le modèle', 
+
+];
+

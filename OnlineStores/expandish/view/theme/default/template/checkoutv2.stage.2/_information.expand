@@ -1,0 +1,312 @@
+<form id="information" class="tap {{current_step == 'information' ? 'active' : '' }}" data-tap="information-step" autocomplete="off">
+    <div class="taps-container__contact-info">
+        <h2 class="contact-info__header">{{lang('text_contact_info', 'checkout/checkoutv2', true)}}</h2>
+        {% if logged == false %}
+        <p class="contact-info__sign">{{lang('text_have_account', 'checkout/checkoutv2', true)}} <span id="sign__in" class="sign__in">{{lang('text_login', 'checkout/checkoutv2', true)}}</span></p>
+        {% endif %}
+    </div>
+    <div class="tap__shipping">
+        <div class="tap-shipping__info">
+            <div class="info__container shipiing-address--info">
+                <div class="info__container__data">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="data__input">
+                                <label class="data__input__label">
+                                    {{ lang('entry_contact_phone', 'account/identity', true) }}
+                                </label>
+                                <input type="tel" style="width:100%;" class="tel data__input__entry" name="telephone"
+                                    value="{{contact_phone}}" data-validate="validate" data-presence="1" data-presence-msg="{{lang('required_input_contact_phone', 'account/identity', true)}}" data-tel="1" data-tel-msg="{{lang('invalid_input_contact_phone', 'account/identity', true)}}" 
+                                    onkeyup="checkout.validateSingle(event);"
+                                    onkeydown="checkout.validateSingle(event);"
+                                    onblur="checkout.validateSingle(event);"
+                                    >
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="data__input">
+                                <label class="data__input__label">
+                                    {{ lang('entry_contact_name', 'account/identity', true) }}
+                                </label>
+                                <input type="text" class="data__input__entry" name="firstname"
+                                    value="{{contact_name}}" data-validate="validate" data-presence="1" data-presence-msg="{{lang('required_input_contact_name', 'account/identity', true)}}" 
+                                    onkeyup="checkout.validateSingle(event);"
+                                    onkeydown="checkout.validateSingle(event);"
+                                    onblur="checkout.validateSingle(event);"
+                                    >
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="tap__shipping__add-new">
+            <h2>{{lang('text_shipping_address', 'checkout/checkoutv2', true)}}</h2>
+            <button class="shipping__add-address" type="button"
+                onclick="checkout.handleOnClickAddAddressBtn(event);">
+                <i class="fas fa-plus"></i>
+                <span>{{lang('text_address_new', 'checkout/checkoutv2', true)}}</span>
+            </button>
+        </div>
+
+        <div class="shipping__address-info">
+            <div class="info__container">
+                {% if google_map['status'] == 1 %}<div class="info__container__map"></div>{% endif %}
+                <div class="info__container__data">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <button class="data__save" type="button" onclick="checkout.handleOnClickCreateOrUpdateAddress(event);">{{lang('btn_submit', 'checkout/checkoutv2', true)}}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="shipping__saved-address">
+            <h3 class="saved-address__title">{{lang('text_select_from_your_address', 'checkout/checkoutv2', true)}}</h3>
+            {% for i, address in addresses %}
+            <div id="address_{{address.address_id}}"
+                class="saved-address-container {{address.related_to_order ? 'active' : ''}}">
+                <label class="saved-address__control" onclick="checkout.handleOnClickAddressLabel(event);" data-address_id="{{ address['address_id'] }}"
+                    data-firstname="{{ address['firstname'] }}" data-short_address="{{ address['short_address'] }}"
+                    data-country_id="{{ address['country_id'] }}" data-country="{{ address['country'] }}"
+                    data-zone_id="{{ address['zone_id'] }}" data-zone="{{ address['zone'] }}"
+                    data-area_id="{{ address['area_id'] }}" data-area="{{ address['area'] }}"
+                    data-city="{{ address['city'] }}" data-iso_code_2="{{ address['iso_code_2'] }}"
+                    data-phonecode="{{ address['phonecode'] }}" data-address_1="{{ address['address_1'] }}"
+                    data-address_2="{{ address['address_2'] }}" data-postcode="{{ address['postcode'] }}"
+                    data-location="{{ address['location'] }}" data-telephone="{{ address['telephone'] }}">
+                    <input class="form-check-input" name="address" data-ignored="true" type="radio" {{address.related_to_order
+                        ? 'checked' : '' }} 
+                        onchange="checkout.handleOnChangeAddress(event);">
+                    <p class="saved-address__main-title">
+                        {{  address.firstname }}
+                    </p>
+                </label>
+                <div class="saved-address__info" style="display:{{address.related_to_order ? 'block' : 'none'}};">
+                    <div class="info-container">
+                        <div class="info__details">
+                            <p>{{address.short_address}}</p>
+                            <p>{{address.country}}</p>
+                            <p>{{address.zone}} {{address.area}}</p>
+                            <p>Tel: {{address.telephone}}</p>
+                            <button class="info__details__edit" type="button"
+                                onclick="checkout.handleOnClickEditAddressBtn(event);">{{lang('text_edit_address', 'checkout/checkoutv2', true)}}</button>
+                        </div>
+                        {% if google_map['status'] == 1 %}
+                            <div class="info__map"><div class="mapouter"><div class="gmap_canvas"><!-- JS-RENDER-MAP-THUMB --></div></div></div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="info__container edit--address">
+                    {% if google_map['status'] == 1 %}<div class="info__container__map"></div>{% endif %}
+                    <div class="info__container__data">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <button class="data__save" 
+                                    type="button" 
+                                    onclick="checkout.handleOnClickCreateOrUpdateAddress(event);">{{lang('btn_submit', 'checkout/checkoutv2', true)}}</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+            {% if enable_send_as_gift %}
+            <div class="saved-address-ship-order">
+                <input class="form-check-input" type="checkbox" name="send_as_gift" value="1" id="flexCheckChecked" {{send_as_gift ? 'checked' : ''}}>
+                <label class="form-check-label" for="flexCheckChecked">
+                    {{lang('text_ship_order_as_a_gift', 'checkout/checkoutv2', true)}}
+                </label>
+            </div>
+            {% else %}
+                <input type="hidden" name="send_as_gift" value="0">
+            {% endif %}
+        </div>
+
+
+
+    </div>
+
+
+    {% if google_map['status'] == 1 %}
+        <fieldset id="address-map-template" style="display: none">
+            <div id="map" style="width: 100%;height: 200px;"> </div>
+        </fieldset>
+    {% endif %}
+    
+    <!-- default address fields -->
+    <fieldset id="address-fields-template" style="display: none;">
+        <div class="row">
+            {% if customer_fields['address']['country_id'] > -1 %}
+            <div class="col-md-6">
+                <div class="data__input">
+                    <label class="data__input__label">
+                        {{ lang('entry_country', 'account/identity', true) }}
+                        {% if customer_fields['address']['country_id'] == 1 %}<span class="required">*</span>{% endif %}
+                    </label>
+                    <select class="data__input__entry js-select" name="country_id"
+                        onchange="checkout.handleOnChangeCountry(event);" 
+                        {% if customer_fields['address']['country_id']==1 %}
+                            data-validate="validate" 
+                            data-presence="1" 
+                            data-presence-msg="{{lang('required_input_country_id', 'account/identity', true)}}"
+                            {% endif %}>
+                        <option value="" selected="selected">{{ lang('text_select', 'account/identity', true) }}</option>
+                        {% for country in countries %}
+                        <option value="{{ country.country_id }}" data-code="{{country.iso_code_2}}" {% if
+                            country.country_id==default_address.country_id %} selected="selected" {% endif %}>
+                            {{ country.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="col-md-6">
+                <div class="data__input">
+                    <label class="data__input__label">
+                        {{ lang('entry_zone_id', 'account/identity', true) }}
+                        {% if customer_fields['address']['zone_id'] == 1 %}<span class="required">*</span>{% endif %}
+                    </label>
+                    <select class="data__input__entry js-select" name="zone_id"
+                        onchange="checkout.handleOnChangeZone(event);" 
+                        {% if customer_fields['address']['zone_id']==1 %}
+                            data-validate="validate" 
+                            data-presence="1" 
+                            data-presence-msg="{{lang('required_input_zone_id', 'account/identity', true)}}" 
+                            {% endif %}>
+                        <option value="" selected="selected">{{ lang('text_select', 'account/identity', true) }}</option>
+                        {% if default_address.zone %}
+                        <option value="{{ default_address.zone_id }}" selected="selected">{{ default_address.zone }}
+                        </option>
+                        {% endif %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="data__input">
+                    <label class="data__input__label">
+                        {{ lang('entry_city', 'account/identity', true) }}
+                        {% if customer_fields['address']['area_id'] == 1 %}<span class="required">*</span>{% endif %}
+                    </label>
+                    <select class="data__input__entry js-select" name="area_id"
+                        onchange="checkout.handleOnChangeArea(event);" {% if
+                        customer_fields['address']['area_id']==1 %}data-validate="validate" data-presence="1" data-presence-msg="{{lang('required_input_area_id', 'account/identity', true)}}" {% endif
+                        %}>
+                        <option value="" selected="selected">{{ lang('text_select', 'account/identity', true) }}</option>
+                        {% if default_address.area %}
+                        <option value="{{ default_address.area_id }}" selected="selected">{{ default_address.area }}
+                        </option>
+                        {% endif %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="data__input">
+                    <label class="data__input__label">
+                        {{ lang('entry_address_1', 'account/identity', true) }}
+                        {% if customer_fields['address']['address_1'] == 1 %}<span class="required ">*</span>{% endif %}
+                    </label>
+                    <input type="text" class="data__input__entry" name="address_1" value="{{default_address.address_1}}"
+                        {% if customer_fields['address']['address_1']==1 %}data-validate="validate" data-presence="1" data-presence-msg="{{lang('required_input_address_1', 'account/identity', true)}}" onkeyup="checkout.validateSingle(event);" onkeydown="checkout.validateSingle(event);" onblur="checkout.validateSingle(event);" {%
+                        endif %}>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="data__input">
+                    <label class="data__input__label">
+                        {{ lang('entry_address_2', 'account/identity', true) }}
+                        {% if customer_fields['address']['address_2'] == 1 %}<span class="required ">*</span>{% endif %}
+                    </label>
+                    <input type="text" class="data__input__entry" name="address_2" value="{{default_address.address_2}}"
+                        {% if customer_fields['address']['address_2']==1 %}data-validate="validate" data-presence="1" data-presence-msg="{{lang('required_input_address_2', 'account/identity', true)}}" onkeyup="checkout.validateSingle(event);" onkeydown="checkout.validateSingle(event);"onblur="checkout.validateSingle(event);" {%
+                        endif %}>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="data__input">
+                    <label class="data__input__label">
+                        {{ lang('entry_postcode', 'account/identity', true) }}
+                        {% if customer_fields['address']['postcode'] == 1 %}<span class="required ">*</span>{% endif %}
+                    </label>
+                    <input type="text" class="data__input__entry" name="postcode" value="{{default_address.postcode}}" data-validate="validate"
+                        {% if customer_fields['address']['postcode']==1 %} data-presence="1" data-presence-msg="{{lang('required_input_postcode', 'account/identity', true)}}" {% endif %} data-number="1" data-number-msg="{{lang('invalid_input_postcode', 'account/identity', true)}}" 
+                        onkeyup="checkout.validateSingle(event);" onkeydown="checkout.validateSingle(event);" onblur="checkout.validateSingle(event);">
+                </div>
+            </div>
+
+            <input type="hidden" name="address_id" value="{{default_address.address_id}}">
+            <input type="hidden" name="iso_code_2" value="{{default_address.iso_code_2}}">
+            <input type="hidden" name="phonecode" value="{{default_address.phonecode}}">
+            <input type="hidden" name="related_to_order" value="1">
+            <input type="hidden" name="location" value="{{default_address.location}}">
+            <input type="hidden" name="country" value="{{default_address.country}}">
+            <input type="hidden" name="zone" value="{{default_address.zone}}">
+            <input type="hidden" name="area" value="{{default_address.area}}">
+            <input type="hidden" name="short_address" value="{{default_address.short_address}}">
+
+        </div>
+    </fieldset>
+</form>
+
+<script id="address-box-tpl" type="text/template">
+    <label 
+        class="saved-address__control"
+        onclick="checkout.handleOnClickAddressLabel(event);"
+        data-address_id="%ADDRESS_ID%"
+        data-firstname="%FIRSTNAME%"
+        data-country_id="%COUNTRY_ID%"
+        data-country="%COUNTRY%"
+        data-zone_id="%ZONE_ID%"
+        data-zone="%ZONE%"
+        data-area_id="%AREA_ID%"
+        data-area="%AREA%"
+        data-city="%CITY%"
+        data-iso_code_2="%ISO_CODE_2%"
+        data-phonecode="%PHONECODE%"
+        data-address_1="%ADDRESS_1%"
+        data-address_2="%ADDRESS_2%"
+        data-postcode="%POSTCODE%"
+        data-location="%LOCATION%"
+        data-telephone="%TELEPHONE%"
+        data-short_address="%SHORT_ADDRESS%"
+        >
+        <input class="form-check-input" name="address" data-ignored="true" type="radio" checked 
+            onchange="checkout.handleOnChangeAddress(event);">
+        <p class="saved-address__main-title">%FIRSTNAME%</p>
+    </label>
+    <div class="saved-address__info" style="display: none;">
+        <div class="info-container">
+            <div class="info__details">
+                <p>%SHORT_ADDRESS%</p>
+                <p>%COUNTRY%</p>
+                <p>%ZONE% %AREA%</p>
+                <p>Tel: %TELEPHONE%</p>
+                <button class="info__details__edit" type="button" onclick="checkout.handleOnClickEditAddressBtn(event);">{{lang('text_edit_address', 'checkout/checkoutv2', true)}}</button>
+            </div>
+            {% if google_map['status'] == 1 %}
+                <div class="info__map"><div class="mapouter"><div class="gmap_canvas"><!-- JS-RENDER-MAP-THUMB --></div></div></div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="info__container edit--address">
+        {% if google_map['status'] == 1 %}<div class="info__container__map"></div>{% endif %}
+        <div class="info__container__data">
+            <div class="row">
+                <div class="col-md-12">
+                    <button 
+                        class="data__save" 
+                        type="button" 
+                        onclick="checkout.handleOnClickCreateOrUpdateAddress(event);">{{lang('btn_submit', 'checkout/checkoutv2', true)}}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</script>

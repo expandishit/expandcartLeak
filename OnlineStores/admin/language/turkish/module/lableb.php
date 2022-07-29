@@ -1,0 +1,66 @@
+<?php
+$_ = [ 
+    'lableb_heading_title'  => 'Lableb', 
+    'error_warning'    => 'Uyarı: Lütfen yanlış veya gerekli alanları gözden geçirdiğinizden emin olun!', 
+    'text_settings'  => 'ayarlar', 
+    'text_enabled'  => 'Etkin', 
+    'text_disabled'  => 'Devre Dışı', 
+    'please_wait' => 'lütfen bekleyin ...', 
+
+    //entry
+    'entry_status'  => 'Durum', 
+    'entry_name'  => 'Hesap Adı', 
+    'entry_first_name'  => 'Adı', 
+    'entry_last_name'  => 'Soyadı', 
+    'entry_phone_number'  => 'Telefon', 
+    'entry_payment_method_id'  => 'Ödeme Yöntemi Kimliği', 
+    'entry_email'  => 'E-posta', 
+    'entry_password'  => 'Şifre', 
+    'entry_confirm_password'  => 'Şifreyi Onayla', 
+    'entry_project'  => 'Proje', 
+    'entry_index_apikey'  => 'Index Apikey', 
+    'entry_search_apikey'  => 'Apikey ara', 
+
+    //text
+    'text_settings_success'  => 'Ayarlar Başarıyla Güncellendi', 
+    'text_success'  => 'Ayarlar Başarıyla Güncellendi', 
+    'text_register_success'  => 'Hesap Başarıyla Oluşturuldu', 
+    'text_bulkdelete_success'  => 'Kod Başarıyla Silindi', 
+    'text_lableb_info'  => "Hesabınız Yoksa Önce Lebleb'e Bu Linkten Kaydolmalısınız", 
+    'text_lableb_account_info'  => 'Lableb Hesap Bilgileri', 
+    'text_register_now'  => 'Şimdi Kaydolun', 
+    'text_register'  => 'Şimdi Kaydolun', 
+    'text_register_new_account'  => 'Yeni Lableb Hesabı Oluşturun', 
+    'text_get_payment_method_id'  => 'Sizinkini Almak İçin Burayı Tıklayın', 
+    'text_payment_method_head'  => 'Ödeme Yöntemi Kimliğini Al', 
+    'text_import'  => 'Endeksleme', 
+    'text_import_help'  => 'Lütfen ürünleri yalnızca uygulama ilk kurulduğunda indeksleyin. Bundan sonra herhangi bir ürün otomatik olarak indekslenecektir ', 
+    'text_indexing_help'  => 'Ürün numaranıza göre indeksleme biraz zaman alabilir!', 
+
+    //btn
+    'btn_index_products'  => 'Ürünleri İndeksleyin', 
+    'button_register'  => 'Kayıt Ol', 
+    'btn_confirm'  => 'Onayla', 
+    'button_start'  => 'İndekslemeye Başla', 
+
+    // error
+    'error_permission'      => 'Uyarı: Kodları değiştirme izniniz yok!', 
+    'text_bulkdelete_error'      => 'Beklenmedik Bir Hata Oluştu', 
+    'unexpected_error'      => 'Beklenmedik Bir Hata Oluştu', 
+    'error_index_apikey_required'      => 'Index apikey Gerekli', 
+    'error_search_apikey_required'      => 'Arama api anahtarı Gerekli', 
+    'error_name_required'      => 'Hesap Adı Gerekli', 
+    'error_first_name_required'      => 'Ad Gerekli', 
+    'error_last_name_required'      => 'Soyadı Gerekli', 
+    'error_phone_number_required'      => 'Telefon Numarası Gerekli', 
+    'error_payment_method_id_required'      => 'Ödeme Yöntemi Kimliği Gerekli', 
+    'error_email_required'      => 'E-posta Gerekli', 
+    'error_password_required'      => 'Şifre Gerekli', 
+    'error_confirm_password_required'      => 'Şifreyi Onayla Gerekli', 
+    'error_confirm_password_not_match'      => "Parola ve Onay Parolası Eşleşmiyor", 
+    'error_invalid_email_password'      => "Geçersiz Lebleb Hesabı Veri E-postası veya Parolası", 
+    'job_done_message'  => 'İndeksleme başarıyla yapıldı', 
+    'this_account_already_existed'  => 'Bu e-posta için bir hesap zaten var', 
+    'entered_automitaically'  => 'E-posta ve şifre kaydettikten sonra otomatik olarak girilecektir', 
+    'text_products_already_indexed'  => 'Ürünler zaten endekslenmiş' 
+];

@@ -1,0 +1,384 @@
+{% import 'controls/uploader.expand' as uploader %}
+
+<div class="modal fade" id="newOption" tabindex="-1" role="dialog" aria-labelledby="newOptionLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="newOptionLabel">{{ lang('btn_new_option') }}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+
+                <div class="modal-errors"></div>
+
+                {% include "catalog/product/modals/options.expand" %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ lang('button_cancel') }}</button>
+                <button type="button" class="btn btn-primary" id="newOptionSubmitButton">{{ lang('button_save') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="newOptionValue" tabindex="-1" role="dialog" aria-labelledby="newOptionValueLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="newOptionValueLabel">{{ lang('button_add_option_value') }}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+
+                <div class="modal-errors"></div>
+
+                {% include "catalog/product/modals/values.expand" %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ lang('button_cancel') }}</button>
+                <button type="button" class="btn btn-primary" id="newOptionValueSubmitButton">{{ lang('button_save') }}</button>
+            </div>
+        </div>
+    </div>
+</div> 
+
+<div class="modal fade" id="newAttribute" tabindex="-1" role="dialog" aria-labelledby="newAttributeLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="newAttributeLabel">{{lang('new_attr')}}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                {% include "catalog/product/modals/attributes.expand" %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">{{lang('close')}}</button>
+                <button type="button" class="btn btn-primary" id="newAttributeSubmitButton">{{lang('save')}}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    /**
+     * admin/catalog/product/insert , in the filemanager
+     * we need to init a global state for maintaining the current in directory viewer
+     * so that we can indicate the first/root page and disable the back/parent page button
+     **/
+    var pageIndex = 0;
+    $('#button-parent').attr('disabled', true);
+</script>
+
+{% include 'includes/tutorial_modal_snippet.expand' %}
+
+<script>
+
+    $('#newAttributeSubmitButton').click(function () {
+        $('#attributeTable').removeClass('hidden');
+        var $form = $('#newAttributeForm');
+
+        var $action = $form.attr('action');
+        var $data = $form.serialize();
+
+        $.ajax({
+            url: $action,
+            data: $data,
+            dataType: 'JSON',
+            method: 'POST',
+            async: false,
+            success: function (response) {
+                if (response.success == 1) {
+
+                    var data = response.data;
+
+                    $('#attribute-autocomplete').append(
+                        new Option(data['name'], data['attribute_id'], true, true)
+                    );
+
+                    addAttribute({
+                        'name': data['name'],
+                        'id': data['attribute_id']
+                    }, function (template) {
+                        $('#attributeTable tbody').append(template);
+                    });
+
+
+                } else {
+                    // handle errors
+                }
+            }
+        });
+
+        $('#newAttribute').modal('toggle');
+    });
+
+    $(document).on('click', '#newOptionSubmitButton', function () {
+
+        var $form = $('#newOptionForm');
+
+        var $action = $form.attr('action');
+        var $data = $form.serialize();
+
+        var closeModal = false;
+        $('.modal-errors').html('');
+        $.ajax({
+            url: $action,
+            data: $data,
+            dataType: 'JSON',
+            method: 'POST',
+            async: false,
+            success: function (response) {
+                console.log(response.limit_reached)
+                if(response.limit_reached) {
+                    $('.newOption').addClass('plan-lock-btn').removeClass('newOption')
+                }
+                if (response.success == 1) {
+
+                    var optionData = response.data;
+
+                    var newObject = {};
+
+                    allOptions[optionData['option_id']] = optionData;
+
+                    newObject['id'] = optionData['option_id']
+                    newObject['option_value'] = optionData['values'];
+                    newObject['category'] = optionData['type'];
+                    newObject['type'] = optionData['type'];
+                    newObject['label'] = optionData['name'];
+                    newObject['text'] = optionData['name'];
+                    newObject['selected'] = true;
+                    newObject['appendToTable'] = true;
+
+                    $('.optionsRows').append(getOptionsTemplate(newObject));
+
+                    $("#options-autocomplete").append(new Option(newObject['text'], newObject['id'], true, true));
+
+                    bootstrap();
+
+                    closeModal = true;
+
+                } else {
+                    for (err in response.errors) {
+
+                        var error = response.errors[err];
+
+                        var errorTemplate = '<div class="alert alert-danger alert-styled-left alert-bordered">' +
+                            '<button type="button" class="close" data-dismiss="alert"><span>&times;</span>' +
+                            '<span class="sr-only">Close</span>' +
+                            '</button>' + error + '</div>';
+
+                        $('.modal-errors').append(errorTemplate);
+                    }
+
+                }
+            }
+        });
+
+        if (closeModal) {
+            $('#newOption').modal('toggle');
+        }
+    });
+
+    let current_value_type = $('select[name=\'type\']').val();
+
+    $('select[name=\'type\']').bind('change', function() {
+        $('#datatableGrid').find('tbody').empty();
+        if (this.value == 'select' || this.value == 'radio' || this.value == 'checkbox' || this.value == 'image' || this.value == 'product') {
+            current_value_type = this.value;
+            $('#option-value').show();
+        } else {
+            $('#option-value').hide();
+        }
+    });
+
+    var option_value_row = '{{ globalOvKey + 1 }}';
+
+    var optionsTable, optionsValuesTable;
+
+    $.extend($.fn.dataTable.defaults, {
+        autoWidth: false,
+        dom: '<"datatable-header"B><"datatable-scroll-wrap"><"datatable-footer">',
+    });
+
+    optionsTable = $('#datatableGrid').DataTable({
+        language: {
+            emptyTable: locales['no_data_found']
+        },
+        rowReorder: {
+            selector: 'td.sortable'
+        },
+        select: {
+            style: 'multi',
+        },
+        buttons: [
+            {
+                text: "<i class='icon-plus3'></i> {{ lang('button_add_option_value') }}",
+                className: 'btn btn-default',
+                action: function (e, dt, node, congig) {
+                    addOptionValue('datatableGrid');
+                }
+            },
+        ],
+        columnDefs: [
+            {
+                targets: [0, 1],
+                sortable: false,
+                orderable: false
+            }
+        ],
+    });
+
+    optionsValuesTable = $('#dtOptionValues').DataTable({
+        language: {
+            emptyTable: locales['no_data_found']
+        },
+        rowReorder: {
+            selector: 'td.sortable'
+        },
+        select: {
+            style: 'multi',
+        },
+        buttons: [
+            {
+                text: "<i class='icon-plus3'></i> {{ lang('button_add_option_value') }}",
+                className: 'btn btn-default',
+                action: function (e, dt, node, congig) {
+                    addOptionValue('dtOptionValues');
+                }
+            },
+        ],
+        columnDefs: [
+            {
+                targets: [0, 1, 2],
+                sortable: false,
+                orderable: false
+            }
+        ],
+    });
+
+    function removeItem(that) {
+        $(that).parents('tr').remove();
+    }
+
+
+    function addOptionValue(parentTable) {
+
+        if (parentTable == 'dtOptionValues') {
+            var optionType = allOptions[$("#newOptionValueForm #option_id").val()]['type'];
+        } else {
+            var optionType = 'image';
+        }
+
+        html = '';
+        var uniqueID = ( (Math.random() * 50000) + 1);
+        var noImage = 'no_image';
+
+        html += `<tr id="option-value-row${option_value_row}">
+                <td>
+                    <a class='btn btn-default btn-xs' onclick="removeItem(this)"><i class='icon-trash'></i></a>
+                </td>`;
+
+        if (optionType == 'image') {
+            html += `<td>{{ uploader.image({ 'name': 'option_value[][image]', 'thumbPath': no_image, 'imagePath': "", 'noImage': no_image, 'ID': "__" })|e("js") }}</td>`;
+        }
+
+        if ($('#newOptionValueForm #option_id').val()) {
+            optionType = allOptions[$('#newOptionValueForm #option_id').val()]['type'];
+        } else {
+            optionType = $('#type').val();
+        }
+
+        if (optionType == 'product') {
+
+            html += `
+            <td class="optionValueInput">
+                <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                    <div class="form-group">
+                        <select class="form-control" name="option_value[${option_value_row}][value]" id="product-select">
+            `;
+
+            {% for product in products %}
+                html += `<option value='{{product.product_id}}'>{{product.name|e('js')}}</option>`;
+            {% endfor %}
+            
+            html +=`
+                            </select>
+                            <span class="help-block"></span>
+                        </div>
+                    </div>
+                </td>
+            </tr>`;
+
+            setTimeout(function(){
+                $('#product-select').select2({
+                    minimumResultsForSearch: 3,
+                });
+            }, 0);
+
+        } else {
+
+            html += `<td class="optionValueInput">
+                    <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                        <div class="tab-content">
+                            {% for language in languages %}
+                                <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}" id="langTab-${option_value_row}-{{ language['language_id'] }}">
+                                    <div class="form-group">
+                                        <label class="label-control"></label>
+                                        <input type="text" class="form-control"
+                                        name="option_value[${option_value_row}][option_value_description][{{ language['language_id'] }}][name]"
+                                        value=""/>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                            {% for language in languages %}
+                                <li class="{{ loop.first ? 'active' : '' }}">
+                                    <a href="#langTab-${option_value_row}-{{ language['language_id'] }}" data-toggle="tab" aria-expanded="false">
+                                        <img src="view/image/flags/{{ language['image'] }}" title="{{ language['name'] }}" class="pull-right">
+                                        <div> {{ language['name'] }}</div>
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </td>
+                </tr>`;
+        }
+            
+
+        html = html.replace(/option_value\[]\[image]/, 'option_value[' + option_value_row + '][image]');
+        html = html.replace(/image__/g, 'image__' + option_value_row + '_image');
+        html = html.replace(/thumb__/g, 'thumb__' + option_value_row + '_image');
+
+        $('#' + parentTable).find('tr td.dataTables_empty').parents('tr').hide();
+
+        $('#' + parentTable).find('tbody').prepend(html);
+
+        option_value_row++;
+    }
+</script>
+<script>
+    $(document).ready(function () {
+
+        $("body").on("click", "#modal-image .md-close.close", function () {
+
+            $('body').addClass("modal-open")
+        });
+        $("body").on("click", "#modal-image .thumbnail", function () {
+            $('body').addClass("modal-open")
+        });
+        $("body").on("click", ".uploadZoneFileManager .dz-details img", function () {
+            $('body').addClass("modal-open")
+        });
+
+    });
+</script>

@@ -1,0 +1,231 @@
+<style type="text/css">
+    .modal-backdrop {
+        z-index: 1040;
+    }
+
+    .pay-button {
+        border: medium none;
+        color: #fff;
+        height: 40px;
+        width: auto:;
+        transition: all 0.5s ease-out 0s;
+        -webkit-transition: all 0.5s ease-out 0s;
+        background-color: #669933;
+        -webkit-appearance: button;
+        cursor: pointer;
+        border-radius: 0;
+        width: 100px;
+    }
+
+    #tab2-root {
+        display: none;
+        position: fixed;
+        top: 0px;
+        bottom: 0px;
+        left: 0px;
+        right: 0px;
+        margin: auto;
+        border: 0px;
+        z-index: 2147483711;
+        overflow: hidden !important;
+    }
+
+    .gosell-gateway-msg {
+        background-color: rgba(0, 0, 0, .6);
+        overflow: hidden !important;
+        position: absolute;
+        top: 0;
+        right: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        margin: auto;
+        z-index: 99999999;
+    }
+</style>
+<div id="tab2-root"></div>
+<button style="display:none" id="confirm-button" class="button" type="button"></button>
+<!-- Tap 2 Modal -->
+<div class="modal" id="tab2-checkout-mode-page-modal" tabindex="-1" role="dialog" aria-hidden="true"
+    data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content" style="top: 80px">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                {{ pay_hint }}
+                
+                {% if ask_customer_to_save_his_cart %}
+                <br>
+                <input type="checkbox" name="save_card" id="save_card" value="true">
+                <label for="save_card">{{ lang('text_ask_customer_to_save_his_cart') }}</label>
+                {% endif %}
+
+            </div>
+            <div class="modal-footer" style="text-align: center; min-height:120px;">
+                <button type="button" id="pay-button" class="pay-button">{{ pay }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+{#<script src="{{ jslink('assets/js/bootstrap.min.js') }}"></script>#}
+<script>
+    (function() {
+        var script = document.createElement("SCRIPT");
+        script.src = "{{ jslink('assets/js/bootstrap.min.js') }}";
+        script.type = 'text/javascript';
+        script.onload = function() {
+        };
+        script.onerror = function() {
+            var script2 = document.createElement("SCRIPT");
+            script2.src = "{{ jslink('vendor/bootstrap/bootstrap.min.js') }}";
+            script2.type = 'text/javascript';
+            script2.onload = function() {
+            };
+            document.getElementsByTagName("head")[0].appendChild(script2);
+        };
+        document.getElementsByTagName("head")[0].appendChild(script);
+    })();
+
+    jQuery(document).ready(function () {
+        var popupLightBoxContainer = jQuery('#tab2-root');
+
+        function configure(callback) {
+            jQuery.ajax({
+                type: 'get',
+                url: 'index.php?route=payment/tap2/getOrder',
+                cache: false,
+                data: {},
+                success: function (data) {
+                    data = JSON.parse(data);
+                
+                    goSell.config({
+                        containerID: "tab2-root",
+                        gateway: {
+                            publicKey: data.tap2_api_publishable_key,
+                            language: data.language_code,
+                            contactInfo: true,
+                            supportedCurrencies: "all",
+                            supportedPaymentMethods: "all",
+                            saveCardOption: false,
+                            customerCards: true,
+                            notification: 'standard',
+                            callback: function (response) {
+                                console.log('GoSell Gateway Response', response);
+                            },
+                            onClose: function () {
+                                popupLightBoxContainer.css('display', 'none');
+                            }
+                        },
+                        customer: {
+                            id: data.tap2_customer_id,
+                            first_name: data.firstname,
+                            last_name: data.lastname,
+                            email: data.email,
+                            phone: {
+                                country_code: data.payment_phonecode,
+                                number: data.phone_number
+                            }
+                        },
+                        order: {
+                            amount: data.total,
+                            currency: data.currency_code
+                        },
+                        transaction: {
+                            mode: 'charge',
+                            charge: {
+                                saveCard: data.tap2_kfast_enabled,
+                                metadata: {
+                                    order_id: data.order_id
+                                },
+                                reference: {
+                                    transaction: "txn_" + data.order_id,
+                                    order: "ord_" + data.order_id,
+                                },
+                                hashstring: '',
+                                redirect: data.redirect_url,
+                                post: null
+                            }
+                        }
+                    });
+
+                    if (typeof callback === "function")
+                        callback((data.tap2_checkout_mode || 'page').trim().toLowerCase());
+                },
+                error: function (err) {
+                    console.log(err);
+                }
+            });
+        }
+
+        /** Vanilla js load script */
+        function loadScript(url, id, callback) {
+            var script = document.getElementById(id);
+            if (script) {
+                script.parentNode.removeChild(script);
+                script = null;
+            }
+
+            script = document.createElement("script")
+            script.type = "text/javascript";
+            script.id = id;
+
+            if (script.readyState) { //IE
+                script.onreadystatechange = function () {
+                    if (script.readyState == "loaded" || script.readyState == "complete") {
+                        script.onreadystatechange = null;
+                        callback();
+                    }
+                };
+            } else { //Others
+                script.onload = function () {
+                    callback();
+                };
+            }
+
+            script.src = url;
+            document.getElementsByTagName("head")[0].appendChild(script);
+        }
+
+        function pay() {
+            configure(function (checkoutMode) {
+                if (checkoutMode == 'page') {
+                    jQuery('#tab2-checkout-mode-page-modal').appendTo("body").modal('show');
+                }
+                else if (checkoutMode == 'popup') {
+                    popupLightBoxContainer.css('display', 'block');
+                    goSell.openLightBox();
+                }
+            });
+        }
+
+        jQuery('#confirm-button').on('click', function (event) {
+            event.preventDefault();
+            var theScript = "https://goSellJSLib.b-cdn.net/v1.4.1/js/gosell.js?nocache=" + (new Date().getTime());
+            loadScript(theScript, 'gosell-cdn-v1', pay);
+        });
+
+        jQuery('#pay-button').on('click', function (event) {
+            event.preventDefault();
+            jQuery('#tab2-checkout-mode-page-modal').modal('hide');
+            
+            //save card option
+            let save_card = $('#save_card').is(':checked');
+            $.post("index.php?route=payment/tap2/setSaveCardOption", { save_card : save_card } ,function(){});
+            
+            goSell.openPaymentPage();
+        });
+
+        $('#tab2-checkout-mode-page-modal').modal({
+            // backdrop: false,
+            keyboard: false,
+            show: false,
+        });
+    });
+
+</script>
+
+{% include 'default/template/payment/external_payment_msg.expand' %}

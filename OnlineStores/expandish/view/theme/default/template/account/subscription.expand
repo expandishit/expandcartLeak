@@ -1,0 +1,148 @@
+{% extends uses_twig_extends ? Template_Name~"/template/layouts/master.expand" : "default/template/layouts/base.expand"
+%}
+
+{% block content %}
+
+<div class="container">
+    <div id="content">
+
+        <!-- breadcrumb -->
+        <div class="breadcrumb-page">
+            <ol class="breadcrumb">
+                {% for breadcrumb in breadcrumbs %}
+                {% if loop.last %}
+                <li class="active">{{ breadcrumb['text'] }}</li>
+                {% else %}
+                <li><a href="{{ breadcrumb['href'] }}">{{ breadcrumb['text'] }}</a></li>
+                {% endif %}
+                {% endfor %}
+            </ol>
+        </div>
+        <!-- /breadcrumb -->
+
+        {% if success %}
+        <br>
+        <div class="alert alert-success alert-dismissible" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span
+                    aria-hidden="true">&times;</span></button>
+            {{ success }}
+        </div>
+        {% endif %}
+
+        <div class="my-account">
+            <div class="row">
+                <div class="col-md-3">
+                    {{ taps }}
+                </div>
+                <div class="col-md-9">
+                    <div id="content row">
+                        <br />
+                        <br />
+                        <div id="carouselExampleControls" class="carousel slide" data-ride="carousel">
+                            <div class="carousel-inner">
+
+                                {% for subscription in subscriptions %}
+                                {% if loop.index is divisible by(4) or loop.first %}
+                                <div class="carousel-item {{ loop.first ? 'active' : '' }}">
+                                    <section class="container">
+                                        <div class="card-deck mb-3 text-center">
+                                            {% endif %}
+
+                                            <!-- item # -->
+                                            <div class="card mb-4 box-shadow subscription">
+                                                <input type="hidden" class="subscription_id"
+                                                    value="{{ subscription.subscription_id }}">
+                                                <div class="card-header">
+                                                    <h4 class="my-0 font-weight-normal title">{{ subscription.title }}
+                                                    </h4>
+                                                </div>
+                                                <div class="card-body">
+                                                    <h1 class="card-title pricing-card-title">
+                                                        <span class="subscription-currency">{{ currency }}</span>
+                                                        {{ subscription.price|number_format(2, '.', ',')| replace({".00"
+                                                        : ""}) }}
+                                                        <small class="text-muted">/ {{ subscription.validity_period ~ '
+                                                            ' ~ lang(subscription.validity_period_unit) }}</small>
+                                                    </h1>
+
+                                                    <ul class="list-unstyled mt-3 mb-4">
+                                                        {% for coupon in subscription.coupons %}
+                                                        <li>
+                                                            {% for category in coupon.categories %}
+                                                            {{ lang('text_discount') }}
+
+                                                            {{ coupon.discount|number_format(2, '.', ',')|
+                                                            replace({".00" : ""}) }}
+                                                            <span class="coupon-discount-symbol">{{ coupon.type == 'P' ?
+                                                                '%':currency }}</span>
+                                                            {{ lang('text_on') }}
+                                                            <span class="coupon-category-name">{{ category.name
+                                                                }}</span>
+                                                            <br />
+                                                            {% endfor %}
+                                                        </li>
+                                                        {% endfor %}
+                                                    </ul>
+
+                                                    {# <button type="button"
+                                                        class="btn btn-lg btn-block btn-outline-primary">Choose
+                                                        package</button> #}
+                                                </div>
+                                            </div>
+                                            <!-- /item # -->
+
+                                            {% if (loop.index + 1) is divisible by(4) or loop.last %}
+                                        </div>
+                                    </section>
+                                </div>
+                                {% endif %}
+
+                                {% endfor %}
+
+                            </div>
+
+
+                            <a class="carousel-control-prev" href="#carouselExampleControls" role="button"
+                                data-slide="prev">
+                                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                <span class="sr-only">Previous</span>
+                            </a>
+
+                            <a class="carousel-control-next" href="#carouselExampleControls" role="button"
+                                data-slide="next">
+                                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                <span class="sr-only">Next</span>
+                            </a>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12 not-allowed" id="button-continue">
+                                <a href="#" class="btn btn-inline button">{{ lang('button_continue') }}</a>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <style type="text/css">
+            .subscription {
+                cursor: pointer;
+            }
+        </style>
+        <script type="text/javascript">
+            let base_href = "{{ link('account/upgrade/redirectToCheckout') }}";
+
+            $('.subscription').click(function () {
+                $('.subscription').removeClass('active');
+                $(this).addClass('active');
+                $('#button-continue').removeClass('not-allowed')
+                let id = $(this).find($('.subscription_id')).val();
+                $('#button-continue a').attr('href', base_href + '&subscription_id=' + id);
+            });
+        </script>
+    </div>
+</div>
+
+{% endblock content %}

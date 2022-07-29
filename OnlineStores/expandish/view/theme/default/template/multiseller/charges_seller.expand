@@ -1,0 +1,260 @@
+<style>
+    .setting, .input-group, .rule {
+        margin-bottom: 5px;
+    }
+
+    .rule {
+        font-size: 11px;
+    }
+
+    .rule select, .rule input {
+        display: inline-block;
+        font-size: inherit;
+        padding: 0 5px !important;
+        height: 2.5em;
+    }
+
+    .rule input[type="text"] {
+        width: auto !important;
+    }
+
+    .collapsed .rule {
+        padding-bottom: 8px;
+    }
+
+    input[type="text"].short {
+        width: 42px !important;
+    }
+    .switch {
+  position: absolute;
+  display: inline-block;
+width: 50px;
+ height: 26px;
+  
+}
+
+.switch input { 
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+    height: 20px;
+    width: 20px;
+    left: 4px;
+    bottom: 3px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #2196F3;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(26px);
+  -ms-transform: translateX(26px);
+  transform: translateX(26px);
+}
+
+/* Rounded sliders */
+.slider.round {
+  border-radius: 10px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+.bold{font-weight: bold;}
+.span_switch{margin-right: 60px;}
+</style>
+
+{% if session_data.success  %}
+<div class="alert alert-success fade in alert-dismissible" style="margin-top:18px;">
+    <a style="right: 100% !important;" href="#" class="close" data-dismiss="alert" aria-label="close" title="close">×</a>
+  {{ session_data.success}}.
+</div>
+
+{% endif %}
+
+<div class="col-md-12">
+    <div class="panel panel-flat">
+        <div class="panel-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th>{{ lang('column_action') }}</th>
+                        <th>{{ lang('column_group') }}</th>
+                        <th>{{ lang('column_title') }}</th>
+                        <th>{{ lang('column_charge') }}</th>
+                        <th>{{ lang('column_rules') }}</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for key,charge in setting['charges'] %}
+                     
+                        <tr class="charge">
+                            <td>
+                                <div class="setting">
+                                    <a class="btn btn-warning add-button"
+                                       onclick="saveRow(copyRow($(this).parents('tr'))); $('.tooltip').hide();">
+                                        <i class="fa fa-copy fa-lg fa-fw"></i>
+                                    </a>
+                                </div>
+                                <div class="setting">
+                                    <a class="btn btn-danger" data-help="" onclick=" removeRow($(this).parents('tr'))"
+                                       title="" data-original-title="">
+                                        <i class="fa fa-trash fa-lg fa-fw"></i>
+                                    </a>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="setting">
+                                    <input class="form-control short" name="charge_{{ key }}_group"
+                                           id="input-charge_{{ key }}_group"
+                                           data-help=""
+                                           maxlength="2" value="{{ saved['charge_' ~ key ~ '_group'] }}"
+                                           type="text">
+                                </div>
+                            </td>
+                            <td>
+                                <div class="setting">
+                                <select name="charge_{{ key }}_title_admin" class="form-control selectStatus">
+                                {% for ms_option in ms_basedOptions %}
+                                {{ms_option['sellerbased_options_id']}} 
+                                <option value="{{ ms_option['sellerbased_options_id'] }}" {{ saved['charge_' ~ key ~ '_title_admin'] ==  ms_option['sellerbased_options_id'] ? 'selected' }} >{{ ms_option['title'] }}</option>
+                                {% endfor %}
+                                </select>
+
+                                    {% for lang in setting['languages'] %}
+                                        <div class="input-group hidden" title=""
+                                             data-help="{{ lang('help_charge_title' ~ ' ' ~ lang['name']) }}"
+                                             data-original-title="{{ lang('help_charge_title' ~ ' ' ~ lang['name']) }}">
+                                            <span class="input-group-addon"><img
+                                                        src="view/image/flags/{{ lang['image'] }}"></span>
+                                            <input class="form-control "
+                                                   placeholder="{{ lang('placeholder_charge_title') ~ ' ' ~ lang['name'] }}"
+                                                   name="charge_{{ key }}_title_{{ lang['code'] }}"
+                                                   value="{{ saved['charge_' ~ key ~ '_title_' ~ lang['code']] }}"
+                                                   type="text">
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </td>
+                            <td>
+                               <div class="setting">
+                                    <select class="form-control " name="charge_{{ key }}_type"
+                                            id="input-charge_{{ key }}_type"
+                                            data-help="{{ lang('help_charge_type') }}"
+                                            title=""
+                                            data-original-title="{{ lang('help_charge_type') }}">
+                                        {% set type = saved['charge_' ~ key ~ '_type'] %}
+                                        {% for optGroupKey,optGroup in setting['chargeOptGroups'] %}
+                                            <optgroup label="{{ lang(optGroupKey) }}">
+                                                {% for optKey,option in optGroup %}
+                                                    <option value="{{ optKey }}" {{ type == optKey ? 'selected' : '' }}>
+                                                        {{ lang(optKey) }}
+                                                    </option>
+                                                {% endfor %}
+                                            </optgroup>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="setting">
+                                    <textarea class="form-control" name="charge_{{ key }}_charges"
+                                              id="input-charge_{{ key }}_charges"
+                                              title="">{{ saved['charge_' ~ key ~ '_charges'] }}</textarea>
+                                    {#<span class="help-block"></span>#}
+                                    {#<span class="text-muted">{{ lang('help_charge_charges')|raw }}</span>#}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="setting">
+
+                                    {% for rule in newrules['charge']['charge_' ~ key ~ '_rule'] %}
+                                        {% set rule_type = saved['charge_' ~ key ~ '_rule_' ~ rule ~ '_type'] %}
+                                        {% set rule_comparison = saved['charge_' ~ key ~ '_rule_' ~ rule ~ '_comparison'] %}
+                                        {% set rule_value = saved['charge_' ~ key ~ '_rule_' ~ rule ~ '_value'] %}
+
+                                        {% set rule_type_html = ruleSelectorTemplate %}
+                                        {% set rule_type_html = rule_type_html|replace(
+                                        {('<option value="' ~ rule_type ~ '"'): '<option value="' ~ rule_type ~ '" selected'}
+                                        ) %}
+                                        {% set fieldName = 'charge_' ~ key ~ '_rule_' ~ rule %}
+                                        {% set rule_type_html = rule_type_html|replace({'##': fieldName}) %}
+
+                                        {% set rule_comparison_value_html = ruleOptionTemplates[rule_type] %}
+                                        {% set rule_comparison_value_html = rule_comparison_value_html|replace({
+                                        '<input data-setting="comparison" value=""': '<input data-setting="comparison" value="'~rule_comparison~'"',
+                                        ('<option data-setting="comparison" value="' ~ rule_comparison ~ '"'): '<option data-setting="comparison" value="' ~ rule_comparison ~ '" selected="selected"',
+                                        '<input data-setting="value" value=""': '<input data-setting="value" value="' ~ rule_value ~ '"',
+                                        ('<option data-setting="value" value="' ~ rule_value ~ '"'): '<option data-setting="value" value="' ~ rule_value ~ '" selected'
+                                        }) %}
+                                        {% set rule_comparison_value_html = rule_comparison_value_html|replace({'##': fieldName}) %}
+                                        <div class="rule">
+                                            {{ rule_type_html }}
+                                            {{ rule_comparison_value_html }}
+                                        </div>
+
+                                    {% endfor %}
+
+                                    <a class="btn btn-success btn-xs add-button pad-top-sm" onclick="addRule($(this))"
+                                       data-help="{{ lang('help_add_rule') }}"
+                                       data-prefix="charge_{{ key }}_rule" title=""
+                                       data-original-title="{{ lang('help_add_rule') }}"><i
+                                                class="fa fa-plus"></i>{{ lang('button_add_rule') }}</a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                    <tfoot>                    
+                    <tr>
+                    <td colspan="15">
+                          </br>
+                    <span class="text-muted">{{ lang('text_charges_note')}}</span></br>  
+                    <span class="text-muted">{{ lang('help_charge_charges')}}</span>    
+                        </td>
+                    </tr>
+                    </tfoot>
+                </table>
+                  <h5> <span class="bold">{{ lang('text_defult_charges')}} :</span></h5>
+        
+                    {% for ms_default_option in ms_admin_basedOptions %}
+                    <div class="form-group">
+                    <label class="switch ">
+                        <input type="checkbox" name="admin_defult_charges[]" value="{{ ms_default_option['sellerbased_options_id'] }}" {{ ms_default_option['sellerbased_options_id'] in saved_admin_defult_charges ? 'checked' }}  /> 
+                        <span class="slider round"></span>
+                        </label> 
+                        <span class="span_switch">{{ ms_default_option['title'] }}</span> </div>
+                    {% endfor %}  
+                    </br>
+                 <a class="btn btn-primary add-button"
+                onclick="saveRow(clearRow(copyRow($(this).parents('table').find('tbody tr:last-child')), 'soft'))">
+                <i class="fa fa-plus pad-right-sm"></i> {{ lang('button_add_charge') }}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

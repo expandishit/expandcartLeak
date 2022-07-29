@@ -1,0 +1,536 @@
+
+<div class="row">
+    <input type="hidden" 
+        id="validate_section" 
+        value="payment_address" 
+        name="validate_section" />
+        
+    <div class="col-md-9 position-static">
+
+    <div class="wizard  checkout_cont" id="contact" action="#">
+        <div>
+            <h3>{{ lang('customer_info') }}</h3>
+            <section class="register_payment address-section">
+                
+                <section id="" class="sections_data step_2">
+                    {{ section_address }}
+                </section>
+            </section>
+
+            {% if cart_has_shipping %}
+                <h3>{{ lang('shipping_method') }}</h3>
+                <section class="ship_address sections_data shipping-section step_4"  id="">
+                    {{ get_shipping_method_view }}
+                </section>
+            {% endif %}
+
+            <h3>{{ lang('text_checkout_payment') }}</h3>
+            <section class="sections_data payment-section">
+                {{ get_order_summery_view }}
+                <div class="step_5">
+                    {{ get_payment_method_view }}
+                </div>
+                <div class="step_8">
+                    {{ get_confirm_view }}
+                </div>
+            </section>
+        </div>
+
+    </div>
+    <div class="wizard__controls">
+        {% if languages|length > 1 %}
+        <div class="dropdown">
+            <a class="btn dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                {{ current_language.name }}
+            </a>
+          
+            <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                <form method="post" enctype="multipart/form-data">
+                    {% for language in languages %}
+                        <a class="dropdown-item" href="#" title="{{ language.name }}" onclick="$('input[name=\'language_code\']').attr('value', '{{ language.code }}'); $(this).closest('form').submit(); return false;">{{ language.name }}</a>
+                    {% endfor %}
+                    <input type="hidden" name="language_code" value="{{ current_language.code }}" />
+                    <input type="hidden" name="redirect" value="{{ redirect }}" />
+                </form>
+            </div>
+          </div>
+        {% endif %}
+
+        {% if currencies|length > 1 %}
+          <div class="dropdown">
+            <a class="btn dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                {{ current_currency.symbol }} - {{ current_currency.title }}
+            </a>
+          
+            <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                <form action="{{ link('common/home') }}" method="post" enctype="multipart/form-data">
+                {% for currency in currencies %}
+                  <a class="dropdown-item" href="#" onclick="$('input[name=\'currency_code\']').attr('value', '{{ currency.code }}'); $(this).closest('form').submit(); return false;">{{ currency.symbol }}</a>
+                {% endfor %}
+                <input type="hidden" name="currency_code" value="{{ current_currency.code }}" />
+                <input type="hidden" name="redirect" value="{{ redirect }}" />
+                </form>
+            </div>
+          </div>
+    </div>
+        {% endif %}
+    </div>
+    </div>
+    <div class="col-md-4 cart_cont step_6" id="">
+        {{ get_cart_view }}
+    </div>
+</div>
+
+<input class="back-to-cart--link" type="hidden" value="{{ link('checkout/cart') }}">
+<input class="back-to-cart-name" type="hidden" value="{{ lang('return_to_shop') }}">
+
+{# <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-steps/1.1.0/jquery.steps.min.js" integrity="sha512-bE0ncA3DKWmKaF3w5hQjCq7ErHFiPdH2IGjXRyXXZSOokbimtUuufhgeDPeQPs51AI4XsqDZUK7qvrPZ5xboZg==" crossorigin="anonymous"></script> #}
+<script src="/expandish/view/javascript/jquery/jquery.steps.min.js"></script>
+
+<script>
+    const CART_HAS_SHIPPING = !!Number("{{cart_has_shipping}}");
+    // console.log("CART_HAS_SHIPPING", CART_HAS_SHIPPING);
+    
+    const SECTIONS_STRUCT = {};
+    
+    if (CART_HAS_SHIPPING) {
+        SECTIONS_STRUCT[0] =  {btn_text: '{{lang("continue_to_shipiing")}}', name: 'payment_address' };
+        SECTIONS_STRUCT[1] =  {btn_text: '{{lang("Continue_to_payments")}}', name: 'shipping_method' };
+        SECTIONS_STRUCT[2] =  {btn_text: '{{lang("button_confirm")}}', name: 'payment_method' };
+    }
+    
+    if (!CART_HAS_SHIPPING) {
+        SECTIONS_STRUCT[0] =  {btn_text: '{{lang("Continue_to_payments")}}', name: 'payment_address' };
+        SECTIONS_STRUCT[1] =  {btn_text: '{{lang("continue")}}', name: 'payment_method' };
+    }
+   
+    
+    $(document).ready(function() {
+        var currentStep = '{{current_step}}';
+        
+        if(CART_HAS_SHIPPING) {
+            var startIndex = (currentStep == "shipping") ? 1 : currentStep == "payment" ? 2 : 0;
+        } else {
+            var startIndex = currentStep == "payment" ? 1 : 0;
+        }
+        
+        var widthOfWizard =  $('.wizard.checkout_cont').innerWidth();
+      // function checkIfBodyHasScroll() {
+      // if ($(document).height() > $(window).height()) {
+      //       $('.wizard__controls').removeClass('fixed--wizard');
+      //     } else{
+      //       $('.wizard__controls').addClass('fixed--wizard');
+      //       $('.wizard__controls').css('width', widthOfWizard + 'px');
+      //     }
+      // }
+      // checkIfBodyHasScroll ();
+  
+
+        var form = $("#contact");
+
+        form.children("div").steps({
+            headerTag: "h3",
+            bodyTag: "section",
+            transitionEffect: "slideLeft",
+            startIndex : startIndex,
+            enableAllSteps: true,
+            /* Labels */
+            labels: {
+                next: "{{ lang('continue') }}",
+                previous: "{{ lang('previous') }}",
+                finish:""
+
+            },
+            transitionEffect: 0,
+            transitionEffectSpeed: 0,
+            onStepChanging: function (event, currentIndex, newIndex) {
+                
+                var nextLink = $(".wizard>.actions>ul>li a[href='#next']");
+
+                if (currentIndex > newIndex) {
+                   
+                    /*if(newIndex == 0){
+                        $(nextLink).text("{{ lang('continue_shipping_method') }}");
+                    }else if(newIndex == 2){
+                        $(nextLink).text("{{ lang('continue_payment') }}");
+                    }*/
+                    
+                    return true;
+                }
+
+                // shipping address tab 
+                if(newIndex == 2) {
+                   
+                   // re init date calender here 
+                   
+                }
+
+
+                var $parent = $(".wizard section.sections_data:eq(" + currentIndex + ")");
+
+                if (currentIndex < 3) {
+                    validation = validateFields();
+                    // console.log("validateFields", validation);
+                    //validation = syncValidation( $parent);
+
+                    
+                    /*if(newIndex == 2) {
+                        $(nextLink).text("{{ lang('continue_payment') }}")
+                    }*/
+
+
+                    return validation;
+
+                }
+
+                return form;
+            },
+            onInit: function(event, currentIndex) {
+                /*var $stepsCount = $(".wizard .steps ul[role=tablist] li").length;
+                var $parent = $(".wizard .steps ul[role=tablist] li:eq(0)");
+                
+                if ($stepsCount === 3) {
+                    $('.actions a[href="#next"]').text("{{lang("continue_to_shipiing")}}");
+                } else {
+                    $('.actions a[href="#next"]').text("{{lang("Continue_to_payments")}}");
+                }*/
+                
+                if (SECTIONS_STRUCT.hasOwnProperty(currentIndex)) {
+                    $('.actions a[href="#next"]').text(SECTIONS_STRUCT[currentIndex]['btn_text']);
+                    $('#validate_section').val(SECTIONS_STRUCT[currentIndex]['name']);
+                }
+            },
+            onStepChanged: function (event, currentIndex, priorIndex) { 
+                // console.log('currentIndex', currentIndex);
+                $.ajax({
+                    url: 'index.php?route=checkout/checkoutv2/update_current_step',
+                    type: 'post',
+                    data:  {"index" : currentIndex},
+                    dataType: 'json',
+                    success: function(json) {
+                        // console.log('currentStep', json)
+                    },
+                    error: function(xhr, ajaxOptions, thrownError) {
+                        console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                    }
+                });
+                
+                // console.log("currentIndex", currentIndex)
+                
+                if (SECTIONS_STRUCT.hasOwnProperty(currentIndex)) {
+                    $('.actions a[href="#next"]').text(SECTIONS_STRUCT[currentIndex]['btn_text']);
+                    $('#validate_section').val(SECTIONS_STRUCT[currentIndex]['name']);
+                }
+                
+                /*
+                var $stepsCount = $(".wizard .steps ul[role=tablist] li").length;
+                
+                var $parent = $(".wizard .steps ul[role=tablist] li:eq(" + currentIndex + ")");
+                
+                if (!$parent.length) {
+                   return; 
+                }
+                
+                var activeClassList = $parent.get(0).classList;
+                
+                if (!activeClassList.contains("current")) return;
+                
+                if (activeClassList.contains("first")) {
+                    $("#validate_section").val('payment_address');
+                    if ($stepsCount === 3) {
+                        $('.actions a[href="#next"]').text("{{lang("continue_to_shipiing")}}");
+                    } else {
+                        $('.actions a[href="#next"]').text("{{lang("Continue_to_payments")}}");
+                    }
+                } else if (activeClassList.contains("last")) {
+                    $("#validate_section").val('payment_method');
+                } else {
+                    $("#validate_section").val('shipping_method');
+                    $('.actions a[href="#next"]').text('{{lang("Continue_to_payments")}}');
+                }
+                */
+                
+                return;
+                
+               /*
+                if(currentIndex == 0){
+                    $("#validate_section").val('payment_address');
+                }else if(currentIndex == 1){
+                    $("#validate_section").val('shipping_method');
+                }else if(currentIndex == 2){
+                    $("#validate_section").val('payment_method');
+                }
+                */
+            }, 
+        });
+                
+        $(".steps   span.number").each((i, el) => {
+            $(el).text($(el).text().split('.').join(""));
+        })
+
+        $(".wizard  #shipping_method_wrap .map_cont .address_details .edit").on("click", (event) => {
+            event.preventDefault();
+            // $("#contact").steps("setStep", 1);
+            $("#steps-uid-0-t-0").get(0).click();
+        })
+        
+        // change the href here for the return to shop link
+        var returnToShopLink = $(".wizard>.actions>ul>li a[href='#previous']");
+        //$(returnToShopLink).attr("href", "changeHere");
+        $(".wizard>.actions>ul>li:first-child a").append(`<span class="back--icon"><svg xmlns="http://www.w3.org/2000/svg" width="11.593" height="8.022" viewBox="0 0 11.593 8.022">
+  <g id="left-arrow_2_" data-name="left-arrow (2)" transform="translate(0 0)">
+    <g id="Group_61" data-name="Group 61">
+      <path id="Path_32" data-name="Path 32" d="M10.946,135.364H2.214l2.27-2.259a.647.647,0,0,0-.913-.917L.19,135.553h0a.648.648,0,0,0,0,.916h0l3.38,3.364a.647.647,0,0,0,.913-.917l-2.27-2.259h8.732a.647.647,0,1,0,0-1.294Z" transform="translate(0 -132)" fill="#2c2c35"/>
+    </g>
+  </g>
+</svg>
+</span>`);
+
+
+
+$('.steps li').click(function (){
+    $('.current').prevAll('li').addClass('active--step');
+    $('.current').nextAll('li').removeClass('active--step');
+
+});
+        {% if not is_logged %}
+            $(".actions").fadeOut(0);
+        {% endif %}
+        
+        /*function syncValidation($parent) {
+            var state = false;
+            $.ajax({
+                url: '{{ link('module/quickcheckoutv2/validate_all_fields') }}',
+                data:
+                    $parent.find('select:visible[data-require=\'require\'],input:visible[data-require=\'require\'],textarea:visible[data-require=\'require\'],radio:visible[data-require=\'require\'],checkbox:visible[data-require=\'require\']').serialize(),
+                method:
+                    'POST',
+                dataType:
+                    'JSON',
+                async:
+                    false,
+                beforeSend: function() {
+                    $('.error_span').remove();
+                },
+                success:
+
+                    function (json) {
+                        $parent.find('.error').removeClass('error');
+
+                        isPhoneVerified=json['phoneverified'];
+                        accountType = json['accountType'];
+                        $('.error_span').remove();
+                        $('.highlight-error').removeClass('highlight-error');
+
+                        if("error" in json){
+                            if ($('#payment_address').is(':visible')  && json['error']['payment_address']) {
+                                $.each(json['error']['payment_address'], function(key, value){
+                                    console.log(key, value);
+                                    $('.register_payment [name=\'payment_address\['+key+'\]\']').parents('[class*=-input]').addClass('highlight-error').append('<div class="error_span">' + value + '</div>');
+                                });
+                                state = false;
+                            }
+                            if ($('#shipping_address').is(':visible') && json['error']['shipping_address'] ) {
+                                $.each(json['error']['shipping_address'], function(key, value){
+                                    console.log(key, value);
+                                    $('#shipping_address_wrap [name=\'shipping_address\['+key+'\]\']').parents('[class*=-input]').addClass('highlight-error').append('<div class="error_span">' + value + '</div>');
+                                });
+                                state = false;
+                            }
+
+                            if ($('#shipping_method_wrap').is(':visible') && json['error']['shipping_method'] ) {
+                                $.each(json['error']['shipping_method'], function(key, value){
+                                    console.log(key, value);
+                                    $('#shipping_method_wrap ').prepend('<div class="error_span">' + value + '</div>');
+                                });
+                                state = false;
+                            }
+
+                            if ($('#payment_method_wrap').is(':visible') && json['error']['payment_method'] ) {
+                                $.each(json['error']['payment_method'], function(key, value){
+                                    console.log(key, value);
+                                    $('#payment_method_wrap ').prepend('<div class="error_span">' + value + '</div>');
+                                });
+                                state = false;
+                            }
+
+                            if ($('#confirm_wrap').is(':visible') && json['error']['confirm'] ) {
+                                state = false;
+                                $.each(json['error']['confirm'], function(key, value){
+                                    if(key == 'error_warning'){
+                                        $.each(json['error']['confirm']['error_warning'], function(key, value){
+                                            $('#confirm_wrap .checkout-product').prepend('<div class="error_span">' + value + '</div>');
+                                        });
+                                    }else{
+                                        console.log(key, value);
+                                        $('#confirm_wrap [name=\'confirm\['+key+'\]\']').parents('[class*=-input]').addClass('highlight-error').append('<div class="error_span">' + value + '</div>');
+                                    }
+                                });
+
+                            }
+                        }else{
+                            state = true;
+
+                            $parent.find('.error').removeClass('error');
+                        }
+
+                        if(state == true){
+                            if (typeof func == "function") func();
+                        }else{
+                            $('html,body').animate({
+                                    scrollTop: $(".error_span").offset().top-60},
+                                'slow');
+                        }
+
+                    }
+            });
+            return state;
+        }*/
+
+      $('.steps li:first-child span.number').html(`<i class="fas fa-map-marker-alt"></i>`);
+      $('.steps li:nth-child(2) span.number').html(`<i class="fas fa-truck"></i>`);
+      $('.steps li:last-child span.number').html(`<i class="far fa-credit-card"></i>`);
+
+var link = $(".back-to-cart--link").val();
+        var nameBackTo = $(".back-to-cart-name").val();
+      $('.wizard>.actions>ul>li:first-of-type').html(`<a href="${link}">
+        <svg xmlns="http://www.w3.org/2000/svg" width="11.593" height="8.022" viewBox="0 0 11.593 8.022">
+            <g id="left-arrow_2_" data-name="left-arrow (2)" transform="translate(0 0)">
+                <g id="Group_61" data-name="Group 61">
+                <path id="Path_32" data-name="Path 32" d="M10.946,135.364H2.214l2.27-2.259a.647.647,0,0,0-.913-.917L.19,135.553h0a.648.648,0,0,0,0,.916h0l3.38,3.364a.647.647,0,0,0,.913-.917l-2.27-2.259h8.732a.647.647,0,1,0,0-1.294Z" transform="translate(0 -132)" fill="#2c2c35"/>
+                </g>
+            </g>
+        </svg>
+        ${nameBackTo} 
+        </a>
+    `);
+
+    // return active link when reload
+
+    {% if current_step == "shipping" %}
+        // $("#steps-uid-0-t-1").click();
+    {% endif %}
+
+    {% if current_step == "payment" %}
+      // $("#steps-uid-0-t-2").click();
+    {% endif %}
+    
+    var widthOfWizard =  $('.wizard.checkout_cont').width();
+            // $(" .wizard>.steps>ul>li a , .add--new-address , .comment_input__leave-comment-word").click(function (){
+            //     setTimeout(function(){
+            //     if (scrollBars().vertical) {
+            //       $('.wizard__controls').removeClass('fixed--wizard');
+            //     } else {
+            //       $('.wizard__controls').addClass('fixed--wizard');
+            //       $('.wizard__controls').css('width', widthOfWizard + 'px');
+            //       }
+            //     }, 400);
+            // });
+        
+          //   if (scrollBars().vertical) {
+          //         $('.wizard__controls').removeClass('fixed--wizard');
+          //       } else {
+          //         $('.wizard__controls').addClass('fixed--wizard');
+          //         $('.wizard__controls').css('width', widthOfWizard + 'px');
+          //     }
+          //   function scrollBars(){
+          //   var body= $('body')[0]
+          //   return {
+          //     vertical:body.scrollHeight>body.clientHeight,
+          //     horizontal:body.scrollWidth>body.clientWidth
+          //   }
+          // }
+  
+    $('.content.position-static').show();
+});
+
+ 
+</script>
+
+{% if (delivery_slot_calendar_type != 'default') %}
+<script>
+    $(function(){
+        if ($('#date').is(":hidden")) {
+                $(".hasDatepicker").removeClass("hasDatepicker");
+                $("#date").datepicker("destroy");
+                console.log(!$("#date").datepicker( "isDisabled" )) ;
+            }
+    })
+</script>
+{% else %}
+<script>
+    $(function(){
+        if ($('#date').is(":hidden")) {
+                    var monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                    var weekday = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+                    var td = $('.ui-state-default').parents('td');
+
+                    // start function to bring month and weekday in date item
+                    function dateEdit() {
+                        $(td).each(function(){
+                            var monthNum = $(this).attr("data-month");
+                            var yearNum = $(this).attr("data-year")
+                            var month = monthNames[monthNum]; // Jan
+                            $(this).append('<span class="item-month"> '+ month +'</span>');
+                            var dateFormat = $(this).text() + '' + yearNum;
+                            var date = new Date(dateFormat);
+                            $(this).append('<span class="item-year"> '+weekday[date.getDay()]+'</span>'); //Saturday
+
+                        })
+                    }
+                
+
+                    $(td).on("click", function(e) {
+                        e.stopPropagation();
+                        $(this).find('.ui-state-default').removeAttr("href")
+                        var yearNum = $(this).attr("data-year");
+                        var day = $(this).find('.ui-state-default').text();
+                        var month = $(this).find('.item-month').text().trim();
+                        var monthIndex= monthNames.indexOf(month.charAt(0).toUpperCase() + month.slice(1));
+                        var dateFormat = day+' '+month+' '  + yearNum; // 16 Jan 2021
+                        var dateValue = day+'-'+ (monthIndex+1) + '-' + yearNum; // 16/1/2021
+                        var date = new Date(dateFormat);
+                        if (!$(".item-year")) {
+                            $(this).append('<span class="item-year"> '+weekday[date.getDay()]+'</span>');
+                        }
+                        var dayOfWeek = date.getUTCDay();;
+                            $.ajax({
+                                url: "{{ link('module/delivery_slot/getSlotsData') }}",
+                                type: "GET",
+                                data: {'dateValue': dateValue, 'dayOfWeek': dayOfWeek},
+                                success: function (resp)
+                                {
+                                    var resp = JSON.parse(resp);
+                                    var html = '';
+                                    var lenthData = resp.length;
+                                    if(lenthData > 0){
+                                        for (var i = 0; i < lenthData; i++)
+                                        {
+                                            html += '<option value="' + resp[i].slot_id + '">' + resp[i].delivery_slot_data + '</option>';
+                                        }
+                                    }else{
+                                        html += '<option value="0">{{ lang('text_no_slots') }}</option>';
+                                    }
+
+                                    $('#delivery_slot').html(html);
+
+                                },
+                                error: function(xhr, status, error) {
+                                    console.log(error)
+                                },
+                            }).done(function(){
+                                    // calling function after click on date item
+                                    //dateEdit()
+                                });
+                    })
+
+
+                    // calling function onload
+                    dateEdit()
+
+                }
+    })
+</script>
+{% endif %}
+
+

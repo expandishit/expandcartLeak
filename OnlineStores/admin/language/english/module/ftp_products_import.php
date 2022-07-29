@@ -1,0 +1,86 @@
+<?php
+$_['heading_title']  = 'FTP Products Import';
+$_['text_settings']  = 'Settings';
+$_['text_status']  = 'Status';
+$_['entry_status_help']  = 'FTP Products Import App Status.';
+$_['extension_not_active']  = 'FTP Products Import Application not Installed!';
+$_['text_success']  = 'Success: You have modified settings!';
+$_['text_wait'] = 'This process take several minutes please wait';
+$_['text_enabled']  = 'Enabled';
+$_['text_disabled']  = 'Disabled';
+
+$_['entry_products_credentials_server'] = 'Server';
+$_['error_invalid_products_credentials_server'] = 'Server field is required!';
+$_['entry_products_credentials_user'] = 'Username';
+$_['error_invalid_products_credentials_user'] = 'Username field is required!';
+$_['entry_products_credentials_password'] = 'Password';
+$_['error_invalid_products_credentials_password'] = 'Password field is required!';
+$_['entry_products_credentials_port'] = 'Port';
+$_['error_invalid_products_credentials_port'] = 'Port field is required!';
+$_['entry_products_credentials_ssl'] = 'SSL';
+$_['error_invalid_products_credentials_ssl'] = 'SSL field is required!';
+$_['entry_products_credentials_document_root'] = 'Document root';
+$_['error_invalid_products_credentials_document_root'] = 'Document root field is required!';
+$_['entry_products_credentials_sync_path'] = 'Directory name';
+$_['error_invalid_products_credentials_sync_path'] = 'Directory name field is required!';
+$_['entry_products_credentials_filename'] = 'Filename';
+$_['error_invalid_products_credentials_filename'] = 'Filename field is required!';
+$_['error_invalid_products_credentials_filename_extensions'] = 'Allowed filename extensions';
+
+
+$_['entry_images_credentials_server'] = 'Server';
+$_['error_invalid_images_credentials_server'] = 'Server field is required!';
+$_['entry_images_credentials_user'] = 'Username';
+$_['error_invalid_images_credentials_user'] = 'Username field is required!';
+$_['entry_images_credentials_password'] = 'Password';
+$_['entry_images_credentials_port'] = 'Port';
+$_['error_invalid_images_credentials_port'] = 'Port field is required!';
+$_['entry_images_credentials_ssl'] = 'SSL';
+$_['error_invalid_images_credentials_ssl'] = 'SSL field is required!';
+$_['error_invalid_images_credentials_password'] = 'Password field is required!';
+$_['entry_images_credentials_document_root'] = 'Document root';
+$_['error_invalid_images_credentials_document_root'] = 'Document root field is required!';
+$_['entry_images_credentials_sync_path'] = 'Directory name';
+$_['error_invalid_images_credentials_sync_path'] = 'Directory name field is required!';
+$_['entry_images_credentials_save_image_path'] = 'Save images path';
+$_['entry_images_credentials_save_image_path_help'] = 'The place where images are saved in the server';
+
+$_['entry_file_schema_file_columns_map_required_name_ar'] = 'Product name (arabic)';
+$_['error_invalid_file_schema_file_columns_map_required_name_ar'] = 'Product name (arabic) field is required!';
+$_['entry_file_schema_file_columns_map_required_name_en'] = 'Product name (english)';
+$_['error_invalid_file_schema_file_columns_map_required_name_en'] = 'Product name (english) field is required!';
+$_['entry_file_schema_file_columns_map_required_description_ar'] = 'Product description (arabic)';
+$_['error_invalid_file_schema_file_columns_map_required_description_ar'] = 'Product description (arabic) field is required!';
+$_['entry_file_schema_file_columns_map_required_description_en'] = 'Product description (english)';
+$_['error_invalid_file_schema_file_columns_map_required_description_en'] = 'Product description (english) field is required!';
+$_['entry_file_schema_file_columns_map_required_sku'] = 'SKU';
+$_['error_invalid_file_schema_file_columns_map_required_sku'] = 'SKU field is required!';
+$_['entry_file_schema_file_columns_map_required_barcode'] = 'Barcode';
+$_['error_invalid_file_schema_file_columns_map_required_barcode'] = 'Barcode field is required!';
+$_['entry_file_schema_file_columns_map_required_model'] = 'Model';
+$_['error_invalid_file_schema_file_columns_map_required_model'] = 'Model field is required!';
+$_['entry_file_schema_file_columns_map_required_price'] = 'Price';
+$_['error_invalid_file_schema_file_columns_map_required_price'] = 'Price field is required!';
+$_['entry_file_schema_file_columns_map_required_quantity'] = 'Quantity';
+$_['error_invalid_file_schema_file_columns_map_required_quantity'] = 'Quantity field is required!';
+$_['entry_file_schema_file_columns_map_required_product_category'] = 'Category ID\'s';
+$_['entry_file_schema_file_columns_map_required_product_category_help'] = 'For more category separate them with comma';
+$_['error_invalid_file_schema_file_columns_map_required_category'] = 'category field is required!';
+$_['entry_file_schema_file_columns_map_required_image'] = 'Main Image';
+$_['error_invalid_file_schema_file_columns_map_required_image'] = 'Main Image field is required!';
+$_['entry_file_schema_file_columns_map_required_status'] = 'Status';
+$_['error_invalid_file_schema_file_columns_map_required_status'] = 'Status field is required!';
+$_['entry_file_schema_file_columns_map_optional_product_image'] = 'Additional images';
+$_['entry_file_schema_file_columns_map_optional_product_image_help'] = 'For more image separate them with comma';
+$_['error_invalid_file_schema_file_columns_map_optional_product_image'] = 'Additional images field is required!';
+$_['entry_file_schema_identifier_name'] = 'Identifier name';
+
+$_['entry_products_credentials_heading'] = 'Product server connection credentials';
+$_['entry_images_credentials_heading'] = 'Image server connection credentials';
+$_['entry_file_schema_heading'] = 'Excel file schema';
+$_['entry_enable_ssl'] = 'Enable SSL';
+$_['entry_disable_ssl'] = 'Disable SSL';
+$_['button_ftp_import_products'] = 'Start import products';
+
+$_['error_warning'] = 'Warning: Please make sure to review incorrect or required fields';
+$_['text_success_imported_products'] = 'Success: You have imported products!';

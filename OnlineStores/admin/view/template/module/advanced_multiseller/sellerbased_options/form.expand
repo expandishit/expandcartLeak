@@ -1,0 +1,234 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% set dualMenuEnabled = true %}
+
+{% block title %}
+    {{ lang('seller_options_heading_title', 'module/multiseller_advanced') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block secondarymenu %}
+    {% include 'module/advanced_multiseller/menu.expand' with {'active': '#seller_based_settings'} %}
+{% endblock secondarymenu %}
+
+{% block headelements %}
+      {% include "includes/buttons_top.expand" with {'cancel': link('module/multiseller_advanced/sellerbased_options')} %}
+{% endblock headelements %}
+
+{% block content %}
+
+    <form class="form" action="{{ links['submit'] }}" method="POST">
+        <div class="col-md-9">
+            <div class="panel panel-flat">
+                <div class="panel-body">
+                
+                    <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                        <div class="tab-content">
+                            {% for lng in languages %}
+
+                                {% set details = options['details'][lng['language_id']] %}
+
+                                <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}"
+                                     id="langTab{{ lng['language_id'] }}">
+                                    <div class="form-group"
+                                         id="name-group_{{ lng['language_id'] }}">
+                                        <label class="control-label">
+                                            {{ lang('ms_options_title') }} <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text" class="form-control"
+                                               id="name_{{ lng['language_id'] }}"
+                                               name="ms_options[details][{{ lng['language_id'] }}][title]"
+                                               value="{{ details['title'] }}"
+                                        >
+                                        <span class="help-block"></span>
+                                        <span class="text-muted"></span>
+                                    </div>
+
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                            {% for language in languages %}
+                                <li class="{{ loop.first ? 'active' : '' }}">
+                                    <a href="#langTab{{ language['language_id'] }}" data-toggle="tab"
+                                       aria-expanded="false">
+                                        <img src="view/image/flags/{{ language['image'] }}"
+                                             title="{{ language['name'] }}" class="pull-right">
+                                        <div> {{ language['name'] }}</div>
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                     {% if options['sellerbased_options_id'] %}
+                     <div class="form-group col-md-6" id="status-group">
+                        <label class="control-label">{{ lang('entry_default_status') }}</label>
+                        <div class="checkbox checkbox-switchery">
+                            <label>
+                                <input id="defaultStatus" onclick="changeStatus(this)" type="checkbox" value="1" name="ms_options[options][sellerbased_options_default]"
+                                       class="switchery" {{ options['sellerbased_options_default'] == 1 ? 'checked' : '' }}>
+                                <span class="switchery-status">{{ options['sellerbased_options_default'] in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                            </label>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="form-group col-md-6" id="status-group">
+                    <label class="control-label">{{ lang('entry_status') }}</label>
+                    <div class="checkbox checkbox-switchery">
+                        <label>
+                            <input onclick="changeStatus(this)" type="checkbox" value="1" name="ms_options[options][status]"
+                                    class="switchery" {{ options['sellerbased_options_status'] == 1 ? 'checked' : '' }}>
+                            <span class="switchery-status">{{ options['sellerbased_options_status'] in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                        </label>
+                    </div> 
+                   </div> 
+
+                </div>
+                 <!--Start of adding charge for each area ---->
+                 <div class="chargeDiv" style="display:{{ options['sellerbased_options_default'] == 1 ? 'block' : 'none' }};" >
+                  <div class="panel panel-white">
+                <div class="panel-heading">
+                <h6 class="panel-title col-md-10"><span class="text-bold">{{ lang('entry_charge_for_area') }}  : </span></h6>
+                <a  class="btn btn-success btn-labeled btn-xs" id="addChargeRow" ><b><i class="icon-plus3"></i></b> {{ lang('entry_add') }} </a>
+                <div class="heading-elements not-collapsible">
+                    <ul class="icons-list">
+                        <li><a data-action="collapse" class=""></a></li>
+                    </ul>
+                </div>
+            </div>
+               <div class="panel-body">
+            
+            <div class="datatable-scroll-wrap">
+                <table class="table datatable-show-all table-framed dataTable table-hover datatable-highlight" id="chargeTable">
+                    <tr>
+                    <th>{{ lang('entry_charges') }}</th>
+                    <th>{{ lang('entry_charge_value') }}</th>
+                    <th>{{ lang('entry_area') }}</th>
+                    <th></th>
+                    </tr>
+                     {% set key = 1 %}
+                    {% if charges_rows %}
+                    {% for chargeKey in charges_rows %}
+                    <tr id="chargeRow{{ chargeKey }}">
+                    <td>
+                        <input hidden name="charge[charge_{{ chargeKey }}_title_admin]" value="{{ options['sellerbased_options_id'] }}">
+                        <select name="charge[charge_{{ chargeKey }}_type]" class="form-control select">
+                        {% for chargeType in chargeTypes %}
+                        <option value="{{chargeType['value']}}" {{ saved_charges['charge_' ~ chargeKey ~ '_type'] == chargeType['value'] ? 'selected' }} >{{ chargeType['text'] }}</option>
+                        {% endfor %}
+                        </select>
+                    </td>
+                    <td>
+                       <input name="charge[charge_{{ chargeKey }}_charges]" value="{{ saved_charges['charge_' ~ chargeKey ~ '_charges'] }}" class="form-control"/>
+               
+                    </td>
+                    <td>
+                        <input hidden name="charge[charge_{{ chargeKey }}_rule_1_type]" value="geo_zone">
+                        <input hidden name="charge[charge_{{ chargeKey }}_rule_1_comparison]" value="is">
+                        <select  name="charge[charge_{{ chargeKey }}_rule_1_value]" class="form-control select">
+                        {% for area in areas %}
+                        <option value="{{ area['geo_zone_id'] }}" {{ saved_charges['charge_' ~ chargeKey ~ '_rule_1_value'] == area['geo_zone_id'] ? 'selected' }} >{{ area['name'] }}</option>
+                        {% endfor %}
+                        </select>
+                    </td>
+                    <td>
+                    <a onclick="$('#chargeRow{{ chargeKey }}').remove();"
+                      class="button btn btn-danger"><i class="icon-trash"></i></a>
+                     </td>
+                    </tr>   
+                     {% set key = chargeKey + 1 %} 
+                     {% endfor %}
+                     {% endif %} 
+                </table>
+            </div>  
+            <br/>
+        <span class="text-muted bold">{{ lang('text_charges_note') }}</span><br/>
+        <span class="text-muted">{{ lang('help_charge_charges') }}</span> 
+        </div>
+      
+        </div>
+       <!--End of adding charge for each area -->     
+            </div>
+            </div>
+           </div>
+        <input type="hidden" name="ms_options[actionType]" value="{{ actionType }}" />
+    </form>
+
+    {% include "includes/buttons_bottom.expand" %}
+
+    <script>
+        $(document).ready(function () {
+            $('.select').select2();
+        });
+    </script>
+     <script>
+
+        function changeStatus(checkbox)
+        {
+            var self = $(checkbox);
+            var switch_status = self.siblings('.switchery-status');
+
+            if ( self.is(':checked') )
+            {
+                switch_status.html("{{ lang('text_enabled') }}");
+            }
+            else
+            {
+                switch_status.html("{{ lang('text_disabled') }}");
+            }
+        }
+         $('#defaultStatus').change(function(){
+            if(this.checked)
+                $('.chargeDiv').fadeIn('slow');
+            else
+                $('.chargeDiv').fadeOut('slow');
+
+        })
+            var count = {{ key }};       
+        $('#addChargeRow').click(function(){
+            var temp = chargeTypesArr = areasArr=''; 
+            {% for chargeType in chargeTypes %}
+                chargeTypesArr += '<option value="{{chargeType['value']}}" >{{chargeType['text']}}</option>';
+            {% endfor %}
+            {% for area in areas %}
+             areasArr += '<option value="{{ area['geo_zone_id'] }}" >{{ area['name'] }}</option>';
+            {% endfor %}
+            temp = '<tr id="chargeRow' + count + '" >' +
+                '<td>' +
+                '<input hidden name="charge[charge_' + count + '_title_admin]" value="{{ options['sellerbased_options_id'] }}">' +
+                '<select class="form-control select"  name="charge[charge_' + count + '_type]">' + chargeTypesArr + '</select>' +
+                '</td>'+
+                '<td>' +
+                '<input class="form-control" name="charge[charge_' + count + '_charges]"/>' +
+                '</td>' +
+                '<td>' +
+                '<input hidden name="charge[charge_' + count + '_rule_1_type]" value="geo_zone">' +
+                '<input hidden name="charge[charge_' + count + '_rule_1_comparison]" value="is">' +
+                '<select class="form-control select" " name="charge[charge_' + count + '_rule_1_value]">' + areasArr + '</select>' +
+                '</td>' +
+                '<td>' +
+                '<a onclick="$(\'#chargeRow' + count + '\').remove();" ' +
+                'class="button btn btn-danger"><i class="icon-trash"></i></a>' +
+                '</td>' +
+                '</tr>' ;
+        $('#chargeTable').append(temp);
+        $('.select').select2();
+         count++;
+        });
+    </script>
+
+{% endblock %}
+
+{% block scripts %}
+
+    {{ parent() }}
+
+
+
+{% endblock %}

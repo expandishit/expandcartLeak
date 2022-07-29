@@ -1,0 +1,717 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+
+{% block title %}
+    {{ lang('heading_title', 'sale/order') }}
+{% endblock title %}
+
+{% block styles %}
+    <style type="text/css">
+        .pr-warehouse-td .select2-container{
+            width: 80% !important;
+        }
+    </style>
+{% endblock styles %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+
+{% block content %}
+    <!-- Detailed task -->
+    <div class="row">
+     {{ include('loghistory/logInfo.expand') }}
+        <div class="col-lg-6">
+
+            <div class="panel panel-flat panel-order">
+                <div class="panel-heading mt-5">
+                    <div>
+                        <h5>{{ lang('text_before_edit') }}</h5>
+                    </div>
+                    <div class="panel-title" style="display: flex; justify-content: space-between;">
+                        <h5 style="margin-bottom: 0px; margin-top: 0px;">
+                            <i class="fa fa-tag position-left"></i>
+                            <span class="title-order">{{ lang('lbl_order_id') }}</span> <span class="label label-order
+                        label-primary">{{
+                                old_value['orderInfo']['order_id']
+                                }}</span>
+                        </h5>
+                    </div>
+                    <div>
+                      <h5 class="panel-title panel-status">
+                        <i class="fa fa-sitemap position-left"></i>
+                        <span class="title-order">{{ lang('lbl_order_status') }}:</span>
+                        {% if old_order_status_color %}
+                            <span class="label heading-text label-status" id="header-order-status" style="background-color:{{ old_order_status_color }}">{{ old_order_status }}</span>
+                        {% else %}
+                            <span class="label label-info heading-text label-status" id="header-order-status">{{
+                                old_order_status }}</span>
+                        {% endif %}
+                    </h5>
+                    </div>
+
+                    <h5 class="panel-title">
+                        <i class="icon-coin-dollar position-left"></i>
+                        <span class="title-order">{{ lang('lbl_order_details') }}:</span>
+                    </h5>
+
+                </div>
+
+                <div class="panel-body">
+                    <div class="media panel-body no-margin">
+                        <div class="media-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <ul class="list list-icons">
+                                        <li>
+                                            <i class="icon-user text-success position-left"></i>
+                                            {{ lang('text_customer') }}: <b>{{ old_value['orderInfo']['firstname'] }} {{ old_value['orderInfo']['lastname'] }}</b>
+                                        </li>
+                                        <li>
+                                            <i class="icon-envelop text-success position-left"></i>
+                                            {{ lang('text_email') }}: <b><a href="mailto:{{ old_value['orderInfo']['email'] }}">   {{ old_value['orderInfo']['email'] }}</a></b>
+                                        </li>
+                                        <li>
+                                            <i class="icon-phone2 text-success position-left"></i>
+                                            {{ lang('text_telephone') }}: <b> {{ old_value['orderInfo']['telephone'] }} </b>
+                                        </li>
+                                        {% if fax %}
+                                            <li>
+                                                <i class="icon-printer text-success position-left"></i>
+                                                {{ lang('text_fax') }}: <b> {{ old_value['orderInfo']['fax'] }} </b>
+                                            </li>
+                                        {% endif %}
+                                        {% if old_value['orderInfo']['customer_id'] %}
+                                            <li>
+                                                <i class="icon-link text-success position-left"></i>
+                                                {{ lang('text_customer_type') }}: <b><a href="{{ link('sale/customer/update') }}?customer_id={{ old_value['orderInfo']['customer_id'] }}" target="_blank">{{ lang('lbl_customer_profile') }}</a></b>
+                                            </li>
+                                        {% else %}
+                                            <li>
+                                                <i class="icon-link text-success position-left"></i>
+                                                {{ lang('text_customer_type') }}: <b>{{ lang('lbl_guest_user') }}</b>
+                                            </li>
+                                        {% endif %}
+
+                                        {% if old_value['orderInfo']['order_comment'] %}
+                                            <li>
+                                                <i class="icon-comment position-left"></i>
+                                                {{ lang('text_comment') }}:<br><b id="order_comment">{{ old_value['orderInfo']['order_comment']| replace({"\\n":"<br>"}) }}</b>
+                                            </li>
+                                        {% endif %}
+
+
+                                    </ul>
+
+                                </div>
+                                <div class="col-md-6">
+                                    <ul class="list list-icons">
+                                        {% if customer_group %}
+                                            <li>
+                                                <i class="icon-users text-success position-left"></i>
+                                                {{ lang('text_customer_group') }}: <b> {{ customer_group }} </b>
+                                            </li>
+                                        {% endif %}
+
+                                        <li>
+                                            <i class="icon-pencil text-success position-left"></i>
+                                            {{ lang('text_invoice_no') }}:
+
+                                                <b>{{ old_value['orderInfo']['invoice_no'] }}</b>
+                                        </li>
+
+                                        <li>
+                                            <i class="fa fa-clock text-success position-left"></i>
+                                            <span>{{ lang('text_time_added') }}:</span>
+                                            <b>{{ old_value['orderInfo']['date_added'] }}</b>
+                                        </li>
+
+                                    </ul>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="text-semibold">{{ lang('tab_product') }}</h6>
+
+                    <div class="table-responsive content-group">
+
+                        <table class="table table-framed">
+                            <thead>
+                            <tr>
+                                <th>{{ lang('column_product') }}</th>
+                                <th>{{ lang('column_model') }}</th>
+                                <th>{{ lang('column_price') }}</th>
+                                <th>{{ lang('column_quantity') }}</th>
+                                <th>{{ lang('column_total') }}</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for idx, productArr in old_value['order_products'] %}
+
+                                <tr>
+                                    <td class="no-padding-right" >
+                                        <span>{{  productArr['name'] }}</span>
+                                        {% if productArr['option'] %}
+                                            {% for opp in productArr['option'] %}
+                                                {% if opp['type'] == 'file' %}
+                                                    <br>
+                                                    <a href="{{ opp['href'] }}"> {{ opp['value'] }} </a>
+                                                {% else %}
+                                                    <br><small> - {{ opp['name'] }}: {{ opp['value'] }}</small>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% endif %}
+                                    </td>
+
+                                    <td class="no-padding-right" >
+                                        <span>{{  productArr['model'] }}</span>
+
+                                    </td>
+
+                                    <td class="no-padding-right">
+                                        <span>{{  productArr['price'] }}</span>
+
+                                    </td>
+
+                                    <td class="no-padding-right">
+                                        <span>{{  productArr['quantity'] }}</span>
+
+                                    </td>
+                                    <td class="no-padding-right">
+                                        <span>{{  productArr['total'] }}</span>
+
+                                    </td>
+                                </tr>
+
+                            {% endfor %}
+                            </tbody>
+                        </table>
+
+                        <table class="table table-borderless table-xs content-group-sm">
+                            <tbody>
+
+                            {% for total in old_value['totals'] %}
+                                <tr class="{{ total['code'] == 'total' ? 'bg-success' }}">
+                                    <td> {{ total['title'] }}</td>
+                                    <td class="text-right"><span class="pull-right">{{ total['value'] }}</td>
+                                </tr>
+                            {% endfor %}
+
+                        </tbody>
+                    </table>
+                </div>
+                </div>
+
+                <div class="panel-footer">
+                    <div class="heading-elements">
+                        <ul class="list-inline list-inline-condensed heading-text">
+                            <li><span class="status-mark border-blue position-left"></span> {{ lang('text_date_added') }}: <b>{{ old_value['orderInfo']['date_added'] }}</b></li>
+                        </ul>
+                        <ul class="list-inline list-inline-condensed heading-text pull-right">
+                            <li><span class="status-mark border-warning position-left"></span> {{ lang('text_date_modified') }}: <b>{{ old_value['orderInfo']['date_modified'] }}</b></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="panel panel-flat">
+                <div class="panel-heading">
+                    <h5 class="panel-title text-semiold"><i class="icon-home position-left"></i> {{ lang('lbl_addresses') }}</h5>
+                    <div class="heading-elements">
+
+                    </div>
+                </div>
+
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6><i class="icon-truck position-left"></i> {{ lang('tab_shipping') }}</h6>
+                            <table class="table table-xs table-striped">
+                                <tbody>
+                                <tr>
+                                    <td>{{ lang('text_firstname') }}:</td>
+                                    <td>{{ old_value['orderInfo']['shipping_firstname'] }} </td>
+                                </tr>
+                                <tr>
+                                    <td>{{ lang('text_lastname') }}:</td>
+                                    <td>{{ old_value['orderInfo']['shipping_lastname'] }}</td>
+                                </tr>
+                                <tr>
+                                    <td>{{ lang('text_address_1') }}:</td>
+                                    <td class="hot-edit" data-name="shipping_address_1">{{ old_value['orderInfo']['shipping_address_1'] }}</td>
+                                </tr>
+                                {% if shipping_address_2 %}
+                                    <tr>
+                                        <td>{{ lang('text_address2') }}:</td>
+                                        <td class="hot-edit" data-name="shipping_address_2">{{ old_value['orderInfo']['shipping_address_2'] }}</td>
+                                    </tr>
+                                {% endif %}
+                                <tr>
+                                    <td>{{ lang('text_city') }}:</td>
+                                    <td class="hot-edit" data-name="shipping_city">{{ old_value['orderInfo']['shipping_city'] }}</td>
+                                </tr>
+                                <tr>
+                                    <td>{{ lang('text_zone') }}:</td>
+                                    <td>{{ old_value['orderInfo']['shipping_zone'] }}</td>
+                                </tr>
+                                <tr>
+                                    <td>{{ lang('text_postcode') }}:</td>
+                                    <td>{{ old_value['orderInfo']['shipping_postcode'] }}</td>
+                                </tr>
+
+                                <tr>
+                                    <td>{{ lang('text_country') }}:</td>
+                                    <td>{{ old_value['orderInfo']['shipping_country'] }}</td>
+                                </tr>
+                                <tr>
+                                    <td>{{ lang('text_shipping_method') }}:</td>
+                                    <td>{{ old_value['orderInfo']['shipping_method'] }}</td>
+                                </tr>
+                                </tbody>
+                            </table>
+
+                            <div class="col-md-12">
+                                <h6><i class="icon-truck position-left"></i> {{ lang('delivery_info') }}</h6>
+                                <div class="form-group">
+                                    <textarea class="form-control" name="delivery_info" id="delivery_info" cols="30" rows="4" disabled>{{ old_value['orderInfo']['delivery_info'] }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="icon-coins position-left"></i> {{ lang('tab_payment') }}</h6>
+                            <table class="table table-xs table-striped">
+                                <tbody>
+                                <tr>
+                                    <td>{{ lang('text_firstname') }}:</td>
+                                    <td>{{ old_value['orderInfo']['payment_firstname'] }}</td>
+                                </tr>
+                                <tr>
+                                    <td>{{ lang('text_lastname') }}:</td>
+                                    <td>{{ old_value['orderInfo']['payment_lastname'] }}</td>
+                                </tr>
+                                <tr>
+                                    <td>{{ lang('text_address_1') }}:</td>
+                                    <td class="hot-edit" data-name="payment_address_1">{{ old_value['orderInfo']['payment_address_1'] }}</td>
+                                </tr>
+                                {% if payment_address_2 %}
+                                    <tr>
+                                        <td>{{ lang('text_address2') }}:</td>
+                                        <td class="hot-edit" data-name="payment_address_2">{{ old_value['orderInfo']['payment_address_2'] }}</td>
+                                    </tr>
+                                {% endif %}
+                                <tr>
+                                    <td>{{ lang('text_telephone') }}:</td>
+                                    <td>{{ old_value['orderInfo']['payment_telephone'] }}</td>
+                                </tr>
+                                <tr>
+                                    <td>{{ lang('text_city') }}:</td>
+                                    <td class="hot-edit" data-name="payment_city">{{ old_value['orderInfo']['payment_city'] }}</td>
+                                </tr>
+                                <tr>
+                                    <td>{{ lang('text_zone') }}:</td>
+                                    <td>{{ old_value['orderInfo']['payment_zone'] }}</td>
+                                </tr>
+                                <tr>
+                                    <td>{{ lang('text_postcode') }}:</td>
+                                    <td>{{ old_value['orderInfo']['payment_postcode'] }}</td>
+                                </tr>
+                                <tr>
+                                    <td>{{ lang('text_country') }}:</td>
+                                    <td>{{ old_value['orderInfo']['payment_country'] }}</td>
+                                </tr>
+                                <tr>
+                                    <td>{{ lang('text_payment_method') }}:</td>
+                                    <td>{{ old_value['orderInfo']['payment_method'] }}</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+<!-- Start Of Manual Shipping Products data  -->
+                    {% if old_value['manual_Shipped_products'] %}
+                    <div class="panel panel-flat">
+                    <div class="panel-heading">
+                        <h5 class="panel-title text-semiold"><i class="icon-truck position-left"></i> {{ lang('entry_manual_shipping_products') }}</h5>
+                        <div class="heading-elements">
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <table id="datatableGrid" class="table table-hover datatable-highlight">
+                                <thead>
+                                    <tr>
+                                        <th>{{ lang('column_product') }}</th>
+                                        <th>{{ lang('column_gateway') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                  {% for shippedProduct in old_value['manual_Shipped_products'] %}
+                                  <tr>
+                                    <td>{{ shippedProduct['name'] }}</td>
+                                    <td>{{ shippedProduct['title'] }}</td>
+                                  {% endfor %}
+                                  </tr>
+                                </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+                    {% endif %}
+<!-- End of Manual Shipping Products data  -->
+        </div>
+        <div class="col-lg-6">
+
+            <div class="panel panel-flat panel-order">
+                <div class="panel-heading mt-5">
+                    <div>
+                        <h5>{{ lang('text_after_edit') }}</h5>
+                    </div>
+                    <div class="panel-title" style="display: flex; justify-content: space-between;">
+
+
+                        <h5 style="margin-bottom: 0px; margin-top: 0px;">
+
+                            <i class="fa fa-tag position-left"></i>
+                            <span class="title-order">{{ lang('lbl_order_id') }}</span> <span class="label label-order
+                        label-primary">{{
+                                new_value['orderInfo']['order_id']
+                                }}</span>
+                        </h5>
+                      
+                    </div>
+                    <div>
+                      <h5 class="panel-title panel-status">
+                        <i class="fa fa-sitemap position-left"></i>
+                        <span class="title-order">{{ lang('lbl_order_status') }}:</span>
+                        {% if new_order_status_color %}
+                            <span class="label heading-text label-status" id="header-order-status" style="background-color:{{ new_order_status_color }}">{{ new_order_status }}</span>
+                        {% else %}
+                            <span class="label label-info heading-text label-status" id="header-order-status">{{
+                                new_order_status }}</span>
+                        {% endif %}
+                    </h5>
+                    </div>
+
+                    <h5 class="panel-title">
+                        <i class="icon-coin-dollar position-left"></i>
+                        <span class="title-order">{{ lang('lbl_order_details') }}:</span>
+                    </h5>
+
+                </div>
+
+                <div class="panel-body">
+                    <div class="media panel-body no-margin">
+                        <div class="media-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <ul class="list list-icons">
+                                        <li>
+                                            <i class="icon-user text-success position-left"></i>
+                                            {{ lang('text_customer') }}: <b>{{ new_value['orderInfo']['firstname'] }} {{ new_value['orderInfo']['lastname'] }}</b>
+                                        </li>
+                                        <li>
+                                            <i class="icon-envelop text-success position-left"></i>
+                                            {{ lang('text_email') }}: <b><a href="mailto:{{ new_value['orderInfo']['email'] }}">   {{ new_value['orderInfo']['email'] }}</a></b>
+                                        </li>
+                                        <li>
+                                            <i class="icon-phone2 text-success position-left"></i>
+                                            {{ lang('text_telephone') }}: <b> {{ new_value['orderInfo']['telephone'] }} </b>
+                                        </li>
+                                        {% if fax %}
+                                            <li>
+                                                <i class="icon-printer text-success position-left"></i>
+                                                {{ lang('text_fax') }}: <b> {{ new_value['orderInfo']['fax'] }} </b>
+                                            </li>
+                                        {% endif %}
+                                        {% if new_value['orderInfo']['customer_id'] %}
+                                            <li>
+                                                <i class="icon-link text-success position-left"></i>
+                                                {{ lang('text_customer_type') }}: <b><a href="{{ link('sale/customer/update') }}?customer_id={{ new_value['orderInfo']['customer_id'] }}" target="_blank">{{ lang('lbl_customer_profile') }}</a></b>
+                                            </li>
+                                        {% else %}
+                                            <li>
+                                                <i class="icon-link text-success position-left"></i>
+                                                {{ lang('text_customer_type') }}: <b>{{ lang('lbl_guest_user') }}</b>
+                                            </li>
+                                        {% endif %}
+
+                                        {% if new_value['orderInfo']['order_comment'] %}
+                                            <li>
+                                                <i class="icon-comment position-left"></i>
+                                                {{ lang('text_comment') }}:<br><b id="order_comment">{{ new_value['orderInfo']['order_comment']| replace({"\\n":"<br>"}) }}</b>
+                                            </li>
+                                        {% endif %}
+
+
+                                    </ul>
+
+                                </div>
+                                <div class="col-md-6">
+                                    <ul class="list list-icons">
+
+                                        <li>
+                                            <i class="icon-pencil text-success position-left"></i>
+                                            {{ lang('text_invoice_no') }}:
+
+                                                <b>{{ new_value['orderInfo']['invoice_no'] }}</b>
+                                        </li>
+
+                                        <li>
+                                            <i class="fa fa-clock text-success position-left"></i>
+                                            <span>{{ lang('text_time_added') }}:</span>
+                                            <b>{{ new_value['orderInfo']['date_added'] }}</b>
+                                        </li>
+
+                                    </ul>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="text-semibold">{{ lang('tab_product') }}</h6>
+
+                    <div class="table-responsive content-group">
+
+                        <table class="table table-framed">
+                            <thead>
+                            <tr>
+                                <th>{{ lang('column_product') }}</th>
+                                <th>{{ lang('column_model') }}</th>
+                                <th>{{ lang('column_price') }}</th>
+                                <th>{{ lang('column_quantity') }}</th>
+                                <th>{{ lang('column_total') }}</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for idx, productArr in new_value['order_products'] %}
+
+                                <tr>
+                                    <td class="no-padding-right" >
+                                        <span>{{  productArr['name'] }}</span>
+                                        {% if productArr['option'] %}
+                                            {% for opp in productArr['option'] %}
+                                                {% if opp['type'] == 'file' %}
+                                                    <br>
+                                                    <a href="{{ opp['href'] }}"> {{ opp['value'] }} </a>
+                                                {% else %}
+                                                    <br><small> - {{ opp['name'] }}: {{ opp['value'] }}</small>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% endif %}
+                                    </td>
+
+                                    <td class="no-padding-right" >
+                                        <span>{{  productArr['model'] }}</span>
+
+                                    </td>
+
+                                    <td class="no-padding-right">
+                                        <span>{{  productArr['price'] }}</span>
+
+                                    </td>
+
+                                    <td class="no-padding-right">
+                                        <span>{{  productArr['quantity'] }}</span>
+
+                                    </td>
+                                    <td class="no-padding-right">
+                                        <span>{{  productArr['total'] }}</span>
+
+                                    </td>
+                                </tr>
+
+                            {% endfor %}
+                            </tbody>
+                        </table>
+
+                        <table class="table table-borderless table-xs content-group-sm">
+                            <tbody>
+
+                            {% for total in new_value['totals'] %}
+                                <tr class="{{ total['code'] == 'total' ? 'bg-success' }}">
+                                    <td> {{ total['title'] }}</td>
+                                    <td class="text-right"><span class="pull-right">{{ total['value'] }}</td>
+                                </tr>
+                            {% endfor %}
+
+                        </tbody>
+                    </table>
+                </div>
+                </div>
+
+                <div class="panel-footer">
+                    <div class="heading-elements">
+                        <ul class="list-inline list-inline-condensed heading-text">
+                            <li><span class="status-mark border-blue position-left"></span> {{ lang('text_date_added') }}: <b>{{ new_value['orderInfo']['date_added'] }}</b></li>
+                        </ul>
+                        <ul class="list-inline list-inline-condensed heading-text pull-right">
+                            <li><span class="status-mark border-warning position-left"></span> {{ lang('text_date_modified') }}: <b>{{ new_value['orderInfo']['date_modified'] }}</b></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="panel panel-flat">
+                <div class="panel-heading">
+                    <h5 class="panel-title text-semiold"><i class="icon-home position-left"></i> {{ lang('lbl_addresses') }}</h5>
+                    <div class="heading-elements">
+
+                    </div>
+                </div>
+
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6><i class="icon-truck position-left"></i> {{ lang('tab_shipping') }}</h6>
+                            <table class="table table-xs table-striped">
+                                <tbody>
+                                <tr>
+                                    <td>{{ lang('text_firstname') }}:</td>
+                                    <td>{{ new_value['orderInfo']['shipping_firstname'] }} </td>
+                                </tr>
+                                <tr>
+                                    <td>{{ lang('text_lastname') }}:</td>
+                                    <td>{{ new_value['orderInfo']['shipping_lastname'] }}</td>
+                                </tr>
+                                <tr>
+                                    <td>{{ lang('text_address_1') }}:</td>
+                                    <td class="hot-edit" data-name="shipping_address_1">{{ new_value['orderInfo']['shipping_address_1'] }}</td>
+                                </tr>
+                                {% if shipping_address_2 %}
+                                    <tr>
+                                        <td>{{ lang('text_address2') }}:</td>
+                                        <td class="hot-edit" data-name="shipping_address_2">{{ new_value['orderInfo']['shipping_address_2'] }}</td>
+                                    </tr>
+                                {% endif %}
+                                <tr>
+                                    <td>{{ lang('text_city') }}:</td>
+                                    <td class="hot-edit" data-name="shipping_city">{{ new_value['orderInfo']['shipping_city'] }}</td>
+                                </tr>
+                                <tr>
+                                    <td>{{ lang('text_zone') }}:</td>
+                                    <td>{{ new_value['orderInfo']['shipping_zone'] }}</td>
+                                </tr>
+                                <tr>
+                                    <td>{{ lang('text_postcode') }}:</td>
+                                    <td>{{ new_value['orderInfo']['shipping_postcode'] }}</td>
+                                </tr>
+
+                                <tr>
+                                    <td>{{ lang('text_country') }}:</td>
+                                    <td>{{ new_value['orderInfo']['shipping_country'] }}</td>
+                                </tr>
+                                <tr>
+                                    <td>{{ lang('text_shipping_method') }}:</td>
+                                    <td>{{ new_value['orderInfo']['shipping_method'] }}</td>
+                                </tr>
+                                </tbody>
+                            </table>
+
+                            <div class="col-md-12">
+                                <h6><i class="icon-truck position-left"></i> {{ lang('delivery_info') }}</h6>
+                                <div class="form-group">
+                                    <textarea class="form-control" name="delivery_info" id="delivery_info" cols="30" rows="4" disabled>{{ new_value['orderInfo']['delivery_info'] }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="icon-coins position-left"></i> {{ lang('tab_payment') }}</h6>
+                            <table class="table table-xs table-striped">
+                                <tbody>
+                                <tr>
+                                    <td>{{ lang('text_firstname') }}:</td>
+                                    <td>{{ new_value['orderInfo']['payment_firstname'] }}</td>
+                                </tr>
+                                <tr>
+                                    <td>{{ lang('text_lastname') }}:</td>
+                                    <td>{{ new_value['orderInfo']['payment_lastname'] }}</td>
+                                </tr>
+                                <tr>
+                                    <td>{{ lang('text_address_1') }}:</td>
+                                    <td class="hot-edit" data-name="payment_address_1">{{ new_value['orderInfo']['payment_address_1'] }}</td>
+                                </tr>
+                                {% if payment_address_2 %}
+                                    <tr>
+                                        <td>{{ lang('text_address2') }}:</td>
+                                        <td class="hot-edit" data-name="payment_address_2">{{ new_value['orderInfo']['payment_address_2'] }}</td>
+                                    </tr>
+                                {% endif %}
+                                <tr>
+                                    <td>{{ lang('text_telephone') }}:</td>
+                                    <td>{{ new_value['orderInfo']['payment_telephone'] }}</td>
+                                </tr>
+                                <tr>
+                                    <td>{{ lang('text_city') }}:</td>
+                                    <td class="hot-edit" data-name="payment_city">{{ new_value['orderInfo']['payment_city'] }}</td>
+                                </tr>
+                                <tr>
+                                    <td>{{ lang('text_zone') }}:</td>
+                                    <td>{{ new_value['orderInfo']['payment_zone'] }}</td>
+                                </tr>
+                                <tr>
+                                    <td>{{ lang('text_postcode') }}:</td>
+                                    <td>{{ new_value['orderInfo']['payment_postcode'] }}</td>
+                                </tr>
+                                <tr>
+                                    <td>{{ lang('text_country') }}:</td>
+                                    <td>{{ new_value['orderInfo']['payment_country'] }}</td>
+                                </tr>
+                                <tr>
+                                    <td>{{ lang('text_payment_method') }}:</td>
+                                    <td>{{ new_value['orderInfo']['payment_method'] }}</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+            <!-- Start Of Manual Shipping Products data  -->
+                    {% if old_value['manual_Shipped_products'] %}
+                    <div class="panel panel-flat">
+                    <div class="panel-heading">
+                        <h5 class="panel-title text-semiold"><i class="icon-truck position-left"></i> {{ lang('entry_manual_shipping_products') }}</h5>
+                        <div class="heading-elements">
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <table id="datatableGrid" class="table table-hover datatable-highlight">
+                                <thead>
+                                    <tr>
+                                        <th>{{ lang('column_product') }}</th>
+                                        <th>{{ lang('column_gateway') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                  {% for shippedProduct in new_value['manual_Shipped_products'] %}
+                                  <tr>
+                                    <td>{{ shippedProduct['name'] }}</td>
+                                    <td>{{ shippedProduct['title'] }}</td>
+                                  {% endfor %}
+                                  </tr>
+                                </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+                    {% endif %}
+<!-- End of Manual Shipping Products data  -->
+       
+        </div>
+
+    </div>
+{% endblock content %}

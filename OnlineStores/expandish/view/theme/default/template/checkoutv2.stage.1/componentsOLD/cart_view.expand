@@ -1,0 +1,130 @@
+<!-- Quick Checkout v4.2 by Dreamvention.com quickcheckout/cart.tpl -->
+<style>
+    .qc.qc-popup {
+        width: {{ settings['general']['cart_image_size']['width'] }}px;
+        height: {{ settings['general']['cart_image_size']['height'] }}px;
+    }
+</style>
+<div id="cart_wrap">
+    <div class="cart_view {% if not data['display'] %}qc-hide{% endif %}">
+            {% if error %}
+                {% for error_message in error %}
+                    <div class="error alert alert-danger">{{ error_message }}</div>
+                {% endfor %}
+            {% endif %}
+
+            {% if show_qantity_error %}
+                <div class="alert alert-warning alert-dismissible" role="alert">
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    {{ lang('error_quantity_stock') }}
+                </div>
+            {% endif %}
+                <a href="{{ link('checkout/cart') }}" class="d-flex justify-content-between backTo">
+                    back to Cart
+                    <i class="fas fa-long-arrow-alt-right"></i>
+                </a>
+
+                {% set products_list = groupProducts(products, 'warehouse', warehouses) %}
+                    {% for idx, productArr in products_list %}
+                    <div class="products">
+                        {% for product in productArr %}
+                            {% if warehouses %}
+                                <div>
+                                    <strong>{{ lang('warehouse') }} {{ idx == -1 ? lang('other_warehouse') : wrs_names[idx] }}</strong>
+                                </div>
+                            {% endif %}
+                            <div class="media">
+                                <img src="{{ product['thumb'] }}" alt="">
+                                <div class="media-body">
+                                    <h5 class="mt-0">{{ product['name'] }} {% if not product['stock'] %}<span class="out-of-stock">***</span>{% endif %}</h5>
+                                    {% for option in product['option'] %}
+                                        <div> &nbsp;<small> - {{ option['name'] }}: {{ option['value'] }}</small> </div>
+                                    {% endfor %}
+
+                                    {% if product['main_price'] %}
+                                        <div>
+                                            - <small>{{ lang('main_price') }} : {{ product['main_price'] }} </small><br/>
+                                        </div>
+                                    {% endif %}
+                                    {% if product['remaining_amount'] %}
+                                        <div>
+                                            - <small>{{ lang('remaining_amount') }} : {{ product['remaining_amount'] }} </small><br/>
+                                        </div>
+                                    {% endif %}
+                                    {% if product['rentData'] %}
+                                        <div>
+                                            {{ lang('product_for_rent_from') }}
+                                            {{ product['rentData']['range']['from'] }}
+                                            {{ lang('product_for_rent_to') }}
+                                            {{ product['rentData']['range']['to'] }}
+                                            {{ lang('product_for_rent_for') }}
+                                            {{ product['rentData']['diff'] }}
+                                            {{ lang('text_day') }}
+                                        </div>
+                                    {% endif %}
+                                    {% if product['pricePerMeterData'] %}
+                                        <div>
+                                            {% if product['pricePerMeterData']['skirtings_status']  == 1 %}
+                                            &nbsp;<small> - <small>{{ lang('text_skirtings') }}: {{ product['pricePerMeterData']['skirtings'] }} {{ lang('text_meter') }}</small><br/>
+                                                {% endif %}
+                                                {% if product['pricePerMeterData']['metalprofile_status']  == 1 %}
+                                                &nbsp;<small> - <small>{{ lang('text_metalprofiles') }}: {{ product['pricePerMeterData']['metalProfiles'] }} {{ lang('text_meter') }}</small><br/>
+                                                    {% endif %}
+                                                    &nbsp;<small> - {{ lang('text_quantity') }}: {{ product['pricePerMeterData']['underlaymen'] }} {{ lang('text_meter') }}
+                                                        {% if product['pricePerMeterData']['main_unit'] == '2' %}
+                                                            <span style="font-size: 10px;vertical-align: top;">2</span>
+                                                        {% endif %}
+                                                    </small><br/>
+
+                                        </div>
+                                    {% endif %}
+                                    {% if product['printingDocument'] %}
+                                        <div>
+                                            - <small>{{ lang('text_pages_num') }}: {{ product['printingDocument']['print_pages'] }}</small><br/>
+
+                                            {% if product['printingDocument']['print_cover_name'] %}
+                                                - <small>{{ lang('text_cover') }}: {{ product['printingDocument']['print_cover_name'] }}</small><br/>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+                                    <div class="qc-name-model {% if not data['columns']['model'] %}qc-hide{% endif %}"><span class="title">{{ column_model }}:</span> <span class="text">{{ product['model'] }}</span></div>
+                                    <div class="qc-name-price {% if not data['columns']['price'] or (config('config_customer_price') and not is_logged) %}qc-hide{% endif %}"> <span class="text">{{ product['price'] }}</span></div>
+                                    {{ product['total'] }} ({{ product['quantity'] }}X {{ product['price'] }})
+                                </div>
+                            </div>
+                        {% endfor %}
+                        {% if warehouses %}
+                            <div><p class="lead font-15">{{ lang('shipping_cost') }} {{ combined_wrs_costs[idx] }}</p></div>
+                        {% if wrs_duration[idx] %}
+                                <div><p class="lead font-15">{{ lang('shipping_duration') }} {{ wrs_duration[idx] }} {{ lang('shipping_days') }}</p></div>
+                        {% endif %}
+                    {% endif %}
+                    </div>
+                    
+                {% endfor %}
+
+                {% for itemvoucher in vouchers %}
+                        <div class="qc-name {% if not data['columns']['image'] %}qc-hide{% endif %}"></div>
+                        <div class="qc-name {% if not data['columns']['name'] %}qc-hide{% endif %} ">{{ itemvoucher['description'] }}</div>
+                        <div class="qc-model {% if not data['columns']['model'] %}qc-hide{% endif %} "></div>
+                        <div class="qc-quantity {% if not data['columns']['quantity'] %}qc-hide{% endif %} ">{{ itemvoucher['quantity'] }}</div>
+                        <div class="qc-price {% if (not data['columns']['price'] or (config('config_customer_price') and not is_logged)) %}qc-hide{% endif %} ">{{ itemvoucher['amount'] }}</div>
+                        <div class="qc-total {% if (not data['columns']['total'] or (config('config_customer_price') and not is_logged)) %}qc-hide{% endif %} ">{{ itemvoucher['amount'] }}</div>
+                {% endfor %}
+
+                <!-- Subscription Item -->
+                {% if subscription is defined and subscription is not empty %}
+                        <div class="qc-name"><a href="{{ link('checkout/cart/removeSubscriptionPlan') }}">X</a></div>
+                        <div class="qc-name {% if not data['columns']['name'] %}qc-hide{% endif %} ">{{ subscription['title'] }}</div>
+                        <div class="qc-model {% if not data['columns']['model'] %}qc-hide{% endif %} "></div>
+                        <div class="qc-quantity {% if not data['columns']['quantity'] %}qc-hide{% endif %} ">1</div>
+                        <div class="qc-price {% if (not data['columns']['price'] or (config('config_customer_price') and not is_logged)) %}qc-hide{% endif %} ">{{ subscription['amount'] }}</div>
+                        <div class="qc-total {% if (not data['columns']['total'] or (config('config_customer_price') and not is_logged)) %}qc-hide{% endif %} ">{{ subscription['amount'] }}</div>
+                {% endif %}
+                    <ul class="price">
+                        {% for total in totals %}
+                            <li class="d-flex justify-content-xl-between"><span>{{ total['title'] }}</span><span>{{ total['text'] }}</span></li>
+                        {% endfor %}
+                    </ul>
+    </div>
+</div>

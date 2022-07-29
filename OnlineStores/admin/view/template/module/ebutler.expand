@@ -1,0 +1,404 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block title %}
+    {{ lang('heading_title') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+    {% include "includes/buttons_top.expand" %}
+{% endblock headelements %}
+
+{% block content %}
+    
+        <div class="row">
+        <form method="post" class="form" action="{{ save_app_settings }}">
+            {% if not is_delivery_slots %}
+                <div class="col-md-12">
+                    <div class="alert alert-danger alert-styled-left alert-bordered">
+                        {{ delivery_slots_warning }}
+                    </div>
+                </div>
+
+            {% endif %}
+        <div class="col-md-3">
+                <div class="panel panel-white">
+                    <div class="panel-heading">
+                        <h6 class="panel-title"><span class="text-bold">{{ lang('entry_status')|trim(':') }}</span></h6>
+                        <div class="heading-elements not-collapsible">
+                            <ul class="icons-list">
+                                <li><a data-action="collapse" class=""></a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="collapse in" id="panel1">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label class="control-label">{{ lang('entry_app_status') }}</label>
+                                    <div class="checkbox checkbox-switchery">
+                                        <label>
+                                            <input type="checkbox" onchange="saveAppSettings(this);" name="ebutler_app_status" class="switchery" {{ ebutler_data.ebutler_app_status in ['1', 1, 'on'] ? 'checked' }}>
+                                            <span class="switchery-status">{{ ebutler_data.ebutler_app_status not in ['0', 0, 'off'] or ebutler_data.ebutler_app_status is not defined ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel panel-white">
+                    <div class="panel-heading">
+                        <h6 class="panel-title"><span class="text-bold">Shipping Location</span></h6>
+                        <div class="heading-elements not-collapsible">
+                            <ul class="icons-list">
+                                <li><a data-action="collapse" class=""></a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="collapse in" id="panel1">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label class="control-label">Qatar National address</label>
+                                    <div class="checkbox checkbox-switchery">
+                                        <label>
+                                            <input type="checkbox" onchange="saveAppSettings(this);" name="ebutler_app_shipping_location_qna" class="switchery" {{ ebutler_data.ebutler_app_shipping_location_qna in ['1', 1, 'on'] ? 'checked' }}>
+                                            <span class="switchery-status">{{ ebutler_data.ebutler_app_shipping_location_qna not in ['0', 0, 'off'] or ebutler_data.ebutler_app_shipping_location_qna is not defined ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+         
+            <div class="col-md-9">
+                <div class="panel panel-flat">
+                    <div class="panel-body">
+                        <fieldset>
+                            <legend class="text-semibold">
+                                <i class="fas fa-check-circle fa-lg position-left"></i>{{ lang('text_app_settings') }}
+                                <a class="control-arrow" data-toggle="collapse" data-target="#fields-pane3">
+                                    <i class="icon-circle-down2"></i>
+                                </a>
+                            </legend>
+                            <div class="collapse in" id="fields-pane3">
+                                <div class="form-group">
+                                    <label for="ebutler_api_key">API Key</label>
+                                    <input type="text" class="form-control" name="ebutler_api_key" placeholder="ebutler_api_key" value="{{ ebutler_data.ebutler_api_key}}">
+                                </div>
+                                <div class="form-group">
+                                    <label class="control-label">{{ entry_sending_order_status }}</label>
+                                    <select type="text" class="form-control" id="ebutler_sending_order_status" name="ebutler_sending_order_status">
+                                        <option value="all">All</option>
+                                        {% for order_status in order_statuses %}
+                                            <option value="{{ order_status['order_status_id'] }}"
+                                            {% if ebutler_data.ebutler_sending_order_status == order_status['order_status_id'] %}
+                                                selected
+                                            {% endif %}
+                                            >{{ order_status['name'] }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="control-label">Webhook</label>
+                                      <div class="input-group">
+                                        <input type="text" id="btn-ebutler-clipboard" class="form-control" value="{{ order_sync_url }}" readonly>
+                                        <span class="input-group-btn">
+                                            <button class="btn btn-default btn-ebutler-clipboard" data-clipboard-text="{{ order_sync_url_text }}" data-clipboard-target="#btn-ebutler-clipboard" type="button"><i class="icon-copy3 position-left"></i> {{lang('text_copy')}}</button>
+                                        </span>
+                                        <span class="help-block"></span>
+                                      </div>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </form>
+                    </div>
+                </div>
+
+                <div class="panel panel-flat">
+                    <div class="panel-heading">
+                        <h6 class="panel-title"><i class="fas fa-check-circle fa-lg position-left"></i><span class="text-bold">{{ lang('ebutler_statuses_mapping') }}</span></h6>
+                        <small>{{ lang('ebutler_statuses_help_text')}}</small>
+                        <div class="heading-elements not-collapsible">
+                            <ul class="icons-list">
+                                <li><a data-action="collapse" class=""></a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="collapse in" id="fields-panel">
+                            <div class="form-group col-md-3">
+                                <label for="ebutler_order_pending" class="control-label">{{ lang('pending') }}</label>
+                                <select name="ebutler_order_pending" class="form-control">
+                                    {% for order_status in order_statuses %}
+                                        <option value="{{ order_status['order_status_id'] }}" {{ ebutler_data.ebutler_order_pending == order_status['order_status_id'] ? 'selected' :'' }}> 
+                                            {{ order_status['name'] }} 
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group col-md-3">
+                                <label for="ebutler_order_in_schedule" class="control-label">{{ lang('in_schedule') }}</label>
+                                <select name="ebutler_order_in_schedule" class="form-control">
+                                    {% for order_status in order_statuses %}
+                                        <option value="{{ order_status['order_status_id'] }}" {{ ebutler_data.ebutler_order_in_schedule == order_status['order_status_id'] ? 'selected' :'' }}> 
+                                            {{ order_status['name'] }} 
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group col-md-3">
+                                <label for="ebutler_order_pending_payment" class="control-label">{{ lang('pending_payment') }}</label>
+                                <select name="ebutler_order_pending_payment" class="form-control">
+                                    {% for order_status in order_statuses %}
+                                        <option value="{{ order_status['order_status_id'] }}" {{ ebutler_data.ebutler_order_pending_payment == order_status['order_status_id'] ? 'selected' :'' }}> 
+                                            {{ order_status['name'] }} 
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group col-md-3">
+                                <label for="ebutler_order_pending_delivery" class="control-label">{{ lang('pending_delivery') }}</label>
+                                <select name="ebutler_order_pending" class="form-control">
+                                    {% for order_status in order_statuses %}
+                                        <option value="{{ order_status['order_status_id'] }}" {{ ebutler_data.ebutler_order_pending == order_status['order_status_id'] ? 'selected' :'' }}> 
+                                            {{ order_status['name'] }} 
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group col-md-3">
+                                <label for="ebutler_order_in_route" class="control-label">{{ lang('in_route') }}</label>
+                                <select name="ebutler_order_in_route" class="form-control">
+                                    {% for order_status in order_statuses %}
+                                        <option value="{{ order_status['order_status_id'] }}" {{ ebutler_data.ebutler_order_in_route == order_status['order_status_id'] ? 'selected' :'' }}> 
+                                            {{ order_status['name'] }} 
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group col-md-3">
+                                <label for="ebutler_order_rejected" class="control-label">{{ lang('rejected') }}</label>
+                                <select name="ebutler_order_rejected" class="form-control">
+                                    {% for order_status in order_statuses %}
+                                        <option value="{{ order_status['order_status_id'] }}" {{ ebutler_data.ebutler_order_rejected == order_status['order_status_id'] ? 'selected' :'' }}> 
+                                            {{ order_status['name'] }} 
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group col-md-3">
+                                <label for="ebutler_order_pending_pickup" class="control-label">{{ lang('pending_pickup') }}</label>
+                                <select name="ebutler_order_pending_pickup" class="form-control">
+                                    {% for order_status in order_statuses %}
+                                        <option value="{{ order_status['order_status_id'] }}" {{ ebutler_data.ebutler_order_pending_pickup == order_status['order_status_id'] ? 'selected' :'' }}> 
+                                            {{ order_status['name'] }} 
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group col-md-3">
+                                <label for="ebutler_order_preparing_order" class="control-label">{{ lang('preparing_order') }}</label>
+                                <select name="ebutler_order_preparing_order" class="form-control">
+                                    {% for order_status in order_statuses %}
+                                        <option value="{{ order_status['order_status_id'] }}" {{ ebutler_data.ebutler_order_preparing_order == order_status['order_status_id'] ? 'selected' :'' }}> 
+                                            {{ order_status['name'] }} 
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group col-md-3">
+                                <label for="ebutler_order_picked_up" class="control-label">{{ lang('picked_up') }}</label>
+                                <select name="ebutler_order_picked_up" class="form-control">
+                                    {% for order_status in order_statuses %}
+                                        <option value="{{ order_status['order_status_id'] }}" {{ ebutler_data.ebutler_order_picked_up == order_status['order_status_id'] ? 'selected' :'' }}> 
+                                            {{ order_status['name'] }} 
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group col-md-3">
+                                <label for="ebutler_order_delivered" class="control-label">{{ lang('delivered') }}</label>
+                                <select name="ebutler_order_delivered" class="form-control">
+                                    {% for order_status in order_statuses %}
+                                        <option value="{{ order_status['order_status_id'] }}" {{ ebutler_data.ebutler_order_delivered == order_status['order_status_id'] ? 'selected' :'' }}> 
+                                            {{ order_status['name'] }} 
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group col-md-3">
+                                <label for="ebutler_order_canceled" class="control-label">{{ lang('canceled') }}</label>
+                                <select name="ebutler_order_canceled" class="form-control">
+                                    {% for order_status in order_statuses %}
+                                        <option value="{{ order_status['order_status_id'] }}" {{ ebutler_data.ebutler_order_canceled == order_status['order_status_id'] ? 'selected' :'' }}> 
+                                            {{ order_status['name'] }} 
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group col-md-3">
+                                <label for="ebutler_order_delayed" class="control-label">{{ lang('delayed') }}</label>
+                                <select name="ebutler_order_delayed" class="form-control">
+                                    {% for order_status in order_statuses %}
+                                        <option value="{{ order_status['order_status_id'] }}" {{ ebutler_data.ebutler_order_delayed == order_status['order_status_id'] ? 'selected' :'' }}> 
+                                            {{ order_status['name'] }} 
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group col-md-3">
+                                <label for="ebutler_order_claimed" class="control-label">{{ lang('claimed') }}</label>
+                                <select name="ebutler_order_claimed" class="form-control">
+                                    {% for order_status in order_statuses %}
+                                        <option value="{{ order_status['order_status_id'] }}" {{ ebutler_data.ebutler_order_claimed == order_status['order_status_id'] ? 'selected' :'' }}> 
+                                            {{ order_status['name'] }} 
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel panel-flat">
+                    <div class="panel-heading">
+                        <h6 class="panel-title"><i class="fas fa-check-circle fa-lg position-left"></i><span class="text-bold">{{ lang('ebutler_qna_mapping') }}</span></h6>
+                        <small>{{ lang('ebutler_qna_help_text')}}</small>
+                        <div class="heading-elements not-collapsible">
+                            <ul class="icons-list">
+                                <li><a data-action="collapse" class=""></a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="collapse in" id="fields-panel">
+                            <div class="form-group col-md-3">
+                                <label for="ebutler_qna_buildingnumber" class="control-label">{{ lang('building_number') }}</label>
+                                <select name="ebutler_qna_buildingnumber" class="form-control">
+                                    {% for field in custom_fields %}
+                                        <option value="{{ field['id'] }}" {{ ebutler_data.ebutler_qna_buildingnumber == field['id'] ? 'selected' :'' }}> 
+                                            {{ field['field_title'] }} 
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group col-md-3">
+                                <label for="ebutler_qna_streetnumber" class="control-label">{{ lang('street_number') }}</label>
+                                <select name="ebutler_qna_streetnumber" class="form-control">
+                                      {% for field in custom_fields %}
+                                        <option value="{{ field['id'] }}" {{ ebutler_data.ebutler_qna_streetnumber == field['id'] ? 'selected' :'' }}> 
+                                            {{ field['field_title'] }} 
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group col-md-3">
+                                <label for="ebutler_qna_zonenumber" class="control-label">{{ lang('zone_number') }}</label>
+                                <select name="ebutler_qna_zonenumber" class="form-control">
+                                       {% for field in custom_fields %}
+                                        <option value="{{ field['id'] }}" {{ ebutler_data.ebutler_qna_zonenumber == field['id'] ? 'selected' :'' }}> 
+                                            {{ field['field_title'] }} 
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+    
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+
+     
+    <script>
+        var clipboard = new ClipboardJS('.btn-ebutler-clipboard');
+        clipboard.on('success', function(e) {
+            e.clearSelection();
+            changeButtonText(e.trigger, "Copied!");
+        });
+        $('.btn-clipboard').on('click', function(e) {
+            e.preventDefault();
+        });
+
+        function saveAppSettings(checkbox)
+        {
+            var self = $(checkbox);
+            var switch_status = self.siblings('.switchery-status');
+
+            if ( self.is(':checked') )
+            {
+                switch_status.html("{{ lang('text_enabled') }}");
+            }
+            else
+            {
+                switch_status.html("{{ lang('text_disabled') }}");
+            }
+            $(checkbox).closest('.form').submit();
+        }
+
+        $(document).ready(function() {
+
+            const lang_code = "{{base.lang}}";
+            const defaultCurrency = '{{ defaultCurrency }}';
+            
+            if (lang_code == 'en') {
+                $('#subscribers-datatable').DataTable();
+            } else {
+                $('#subscribers-datatable').DataTable({
+                    language: {
+                        "sEmptyTable":     "ليست هناك بيانات متاحة في الجدول",
+                        "sLoadingRecords": "جارٍ التحميل...",
+                        "sProcessing":   "جارٍ التحميل...",
+                        "sLengthMenu":   "أظهر _MENU_ مدخلات",
+                        "sZeroRecords":  "لم يعثر على أية سجلات",
+                        "sInfo":         "إظهار _START_ إلى _END_ من أصل _TOTAL_ مدخل",
+                        "sInfoEmpty":    "يعرض 0 إلى 0 من أصل 0 سجل",
+                        "sInfoFiltered": "(منتقاة من مجموع _MAX_ مُدخل)",
+                        "sInfoPostFix":  "",
+                        "sSearch":       "ابحث:",
+                        "sUrl":          "",
+                        "oPaginate": {
+                            "sFirst":    "الأول",
+                            "sPrevious": "السابق",
+                            "sNext":     "التالي",
+                            "sLast":     "الأخير"
+                        },
+                        "oAria": {
+                            "sSortAscending":  ": تفعيل لترتيب العمود تصاعدياً",
+                            "sSortDescending": ": تفعيل لترتيب العمود تنازلياً"
+                        }
+                    }
+                });
+
+                $('.paginate_button').css('-webkit-transform', 'none')
+                $('.paginate_button').css('transform', 'none')
+            }
+
+            $(".touchspin-money").TouchSpin({
+                'postfix': defaultCurrency,
+                min: -Infinity,
+                max: Infinity,
+                initval: 0,
+                decimals: 3,
+                step: 0.01
+            });
+
+        });
+
+
+    </script>
+
+{% endblock %}

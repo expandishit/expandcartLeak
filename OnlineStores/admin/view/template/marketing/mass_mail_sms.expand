@@ -1,0 +1,364 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+
+{% block title %}
+    {{ lang('heading_title', 'marketing/mass_mail_sms') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+<span id="btnSendMass" class="headLinksEffect">
+    <a href="#" onclick="sendmass(); return false;" class="btn btn-success btn-labeled btn-xs"><b><i class="icon-checkmark"></i></b> {{ lang('button_send') }}</a>
+</span>
+{% endblock headelements %}
+
+{% block babyHeaderContent %}
+    <ul id="panelBtn" class="nav navbar-nav">
+        <li id="panel_mail" class="active"><a href="#panel-mail" data-toggle="tab"><i class="icon-envelop3 position-left"></i> {{ lang('lbl_mail') }}</a></li>
+        {% if enable_sms_tab == '1' %}
+        <li id="panel_sms"><a href="#panel-sms" data-toggle="tab"><i class="icon-mobile position-left"></i> {{ lang('lbl_sms') }}</a></li>
+        {% endif %}
+    </ul>
+{% endblock %}
+
+
+{% block content %}
+    <div class="col-md-12">
+        <!-- Pills -->
+        <div class="alert alert-warning alert-dismissible" style="display:none !important" id="sending_mail_alert" role="alert">
+            {{ lang("text_sending_mail") }}
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-tab-content tab-content">
+                <div class="tab-pane active has-padding" id="panel-mail">
+                    <form id="form-mail" class="form" action="{{ link("marketing/mass_mail_sms/sendMail") }}">
+                        {% if(expandcart_smtp_enabled) %}
+                        <div class="alert alert-warning alert-dismissible" id="sending_mail_alert" role="alert">
+                            {{ lang("text_change_smtp") }}
+                        </div>
+                        {% endif %}
+                        <div class="form-group" id="mail_store_id-group" style="display: none;">
+                            <label>{{ lang("lbl_mail_store_id") }}</label>
+                            <select class="select-search" name="mail_store_id" id="mail_store_id">
+                                <option value="0">{{ lang("text_default") }}</option>
+                                {% for store in stores %}
+                                <option value="{{ store['store_id'] }}">{{ store['name'] }}</option>
+                                {% endfor %}
+                            </select>
+                            <span class="help-block"></span>
+                            <span class="text-muted">{{ langempty('mail_store_id_help') }}</span>
+                        </div>
+                        <div class="form-group" id="mail_to-group">
+                            <label>{{ lang("lbl_entry_to") }}</label>
+                            <select class="select-search" name="mail_to" id="mail_to">
+                                <option value="newsletter">{{ lang("text_newsletter") }}</option>
+                                <option value="customer_all">{{ lang("text_customer_all") }}</option>
+                                <option value="customer_group">{{ lang("text_customer_group") }}</option>
+                                <option value="customer">{{ lang("text_customer") }}</option>
+                                <option value="affiliate_all">{{ lang("text_affiliate_all") }}</option>
+                                <option value="affiliate">{{ lang("text_affiliate") }}</option>
+                                {% if base.ms_installed %}
+                                <option value="seller_all">{{ lang("text_seller_all") }}</option>
+                                {% endif %}
+                                <option value="product">{{ lang("text_product") }}</option>
+                            </select>
+                            <span class="help-block"></span>
+                            <span class="text-muted">{{ langempty('mail_to_help') }}</span>
+                        </div>
+                        <div class="form-group to" id="to-mail_customer-group-group">
+                            <label>{{ lang("lbl_customer_group") }}</label>
+                            <select class="select-search" name="mail_customer_group_id" id="mail_customer_group_id">
+                                {% for customer_group in customer_groups %}
+                                    <option value="{{ customer_group.customer_group_id }}">{{ customer_group.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <span class="help-block"></span>
+                            <span class="text-muted">{{ langempty('mail_customer_group_id_help') }}</span>
+                        </div>
+                        <div class="form-group to" id="to-mail_customer-group">
+                            <label>{{ lang("lbl_customer") }}</label>
+                            <select class="multiselect-tags" multiple="multiple" name="mail_customer[]" id="mail_customer">
+                            </select>
+                            <span class="help-block"></span>
+                            <span class="text-muted">{{ langempty('customer_help') }}</span>
+                        </div>
+                        <div class="form-group to" id="to-mail_affiliate-group">
+                            <label>{{ lang("lbl_affiliate") }}</label>
+                            <select class="multiselect-tags" multiple="multiple" name="mail_affiliate[]" id="mail_affiliate">
+                            </select>
+                            <span class="help-block"></span>
+                            <span class="text-muted">{{ langempty('affiliate_help') }}</span>
+                        </div>
+                        <div class="form-group to" id="to-mail_product-group">
+                            <label>{{ lang("lbl_product") }}</label>
+                            <select class="multiselect-tags" multiple="multiple" name="mail_product[]" id="mail_product">
+                            </select>
+                            <span class="help-block"></span>
+                            <span class="text-muted">{{ langempty('product_help') }}</span>
+                        </div>
+                        <div class="form-group" id="mail_subject-group">
+                            <label class="control-label">{{ lang('lbl_subject') }} <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="mail_subject" name="mail_subject" value="{{ mail_subject }}" placeholder="{{ langempty('mail_subject_ph') }}">
+                            <span class="help-block"></span>
+                            <span class="text-muted">{{ langempty('subject_help') }}</span>
+                        </div>
+                        <div class="row">
+                            <div class="form-group col-md-9" id="mail_message-group">
+                                <label class="control-label">{{ lang('lbl_message') }} <span class="text-danger">*</span></label>
+                                <textarea name="mail_message" id="mail_message" class="summernote">{{ mail_message }}</textarea>
+                                <span class="help-block"></span>
+                                <span class="text-muted">{{ langempty('message_help') }}</span>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="control-label">{{ lang("lbl_available_vars") }}</label>
+                                <div class="well">
+                                    <div class="input-group">
+                                        <label class="control-label position-left">{{ lang('lbl_first_name') }}</label>
+                                        <button class="label label-primary btn-clipboard" data-clipboard-text="{firstname}">{firstname}</button>
+                                        {#<a href="#" class="label label-primary" >{firstname}</a>#}
+                                    </div>
+                                    <div class="input-group">
+                                        <label class="control-label position-left">{{ lang('lbl_last_name') }}</label>
+                                        <button class="label label-primary btn-clipboard" data-clipboard-text="{lastname}">{lastname}</button>
+                                        {#<a href="#" class="label label-primary">{lastname}</a>#}
+                                    </div>
+                                    <div class="input-group">
+                                        <label class="control-label position-left">{{ lang('lbl_phone') }}</label>
+                                        <button class="label label-primary btn-clipboard" data-clipboard-text="{phonenumber}">{phonenumber}</button>
+                                        {#<a href="#" class="label label-primary">{phonenumber}</a>#}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="hidden" value="mail" name="mass_type">
+                    </form>
+                </div>
+                <div class="tab-pane has-padding" id="panel-sms">
+                    <form id="form-sms" class="form" action="{{ link("marketing/mass_mail_sms/sendSMS") }}">
+                        <div class="form-group" id="sms_store_id-group" style="display: none;">
+                            <label>{{ lang("lbl_store_id") }}</label>
+                            <select class="select-search" name="sms_store_id" id="sms_store_id">
+                                <option value="0">{{ lang('text_default') }}</option>
+                                {% for store in stores %}
+                                    <option value="{{ store['store_id'] }}">{{ store['name'] }}</option>
+                                {% endfor %}
+                            </select>
+                            <span class="help-block"></span>
+                            <span class="text-muted">{{ langempty('store_id_help') }}</span>
+                        </div>
+                        <div class="form-group" id="to-group">
+                            <label>{{ lang("lbl_entry_to") }}</label>
+                            <select class="select-search" name="sms_to" id="sms_to">
+                                <option value="newsletter">{{ lang('text_newsletter') }}</option>
+                                <option value="customer_all">{{ lang('text_customer_all') }}</option>
+                                <option value="customer_group">{{ lang('text_customer_group') }}</option>
+                                <option value="customer">{{ lang('text_customer') }}</option>
+                                <option value="affiliate_all">{{ lang('text_affiliate_all') }}</option>
+                                <option value="affiliate">{{ lang('text_affiliate') }}</option>
+                                {% if base.ms_installed %}
+                                    <option value="seller_all">{{ lang('text_seller_all') }}</option>
+                                {% endif %}
+                                <option value="product">{{ lang('text_product') }}</option>
+                            </select>
+                            <span class="help-block"></span>
+                            <span class="text-muted">{{ langempty('to_help') }}</span>
+                        </div>
+                        <div class="form-group to" id="to-sms_customer-group-group">
+                            <label>{{ lang("lbl_customer_group") }}</label>
+                            <select class="select-search" name="sms_customer_group_id" id="sms_customer_group_id">
+                                {% for customer_group in customer_groups %}
+                                    <option value="{{ customer_group.customer_group_id }}">{{ customer_group.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <span class="help-block"></span>
+                            <span class="text-muted">{{ langempty('customer_group_id_help') }}</span>
+                        </div>
+                        <div class="form-group to" id="to-sms_customer-group">
+                            <label>{{ lang("lbl_customer") }}</label>
+                            <select class="multiselect-tags" multiple="multiple" name="sms_customer[]" id="sms_customer">
+                            </select>
+                            <span class="help-block"></span>
+                            <span class="text-muted">{{ langempty('customer_help') }}</span>
+                        </div>
+                        <div class="form-group to" id="to-sms_affiliate-group">
+                            <label>{{ lang("lbl_affiliate") }}</label>
+                            <select class="multiselect-tags" multiple="multiple" name="sms_affiliate[]" id="sms_affiliate">
+                            </select>
+                            <span class="help-block"></span>
+                            <span class="text-muted">{{ langempty('affiliate_help') }}</span>
+                        </div>
+                        <div class="form-group to" id="to-sms_product-group">
+                            <label>{{ lang("lbl_product") }}</label>
+                            <select class="multiselect-tags" multiple="multiple" name="sms_product[]" id="sms_product">
+                            </select>
+                            <span class="help-block"></span>
+                            <span class="text-muted">{{ langempty('product_help') }}</span>
+                        </div>
+                        <div class="row">
+                            <div class="form-group col-md-9" id="sms_message-group">
+                                <label class="control-label">{{ lang('lbl_message') }} <span class="text-danger">*</span></label>
+                                <textarea class="form-control" rows="6" name="sms_message" id="sms_message">{{ sms_message }}</textarea>
+                                <span class="help-block"></span>
+                                <span class="text-muted">{{ langempty('message_help') }}</span>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="control-label">{{ lang("lbl_available_vars") }}</label>
+                                <div class="well">
+                                    <div class="input-group">
+                                        <label class="control-label position-left">{{ lang('lbl_first_name') }}</label>
+                                        <button class="label label-primary btn-clipboard" data-clipboard-text="{firstname}">{firstname}</button>
+                                        {#<a href="#" class="label label-primary" >{firstname}</a>#}
+                                    </div>
+                                    <div class="input-group">
+                                        <label class="control-label position-left">{{ lang('lbl_last_name') }}</label>
+                                        <button class="label label-primary btn-clipboard" data-clipboard-text="{lastname}">{lastname}</button>
+                                        {#<a href="#" class="label label-primary">{lastname}</a>#}
+                                    </div>
+                                    <div class="input-group">
+                                        <label class="control-label position-left">{{ lang('lbl_phone') }}</label>
+                                        <button class="label label-primary btn-clipboard" data-clipboard-text="{phonenumber}">{phonenumber}</button>
+                                        {#<a href="#" class="label label-primary">{phonenumber}</a>#}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="hidden" value="sms" name="mass_type">
+                    </form>
+                </div>
+            </div>
+        </div>
+        <!-- /pills -->
+    </div>
+{% endblock content %}
+
+{% block scripts %}
+    {{ parent() }}
+    <script>
+        var expand_smtp_enabled = {{ expandcart_smtp_enabled }};
+        $(document).ready(function(){
+            checkSmtpServer();
+            $("#panel_mail").on("click",function() {
+                if(expand_smtp_enabled == 1){
+                    $("#btnSendMass").hide();
+                }else{
+                    $("#btnSendMass").show();
+                }
+            });
+            $("#panel_sms").on("click",function(){
+                $("#btnSendMass").show();
+            });
+        });
+        function checkSmtpServer(){
+            if($('#panel_mail').hasClass('active') && expand_smtp_enabled == 1){
+                $("#btnSendMass").hide();
+            }else{
+                $("#btnSendMass").show();
+            }
+        }
+        function sendmass() {
+            if ($('#panel-mail').hasClass('active')) {
+                $('#form-mail').submit();
+            } else if ($('#panel-sms').hasClass('active')) {
+                $('#form-sms').submit();
+            }
+        }
+
+        $(function() {
+            $('.select-search').select2();
+            var $to = $('#mail_to, #sms_to');
+            $to.on("select2:select", function (e) {
+                if(e.target.id == "mail_to") {
+                    $('#panel-mail .to').hide();
+                    $('#panel-mail #to-mail_' + $(this).val().replace('_', '-') + "-group").show();
+                } else if(e.target.id == "sms_to") {
+                    $('#panel-sms .to').hide();
+                    $('#panel-sms #to-sms_' + $(this).val().replace('_', '-') + "-group").show();
+                }
+            });
+            $to.trigger({type: 'select2:select'});
+
+            $("#mail_customer, #sms_customer").select2({
+                minimumResultsForSearch: Infinity,
+                tokenSeparators: [','],
+                ajax: {
+                    url: "{{ link("sale/customer/autocomplete") }}",
+                    dataType: 'json',
+                    type: 'GET',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            filter_name: params.term
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: $.map(data, function (item, index) {
+                                return {
+                                    id: item.customer_id,
+                                    text: item.name+" - "+item.email
+                                }
+                            })
+                        };
+                    },
+                    cache: true
+                }
+            });
+            $("#mail_affiliate, #sms_affiliate").select2({
+                minimumResultsForSearch: Infinity,
+                tokenSeparators: [','],
+                ajax: {
+                    url: "{{ link("sale/affiliate/autocomplete") }}",
+                    dataType: 'json',
+                    type: 'GET',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            filter_name: params.term
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: $.map(data, function (item, index) {
+                                return {
+                                    id: item.affiliate_id,
+                                    text: item.name
+                                }
+                            })
+                        };
+                    },
+                    cache: true
+                }
+            });
+            $("#mail_product, #sms_product").select2({
+                minimumResultsForSearch: Infinity,
+                tokenSeparators: [','],
+                ajax: {
+                    url: "{{ link("catalog/product/autocomplete") }}",
+                    dataType: 'json',
+                    type: 'GET',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            filter_name: params.term
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: $.map(data, function (item, index) {
+                                return {
+                                    id: item.product_id,
+                                    text: item.name
+                                }
+                            })
+                        };
+                    },
+                    cache: true
+                }
+            });
+        });
+
+    </script>
+{% endblock scripts %}

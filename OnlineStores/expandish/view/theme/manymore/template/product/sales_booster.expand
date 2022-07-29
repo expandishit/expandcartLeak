@@ -1,0 +1,208 @@
+    <style type="text/css">
+    .btn-sbnormal{
+        text-transform: uppercase;
+        background-color: rgb(245, 85, 130);
+        color: rgb(255, 255, 255);
+    }
+    .btn-sblarge{
+        width: 100%;
+        height: 70px;
+        text-transform: uppercase;
+        background-color: #00c416;
+        color: #ffffff;
+        font-size: 22px;
+    }
+
+    .btn-sbmedium{
+        width: 100%;
+        margin: auto;;
+        height: 45px;
+        text-transform: uppercase;
+        background-color: #00c416;
+        color: #ffffff;
+        font-size: 18px;
+    }
+
+    .btn:hover{
+        background:#02af16;color: #ffffff;
+    }
+
+    #countdowen{
+    text-align: center;
+    font-size: 60px;
+    margin-top: 0px;
+    line-height: 60px;
+    }
+    #countdowen span{
+    font-size: 12px;
+    }
+
+  .stock_level1{
+        width: 100%;
+        height: 10px;
+        background: gainsboro;
+        border: 1px solid #c4c3c3;
+        border-radius: 5px;
+    }
+
+    .stock_level2{
+        height: 8px;
+        background: #fd3131;
+        border: 1px solid #c4c3c3;
+        border-radius: 5px;
+    }
+    </style>
+   {% if viewAddToCart %}   
+    <button type="submit" title="{{ lang('button_cart') }}"
+            onclick="return false;"
+            id="button-cart-sb" class="btn btn-sb{{ sales_booster['cart_button'] ? sales_booster['cart_button'] : 'large'}}">
+        <span>{{ lang('button_cart') }}</span>
+    </button>
+     {% endif %}
+    {% if sales_booster['disableQuantity'] %}
+    <div style="padding: 10px 0">
+        <h4>{{ lang('sb_stock_level') }} ({{ sales_booster['stock_level_val']}})</h4>
+        <div class="stock_level1">
+            <div class="stock_level2" style="width: {{ sales_booster['stock_level_bar']}}%;"></div>
+        </div>
+    </div>
+    {% endif %}
+    {% if sales_booster['disableDownTime'] %}
+    <div>
+        <h2 style="text-align: center;">{{ lang('sb_count_ends_in') }}</h2>
+        <p id="countdowen"></p>
+    </div>
+    {% endif %}
+
+    {% if sales_booster['disableGuranteedSafeImage'] %}
+        {% if sales_booster['gsafe'] and sales_booster['gsafe'] != 'no_image.jpg' %}
+        <img src="{{ image(sales_booster['gsafe']) }}" style="max-width: 100%;">
+        {% else %}
+        <img src="/image/modules/sb/payment_safe.png" style="max-width: 100%;">
+        {% endif %}
+    {% endif %}
+    {% if sales_booster['free_html'] %}
+        <div style="padding: 20px 0">
+            {{ sales_booster['f_html'] }} 
+        </div>
+    {% endif %}
+
+
+    {% if sales_booster['video_url'] %}
+    <center>
+        <iframe width="100%" height="350" src="{{ sales_booster['video_url'] }}" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen="" style=""></iframe>
+    </center>
+    {% endif %}
+    {% if sales_booster['sound_url'] %}
+    <center>
+            {{ sales_booster['sound_url'] }}
+    </center>
+    {% endif %}
+    {% if sales_booster['disableClientsCountOfProducts'] %}
+    <div style="margin-top: 8px; font-size: 22px; color: #0f9000;">
+        <span>{{ sales_booster['recieved_today']}} {{ lang('sb_received_today') }}</span>
+    </div>
+    {% endif %}
+    <script type="text/javascript">
+        $(document).ready(function () {
+        {%  if(sales_booster['cart_button']) != "normal" %}
+            $('#button-cart').fadeOut(0);
+            $('#button-cart-sb').fadeIn(0);
+         {% else %}
+            $('#button-cart-sb').fadeOut(0);
+            $('#button-cart').fadeIn(0);
+        {% endif %}
+    });
+    
+
+        var product_id = '{{ product_id }}';
+
+        Date.prototype.addHours = function(h){
+        this.setHours(this.getHours()+h);
+        return this;
+        }
+
+        // init and reset 'sales_booster' cooki
+        if (!getCookie('sales_booster_'+ product_id) || getCookie('sales_booster_'+ product_id) == 'expired') {
+        var countDownDate = new Date().addHours({{ sales_booster['count_dowen'] }});
+
+        //var countDownDate = new Date().getTime() + (2*60*1000);
+        document.cookie = 'sales_booster_'+ product_id + "=" + (countDownDate || "")  + "; path=/";
+    } else {
+        var countDownDate = Date.parse(getCookie('sales_booster_'+ product_id));
+    }
+        // temp var
+        console.log(getCookie('sales_booster_expire'))
+        var newCooki = countDownDate;
+        // Check if counter finish from 1 hour to restart timer
+        if(getCookie('sales_booster_expire_'+ product_id) && getCookie('sales_booster_expire_'+ product_id) !== 'valid'){
+            let current = new Date().getTime();
+            let sales_booster_expire = Date.parse(getCookie('sales_booster_expire_'+ product_id));
+            let diff = current - sales_booster_expire;
+            console.log(diff);
+            if(diff > parseInt({{ sales_booster['count_reset'] }})){
+                document.cookie = 'sales_booster_expire_'+ product_id + "=" + "valid"  + "; path=/";
+                startTimer();
+            }else{
+                document.getElementById("countdowen").innerHTML = "EXPIRED";
+            }
+        }else{
+            startTimer();
+        }
+
+        /// Countdowen function
+        function startTimer(){
+            // Update the count down every 1 second
+            var x = setInterval(function() {
+                
+                // Get todays date and time
+                var now = new Date().getTime();
+
+                //save new timer value in sales_bosster cooki
+                newCooki = new Date(newCooki - 1000);
+                document.cookie = 'sales_booster_'+ product_id + "=" + (newCooki)  + "; path=/";
+
+                // Find the distance between now and the count down date
+                var distance = new Date(countDownDate).getTime() - now;
+                
+                // Time calculations for days, hours, minutes and seconds
+                var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                
+                // Output the result in an element with id="demo"
+                if ($('#countdowen').length) {
+                    document.getElementById("countdowen").innerHTML = days + "<span>Day</span>: " + hours + "<span>H</span>: "
+                        + minutes + "<span>M</span>: " + seconds + "<span>S</span>";
+                }
+
+                
+                // If the count down is over, write some text 
+                if (distance < 0) {
+                    clearInterval(x);
+                    document.cookie = 'sales_booster_expire_'+ product_id + "=" + new Date()  + "; path=/";
+                    document.cookie = 'sales_booster_'+ product_id + "=" + "expired"  + "; path=/";
+                    if ($('#countdowen').length) {
+                        document.getElementById("countdowen").innerHTML = "EXPIRED";
+                    }
+                }
+            }, 1000);
+    }
+    function getCookie(cname) {
+        var name = cname + "=";
+        var decodedCookie = decodeURIComponent(document.cookie);
+        var ca = decodedCookie.split(';');
+        for(var i = 0; i <ca.length; i++) {
+            var c = ca[i];
+            while (c.charAt(0) == ' ') {
+                c = c.substring(1);
+            }
+            if (c.indexOf(name) == 0) {
+                
+                return c.substring(name.length, c.length);
+            }
+        }
+        return "";
+    }
+    </script>

@@ -1,0 +1,106 @@
+<div class="modal fade" id="myModalNotifyMe" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" style="z-index: 9999999;">
+	<div class="modal-dialog modal-lg" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+				<h4 class="modal-title" >{{ lang('text_notifyme') }}</h4>
+			</div>
+			<div class="modal-body" style="padding-top: 0">
+				<div class="product-add-form">
+					<div class="option form-group">
+						<br/>
+						<div id="notifyme_required" class="alert alert-danger alert-dismissible" style="display: none" role="alert">{{ lang('text_notifyme_required') }}</div>
+						<div class="row" style="font-size: 12px">
+							<div class="form-group col-md-12">
+								<label class="col-form-label" >{{ lang('text_name') }}</label>
+                                <input type="text" class="form-control" id="ntfy_cst_name"/>
+							</div>
+							<div class="form-group col-md-12">
+								<label class="col-form-label" >{{ lang('text_email') }}</label>
+								<input type="text" class="form-control" id="ntfy_cst_email"/>
+							</div>
+							<div class="form-group col-md-12">
+								<label class="col-form-label" >{{ lang('text_phone') }}</label>
+								<input type="text" class="form-control" id="ntfy_cst_phone"/>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div style="clear:both;"></div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-primary" onclick="addToNotifyMe('{{ product_id }}', 'form')">{{ lang('text_save') }}</button>
+				<button type="button" class="btn btn-secondary" data-dismiss="modal">{{ lang('text_close') }}</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript">
+
+$("#myModalNotifyMe .modal-header .close").click(function(){
+		$('#myModalNotifyMe').removeClass('show');
+		$('#myModalNotifyMe').removeClass('in');
+})
+$("#myModalNotifyMe .modal-footer .btn-secondary").click(function(){
+		$('#myModalNotifyMe').removeClass('show');
+		$('#myModalNotifyMe').removeClass('in');
+		$('#myModalNotifyMe').removeClass('fade');
+})
+	function addToNotifyMe(product_id, target) {
+		$("#notifyme_required").fadeOut();
+		//Guest form validation
+		if(target == 'form'){
+			var cname = $('#ntfy_cst_name').val();
+			var cemail = $('#ntfy_cst_email').val();
+			var cphone = $('#ntfy_cst_phone').val();
+
+			if(!cname || !cemail || !cphone){
+				$("#notifyme_required").fadeIn();
+				return;
+			}
+
+			var notifyme_data = {guest: 1, product_id : product_id, name:cname , email:cemail , phone:cphone};
+		}//////////
+		else{
+			var notifyme_data = {product_id : product_id};
+		}
+		$.ajax({
+			url: 'index.php?route=product/product/add_to_notify_me',
+			type: 'post',
+			data: notifyme_data,
+			dataType: 'json',
+			success: function(json) {
+				$('.alert-success, .alert-warning, .alert-attention, .alert-information').remove();
+
+				if(json['status'] == '1'){
+				//	$('#myModalNotifyMe').modal('hide');
+						$('#myModalNotifyMe').removeClass('show');
+					$('#myModalNotifyMe').removeClass('in');
+					$('#myModalNotifyMe').removeClass('fade');
+					$('#notification').html('<br><div class="alert alert-success alert-dismissible" style="display: none;" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>' + json['success'] + '</div>');
+					$('.alert-success').fadeIn('slow');
+					$('.alert-success').delay(3000).fadeOut('slow');
+					$('#myModalNotifyMe').modal('hide');
+				}else if(json['status'] == '2'){
+				//	$('#myModalNotifyMe').modal('hide');
+
+					$('#myModalNotifyMe').addClass('show');
+					$('#myModalNotifyMe').addClass('in');
+					$('#myModalNotifyMe').modal('show');
+					// $('#myModalNotifyMe').modal({show:true});
+				}else if(json['status'] == '0'){
+
+					$('#myModalNotifyMe').removeClass('fade');
+						$('#myModalNotifyMe').removeClass('show');
+					$('#myModalNotifyMe').removeClass('in');
+				//	$('#myModalNotifyMe').modal('hide');
+					$('#notification').html('<br><div class="alert alert-warning alert-dismissible" style="display: none;" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>' + json['success'] + '</div>');
+					$('.alert-warning').fadeIn('slow');
+					$('.alert-warning').delay(3000).fadeOut('slow');
+					$('#myModalNotifyMe').modal('hide');
+				}
+			}
+		});
+	}
+</script>

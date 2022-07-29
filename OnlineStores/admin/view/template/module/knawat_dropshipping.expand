@@ -1,0 +1,567 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+
+{% block title %}
+{{ heading_title }}
+{% endblock title %}
+
+{% block breadcrumb %}
+{{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+
+{% block headelements %}
+
+    <button type="submit" form="form-module" data-toggle="tooltip" title="{{ button_save }}" class="btn btn-primary btn-ladda btn-ladda-spinner bottom-save-button" data-style="zoom-in" >
+    <i class="far fa-save fa-lg position-left"></i> {{ button_save }}</button>
+
+    <a  href="{{ cancel }}" class="btn btn-default bottom-cancel-button"> {{ button_cancel }}</a>
+
+{% endblock headelements %}
+
+{% block content %}
+
+        {% if error_warning %}
+        <div class="alert alert-danger alert-styled-left alert-bordered knawat_import_message">
+            <button type="button" class="close" data-dismiss="alert"><span>×</span><span class="sr-only">Close</span></button>
+            {{ error_warning }}
+        </div>
+        {% endif %}
+        {% if token_error %}
+        <div class="alert alert-danger alert-styled-left alert-bordered knawat_import_message">
+            <button type="button" class="close" data-dismiss="alert"><span>×</span><span class="sr-only">Close</span></button>
+            {{ token_error }}
+        </div>
+        {% endif %}
+        {% if ordersync_warning %}
+        <div class="alert alert-warning alert-styled-left alert-bordered knawat_import_message">
+            <button type="button" class="close" data-dismiss="alert"><span>×</span><span class="sr-only">Close</span></button>
+            {{ warning_ordersync }} <a href="#" id="start_ordersync">{{ text_ordersync_botton }}</a>
+        </div>
+        {% endif %}
+        {% if success %}
+        <div class="alert alert-success alert-styled-left alert-bordered knawat_import_message">
+            <button type="button" class="close" data-dismiss="alert"><span>×</span><span class="sr-only">Close</span></button>
+            {{ success }}
+        </div>
+        {% endif %}
+
+        <div class="alert alert-info alert-styled-left alert-bordered knawat_sync_processing hidden">
+            <button type="button" class="close" data-dismiss="alert"><span>×</span><span class="sr-only">Close</span></button>
+            {{text_syncing}}
+        </div>
+        <div class="alert alert-success alert-styled-left alert-bordered knawat_sync_success hidden">
+            <button type="button" class="close" data-dismiss="alert"><span>×</span><span class="sr-only">Close</span></button>
+            {{success_ajaxsync}}
+        </div>
+     <form action="{{ action }}" method="post" enctype="multipart/form-data" id="form-module" class="form-non-ajax">
+         <div class="row">
+             <div class="col-md-12">
+                 <div class="panel panel-white">
+                     <div class="panel-heading">
+                         <h6 class="panel-title"><span
+                                     class="text-bold">{{ lang('mn_setting_menu_register') }}</span></h6>
+                         <div class="heading-elements not-collapsible">
+                             <ul class="icons-list">
+                                 <li><a data-action="collapse" class=""></a></li>
+                             </ul>
+                         </div>
+                     </div>
+                     <div class="panel-body">
+                         <div class="collapse in" id="fields-panel">
+                             <div class="col-md-12" id="api_key-group" style="text-align: center;">
+                                 <a href="https://knawat.com/?ref=expandcart" class="btn btn-primary btn-lg" style="font-size: 16px; font-weight: 700;">{{ lang('register_now') }}</a>
+                                 <h4>{{ lang('mn_setting_menu_register_special_offer') }}</h4>
+                             </div>
+                         </div>
+                     </div>
+                 </div>
+             </div>
+         </div>
+         <div class="row">
+         <div class="col-md-6">
+            <div class="panel panel-white">
+                <div class="panel-heading">
+                    <h6 class="panel-title"><span class="text-bold">{{ text_edit |trim(':') }}</span></h6>
+                    <div class="heading-elements not-collapsible">
+                        <ul class="icons-list">
+                            <li><a data-action="collapse" class=""></a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="panel-body">
+
+                        <div class="form-group">
+                            <label class="control-label" for="input-status">{{ entry_status }}</label>
+
+                                <!-- Switchery -->
+                                <div class="checkbox checkbox-switchery">
+                                    <label>
+                                        <input type="checkbox" onchange="changeStatus(this);" name="module_knawat_dropshipping_status" class="switchery" {{ module_knawat_dropshipping_status in ['1', 1, 'on'] ? 'checked' }}>
+                                        <span class="switchery-status">{{ module_knawat_dropshipping_status in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                    </label>
+                                </div>
+                                <!-- /Switchery -->
+                                <span class="help-block"></span>
+                                {% if error_status %}
+                                <div class="text-danger">{{ error_status }}</div>
+                                {% endif %}
+
+                        </div>
+
+                        <div class="form-group">
+                            <label class="control-label" for="input-status">{{ entry_log }}</label>
+
+                                <!-- Switchery -->
+                                <div class="checkbox checkbox-switchery">
+                                    <label>
+                                        <input type="checkbox" onchange="changeStatus(this);" name="module_knawat_dropshipping_log" class="switchery" {{ module_knawat_dropshipping_log in ['1', 1, 'on'] ? 'checked' }}>
+                                        <span class="switchery-status">{{ module_knawat_dropshipping_log in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                    </label>
+                                </div>
+
+                        </div>
+
+                    <div class="form-group">
+                        <label class="control-label" for="input-status">{{ entry_product_update_status }}</label>
+
+                        <!-- Switchery -->
+                        <div class="checkbox checkbox-switchery">
+                            <label>
+                                <input type="checkbox" onchange="changeStatus(this);" name="module_knawat_dropshipping_product_update_status" class="switchery" {{ (module_knawat_dropshipping_product_update_status in [1, '1', 'on'] ) ? 'checked' }}>
+                                <span class="switchery-status">{{ (module_knawat_dropshipping_product_update_status in [1, '1', 'on']) ? lang('text_enabled') : lang('text_disabled') }}</span>
+                            </label>
+                        </div>
+                        <!-- /Switchery -->
+                        <span class="help-block">{{ entry_product_update_status_help }}</span>
+
+                    </div>
+ <div class="checkbox checkbox-switchery">
+                                    <label>
+                                        <span class="text-muted">{{ text_update_category_on_product_update }}</span>
+                                        <input type="checkbox" onchange="changeStatus(this);" id="module_knawat_dropshipping_update_category_on_product_update" name="module_knawat_dropshipping_update_category_on_product_update" class="switchery" {{ (module_knawat_dropshipping_update_category_on_product_update in [1, '1', 'on'] ) ? 'checked' }}>
+                                    </label>
+                                </div>
+                        <div class="form-group">
+                            <label class="control-label" for="input-knawat-consumer-key">{{ entry_consumer_key }}</label>
+
+                                <input type="text" name="module_knawat_dropshipping_consumer_key" value="{{ module_knawat_dropshipping_consumer_key }}" placeholder="{{ consumer_key_placeholder }}"
+                                    class="form-control" id="input-knawat-consumer-key" />
+                                    <span class="help-block"></span>
+
+                        </div>
+
+                        <div class="form-group">
+                            <label class="control-label" for="input-knawat-consumer-secret">{{ entry_consumer_secret }}</label>
+
+                                <input type="text" name="module_knawat_dropshipping_consumer_secret" value="{{ module_knawat_dropshipping_consumer_secret }}"
+                                    placeholder="{{ consumer_secret_placeholder }}" class="form-control" id="input-knawat-consumer-secret"
+                                />
+                                    <span class="help-block"></span>
+
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="control-label">{{ entry_sending_order_status }}</label>
+                            <select type="text" class="form-control" id="module_knawat_dropshipping_sending_order_status" name="module_knawat_dropshipping_sending_order_status">
+                                {% for order_status in order_statuses %}
+                                    <option value="{{ order_status['order_status_id'] }}"
+                                    {% if module_knawat_dropshipping_sending_order_status == order_status['order_status_id'] %}
+                                        selected
+                                    {% endif %}
+                                    >{{ order_status['name'] }}</option>
+                                {% endfor %}
+                            </select>
+
+                         </div>
+
+
+                    <div class="form-group col-md-6">
+                        <label class="control-label" for="input-status">{{ entry_pin_status }}</label>
+                        <!-- Switchery -->
+                        <div class="checkbox checkbox-switchery">
+                            <label>
+                                <input type="checkbox" onchange="changeStatus(this);" id="pin_status" name="module_knawat_dropshipping_pin_status" class="switchery" {{ module_knawat_dropshipping_pin_status in ['1', 1, 'on'] ? 'checked' }}>
+                                <span class="switchery-status">{{ module_knawat_dropshipping_pin_status in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                            </label>
+                        </div>
+                        <span class="help-block"></span>
+                        <span class="text-muted">{{ entry_pin_status_help }}</span>
+                        <!-- /Switchery -->
+                        <span class="help-block"></span>
+                        {% if error_status %}
+                            <div class="text-danger">{{ error_pin_status }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group col-md-6" id="category-group">
+                        <label for="category" class="control-label">
+                            {{ entry_category }}
+                        </label>
+                        <select name="module_knawat_dropshipping_pin_category" id="category" class="form-control category">
+                        </select>
+                        <span class="help-block"></span>
+                        <span class="text-muted">{{ entry_category_help }}</span>
+                    </div>
+
+                        <div class="form-group">
+                            <label class="control-label">{{ entry_connection }}</label>
+
+                                {% if token_valid %}
+                                <h4><span class="label label-success">{{ text_connected }}</span></h4>
+                                <small>{{ text_connected_desc }}</small>
+                                {% else %}
+                                <h4><span class="label label-danger">{{ text_notconnected }}</span></h4>
+                                <small>{{ text_notconnected_desc }}</small>
+                                {% endif %}
+
+                        </div>
+                       
+                        <div class="form-group" style="display: none">
+                            <label class="control-label">{{ entry_store }}</label>
+
+                                <div class="well well-sm" style="height: 150px; overflow: auto;">
+                                    {% for store in stores %}
+                                    <div class="checkbox">
+                                        <label> {% if store.store_id in module_knawat_dropshipping_store %}
+                                            <input type="checkbox" name="module_knawat_dropshipping_store[]" value="{{ store.store_id }}" checked="checked" /> {{ store.name }} {% else %}
+                                            <input type="checkbox" name="module_knawat_dropshipping_store[]" value="{{ store.store_id }}" /> {{ store.name }} {% endif %} </label>
+                                    </div>
+                                    {% endfor %}
+                                    </div>
+
+                        </div>
+
+                </div>
+            </div>
+        </div>
+         {% if token_valid or 1==1 %}
+        <div class="col-md-6">
+            <div class="panel panel-white">
+             <div class="panel-heading">
+                 <h6 class="panel-title"><span class="text-bold">{{ lang('text_manage_products') |trim(':') }}</span></h6>
+                 <div class="heading-elements not-collapsible">
+                     <ul class="icons-list">
+                         <li><a data-action="collapse" class=""></a></li>
+                     </ul>
+                 </div>
+             </div>
+             <div class="panel-body">
+
+                <div class="row">
+
+                    <div class="col-md-6">
+
+                        <div class="form-group">
+                            <label class="control-label" for="input-knawat-consumer-secret">{{ lang('text_import_products') }}</label>
+                            <div class="ajax_import">
+                                <button id="run_import" class="btn btn-primary">{{text_run_import}}</button>
+                                <hr>
+                                <div class="checkbox checkbox-switchery">
+                                    <label>
+                                        <span class="text-muted">{{ text_force_update }}</span>
+                                        <input type="checkbox" onchange="changeStatus(this);" id="force_update" name="force_update" class="switchery">
+                                    </label>
+                                </div>
+                               
+                                <div class="import_inprocess" style="display: none;">
+                                    <img src="{{knawat_ajax_loader}}" style="width:30px;" />
+                                    <strong style="margin-left: 10px;">{{text_import_inprogress}}</strong>
+                                    <div class="import_status" style="margin-top: 10px;">
+                                        <p>{{text_import_stats}}:</p>
+                                        <strong>{{text_imported}}:</strong> 0 {{text_products}}
+                                        <br>
+                                        <strong>{{text_updated}}:</strong> 0 {{text_products}}
+                                        <br>
+                                        <strong>{{text_failed}}:</strong> 0 {{text_products}}
+                                        <br>
+                                        <small style="font-size: 80%;important!">({{text_failed_hint}})</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <div class="form-group">
+                            <label class="control-label">{{ lang('text_sync_deleted_products') }}</label>
+                            <div class="ajax-sync">
+                                <div class="sync-process" style="display:none">
+                                    <img src="{{knawat_ajax_loader}}" style="width:30px;" />
+                                </div>
+                                <button id="sync" class="btn btn-warning">{{ lang('text_sync') }}</button>
+                                <table class="table table-bordered delete-sync-stats" style="display:none; margin-top:10px">
+                                    <tr>
+                                        <td>{{ lang('text_products_deleted') }}</td>
+                                        <td class="products-deleted-count">0</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+             </div>
+         </div>
+
+        </div>
+         {% endif %}
+         </div>
+    </form>
+
+    <!-- Lower Buttons -->
+    <div class="row">
+        <div class="col-md-12 text-right">
+            <hr/>
+            <button type="submit" form="form-module" data-toggle="tooltip" title="{{ button_save }}" class="btn btn-primary btn-ladda btn-ladda-spinner bottom-save-button" data-style="zoom-in" >
+            <i class="far fa-save fa-lg position-left"></i> {{ button_save }}</button>
+
+            <a  href="{{ cancel }}" class="btn btn-default bottom-cancel-button"> {{ button_cancel }}</a>
+        </div>
+    </div><!-- End Lower Buttons -->
+    <!-- End Lower Buttons -->
+{% endblock content %}
+{% block scripts %}
+    {{ parent() }}
+    {% import _self as dtControls %}
+
+    
+    <script type="text/javascript">
+
+    </script>
+
+    <script type="text/javascript">
+        var knawat_ajax_url = '{{ knawat_ajax_url }}';
+        var knawat_sync_ajax_url = '{{ knawat_sync_ajax_url }}';
+        var show_warning_window = false;
+        var number_of_attempts = 10;
+
+        $(document).ready(function () {
+            let category =  {{ category|json_encode }};
+            if(category){
+                $("#category").append('<option value="' + category['category_id'] + '" selected>' + category['name'] + ' </option>');
+            }
+
+            $('#run_import').on('click', function (e) {
+                window.onbeforeunload = confirmExit;
+                e.preventDefault();
+                var data = {};
+                if ($('#force_update:checked').val() == "on") {
+                    data["force_update"] = 1;
+                }
+                if ($('#module_knawat_dropshipping_update_category_on_product_update:checked').val() == "on") {
+                    data["module_knawat_dropshipping_update_category_on_product_update"] = 1;
+                }
+                process_step(data);
+                knawat_ajax_import_start();
+            });
+            $('#sync').on('click', function (e) {
+                window.onbeforeunload = confirmExit;
+                e.preventDefault();
+                syncDeletedProducts();
+            });
+        });
+        
+        function syncDeletedProducts() {
+            jQuery('#sync').hide();
+            jQuery('.knawat_sync_processing').removeClass('hidden');
+            jQuery('.knawat_sync_success').addClass('hidden');
+            jQuery('.ajax-sync .sync-process, .delete-sync-stats').show();
+            $('.products-deleted-count').html(0);
+            $.ajax({
+                type: "POST",
+                url: knawat_sync_ajax_url.replace(/&amp;/g, '&'),
+                success: function (res) {
+                    $('.products-deleted-count').html(res);
+                },
+                complete: function() {
+                    jQuery('#sync').show();
+                    jQuery('.ajax-sync .sync-process').hide();
+                    jQuery('.knawat_sync_processing').addClass('hidden');
+                    jQuery('.knawat_sync_success').removeClass('hidden');
+                }
+            });
+        }
+
+        function confirmExit() {
+            return "You have attempted to leave this page. Are you sure?";
+        }
+
+        function process_step(data) {
+            $.ajax({
+                type: 'POST',
+                url: knawat_ajax_url.replace(/&amp;/g, '&'),
+                data: {
+                    process_data: data,
+                    categoryFilter : {"pinCategory":$("input[name='module_knawat_dropshipping_pin_status']").is(":checked"),"categoryID":$("#category").val()}
+                },
+                dataType: "json",
+                success: function (response) {
+                    console.log(response);
+                    if(response.fail == true){
+                        if(number_of_attempts){
+                            --number_of_attempts;
+                            setTimeout(process_step.bind(null, data), (60000 * (10 - number_of_attempts)));
+                        }
+                        else{
+                            knawat_ajax_import_stop();
+                            jQuery(".content").prepend(
+                                '<div class="knawat_import_message alert alert-danger"><i class="fa fa-exclamation-circle"></i> {{error_ajaximport_404}}</div>'
+                            );
+                        }
+                    }
+                    else if (response.is_complete) {
+                        /* Done Operation here. */
+                        knawat_ajax_import_stop();
+                        jQuery(".content").prepend(
+                            '<div class="knawat_import_message alert alert-success"><i class="fa fa-info-circle"></i> {{success_ajaximport}}</div>'
+                        );
+                        jQuery('.import_inprocess .import_status').html('');
+
+                    } else {
+                        /*Update import stats.*/
+                        jQuery('.import_inprocess .import_status').html(
+                            '<p>{{text_import_stats}}:</p><strong>{{text_imported}}:</strong> ' +
+                            response.imported +
+                            ' {{text_products}}<br><strong>{{text_updated}}:</strong> ' + response.updated +
+                            ' {{text_products}}<br><strong>{{text_failed}}:</strong> ' + response.failed +
+                            ' {{text_products}} <br> <small style="font-size: 80%;important!">({{text_failed_hint}})</small>')
+                        /*Run next batch.*/
+                        number_of_attempts = 10;
+                        if ($('#force_update:checked').val() == "on") {
+                            response["force_update"] = 1;
+                        }
+                        if ($('#module_knawat_dropshipping_update_category_on_product_update:checked').val() == "on") {
+                            response["module_knawat_dropshipping_update_category_on_product_update"] = 1;
+                        }
+                        process_step(response);
+                    }
+
+                }
+            }).fail(function (response) {
+                if (window.console && window.console.log) {
+                    console.log(response);
+                }
+                knawat_ajax_import_stop();
+                jQuery(".content").prepend(
+                    '<div class="knawat_import_message alert alert-danger"><i class="fa fa-exclamation-circle"></i> {{error_ajaximport}}</div>'
+                );
+            });
+        }
+
+        function knawat_ajax_import_start() {
+            jQuery(".content .knawat_import_message").remove();
+            jQuery(".content").prepend(
+                '<div class="knawat_import_message alert alert-warning"><i class="fa fa-info-circle"></i> {{warning_ajaximport}}</div>'
+            );
+            jQuery('#run_import').hide();
+            jQuery('.ajax_import .import_inprocess').show();
+        }
+
+        function knawat_ajax_import_stop() {
+            jQuery(".content .knawat_import_message").remove();
+            jQuery('#run_import').show();
+            jQuery('.ajax_import .import_inprocess').hide();
+            window.onbeforeunload = null;
+        }
+
+        var knawat_ordersync_url = '{{ knawat_ordersync_url }}';
+        $(document).ready(function () {
+            $.ajaxSetup({
+                headers : {
+                    'CsrfToken': '{{csrf_token}}'
+                }
+            });
+            $('#start_ordersync').on('click', function (e) {
+                $('#start_ordersync').html('{{ lang("text_syncing")}}');
+                e.preventDefault();
+                $.ajax({
+                    type: 'POST',
+                    url: knawat_ordersync_url.replace(/&amp;/g, '&'),
+                    dataType: "json",
+                    success: function (response) {
+                        if ( 'success' === response.status) {
+                            jQuery(".content .knawat_import_message").remove();
+                            jQuery(".content").prepend(
+                                '<div class="knawat_import_message alert alert-success"><i class="fa fa-info-circle"></i> {{ lang("success_ordersync") }}</div>'
+                            );
+                        }else{
+                            jQuery(".content .knawat_import_message").remove();
+                            if (typeof response.error !== 'undefined') {
+                                var order_error = response.error;
+                                if( '1' === order_error ){
+                                    order_error = '{{ lang("error_wrong") }}';
+                                }
+                                jQuery(".content").prepend( '<div class="knawat_import_message alert alert-danger"><i class="fa fa-exclamation-circle"></i> ' + order_error + '</div>' );
+                            }
+                        }
+                    }
+                }).fail(function (response) {
+                    if (window.console && window.console.log) {
+                        console.log(response);
+                    }
+                    jQuery(".content .knawat_import_message").remove();
+                    jQuery(".content").append(
+                        '<div class="knawat_import_message alert alert-danger"><i class="fa fa-exclamation-circle"></i> {{ lang("error_wrong")}}</div>'
+                    );
+                });
+
+            });
+        });
+
+        $(document).ready(function(){
+            $(".category").select2({
+                tokenSeparators: [','],
+                closeOnSelect: false,
+                ajax: {
+                    url: '{{ link("catalog/category/autocomplete") }}',
+                    dataType: 'json',
+                    type: 'GET',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            filter_name: params.term
+                        };
+                    },
+                    error:function(err){
+                        console.log("ERROR",err);
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: $.map(data, function (item, index) {
+
+                                return {
+                                    id: item.category_id,
+                                    text: item.name
+                                }
+                            })
+                        };
+                    },
+                    cache: true
+                }
+            });
+        });
+
+        function changeStatus(checkbox)
+        {
+            var self = $(checkbox);
+            var switch_status = self.siblings('.switchery-status');
+
+            if ( self.is(':checked') )
+            {
+                switch_status.html("{{ lang('text_enabled') }}");
+            }
+            else
+            {
+                switch_status.html("{{ lang('text_disabled') }}");
+            }
+        }
+    </script>
+    {% endblock scripts %}

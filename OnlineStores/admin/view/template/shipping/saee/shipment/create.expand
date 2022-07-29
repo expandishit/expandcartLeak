@@ -1,0 +1,181 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block title %}
+    {{ lang('heading_title') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+
+           {% if(isShipping) %}
+                 <a  onclick="$('#cancel_shipment').submit()" class="button btn btn-warning">{{ lang('button_cancel_shipment') }}</a>
+                 <a href="{{ link('sale/order/info?order_id=')~order_id }}"  class="button btn btn-success">{{ lang('button_return') }}</a>
+                 <a onclick="trackShipment();" target="_blank" class="button btn btn-success">{{ lang('button_track_shipment') }}</a>
+                 <a href="{{ link('shipping/saee/printSticker?order_id=')~order_id }}"  target="_blank" class="button btn btn-success">{{ lang('button_print_label') }}</a>
+           {% else %}
+                <a onclick="$('.form').submit()" class="button btn btn-primary">{{ lang('button_create_shipment') }}</a>
+           {% endif %}
+
+{% endblock headelements %}
+
+
+{% block content %}
+    <!-- Fieldset legend -->
+ <div class="row">
+ <div class="alert alert-info" id="infoDialog" style="display: none;">
+    <i class="fa fa-exclamation-circle"></i> <span id="infoDialogText">{{ lang('please_wait') }}</span>
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+ </div>
+    <form action="{{ link('shipping/saee/createShipment') }}" method="post" class="form">
+       <div class="col-md-12">
+          <!-- Advanced legend -->
+          <div class="panel panel-white">
+             <div class="panel-heading">
+                <h6 class="panel-title"><span class="text-bold"><i class="fa fa-cog fa-lg"></i> {{ lang('text_shipment_settings') }}</span></h6>
+                <div class="heading-elements not-collapsible">
+                   <ul class="icons-list">
+                      <li><a data-action="collapse" class=""></a></li>
+                   </ul>
+                </div>
+             </div>
+             <div class="panel-body">
+                <div class="collapse in" id="panel1">
+                   <div class="form-group col-md-6">
+                      <label class="control-label">
+                      {{ lang('entry_name') }} <span class="text-danger">*</span>
+                      </label>
+                      <input type="text" name="saee_entry_name" class="form-control"
+                         value="{{ saee_entry_name }}"/>
+                      <span class="help-block"> {{ lang('entry_name_note') }}</span>
+                   </div>
+                   <div class="form-group col-md-6">
+                      <label class="control-label">
+                      {{ lang('entry_email') }} <span class="text-danger">*</span>
+                      </label>
+                      <input type="text" name="saee_entry_email" class="form-control"
+                         value="{{ saee_entry_email }}"/>
+                      <span class="help-block"> {{ lang('entry_email_note') }}</span>
+                   </div>
+                   <div class="form-group col-md-6">
+                      <label class="control-label">
+                      {{ lang('entry_mobile') }} <span class="text-danger">*</span>
+                      </label>
+                      <input type="text" name="saee_entry_mobile" class="form-control"
+                         value="{{ saee_entry_mobile }}"/>
+                      <span class="help-block"> {{ lang('entry_mobile_note') }}</span>
+                   </div>
+                   <div class="form-group col-md-6">
+                      <label class="control-label">
+                      {{ lang('entry_streetaddress') }} <span class="text-danger">*</span>
+                      </label>
+                      <input type="text" name="saee_entry_streetaddress" class="form-control"
+                         value="{{ saee_entry_streetaddress }}"/>
+                      <span class="help-block"> {{ lang('entry_streetaddress_note') }}</span>
+                   </div>
+                   <div class="form-group col-md-6">
+                      <label>{{ lang('entry_city') }}</label>
+                      <select class="select" name="saee_city">
+                         <option value="0">{{ lang('text_all_zones') }}</option>
+                         {% for city_en, city_ar in cities %}
+                         <option value="{{ city_en }}">
+                         {{ city_ar }}
+                         </option>
+                         {% endfor %}
+                      </select>
+                   </div>
+                   <div class="form-group col-md-6">
+                      <label>{{ lang('entry_district') }}</label>
+                      <select class="select" name="saee_district">
+                         <option value="0">{{ lang('text_all_zones') }}</option>
+                         {% for district_en, district_ar in districts %}
+                         <option value="{{ district_en }}">
+                          {{ district_ar }}
+                         </option>
+                         {% endfor %}
+                      </select>
+                   </div>
+                   <div class="form-group col-md-6">
+                      <label class="control-label">
+                      {{ lang('entry_weight') }} <span class="text-danger">*</span>
+                      </label>
+                      <input type="text" name="saee_entry_weight" class="form-control"
+                         value="{{ saee_entry_weight }}" />
+                      <span class="help-block"> {{ lang('entry_weight_note') }}</span>
+                   </div>
+                   <div class="form-group col-md-6">
+                      <label class="control-label">
+                      {{ lang('entry_quantity') }} <span class="text-danger">*</span>
+                      </label>
+                      <input type="number" name="saee_entry_quantity" class="form-control"
+                         value="{{ saee_entry_quantity }}" min="0" />
+                      <span class="help-block"> {{ lang('entry_quantity_note') }}</span>
+                   </div>
+                   <div class="form-group col-md-6">
+                      <label class="control-label">
+                      {{ lang('entry_cod') }} <span class="text-danger">*</span>
+                      </label>
+                      <input type="number" name="saee_entry_cod" class="form-control"
+                         value="{{ saee_entry_cod }}" min="0" />
+                      <span class="help-block"> {{ lang('entry_cod_note') }}</span>
+                   </div>
+                   <div class="form-group col-md-12">
+                    <label class="control-label">
+                        {{ lang('saee_entry_description') }}
+                     </label>
+                       <textarea type="text" class="form-control" rows="3" id="saee_entry_description" name="saee_entry_description">{{ saee_entry_description }}</textarea>
+                       <span class="help-block"> {{ lang('saee_entry_description') }}</span>
+                   </div>
+                   <div class="clearfix"></div>
+                </div>
+             </div>
+          </div>
+          <!-- /a legend -->
+       </div>
+       <input type="hidden" name="order_id" value="{{ order_id }}">
+    </form>
+
+    <form action="{{ link('shipping/saee/cancelShipment') }}" method="post" id="cancel_shipment">
+        <input type="hidden" name="order_id" value="{{ order_id }}">
+    </form>
+ </div>
+
+    <script>
+        // Default initialization
+        $('.select').select2({
+            minimumResultsForSearch: Infinity
+        });
+
+        $('.form').on("submit",function(){
+         $("#infoDialog").fadeIn(300);
+         setTimeout(function(){
+             $("#infoDialog").fadeOut(300);
+         },4000);
+        });
+
+         function trackShipment() {
+                        $("#infoDialog").fadeIn(300);
+                        $.ajax({
+                            url: '{{ link('shipping/saee/trackShipment?order_id=')~order_id }}',
+                            dataType: 'json',
+                            success: function (response) {
+                                $("#infoDialogText").text(response.success_msg);
+                                setTimeout(function(){
+                                 $("#infoDialog").fadeOut(300);
+                                },3000);
+                            },
+                            error:function(){
+                             $("#infoDialogText").text(" {{ lang('error_saee_tracking') }} ");
+                                setTimeout(function(){
+                                 $("#infoDialog").fadeOut(300);
+                             },3000);
+                            }
+                        });
+                    }
+    </script>
+
+{% endblock %}

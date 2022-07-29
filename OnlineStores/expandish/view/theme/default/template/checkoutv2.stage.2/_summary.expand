@@ -1,0 +1,141 @@
+<div class="close--summary">
+    <i class="fas fa-times"></i>
+</div>
+<div class="order-summary__header">
+    <h3>{{lang('text_order_summary_head', 'checkout/checkoutv2', true)}}</h3>
+    <p><span>{{products_count}}</span> {{lang('text_products', 'checkout/checkoutv2', true)}}</p>
+</div>
+<div class="order-summary__info-container">
+
+    {% set products_list = groupProducts(products, 'warehouse', warehouses) %}
+    
+    {% for idx, productArr in products_list %}
+    
+        {% for product in productArr %}
+            <div class="order-summary__info">
+                <div class="info__image">
+                    <img src="{{ product.thumb }}">
+                </div>
+                <div class="info__details">
+                    <p><span>{{product.quantity}}</span> X {{ product.name }} {% if not product['stock'] %}<span class="out-of-stock">***</span>{% endif %}</p>
+                    {% for option in product['option'] %}
+                        <p>{{ option['name'] }}: {{ option['value'] }}</p>
+                    {% endfor %}
+                    
+                    {% if product['main_price'] %}<p>{{ lang('main_price', 'checkout/checkoutv2', true) }} : {{ product['main_price'] }} </p>{% endif %}
+                    {% if product['remaining_amount'] %}<p>{{ lang('remaining_amount', 'checkout/checkoutv2', true) }} : {{ product['remaining_amount'] }} </p>{% endif %}
+                    {% if product['rentData'] %}
+                        <p>
+                            {{ lang('product_for_rent_from', 'checkout/checkoutv2', true) }}
+                            {{ product['rentData']['range']['from'] }}
+                            {{ lang('product_for_rent_to', 'checkout/checkoutv2', true) }}
+                            {{ product['rentData']['range']['to'] }}
+                            {{ lang('product_for_rent_for', 'checkout/checkoutv2', true) }}
+                            {{ product['rentData']['diff'] }}
+                            {{ lang('text_day', 'checkout/checkoutv2', true) }}
+                        </p>
+                    {% endif %}
+                    
+                    {% if product['pricePerMeterData'] %}
+                        <p>
+                            {% if product['pricePerMeterData']['skirtings_status']  == 1 %}
+                                {{ lang('text_skirtings', 'checkout/checkoutv2', true) }}: {{ product['pricePerMeterData']['skirtings'] }} {{ lang('text_meter', 'checkout/checkoutv2', true) }}<br/>
+                            {% endif %}
+                            {% if product['pricePerMeterData']['metalprofile_status']  == 1 %}
+                                {{ lang('text_metalprofiles', 'checkout/checkoutv2', true) }}: {{ product['pricePerMeterData']['metalProfiles'] }} {{ lang('text_meter') }}<br/>
+                            {% endif %}
+                            {{ lang('text_quantity', 'checkout/checkoutv2', true) }}: {{ product['pricePerMeterData']['underlaymen'] }} {{ lang('text_meter', 'checkout/checkoutv2', true) }}
+                            {% if product['pricePerMeterData']['main_unit'] == '2' %}
+                                <span style="font-size: 10px;vertical-align: top;">2</span>
+                            {% endif %}
+                        </p>
+                    {% endif %}
+                    
+                    {% if product['printingDocument'] %}
+                        <p>
+                            {{ lang('text_pages_num', 'checkout/checkoutv2', true) }}: {{ product['printingDocument']['print_pages'] }}<br/>
+                            {% if product['printingDocument']['print_cover_name'] %}
+                                <br/>
+                                {{ lang('text_cover', 'checkout/checkoutv2', true) }}: {{ product['printingDocument']['print_cover_name'] }}
+                            {% endif %}
+                        </p>
+                    {% endif %}
+                                    
+                </div>
+                <div class="info__price">
+                    <p>{{product.total}}</p>
+                </div>
+            </div>
+        {% endfor %}
+        
+        {% if warehouses %}
+            <div><p class="lead font-15">{{ lang('shipping_cost', 'checkout/checkoutv2', true) }} {{ combined_wrs_costs[idx] }}</p></div>
+            {% if wrs_duration[idx] %}
+                <div><p class="lead font-15">{{ lang('shipping_duration', 'checkout/checkoutv2', true) }} {{ wrs_duration[idx] }} {{ lang('shipping_days', 'checkout/checkoutv2', true) }}</p></div>
+            {% endif %}
+        {% endif %}
+                            
+    {% endfor %}
+    
+    
+    {% for itemvoucher in vouchers %}
+        <div class="qc-name {% if not data['columns']['image'] %}qc-hide{% endif %}"></div>
+        <div class="qc-name {% if not data['columns']['name'] %}qc-hide{% endif %} ">{{ itemvoucher['description'] }}</div>
+        <div class="qc-model {% if not data['columns']['model'] %}qc-hide{% endif %} "></div>
+        <div class="qc-quantity {% if not data['columns']['quantity'] %}qc-hide{% endif %} ">{{ itemvoucher['quantity'] }}</div>
+        <div class="qc-price {% if (not data['columns']['price'] or (config('config_customer_price') and not is_logged)) %}qc-hide{% endif %} ">{{ itemvoucher['amount'] }}</div>
+        <div class="qc-total {% if (not data['columns']['total'] or (config('config_customer_price') and not is_logged)) %}qc-hide{% endif %} ">{{ itemvoucher['amount'] }}</div>
+    {% endfor %}
+    
+    {% if subscription is defined and subscription is not empty %}
+        <div class="qc-name"><a href="{{ link('checkout/cart/removeSubscriptionPlan') }}">X</a></div>
+        <div class="qc-name {% if not data['columns']['name'] %}qc-hide{% endif %} ">{{ subscription['title'] }}</div>
+        <div class="qc-model {% if not data['columns']['model'] %}qc-hide{% endif %} "></div>
+        <div class="qc-quantity {% if not data['columns']['quantity'] %}qc-hide{% endif %} ">1</div>
+        <div class="qc-price {% if (not data['columns']['price'] or (config('config_customer_price') and not is_logged)) %}qc-hide{% endif %} ">{{ subscription['amount'] }}</div>
+        <div class="qc-total {% if (not data['columns']['total'] or (config('config_customer_price') and not is_logged)) %}qc-hide{% endif %} ">{{ subscription['amount'] }}</div>
+    {% endif %}
+    
+</div>
+
+{% for total in totals %}
+    {% if total.code != 'total' %}
+        <div class="order-summary__pricing">
+            <p class="pricing__label">{{ total.title }}</p>
+            <p class="pricing__title">{{ total.text }}</p>
+        </div>
+    {% endif %}
+{% endfor %}
+
+<div id="coupon" class="order-summary__input">
+    <div class="input-group mb-3 data__input">
+        <input type="text" class="form-control" placeholder="{{lang('text_coupons', 'checkout/checkoutv2', true)}}" aria-label="{{lang('text_coupons', 'checkout/checkoutv2', true)}}" aria-describedby="button-addon2" name="coupon" value="{{ coupon ? coupon : '' }}" data-validate="validate" data-presence="1" data-presence-msg="{{lang('required_input_coupon', 'checkout/checkoutv2', true)}}" autocomplete="off">
+        <button class="btn btn-outline-secondary" type="button" id="button-addon2" onclick="checkout.handleOnClickApplyCoupon(event);">{{lang('text_apply', 'checkout/checkoutv2', true)}}</button>
+    </div>
+</div>
+
+{% if logged and reward_app %}
+<div id="reward" class="order-summary__input">
+    <label class="d-block summary__input__label" onclick="checkout.handleOnClickAddReward(event);">{{lang('text_have_points', 'checkout/checkoutv2', true)}}</label>
+    <div class="summary__hide">
+        <div class="summaray__control input-group data__input">
+            <button class="btn-minus" onclick="checkout.incrementDecrementPoint(event);">-</button>
+            <input class="input-reward input-reward__number" type="number" min='0' value="0" class="form-control form-control-lg border-right-0" 
+                value="{{ reward ? reward : ''}}" name="reward" placeholder="{{ lang('text_reward', 'checkout/checkoutv2', true) }}" data-validate="validate" data-presence="1" data-presence-msg="{{lang('required_input_reward', 'checkout/checkoutv2', true)}}" autocomplete="off">
+            <button class="btn-plus" onclick="checkout.incrementDecrementPoint(event);">+</button>
+            <button class="primary-btn mt-0 reward__confirm" onclick="checkout.handleOnClickApplyReward(event);">
+                {{lang('text_apply', 'checkout/checkoutv2', true)}}
+            </button>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="order-summary__pricing summary--total">
+    {% for total in totals %}
+        {% if total['code'] == 'total' %}
+            <p class="pricing__label">{{ total['title'] }}</p>
+            <p class="pricing__title" id="summary_total">{{ total['text'] }}</p>
+        {% endif %}
+    {% endfor %}
+</div>

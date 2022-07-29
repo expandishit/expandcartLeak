@@ -1,0 +1,94 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% set dualMenuEnabled = true %}
+
+{% block title %}
+	{{ lang('heading_title') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+	{{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block secondarymenu %}
+	{% include 'module/printful/menu.expand' with {'expand': '#printful', 'active': '#settings'} %}
+{% endblock secondarymenu %}
+
+{% block content %}
+	<div class="row">
+		<div class="col-md-12">
+			<div class="panel panel-white">
+				<div class="panel-body">
+					<legend class="text-semibold">
+						{{lang('printful_title')}}
+						<a class="control-arrow" data-toggle="collapse" data-target="#panel1">
+							<i class="icon-circle-down2"></i>
+						</a>
+					</legend>
+					<div class="collapse in" id="panel1">
+						{% if printful_settings.api_key is null %}
+							<h2>{{lang('no_apikey')}}</h2>
+						{% else %}
+							{% if printful_message %}
+								<p class="aleproductsrt alert-{{printful_message['type']}}">{{printful_message['message']}}</p>
+							{% endif %}
+							{% if products is iterable %} 
+								<p>
+									{{lang('total_products')}}
+									{{products['paging']['total']}}
+								</p>
+								{% if products['result']|length > 0 %}
+									<div>
+										<p>{{lang('total_products_imported')}} {{imported_products_count}}</p>
+										<p><a href="/admin/module/printful/handleImportAll" class="btn btn-success">{{lang('import_all_products')}}</a></p>
+									</div>
+								{% else %}
+									No products
+								{% endif %}
+							{% else %}	{# means error occurred #}
+								<p class="aleproductsrt alert-danger">{{products}}</p>
+							{% endif %}
+						{% endif %}
+					</div>
+				</div>
+			</div>
+
+			{% if printful_settings.api_key is not null %}
+				<div class="panel panel-white">
+					<div class="panel-body">
+						<legend class="text-semibold">
+							{{lang('printful_rand')}}
+							<a class="control-arrow" data-toggle="collapse" data-target="#panel1">
+								<i class="icon-circle-down2"></i>
+							</a>
+						</legend>
+						<div class="collapse in" id="panel1">
+							{% if imported_products|length > 0 %}
+								<table class="table">
+									<thead>
+										<tr>
+											<th>{{lang('col_image')}}</th>
+											<th>{{lang('col_name')}}</th>
+										</tr>
+									</thead>
+									<tbody>
+										{% for product in imported_products %}
+											<tr>
+												<td><img style="height: 80px" src="{{product['image']}}"></td>
+												<td>{{product['name']}}</td>
+											</tr>
+										{% endfor %}
+									</tbody>
+								</table>
+							{% else %}
+								<p class="alert alert-warning">{{lang('no_imported_alert')}}</p>
+							{% endif %}
+						</div>
+					</div>
+				</div>
+			{% endif %}
+
+		</div>
+	</div>
+{% endblock content %}

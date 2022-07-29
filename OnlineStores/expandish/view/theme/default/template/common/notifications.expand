@@ -1,0 +1,179 @@
+<style>
+
+	.notifications {
+		min-width: 320px;
+	}
+
+	.notifications_dropdown {
+		border-right: 1px solid #e5e5e5;
+		display: inline-block;
+		height: 30px;
+		line-height: 30px;
+		margin: 0 10px;
+		padding: 0 10px;
+	}
+
+	.notifications-wrapper {
+		overflow: auto;
+		max-height: 330px;
+	}
+
+	.menu-title {
+		font-size: 15px;
+		font-weight: bold;
+		display: inline-block;
+	}
+
+	.notification-heading,
+	.notification-footer {
+		padding: 2px 10px;
+	}
+
+	.dropdown-menu .divider {
+		margin: 3px 0;
+		height: 2px;
+	}
+
+	.notify-box {
+		display: flex;
+		padding: 0 20px;
+		border-bottom: 1px solid #e5e5e5;
+		cursor: pointer;
+	}
+	.notify-box .title {
+		font-size: 12px;
+		color: #2c2c35;
+		font-weight: 500;
+		line-height: 20px;
+		margin: 0;
+	}
+	.notify-box .date {
+		font-size: 12px;
+		color: #2c2c35;
+		opacity: .43;
+		line-height: 13px;
+		margin-bottom: 10px;
+	}
+
+	.notify-box i {
+		margin-right: 14px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 33px;
+		height: 33px;
+		border-radius: 50%;
+		font-size: 16px;
+		flex-shrink: 0;
+		margin-top: 3px;
+		background-color: #00A8E8;
+		color: #f4f4f4;
+	}
+	.notify-box .link {
+		font-size: 13x;
+		color: #00A8E8;
+	}
+	.unread {
+		background-color: #00a8e829;
+	}
+	.not_found {
+		text-align: center;
+	}
+
+	.notification_count {
+		color: #fff;
+		font-size: 10px;
+		position: absolute;
+		right: -5px;
+		top: -10px;
+		background: #c70505;
+		background: {{MainColor}}
+		;
+		border-radius: 50%;
+		width: 19px;
+		height: 19px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+
+	}
+	.mark_read {
+		float: right;
+		margin-top: 5px;
+		color: #00a8e8;
+		cursor: pointer;
+	}
+
+	.notification_toggle {
+		transform: translate(0px, 3px);
+		display: inline-block;
+	}
+
+	.notification_toggle i {
+		font-size: 25px;
+	}
+</style>
+
+<ul class="dropdown-menu notifications" role="menu" aria-labelledby="dLabel">
+	<div class="notification-heading">
+		<h4 class="menu-title">{{ lang('title_notifications') }}</h4>
+		<span class="mark_read" onclick="markAsRead()">
+			{{ lang('mark_as_read') }}</span>
+	</div>
+	<li class="divider"></li>
+	<div class="notifications-wrapper"></div>
+</ul>
+
+<script>
+	$(document).ready(function () {
+
+function load_unread_notification(view = '') {
+$.ajax({
+url: '{{ link('module/customer_notifications/getCustomerNotifications') }}',
+method: "POST",
+data: {
+view: view
+},
+dataType: "json",
+success: function (data) {
+$('.notifications-wrapper').html(data.notification);
+if (data.unread_notification > 0) {
+$('.notification_count').html(data.unread_notification);
+} else {
+
+$('.notification_count').hide();
+}
+}
+});
+}
+load_unread_notification();
+
+// load new notifications
+$(document).on('click', '.notification_toggle', function () {
+$('.notification_count').html('');
+load_unread_notification('yes');
+});
+
+const notificationInterval = setInterval(function () {
+load_unread_notification();
+}, 5000);
+/*****************EC-51481*************/
+$(window).on('beforeunload', function(){
+	window.clearInterval(notificationInterval);
+})
+/**************************************/
+});
+
+function markAsRead(notification_id) {
+if (! notification_id) {
+$('.notification_count').hide();
+}
+$.ajax({
+url: "{{ link('module/customer_notifications/markAsRead') }}",
+type: 'post',
+data: {
+id: notification_id
+}
+});
+}
+</script>

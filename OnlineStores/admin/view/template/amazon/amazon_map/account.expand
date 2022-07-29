@@ -1,0 +1,222 @@
+
+    <div class="col-md-12">
+        <!-- Advanced legend -->
+        <div class="features-table-container">
+            <div class="collapse in" id="feed-panel">
+                <table id="dt_account" class="table table-hover datatable-highlight">
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th>{{ lang('column_amazon_store_name') }}</th>
+                        <th>{{ lang('column_amazon_marketplace_id') }}</th>
+                        <th>{{ lang('column_amazon_seller_id') }}</th>
+                        <th>{{ lang('column_amazon_added_date') }}</th>
+                        <th>{{ lang('column_action') }}</th>
+                    </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+    </div> <!-- col-md-12 -->
+
+
+{% block scripts %}
+<script>
+    var dt;
+    $(document).ready(function() {
+        $.extend($.fn.dataTable.defaults, {
+            autoWidth: false,
+            dom: '<"datatable-header"fB><"datatable-scroll-wrap"t><"datatable-footer"lip>',
+            language: locales['dt_language'],
+            lengthMenu: [[10, 25, 50, 100, 200], [10, 25, 50, 100, 200]]
+        });
+        dt = $('#dt_account').DataTable({
+            processing: true,
+            serverSide: true,
+            stateSave: false,
+            language: locales['dt_language'],
+            autoWidth: false,
+            select: {
+                style: 'multi',
+                selector: 'td:first-child'
+            },
+            lengthMenu: [[10, 25, 50, 100, 200], [10, 25, 50, 100, 200]],
+            ajax: {
+                url: "{{ link('amazon/amazon_map/account/dtHandler') }}",
+                type: 'POST',
+            },
+            buttons: [
+                {
+                    text: "<i class='icon-trash'></i>",
+                    className: 'btn btn-default bulk-delete disabled',
+                    action: function (e, dt, node, config) {
+                        var selectedRows = dt.rows('.selected').data();
+                        var selectedIds = [];
+                        selectedRows.each(function (item) {
+                            selectedIds.push(item.account_id);
+                        });
+                        if (selectedIds.length > 0) {
+                            confirmMessage(function () {
+                                $.ajax({
+                                    url: '{{ link('amazon/amazon_map/account/dtDelete') }}',
+                                    type: 'post',
+                                    data: {ids: selectedIds},
+                                    success: function () {
+                                        reloadDT();
+                                    }
+                                });
+                            });
+                        }
+                    },
+                },
+                {
+                    extend: 'collection',
+                    text: '<i class="icon-drawer-out"></i>',
+                    className: 'btn btn-default btn-export',
+                    buttons: [
+                        {
+                            extend: 'copyHtml5',
+                            text: locales['buttons']['copy'],
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        },
+                        {
+                            extend: 'csvHtml5',
+                            text: locales['buttons']['export2csv'],
+                            fieldSeparator: ',',
+                            extension: '.csv',
+                            bom: "true",
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        },
+                        {
+                            extend: 'excelHtml5',
+                            text: locales['buttons']['export2excel'],
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        },
+                        {
+                            extend: 'pdfHtml5',
+                            text: locales['buttons']['export2pdf'],
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        },
+                    ]
+                },
+            ],
+            columnDefs:[
+                {
+                    targets: 0,
+                    orderable: false,
+                    className: 'select-checkbox',
+                    
+                },{
+                targets: 5,
+                orderable: false,
+                render: function (data, type, row) {
+                    return `<ul class="icons-list pull-right">
+                            <li class="dropdown">
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                    <i class="icon-menu9"></i>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-right">
+                                    <li><a href='{{ link('amazon/amazon_map/account/edit') }}?account_id=${row['account_id']}'><i class='icon-pencil7'></i> ${locales['button_edit']}</a></li>
+                                    <li><a onclick="removeItem(${row['account_id']})"><i class='icon-trash'></i> ${locales['button_delete']}</a></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    `;
+                }
+            }],
+            columns: [
+                {
+                    title: `<input type="checkbox" class="select-checkbox" onchange='toggleSelectAll(this);'>`,
+                    data: "account_id",
+                },
+                {data: "store_name"},
+                {data: "marketplace_id"},
+                {data: "seller_id"},
+                {data: "added_date"},
+                {   
+                   data: "account_id"
+                },
+            ],
+        });
+        
+        $('.dt-buttons').append(`<a href="{{ add_account }}" title="{{ button_add_account }}" class="btn btn-primary"><i class="fa fa-plus" aria-hidden="true"></i> {{ lang('button_add_account') }}</a>`)
+
+        $('[data-popup="tooltip"]').tooltip();
+        
+        $(".bulk-delete").attr({
+            "data-popup": "tooltip",
+            "title": locales['button_delete']
+        });
+        
+        $(".btn-export").attr({
+            "data-popup": "tooltip",
+            "title": locales['button_export']
+        });
+        
+        $(".btn-colvis").attr({
+            "data-popup": "tooltip",
+            "title": locales['button_colvis']
+        });
+        
+        dt.on('select', function (e, objDT, type, indexes) {
+            if (dt.rows('.selected').any()) $(".bulk-delete").removeClass('disabled');
+            else $(".bulk-delete").addClass('disabled');
+        })
+        .on('deselect', function (e, objDT, type, indexes) {
+            if (dt.rows('.selected').any()) $(".bulk-delete").removeClass('disabled');
+            else $(".bulk-delete").addClass('disabled');
+        })
+        .on('search.dt', function (e, objDT) {
+            if (dt.rows('.selected').any()) $(".bulk-delete").removeClass('disabled');
+            else $(".bulk-delete").addClass('disabled');
+        });
+
+        $('.date-added').daterangepicker({
+            autoApply: true,
+            ranges: locales['drp_ranges'],
+            locale: locales['drp_locale']
+        }, function (start, end, label) {
+            $('#date-added-start').val(start.format('YYYY-MM-DD'));
+            $('#date-added-end').val(end.format('YYYY-MM-DD'));
+        });
+
+        $('.select').select2();
+
+        $('input, select').change(function (event) {
+            event.preventDefault();
+        });
+
+
+    });
+    function toggleSelectAll(checkbox) {
+        if (checkbox.checked == true) {
+            dt.rows().select();
+        } else {
+            dt.rows().deselect();
+        }
+    }
+
+    function removeItem(id) {
+        //alert(clientId);
+        confirmMessage(function () {
+            ajax("{{ link("amazon/amazon_map/account/dtDelete") }}", {ids: [id]}, function (res) {
+                reloadDT();
+            });
+        });
+    }
+
+    function reloadDT() {
+        dt.ajax.reload();
+    }
+
+
+</script>
+{% endblock %}

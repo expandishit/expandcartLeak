@@ -1,0 +1,276 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block title %}
+    {{ lang('heading_title', 'sale/customer_group') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block secondarymenu %}
+{% endblock secondarymenu %}
+{% block headelements %}
+    {% if customer_group_id and (customer_group_total > 1) and (not is_default) %}
+        <button class="btn btn-default group-delete"> {{ lang('button_delete') }}</button>
+    {% endif %}
+    
+    <a  href="{{ cancel }}" class="btn btn-default bottom-cancel-button"> {{ lang('button_cancel') }}</a>
+    <button type="button" class="btn btn-primary btn-ladda btn-ladda-spinner bottom-save-button" data-style="zoom-in" onclick="$('.form').submit();"><i class="far fa-save fa-lg position-left"></i> {{ lang('button_save') }}</button>
+{% endblock headelements %}
+
+{% block content %}
+  <style>
+        .bootstrap-select, .btn-group, .multiselect-container {width: 100% !important;}
+    </style>
+
+<!-- Profile info -->
+<div class="panel panel-flat">
+        <div class="panel-body">
+            <form class="form" action="{{ action }}" method="POST">
+                <div class="row">
+                    <div class="col-md-6">
+                            <div class="form-group" id="">
+                                    <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                                        <div class="tab-content">
+                                            {% for language in languages %}
+                                                <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}" id="langTab{{ language['language_id'] }}">
+                                                    
+                                                    <div class="form-group" id="name_{{ language['language_id'] }}-group">
+                                                        <label for="cg_name_{{language['language_id']}}" class="control-label">{{lang('entry_name')}} ({{ language['name'] }}) <span class="text-danger">*</span></label>
+                                                        <input type="text" id="cg_name_{{language['language_id']}}" name="customer_group_description[{{ language['language_id'] }}][name]" value="{{customer_group_description[language['language_id']]['name']}}" class="form-control">
+                                                        <span class="help-block"></span>
+                                                    </div>
+                
+                                                    <div class="form-group">
+                                                        <label for="cg_descr_{{language['language_id']}}" class="control-label">{{lang('entry_description')}} ({{ language['name'] }})</label>
+                                                        <textarea id="cg_descr_{{language['language_id']}}" name="customer_group_description[{{language['language_id']}}][description]" class="form-control" cols="30" rows="5">{{ customer_group_description[language['language_id']]['description'] }}</textarea>
+                                                        <span class="help-block"></span>
+                                                    </div>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                
+                                        <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                                            {% for language in languages %}
+                                                <li class="{{ loop.first ? 'active' : '' }}">
+                                                    <a href="#langTab{{ language['language_id'] }}" data-toggle="tab" aria-expanded="false">
+                                                        <img src="view/image/flags/{{ language['image'] }}" title="{{ language['name'] }}" class="pull-right">
+                                                        <div> {{ language['name'] }}</div>
+                                                    </a>
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                </div>
+                    </div>           
+                    <div class="col-md-6">
+                        <!-- Start OF Permissions  -->
+                        {# <div class="panel panel-white">
+                            <div class="panel-heading">
+                                <h6 class="panel-title"><span class="text-bold">{{ lang('text_GroupPermissions')|trim(':') }}</span></h6>
+                                <div class="heading-elements not-collapsible">
+                                    <ul class="icons-list">
+                                        <li><a data-action="collapse" class=""></a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="panel-body">
+                                <div class="collapse in" id="panel1"> #}
+                                    <div class="form-group" id="permissions-group">
+                                        <label class="control-label" for="customer_group_permissions">{{ lang('text_GroupPermissions') }}</label>
+                                        <select name="permissions[]" id="customer_group_permissions" multiple class="multiselect-full-featured form-control">
+                                        {% for permission in customPermissions %}
+                                            <option value="{{permission['value']}}" {{ permission['value'] in selectedPermissions ? 'selected' }}>
+                                                {{ permission['text'] }}
+                                            </option>
+                                        {% endfor %}
+                                        </select>
+                                    </div>
+                                {# </div>
+                            </div>
+                        </div>  #}
+                        <!-- End OF  Permissions -->
+                 
+                            {% if smsModule['status'] == 1 and not enable_new_login  %}
+                            <div class="form-group" id="sms_activation-group">
+                                <label class="control-label">{{ lang('enable_sms_activation') }}</label>
+                                <div class="checkbox checkbox-switchery">
+                                    <label>
+                                        <input type="checkbox" onchange="changeStatus(this);" name="sms_activation" class="switchery" {{ sms_activation == 1 ? 'checked' }}>
+                                        <span class="switchery-status">{{ sms_activation == 1 ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                    </label>
+                                </div>
+                                <span class="help-block"></span>
+                                <span class="text-muted">{{ langempty('sms_activation_help') }}</span>
+                            </div>
+                            {% else %}
+                                <input type="hidden" name="sms_activation" value="0">
+                            {% endif %}
+                            
+                            {% if not enable_new_login  %}
+                            <div class="form-group" id="email_activation-group">
+                                <label class="control-label">{{ lang('enable_email_activation') }}</label>
+                                <div class="checkbox checkbox-switchery">
+                                    <label>
+                                        <input type="checkbox" onchange="changeStatus(this);" name="email_activation" class="switchery" {{ email_activation == 1 ? 'checked' }}>
+                                        <span class="switchery-status">{{ email_activation == 1 ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                    </label>
+                                </div>
+                                <span class="help-block"></span>
+                                <span class="text-muted">{{ langempty('email_activation_help') }}</span>
+                            </div>
+                            {% else %}
+                            <input type="hidden" name="email_activation" value="0">
+                            {% endif %}
+                            
+                            <div class="form-group" id="approval-group">
+                                <label class="control-label">{{lang('entry_approval')}}</label>
+                                <div class="checkbox checkbox-switchery">
+                                    <label>
+                                        <input type="checkbox" onchange="changeStatus(this);" name="approval" class="switchery" {{ approval == 1 ? 'checked' }}>
+                                        <span class="switchery-status">{{ approval == 1 ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                    </label>
+                                </div>
+                                <span class="help-block"></span>
+                                <span class="text-muted">{{ langempty('entry_approval_help') }}</span>
+                            </div>
+                            <!-- Customer  verified -->
+                            {# <div class="form-group" id="config_customer_verified-group">
+                                <label class="control-label">{{ lang('entry_customer_verified') }}</label>
+                                <div class="checkbox checkbox-switchery">
+                                    <label>
+                                        <input type="checkbox" onchange="changeStatus(this);" name="customer_verified" class="switchery" {{ customer_verified == 1 ? 'checked'  ? 'checked' }}>
+                                        <span class="switchery-status">{{ customer_verified == 1 ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                    </label>
+                                </div>
+                                <span class="help-block"></span>
+                                <span class="text-muted">{{ lang('entry_customer_verified_help') }}</span>
+                            </div> #}
+                            <input type="hidden" name="customer_verified" value="0">
+                            <!-- /Customer verified -->
+                    </div>
+                </div>
+            
+                <div class="form-group" id="" style="display: none;">
+                    <label class="control-label col-sm-9">{{lang('entry_company_id_display')}}</label>
+                    
+                    <div class="col-sm-3 text-right">
+                        <div class="checkbox checkbox-switchery">
+                            <label>
+                                <input type="checkbox" onchange="changeStatus(this);" name="company_id_display" class="switchery" {{ company_id_display in ['1', 1, 'on'] ? 'checked' }}>
+                                <span class="switchery-status">{{ company_id_display in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group" id="" style="display: none;">
+                    <label class="control-label col-sm-9">{{lang('entry_company_id_required')}}</label>
+                    
+                    <div class="col-sm-3 text-right">
+                        <div class="checkbox checkbox-switchery">
+                            <label>
+                                <input type="checkbox" onchange="changeStatus(this);" name="company_id_required" class="switchery" {{ company_id_required in ['1', 1, 'on'] ? 'checked' }}>
+                                <span class="switchery-status">{{ company_id_required in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group" id="" style="display: none;">
+                    <label class="control-label col-sm-9">{{lang('entry_tax_id_display')}}</label>
+                    
+                    <div class="col-sm-3 text-right">
+                        <div class="checkbox checkbox-switchery">
+                            <label>
+                                <input type="checkbox" onchange="changeStatus(this);" name="tax_id_display" class="switchery" {{ tax_id_display in ['1', 1, 'on'] ? 'checked' }}>
+                                <span class="switchery-status">{{ tax_id_display in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group" id="" style="display: none;">
+                    <label class="control-label col-sm-9">{{ lang('entry_tax_id_required') }}</label>
+                    
+                    <div class="col-sm-3 text-right">
+                        <div class="checkbox checkbox-switchery">
+                            <label>
+                                <input type="checkbox" onchange="changeStatus(this);" name="tax_id_required" class="switchery" {{ tax_id_required in ['1', 1, 'on'] ? 'checked' }}>
+                                <span class="switchery-status">{{ tax_id_required in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+  
+            </form>
+        </div>
+    </div>
+    <!-- /profile info -->
+
+    {% set cancel = link('sale/component/customers?content_url=sale/customer_group') %}
+
+    <div class="row">
+        <div class="col-md-12 text-right">
+            <hr/>
+            {% if customer_group_id and (customer_group_total > 1) and (not is_default) %}
+                <button class="btn btn-default group-delete"> {{ lang('button_delete') }}</button>
+            {% endif %}
+            <a  href="{{ cancel }}" class="btn btn-default bottom-cancel-button"> {{ lang('button_cancel') }}</a>
+            <button type="button" class="btn btn-primary btn-ladda btn-ladda-spinner bottom-save-button" data-style="zoom-in" onclick="$('.form').submit();"><i class="far fa-save fa-lg position-left"></i> {{ lang('button_save') }}</button>
+        </div>
+    </div>
+
+<script>
+    var url_string = window.location.href
+    var url = new URL(url_string);
+    var id = url.searchParams.get("customer_group_id");
+    console.log(id);
+    $('.group-delete').click(function() {
+        confirmMessage(function() {
+            $.ajax({
+                url: '{{ link('sale/customer_group/dtDelete') }}',
+                type: 'post',
+                data: {id: id},
+                success: function(){
+                    window.location = "{{link('sale/component/customers')}}"
+                }
+            });
+        });
+    })
+    function changeStatus(checkbox)
+    {
+        var self = $(checkbox);
+        var switch_status = self.siblings('.switchery-status');
+
+        if ( self.is(':checked') )
+        {
+            switch_status.html("{{ lang('text_enabled') }}");
+        }
+        else
+        {
+            switch_status.html("{{ lang('text_disabled') }}");
+        }
+    }
+    
+    $(document).ready(function(){
+        $('.multiselect-full-featured').multiselect({
+            includeSelectAllOption: true,
+            enableFiltering: true,
+            templates: {
+                filter: '<li class="multiselect-item multiselect-filter"><i class="icon-search4"></i> <input class="form-control" type="text"></li>'
+            },
+            onSelectAll: function() {
+                $.uniform.update();
+            },
+            buttonWidth: '100%',
+            width: '100%'
+        });
+
+        $(".styled, .multiselect-container input").uniform({ radioClass: 'choice'});
+    });
+
+</script>
+
+
+{% endblock content %}

@@ -1,0 +1,361 @@
+{{ script('js/jquery/jquery.total-storage.min.js') }}
+
+    {% set mfSettings = config(mega_filter_settings) %}
+    {% if mfSettings %}
+        {% if mfilter_json %}
+            <div id="mfilter-json" style="display:none">{{ mfilter_json|base64_encode }}</div>
+        {% endif %}
+        <div id="mfilter-content-container">
+    {% endif %}
+<style>
+.category-view, .description {
+    margin-bottom: 30px;
+}
+.category-view {
+    position: relative;
+}
+.category-view .category-title {
+    position: absolute;
+    z-index: 1;
+    bottom: -3px;
+    color: #fff;
+    padding: 20px 120px 20px 20px;
+    background: rgba(112, 154, 65, 0.9);
+    font-size: 24px;
+}
+.category-view .category-title:lang(en) {
+    left: 0;
+}
+.category-view .category-title:lang(ar) {
+    right: 0;
+}
+.cat-desc-link {
+    display: flex;
+}
+.cat-desc-link img {
+    width: 54px;
+    height: 54px;
+    margin: 0 8px;
+}
+.cat-desc-link p {
+    font-weight: bold;
+    font-style: italic;
+    margin-bottom: 0;
+    font-size: 17px;
+}
+.cat-grid {
+    margin-bottom: 20px;
+}
+.cat-grid .product-item-detail {
+    margin: 10px 0;
+}
+.description {
+    position: relative;
+    height: 100px;
+    overflow: hidden;
+}
+.more-less {
+    text-align: right;
+    background: rgba(255,255,255,.9);
+    padding: 10px;
+    position: absolute;
+    bottom: -10px;
+    width: 100%;
+    cursor: pointer;
+    color: #709a41;
+}
+.more-less:hover, .more-less:active {
+    text-decoration: underline;
+}
+</style>
+<script>
+    if ($('html').attr('lang') == 'ar') {
+        var textLess = 'اقل'
+        var textMore = 'المزيد'
+    } else {
+        var textLess = 'Less'
+        var textMore = 'More'
+    }
+    $(document).ready(function() {
+        $('.more-less').html(textMore + ' <i class="fa fa-angle-down" aria-hidden="true"></i>');
+        var toggle = true;
+        $('.more-less').click(function(){
+            if(toggle) {
+                $('.description').css('height', 'auto');
+                $('.more-less').html(textLess + ' <i class="fa fa-angle-up" aria-hidden="true"></i>');
+            } else {
+                $('.description').css('height', '100px');
+                $('.more-less').html(textMore + ' <i class="fa fa-angle-down" aria-hidden="true"></i>');
+            }
+            toggle = !toggle;
+        })
+    })
+</script>
+    <!-- breadcrumb -->
+    <div class="breadcrumb-page">
+        <ol class="breadcrumb">
+            {% for breadcrumb in breadcrumbs %}
+                {% if loop.last %}
+                    <li class="active">{{ breadcrumb['text'] }}</li>
+                {% else %}
+                    <li><a href="{{ breadcrumb['href'] }}">{{ breadcrumb['text'] }}</a></li>
+                {% endif %}
+            {% endfor %}
+        </ol>
+    </div> <!-- breadcrumb -->
+
+    <!-- category links -->
+    {% if image %}
+    <div class="category-view">
+        <h1 class="category-title">{{ category_name }}</h1>
+        <div class="category-image">
+            <img alt="category-images" src="{{ image(image, 870, 350) }}" alt="{{ category_name }}" />
+        </div>
+    </div><!-- images categori -->
+{% endif %}
+<div class="row">
+    {% if header_data.sideDescriptionCategories.section_state == 'enabled' %}
+    <div class="col-md-8">
+    {% else %}
+    <div class="col-md-8">
+    {% endif %}
+    {% if description %}
+    <div class="description">
+        {{ description }}
+        <p class="more-less"></p>
+    </div>
+    
+    {% endif %}
+</div>
+{% if header_data.sideDescriptionCategories.section_state == 'enabled' %}
+<div class="col-md-4">
+    <a href="{{ header_data.sideDescriptionCategories.fields.sectionLink.value }}" class="cat-desc-link">
+        <img src="{{ image(header_data.sideDescriptionCategories.fields.sectionImage.value) }}" />
+        <div>
+        <p>{{ header_data.sideDescriptionCategories.fields.sectionText1.value }}</p>
+        <p>{{ header_data.sideDescriptionCategories.fields.sectionText2.value }}</p>
+    </div>
+    </a>
+</div>
+{% endif %}
+</div>
+    {% if categories %}
+        
+         <div class="products  products-grid cat-grid">
+            <ol class="product-items row">
+            {% for category in categories %}
+            <li class="col-sm-4 product-item product-item-opt-0">
+                <div class="product-item-info">
+                    <div class="product-item-photo">
+                    <a href="{{ category['href'] }}" class="product-item-img">
+                    <img src="{{ category['icon'] }}" />
+                </a>
+                </div>
+                <div class="product-item-detail">
+                    <strong class="product-item-name"><a href="{{ category['href'] }}">{{ category['name'] }}</a></strong>
+                    </div>
+                    
+                
+                </div>
+            </li>
+            {% endfor %}
+        </ol>
+        </div>
+    
+        <!-- category links -->
+
+    {% else %}
+ <!-- images categori -->
+   
+
+ {% if products %}
+ <!-- Toolbar -->
+ <div class=" toolbar-products toolbar-top">
+     <div class="modes">
+         <strong class="label">{{ lang('text_display') }}</strong>
+         <a href="#" onclick="$('.products-grid').show(); $('.products-list').hide(); $('.mode-list').removeClass('active'); $('.mode-grid').addClass('active'); return false;" class="modes-mode active mode-grid" title="{{ lang('text_grid') }}">
+             <span>{{ lang('text_grid') }}</span>
+         </a>
+         <a href="#" onclick="$('.products-list').show(); $('.products-grid').hide(); $('.mode-grid').removeClass('active'); $('.mode-list').addClass('active'); return false;" class="modes-mode mode-list" title="{{ lang('text_list') }}">
+             <span>{{ lang('text_list') }}</span>
+         </a>
+     </div><!-- View as -->
+
+     <div class="toolbar-option">
+         <div class="toolbar-sorter ">
+             <label class="label">{{ lang('text_sort') }}</label>
+             <select onchange="location = this.value;" class="sorter-options form-control">
+                 {% for sortst in sorts %}
+                     {% if sortst.value == sort ~ '-' ~ order %}
+                         <option value="{{ sortst.href }}" selected="selected">{{ sortst.text }}</option>
+                     {% else %}
+                         <option value="{{ sortst.href }}">{{ sortst.text }}</option>
+                     {% endif %}
+                 {% endfor %}
+             </select>
+         </div><!-- Short by -->
+
+         <div class="toolbar-limiter">
+             <label class="label">
+                 <span>{{ lang('text_limit') }}</span>
+             </label>
+
+             <select class="limiter-options form-control" onchange="location = this.value;">
+                 {% for limitst in limits %}
+                     {% if limitst.value == limit %}
+                         <option value="{{ limitst.href }}" selected="selected">{{ limitst.text }}</option>
+                     {% else %}
+                         <option value="{{ limitst.href }}">{{ limitst.text }}</option>
+                     {% endif %}
+                 {% endfor %}
+             </select>
+         </div><!-- Show per page -->
+     </div>
+
+     {{ pagination }}
+
+ </div><!-- Toolbar -->
+
+ <!-- Grid Products -->
+ <div class="products  products-grid">
+     <ol class="product-items row">
+         {% for product in products %}
+             <li class="col-sm-4 product-item product-item-opt-0">
+                 <div class="product-item-info">
+                     {% if product.image %}
+                         <div class="product-item-photo">
+                             <a href="{{ product.href }}" class="product-item-img"><img src="{{ image(product.image) }}" title="{{ product.name }}" alt="{{ product.name }}"></a>
+                         </div>
+                     {% endif %}
+                     <div class="product-item-detail">
+                         <strong class="product-item-name"><a href="{{ product.href }}">{{ product.name }}</a></strong>
+
+                         
+                         {% if product.price and ('-1' not in product.price) and ('-1' not in product.special) %}
+                             <div class="product-item-price">
+                                 {% if not product.special %}
+                                     <span class="price">{{ product.price }}</span>
+                                 {% else %}
+                                     <span class="price">{{ product.special }}</span>
+                                     <span class="old-price">{{ product.price }}</span>
+                                 {% endif %}
+                             </div>
+                         {% endif %}
+
+                         <div class="product-item-actions">
+                         {% if customer.isCustomerAllowedToAdd_cart and ( config('config_hide_add_to_cart') != 1 or product.quantity >0 )  %}
+                                 <a href="#" onclick="event.preventDefault(); addToCart({{ product.product_id }},1, {{ ('-1' in product.price) or ('-1' in product.special) ? 'true' : 'false' }}); return false;" class="btn btn-cart"><span>{{ ('-1' in product.price) or ('-1' in product.special) ? lang('button_req_quote') : lang('button_cart') }}</span></a>
+                                  {% endif %}
+                         </div>
+                     </div>
+                 </div>
+             </li>
+         {% endfor %}
+     </ol><!-- list product -->
+ </div> <!-- Grid Products -->
+
+ <!-- List Products -->
+ <div class="products  products-list" style="display: none;">
+     <ol class="product-items row">
+         {% for product in products %}
+         <li class="col-sm-12 product-item product-item-opt-0">
+             <div class="product-item-info">
+                 {% if product.image %}
+                 <div class="product-item-photo">
+                     <a href="{{ product.href }}" class="product-item-img"><img src="{{ image(product.image, 200, 200) }}" title="{{ product.name }}" alt="{{ product.name }}"></a>
+                 </div>
+                 {% endif %}
+                 <div class="product-item-detail">
+                     <strong class="product-item-name"><a href="{{ product.href }}">{{ product.name }}</a></strong>
+
+                     {% if product.price and ('-1' not in product.price) and ('-1' not in product.special) %}
+                         <div class="product-item-price">
+                             {% if not product.special %}
+                             <span class="price">{{ product.price }}</span>
+                             {% else %}
+                             <span class="price">{{ product.special }}</span>
+                             <span class="old-price">{{ product.price }}</span>
+                             {% endif %}
+                         </div>
+                     {% endif %}
+
+                     {% if product.description %}
+                         <div class="product-item-des">
+                             {{ product.description }}
+                         </div>
+                     {% endif %}
+
+                     <div class="product-item-actions">
+                              {% if customer.isCustomerAllowedToAdd_cart and ( config('config_hide_add_to_cart') != 1 or product.quantity >0 )  %}
+                             <a href="#" onclick="event.preventDefault(); addToCart({{ product.product_id }},1, {{ ('-1' in product.price) or ('-1' in product.special) ? 'true' : 'false' }}); return false;" class="btn btn-cart"><span>{{ ('-1' in product.price) or ('-1' in product.special) ? lang('button_req_quote') : lang('button_cart') }}</span></a>
+                              {% endif %}
+                     </div>
+                 </div>
+             </div>
+         </li>
+         {% endfor %}
+     </ol><!-- list product -->
+ </div> <!-- List Products -->
+
+ <!-- Toolbar -->
+ <div class=" toolbar-products toolbar-bottom">
+
+     <div class="modes">
+         <strong class="label">{{ lang('text_display') }}</strong>
+         <a href="#" onclick="$('.products-grid').show(); $('.products-list').hide(); $('.mode-list').removeClass('active'); $('.mode-grid').addClass('active'); return false;" class="modes-mode active mode-grid" title="{{ lang('text_grid') }}">
+             <span>{{ lang('text_grid') }}</span>
+         </a>
+         <a href="#" onclick="$('.products-list').show(); $('.products-grid').hide(); $('.mode-grid').removeClass('active'); $('.mode-list').addClass('active'); return false;" class="modes-mode mode-list" title="{{ lang('text_list') }}">
+             <span>{{ lang('text_list') }}</span>
+         </a>
+     </div><!-- View as -->
+
+     <div class="toolbar-option">
+         <div class="toolbar-sorter ">
+             <label class="label">{{ lang('text_sort') }}</label>
+             <select onchange="location = this.value;" class="sorter-options form-control">
+                 {% for sortsb in sorts %}
+                     {% if sortsb.value == sort ~ '-' ~ order %}
+                         <option value="{{ sortsb.href }}" selected="selected">{{ sortsb.text }}</option>
+                     {% else %}
+                         <option value="{{ sortsb.href }}">{{ sortsb.text }}</option>
+                     {% endif %}
+                 {% endfor %}
+             </select>
+         </div><!-- Short by -->
+
+         <div class="toolbar-limiter">
+             <label class="label">
+                 <span>{{ lang('text_limit') }}</span>
+             </label>
+
+             <select class="limiter-options form-control" onchange="location = this.value;">
+                 {% for limitsb in limits %}
+                     {% if limitsb.value == limit %}
+                     <option value="{{ limitsb.href }}" selected="selected">{{ limitsb.text }}</option>
+                     {% else %}
+                     <option value="{{ limitsb.href }}">{{ limitsb.text }}</option>
+                     {% endif %}
+                 {% endfor %}
+             </select>
+         </div><!-- Show per page -->
+     </div>
+
+     {{ pagination }}
+
+ </div><!-- Toolbar -->
+{% endif %}
+    {% endif %}
+
+  
+
+   
+
+
+    {% if mfSettings %}
+        </div>
+    {% endif %}
+    
+    {% if integration_settings['mn_criteo_status'] %}
+        {{ include('manymore/template/module/criteo/criteo_category.expand') }}
+    {% endif %}

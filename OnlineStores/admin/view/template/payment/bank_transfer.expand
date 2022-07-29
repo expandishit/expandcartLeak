@@ -1,0 +1,324 @@
+
+    <style>
+        textarea
+        {
+            resize: vertical;
+        }
+
+        .additional-account {
+            display: flex;
+        }
+
+        .additional-account .delete-container {
+            display: flex;
+            flex-flow: column;
+            justify-content: center;
+        }
+    </style>
+    <!-- Start Form -->
+    <form id="setting-payment" class="form" action="{{ link('payment/bank_transfer') }}">
+        <div class="row">
+            <!-- Status -->
+            <div class="col-md-3">
+                <div class="panel panel-white">
+                    <div class="panel-heading">
+                        <h6 class="panel-title"><span class="text-bold">{{ lang('entry_status')|trim(':') }}</span></h6>
+                        <div class="heading-elements not-collapsible">
+                            <ul class="icons-list">
+                                <li><a data-action="collapse" class=""></a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="collapse in" id="panel1">
+                            <div class="form-group" id="bank_transfer-group">
+                                <label class="control-label">{{ lang('entry_status') }}</label>
+                                <div class="checkbox checkbox-switchery">
+                                    <label>
+                                        <input type="checkbox" onchange="changeStatus(this);" name="bank_transfer_status" class="switchery" {{ bank_transfer_status not in ['0', 0, 'off'] or bank_transfer_status is not defined ? 'checked' }}>
+                                        <span class="switchery-status">{{ bank_transfer_status not in ['0', 0, 'off'] or not bank_transfer_status ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                    </label>
+                                </div>
+                                <span class="help-block"></span>
+                            </div>
+
+                            <!-- Total -->
+                            <div class="form-group col-md-12" id="bank_transfer-group">
+                                <label for="bank_transfer_total" class="control-label">{{ lang('entry_total') }}</label>
+                                <input type="text" class="form-control touchspinney" id="bank_transfer_total" name="bank_transfer_total" value="{{ bank_transfer_total }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Total -->
+                            <!-- Order Status -->
+                            <div class="form-group col-md-12" id="bank_transfer-group">
+                                <label for="bank_transfer_order_status_id" class="control-label">{{ lang('entry_order_status') }}</label>
+                                <select name="bank_transfer_order_status_id" id="bank_transfer_order_status_id" class="form-control">
+                                    {% for order_status in order_statuses %}
+                                        <option value="{{ order_status['order_status_id'] }}" {% if bank_transfer_order_status_id == order_status['order_status_id'] %} selected {% endif %}> 
+                                            {{ order_status['name'] }} 
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <span class="help-block"></span>
+                                <span class="text-muted">{{ langempty('entry_order_status_help') }}</span>
+                            </div>
+                            <!-- /Order Status -->
+                            <!-- Geo Zone -->
+                            <div class="form-group col-md-12" id="bank_transfer-group">
+                                <label for="bank_transfer_geo_zone_id" class="control-label">{{ lang('entry_geo_zone') }}</label>
+                                <select name="bank_transfer_geo_zone_id" id="bank_transfer_geo_zone_id" class="form-control">
+                                    <option value="0">{{ lang('text_all_zones') }}</option>
+                                    {% for geo_zone in geo_zones %}
+                                        <option value="{{ geo_zone['geo_zone_id'] }}" {% if bank_transfer_geo_zone_id == geo_zone['geo_zone_id'] %} selected {% endif %}> 
+                                            {{ geo_zone['name'] }} 
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <span class="help-block"></span>
+                                <span class="text-muted">{{ langempty('entry_geo_zone_help') }}</span>
+                            </div>
+                            <!-- /Geo Zone -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- End of Status -->
+
+            <!-- Fields -->
+            <div class="col-md-9">
+                <div class="panel panel-white">
+                    <div class="panel-heading">
+                        <h6 class="panel-title"><span class="text-bold">{{ lang('settings') }}</span></h6>
+                        <div class="heading-elements not-collapsible">
+                            <ul class="icons-list">
+                                <li><a data-action="collapse" class=""></a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="collapse in" id="fields-panel">
+                            <!-- Bank Transfer Instructions -->
+                            <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                                <div class="tab-content">
+                                    {% for language in languages %}
+
+                                        <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}" id="langTab{{ language['language_id'] }}">
+                                            <!-- Instructions -->
+                                            <div class="form-group" id="bank_transfer_bank_{{ language['language_id'] }}-group">
+                                                <label class="control-label">{{ lang('entry_bank') }} ({{ language['name'] }}) <span class="text-danger">*</span></label>
+                                                <textarea name="bank_transfer_bank_{{ language['language_id'] }}" class="form-control" rows="3">{{ _context ['bank_transfer_bank_' ~ language['language_id']] }}</textarea>
+                                                <span class="help-block"></span>
+                                            </div>
+                                            <!-- /Instructions -->
+                                            <!-- Name -->
+                                            <div class="form-group" id="bank_transfer_field_name_{{ language['language_id'] }}-group">
+                                                <label class="control-label">{{ lang('text_field_name') }} ({{ language['name'] }}) <span class="text-danger">*</span></label>
+                                                <input name="bank_transfer_field_name_{{ language['language_id'] }}" class="form-control" value="{{ _context ['bank_transfer_field_name_' ~ language['language_id']] }}">
+                                                <span class="help-block"></span>
+                                            </div>
+                                            <!-- /Name -->
+                                        </div>
+                                    {% endfor %}
+                                </div>
+
+                                <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                                    {% for language in languages %}
+                                        <li class="{{ loop.first ? 'active' : '' }}">
+                                            <a href="#langTab{{ language['language_id'] }}" data-toggle="tab" aria-expanded="false">
+                                                <img src="view/image/flags/{{ language['image'] }}" title="{{ language['name'] }}" class="pull-right">
+                                                <div> {{ language['name'] }}</div>
+                                            </a>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            <!-- /Bank Transfer Instructions -->
+                            
+                            <!-- Sort Order -->
+                            <div class="form-group" id="bank_transfer_sort_order-group">
+                                <label class="control-label">{{ lang('entry_sort_order') }}</label>
+                                <input name="bank_transfer_sort_order" class="form-control touchy" value="{{ bank_transfer_sort_order }}">
+                                <span class="help-block"></span>
+                            </div>
+                            <!-- /Sort Order -->
+                                    
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel panel-white">
+                    <div class="panel-heading">
+                        <h6 class="panel-title"><span class="text-bold">{{ lang('additional_bank_accounts') }}</span></h6>
+                        <div class="heading-elements not-collapsible">
+                            <button type="button" class="btn btn-xs btn-primary" id="new-bank-account-trigger">
+                                {{ lang('new_bank_account') }}
+                            </button>
+                            <ul class="icons-list">
+                                <li><a data-action="collapse" class=""></a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="collapse in" id="fields-panel">
+                            <div id="additional-bank-accounts">
+                                {% for k, ac in additional_accounts %}
+                                <div class="additional-account additional-accounts-{{ k }}" data-account="{{ k }}">
+                                    <div class="col-md-1 delete-container">
+                                        <button class="delete-account btn btn-danger" type="button">
+                                            <i class="fa fa-trash"></i>
+                                        </button>
+                                    </div>
+                                    <div class="col-md-11">
+                                        <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                                            <div class="tab-content">
+                                                {% for l in languages %}
+                                                    <div class="clearfix"></div>
+                                                    <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}"
+                                                        id="account-{{ k }}-{{ l['language_id'] }}">
+                                                        <div class="form-group"
+                                                            id="bank_transfer_bank_{{ l['language_id'] }}-group">
+                                                            <label class="control-label">
+                                                                {{ lang('entry_bank') }} ({{ l['name'] }})
+                                                                <span class="text-danger">*</span>
+                                                            </label>
+                                                            <textarea name="additional_accounts[{{ k }}][{{ l['language_id'] }}][description]"
+                                                                class="form-control"
+                                                                    rows="3">{{ ac[l['language_id']]['description'] }}</textarea>
+                                                            <span class="help-block"></span>
+                                                        </div>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                            <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                                                {% for language in languages %}
+                                                    <li class="{{ loop.first ? 'active' : '' }}">
+                                                        <a href="#account-{{ k }}-{{ language['language_id'] }}"
+                                                            data-toggle="tab" aria-expanded="false">
+                                                            <img src="view/image/flags/{{ language['image'] }}"
+                                                                title="{{ language['name'] }}" class="pull-right">
+                                                            <div> {{ language['name'] }}</div>
+                                                        </a>
+                                                    </li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- End of Fields -->
+        </div>
+
+    </form>
+    <!-- End Form -->
+
+
+<script id="bank-account-template" type="text/html">
+<div class="additional-account additional-accounts-@account@" data-account="@account@">
+    <div class="col-md-1 delete-container">
+        <button class="delete-account btn btn-danger" type="button">
+            <i class="fa fa-trash"></i>
+        </button>
+    </div>
+    <div class="col-md-11">
+        <div class="tabbable nav-tabs-vertical nav-tabs-right">
+            <div class="tab-content">
+                {% for language in languages %}
+                    <div class="clearfix"></div>
+                    <div class="tab-pane has-padding {{ loop.first ? 'active' : '' }}"
+                        id="account-@account@-{{ language['language_id'] }}">
+                        <div class="form-group" id="bank_transfer_bank_{{ language['language_id'] }}-group">
+                            <label class="control-label">
+                                {{ lang('entry_bank') }} ({{ language['name'] }})
+                                <span class="text-danger">*</span>
+                            </label>
+                            <textarea name="additional_accounts[@account@][{{ language['language_id'] }}][description]"
+                                class="form-control" rows="3"></textarea>
+                            <span class="help-block"></span>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                {% for language in languages %}
+                    <li class="{{ loop.first ? 'active' : '' }}">
+                        <a href="#account-@account@-{{ language['language_id'] }}" data-toggle="tab" aria-expanded="false">
+                            <img src="view/image/flags/{{ language['image'] }}"
+                                title="{{ language['name'] }}" class="pull-right">
+                            <div> {{ language['name'] }}</div>
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+</script>
+
+<script>
+
+$(document).ready(() => {
+
+    let container = $('#additional-bank-accounts');
+    let template = $('#bank-account-template').html();
+    let trigger = $('#new-bank-account-trigger');
+
+    var getLatestId = (c) => {
+        let latest = c.find('.additional-account').last();
+        if (latest.length == 0) {
+            return 1;
+        }
+
+        let latestId = latest.data('account');
+
+        return latestId + 1;
+    };
+
+    $('body').on('click', `#${trigger.attr('id')}`, function () {
+        container.append(template.replace(/@account@/g, getLatestId(container)));
+    });
+
+    $('body').on('click', '.delete-account', function () {
+        confirmMessage(() => {
+            let p = $(this).parents('.additional-account');
+
+            p.remove();
+        });
+    });
+});
+
+</script>
+
+
+<script>
+    $(document).ready(function() {
+        $('select').select2();
+        $('.touchspinney').TouchSpin({
+            'postfix': '{{ current_currency_code }}',
+            'decimals': 2,
+        });
+        $('.touchy').TouchSpin({
+            min: 1,
+            max: 99,
+        });
+    });
+
+    function changeStatus(checkbox)
+    {
+        var self = $(checkbox);
+        var switch_status = self.siblings('.switchery-status');
+
+        if ( self.is(':checked') )
+        {
+            switch_status.html("{{ lang('text_enabled') }}");
+        }
+        else
+        {
+            switch_status.html("{{ lang('text_disabled') }}");
+        }
+    }
+</script>

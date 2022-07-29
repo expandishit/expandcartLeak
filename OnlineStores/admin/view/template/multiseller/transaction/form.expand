@@ -1,0 +1,182 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% set dualMenuEnabled = true %}
+
+{% block title %}
+    {{ lang('heading_title_transaction') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block secondarymenu %}
+    {% include 'multiseller/menu.expand' with {'active': '#transaction'} %}
+{% endblock secondarymenu %}
+
+{% block headelements %}
+    <a href="{{ link('multiseller/transaction') }}" class="btn btn-default"> {{ lang('button_cancel') }}</a>
+    <a class="btn btn-primary" onclick="validateAndSubmit()"><i
+                class="far fa-save fa-lg position-left"></i> {{ lang('button_save') }}</a>
+{% endblock headelements %}
+
+{% block scripts %}
+
+    <script>
+        $(document).ready(function () {
+            $('select').select2({
+                minimumResultsForSearch: 10
+            });
+
+
+        });
+
+        function validateAndSubmit () {
+
+            var $from = $('#ms_from').val();
+            var $to = $('#ms_to').val();
+
+            $('#ms_from-group,#ms_to-group').removeClass('has-error');
+            $('#ms_from-group .text-muted,#ms_to-group .text-muted').text('');
+
+            if ($from == '' || $to == '') {
+                $('#ms_from-group,#ms_to-group').addClass('has-error');
+                $('#ms_from-group .text-muted').text('{{ lang('ms_error_transaction_fromto') }}');
+                $('#ms_to-group .text-muted').text('{{ lang('ms_error_transaction_fromto') }}');
+
+                return;
+            }
+
+            if ($from == $to) {
+                $('#ms_from-group,#ms_to-group').addClass('has-error');
+                $('#ms_from-group .text-muted').text('{{ lang('ms_error_transaction_fromto_same') }}');
+                $('#ms_to-group .text-muted').text('{{ lang('ms_error_transaction_fromto_same') }}');
+
+                return;
+            }
+
+            if (typeof $from == 'undefined' || typeof $to == 'undefined') {
+                $('#ms_from-group,#ms_to-group').addClass('has-error');
+                $('#ms_from-group .text-muted').text('{{ lang('ms_error_transaction_fromto') }}');
+                $('#ms_to-group .text-muted').text('{{ lang('ms_error_transaction_fromto') }}');
+
+                return;
+            }
+
+            $.ajax({
+                type: "POST",
+                dataType: "json",
+                url: 'multiseller/transaction/jxSave',
+                data: $('#form').serialize(),
+                error: function(jqXHR, textStatus, errorThrown) {
+                    $('.warning').text(textStatus).show();
+                },
+                success: function(jsonData) {
+                    if (!jQuery.isEmptyObject(jsonData.errors)) {
+                        for (error in jsonData.errors) {
+                            $('[name="'+error+'"]').after('<p class="error">' + jsonData.errors[error] + '</p>');
+                        }
+                    } else {
+                        window.location = 'multiseller/transaction';
+                    }
+                }
+            });
+        }
+    </script>
+
+{% endblock scripts %}
+
+{% block content %}
+
+    <form id="form" action="{{ link('multiseller/transaction/') }}" method="POST">
+        <div class="col-md-12">
+            <div class="panel panel-white">
+                <div class="panel-body">
+
+                    <legend class="text-semibold">
+                        <i class="fas fa-check-circle fa-lg position-left"></i>
+                        {{ lang('ms_transactions_heading') }}
+                    </legend>
+
+                    <div class="collapse in">
+                        <div class="form-group col-md-6" id="ms_from-group">
+                            <label for="ms_from" class="control-label text-semibold">
+                                {{ lang('ms_from') }}
+                            </label>
+
+                            <select id="ms_from" class="form-control" name="transaction[from]">
+                                <option value="">{{ lang('ms_none') }}</option>
+                                {% for seller in sellers %}
+                                <option value="{{ seller['seller_id'] }}">
+                                    {{ seller['name'] }}
+                                </option>
+                                {% endfor %}
+                            </select>
+
+                            <span class="help-block"></span>
+                            <span class="text-muted"></span>
+                        </div>
+
+                        <div class="form-group col-md-6" id="ms_to-group">
+                            <label for="ms_to" class="control-label text-semibold">
+                                {{ lang('ms_to') }}
+                            </label>
+
+                            <select id="ms_to" class="form-control" name="transaction[to]">
+                                <option value="">{{ lang('ms_none') }}</option>
+                                {% for seller in sellers %}
+                                    <option value="{{ seller['seller_id'] }}">
+                                        {{ seller['name'] }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+
+                            <span class="help-block"></span>
+                            <span class="text-muted"></span>
+                        </div>
+
+                        <div class="clearfix"></div>
+
+                        <div class="form-group" id="ms_amount-group">
+                            <label for="ms_amount" class="control-label text-semibold">
+                                {{ lang('ms_amount') }} <span class="required">*</span>
+                            </label>
+
+                            <div class="input-group">
+                                <span class="input-group-addon">{{ leftCurrencySymbol }}</span>
+                                <input type="text" class="form-control" name="transaction[amount]" id="ms_amount" />
+                                <span class="input-group-addon">{{ rightCurrencySymbol }}</span>
+                            </div>
+
+                            <span class="help-block"></span>
+                            <span class="text-muted"></span>
+                        </div>
+
+                        <div class="form-group" id="ms_description-group">
+                            <label for="ms_description" class="control-label text-semibold">
+                                {{ lang('ms_description') }}
+                            </label>
+
+                            <textarea id="ms_description" name="transaction[description]"
+                                      type="text" class="form-control"></textarea>
+
+                            <span class="help-block"></span>
+                            <span class="text-muted"></span>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <div class="row">
+        <div class="col-md-12 text-right">
+            <hr/>
+            <a href="{{ links['cancel'] }}" class="btn btn-default"> {{ lang('button_cancel') }}</a>
+            <a class="btn btn-primary" onclick="$('.form').submit();"><i
+                        class="far fa-save fa-lg position-left"></i> {{ lang('button_save') }}</a>
+        </div>
+    </div>
+{% endblock %}

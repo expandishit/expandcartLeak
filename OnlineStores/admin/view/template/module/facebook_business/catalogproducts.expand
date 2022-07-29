@@ -1,0 +1,155 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+
+{% block title %}
+    {{ lang('heading_title_fbCatalogProducts') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+{{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block content %}
+
+<style>
+    .content-wrapper {
+        background-color: #f8f9ff;
+    }
+
+    .page-header-default {
+        background-color: transparent;
+    }
+
+    .page-header-content+.breadcrumb-line {
+        border: 0;
+    }
+
+    .page-header {
+        margin: 0 60px;
+    }
+
+    .breadcrumb-line {
+        /* border-bottom: 1px solid #e0ddef !important; */
+        margin: 0 32px;
+        border-top: 0;
+        margin-bottom: 30px !important;
+    }
+	.imported_mark {
+		font-size:25px;
+		color:green;
+	}
+
+	.selected-count  {
+		background-color: #fff;
+		color: #000;
+		padding: 5px 10px;
+		margin: 5px;
+		border-radius: 50%;
+	}
+	
+    @media (max-width: 768px) {
+        .page-header {
+            margin: 0;
+        }
+    }
+</style>
+
+<div class="row-twoside mb-30">
+
+    <div class="end-side">
+        <button type="button" id="import_selected" 	class="btn btn-primary m-bold btn-ladda btn-ladda-spinner btn-has-disabled disabled" ><span class="white-bg selected-count">0</span> {{lang("btnGetSelectedProducts")}}</span></button>
+        <button type="button" id="import_all" 		class="btn btn-primary m-bold btn-ladda btn-ladda-spinner"  data-toggle="modal" data-target="#get-products">{{lang("btnGetAllProducts")}}</span></button>
+    </div>
+</div>
+<div class="panel">
+    <div class="panel-body">
+        <div class=" features-table-container rounded">
+            <table id="productsTable" class="table table-bordered table-responsive-md text-center">
+                <thead>
+                    <tr>
+                        <th class="text-center"><input type="checkbox" class="styled " id="SelectAll"  onchange='toggleSelectAll(this);'></th>
+                        <th class="text-center">{{lang("imageLabel")}}</th>
+                        <th class="text-center">{{lang("nameLabel")}}</th>
+                        <th class="text-center">{{lang("priceLabel")}}</th>
+                        <th class="text-center">{{lang("currencyLabel")}}</th>
+                        <th class="text-center">{{lang("brandLabel")}}</th>
+                        <th class="text-center">{{lang("instoreLabel")}}</th>
+                    </tr>
+                </thead>
+                <tbody class="facebookProducts" id="datatableGrid">
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+var import_link 	= "{{import_link}}";
+var catalog_id  	= "{{catalog_id}}";
+let links 			= {
+						"dtHandler" : import_link + '?catalog_id=' + catalog_id
+					};
+					
+ $("#import_selected").click(function() {
+	$("div.generated_alert").remove();
+	
+	var selected_ids=[];
+    let selected_products = $('tr.selected .select-checkbox input');
+    selected_products.toArray().map((i) => {selected_ids.push(i.id)});
+	
+    $.ajax({
+             url: '/admin/module/facebook_business/handleImport',
+                method: "POST",
+                dataType: 'JSON',
+                data: {
+                    products: selected_ids
+                }
+    }).done(function(res){
+		
+        $("#import_selected").removeAttr("disabled").removeAttr("data-loading");
+		
+        var json = res;
+
+        if(json.success != "1") {
+			var errors = json.errors;
+			$("#edit-products-brand-error-alert").show();
+			html = "";
+			errors.forEach(error => { html+= "<span>"+error+"<span></br>"; });
+			$(".panel-body").prepend(alertHTML('danger',"{{lang('res_error')}}",html));
+        } else {
+			self.notify('','success', "{{lang('res_product_imported_success')}}");
+			 location.reload();
+        }
+		
+    });
+
+});	
+				
+ $("#import_all").click(function() {
+	$("div.generated_alert").remove();
+	
+    $.ajax({
+             url: '/admin/module/facebook_business/handleImportAll',
+                method: "POST",
+                dataType: 'JSON'
+    }).done(function(json){
+	
+	  $("#import_all").removeAttr("disabled").removeAttr("data-loading");
+	  
+		if(json.success != "1") {
+			$(".panel-body").prepend(alertHTML('danger',"{{lang('res_error')}}",json.message));
+		} else {
+			 //the job created and runing in background 
+			$(".panel-body").prepend(alertHTML('warning',"",json.message));
+		}
+    });
+
+});
+
+</script>
+
+<script src="view/javascript/pages/module/facebook_business/products_import.js?bn={{ BuildNumber }}"></script>
+<script src="view/javascript/pages/module/facebook_business/common.js?bn={{ BuildNumber }}"></script>
+
+{% endblock content %}

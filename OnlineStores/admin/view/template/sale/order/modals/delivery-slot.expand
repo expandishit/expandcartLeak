@@ -1,0 +1,128 @@
+<div class="modal fade" id="order-delivery-slot-modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title">{{ lang('text_slots_edit') }} </h4>
+            </div>
+            <div class="modal-body">
+                <form id="order-delivery-slot-form" data-action="{{ link('sale/order/updateOrderDeliverySlot') }}">
+                    <div class="col-md-12 modal-errors"></div>
+                    <input type="hidden" name="order_id" value="{{ order_id }}" />
+                    <input type="hidden" name="slot_order_id" value="{{ order_delivery_slot['ds_delivery_slot_order_id'] }}" />
+                    <div class="col-md-12">
+
+                        <div class="form-group required col-md-6">
+                            <label class="control-label">
+                                {{ lang('text_delivery_date') }}
+                            </label>
+                            <input type="text" id="delivery_slot_date" name="delivery_slot_date" value="{{ order_delivery_slot['delivery_date'] }}"
+                                class="form-control pickadate-events" />
+                        </div>
+                        <div class="form-group required col-md-6">
+                            <label class="control-label">
+                                {{ lang('text_delivery_slot') }}
+                            </label>
+                            <select id="delivery_slot" name="delivery_slot" class="select form-control">
+
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer" style="text-align: {{lang('code') == 'ar' ? 'left' : 'right'}}">
+                <button type="button" class="btn btn-danger " data-dismiss="modal">
+                    {{ lang('button_close') }}
+                </button>
+                <button type="button" class="btn btn-primary update-delivery-slot-btn">
+                    {{ lang('button_save') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    var slot_id = "{{ order_delivery_slot['ds_delivery_slot_id'] }}";
+    $(document).ready(() => {
+        $('.update-delivery-slot-btn').click(function () {
+
+            let m = $('#order-delivery-slot-modal');
+            let f = $('#order-delivery-slot-form'), d = f.serialize();
+            m.find('.modal-errors').html('');
+
+            $.ajax({
+                url: f.data('action'),
+                data: d,
+                method: 'POST',
+                dataType: 'JSON',
+                success: (r) => {
+                    if (typeof r.status !== 'undefined' && r.status === 'OK') {
+                        location.reload();
+                        return;
+                    }
+
+                    for (i in r.errors) {
+                        if(parseInt(i) >= 0){
+                            let e = r.errors[i];
+                            $('.modal-errors').append(`<div class="alert alert-danger">${e}</div>`);
+                        }
+                    }
+                }
+            });
+        });
+
+        var $input = $('.pickadate-events').pickadate({
+            format: "mm-dd-yyyy",
+            onStart: function() {},
+            onRender: function() {},
+            onOpen: function() {},
+            onClose: function() {},
+            onStop: function() {},
+            onSet: function(context) {
+                getSlots();
+            }
+        });
+        var picker = $input.pickadate('picker');
+
+        picker.set('min', {{ slots_day_index ? slots_day_index : true }});
+        {% if slots_max_day and slots_max_day > 0  %}
+        picker.set('max', {{ slots_max_day }});
+        {% endif  %}
+
+        function getSlots(){
+            var dateValue = $('#delivery_slot_date').val();
+            var dayOfWeek = parseInt(picker.get('select').day) - 1;
+
+            $.ajax({
+                url: "{{ link('module/delivery_slot/getSlotsData') }}",
+                type: "GET",
+                data: {'dateValue': dateValue, 'dayOfWeek': dayOfWeek},
+                success: function (resp)
+                {
+
+                    var resp = JSON.parse(resp);
+                    var html = '';
+                    var lenthData = resp.length;
+                    if(lenthData > 0){
+                        var selected = '';
+                        for (var i = 0; i < lenthData; i++)
+                        {
+                            selected = '';
+                            if(slot_id == resp[i].slot_id)
+                                selected = 'selected=""';
+                            html += '<option class="slot-dir-left" value="' + resp[i].slot_id + '"'+selected+'>' + resp[i].delivery_slot_data + '</option>';
+                        }
+                    }else{
+                        html += '<option value="0">{{ lang('text_no_data') }}</option>';
+                    }
+
+                    $('#delivery_slot').html(html);
+
+                }
+            });
+        }
+    });
+</script>

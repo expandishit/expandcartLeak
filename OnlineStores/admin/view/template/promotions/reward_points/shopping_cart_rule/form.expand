@@ -1,0 +1,357 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% set dualMenuEnabled = true %}
+
+{% block title %}
+{{ lang('heading_title') }}
+<style>
+    .label[href]:hover{
+        color: black !important
+    }
+    a.label:hover, a.label:focus{
+        color: black !important
+    }
+</style>
+{% endblock title %}
+
+{% block breadcrumb %}
+{{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block secondarymenu %}
+    {% include 'promotions/reward_points/menu.expand' with {'expand': '#reward_points_pro', 'active': '#shoppingcart'} %}
+{% endblock secondarymenu %}
+
+
+{% block headelements %}
+    {% include "includes/buttons_top.expand" %}
+        <a onclick="$('#apply_rule').val(1);$('#form').submit();" class="button btn btn-primary">{{lang('button_save_and_apply') }}</a>
+
+{% endblock headelements %}
+
+
+{% block content %}
+
+<!-- Start Form -->
+<form id="form" class="form" action="{{ action }}" method="post">
+    <div class="col-md-6">
+        <!-- Advanced legend -->
+        <div class="panel panel-flat">
+            <div class="panel-body">
+               <fieldset>
+                   <legend class="text-semibold">
+                       <i class="fas fa-check-circle fa-lg position-left"></i>
+                       {{ lang('tab_rule_infomation')|trim(':') }}
+                       <a class="control-arrow" data-toggle="collapse" data-target="#panel1">
+                           <i class="icon-circle-down2"></i>
+                       </a>
+                   </legend>
+                   <div class="collapse in" id="panel1" >
+                        <div class="form-group" id="rule_name-group">
+                            <label> {{ lang('column_rule_name') }} <span class="text-danger"> *</span></label>
+                            <input type="text" id="name" value="{{ name }}" name="name" class="form-control" />
+                            <span class="help-block"></span>
+                        </div>
+                        <!-- form-group -->
+                        <div class="form-group" id="rule_description-group">
+                            <label> {{ lang('column_rule_description') }}  <span class="text-danger"> *</span></label>
+                            <textarea type="text" class="form-control" id="rule_description" name="description" size="100" rows="5">{{ description }}</textarea>
+                        </div>
+                        <!-- form-group -->
+                        <div class="form-group id="status-group">
+                            <label for="status" class="control-label"> {{ lang('entry_status') }} </label>
+                            <!-- Switchery -->
+                            <div class="checkbox checkbox-switchery">
+                                <label>
+                                    <input type="checkbox" onchange="changeStatus(this,'{{lang('text_enabled')}}','{{lang('text_disabled')}}');" name="status" class="switchery" {{ status in ['1', 1, 'on'] ? 'checked' }}>
+                                    <span class="switchery-status">{{ status in [1, '1', 'on'] ? lang('text_enabled') : lang('text_disabled') }}</span>
+                                </label>
+                            </div>
+                            <!-- /Switchery -->
+                            <span class="help-block"></span>
+                        </div>
+                        <!-- form-group -->
+                        <div class="form-group" id="customer_group_ids-group">
+                            <label> {{ lang('column_customer_group') }} </label>
+                            <select id="customer_group_ids" class="select2" multiple="multiple" name="customer_group_ids[]" >
+                            <option value="99" {{ customer_group_ids|length > 0 and 99 in customer_group_ids ? 'selected="selected"' : '' }}>{{ lang ('NOT LOGGED IN') }}</option>
+                            {% for group in customer_groups %}
+                                  <option value={{ group["customer_group_id"] }}
+                                  {{ customer_group_ids|length > 0 and group["customer_group_id"] in customer_group_ids ? 'selected="selected"' : '' }}
+                                  > {{ group["name"] }} </option>
+                            {% endfor %}
+                            </select>
+                            <span class="help-block"></span>
+                        </div>
+                        <!-- form-group -->
+                        <div class="form-group">
+                            <label> {{ lang('column_start_date') }} </label>
+                            <input type="text" class="form-control picker__input" id="date_start" name="start_date"  value="{{start_date}}" >
+                            <span class="help-block"></span>
+                        </div>
+                        <!-- form-group -->
+                        <div class="form-group">
+                            <label> {{ lang('column_end_date') }} </label>
+                            <input type="text" class="form-control picker__input" id="date_end" name="end_date"  value="{{end_date}}" >
+                            <span class="help-block"></span>
+                        </div>
+
+                        <input type="hidden" id="rule_id" name="rule_id" value="{{ rule_id }}"/>
+                        <input type="hidden" id="apply_rule" name="apply_rule" value=""/>
+                        <input type="hidden" id="rule_counter" value=" {{ rule_counter }}"/>
+                        <input type="hidden" id="rule_sub_counter" value="{{ rule_sub_counter }}"/>
+                        <input type="hidden" id="rule_url_post" value=" {{ link('promotions/reward_points/getDataOption', 'token={{ data["token"] }}' , 'SSL') }}"/>
+                    </div> <!-- collapse -->
+                 </fieldset>
+            </div>
+        </div>
+        <!-- /a legend -->
+    </div>
+    <!-- col-md-6 -->
+    <div class="col-md-6">
+        <div class="panel panel-flat">
+            <div class="panel-body">
+               <fieldset>
+                   <legend class="text-semibold">
+                       <i class="fas fa-check-circle fa-lg position-left"></i>
+                       {{ lang('tab_rule_conditions')|trim(':') }}
+                       <a class="control-arrow" data-toggle="collapse" data-target="#panel1">
+                           <i class="icon-circle-down2"></i>
+                       </a>
+                   </legend>
+                   <div class="collapse in" id="panel1" >
+                        {% for counter,condition in conditions_combine %}
+                            {% set rule_counter=rule_conunter+1 %}
+                        <fieldset id="rule_conditions_fieldset">
+                            {{ lang('If') }} <span class="rule-param"><a href="javascript:void(0)" class="label">{{ lang(condition['aggregator']) }}</a><span class="element"> <select id="conditions__{{counter}}__aggregator" name="rule[conditions][{{counter}}][aggregator]" class="element-value-changer">
+                            <option value="all" {% if condition['aggregator'] == 'all' %} 'selected="selected"' {% else %} '' {% endif %}>{{ lang('all') }}</option>
+                            <option value="any" {% if condition['aggregator'] == 'any' %} 'selected="selected"' {% else %} '' {% endif %} >{{ lang('any') }}</option>
+                            </select>
+                            </span></span>{{ lang('&nbsp; of these conditions are') }}
+                            <span class="rule-param"><a href="javascript:void(0)" class="label">{% if condition['value'] %} {{ lang('true') }} {% else %} {{ lang('false') }} {% endif %} </a>
+                                <span class="element">
+                                    <select id="conditions__ {{counter}}__value" name="rule[conditions][{{counter}}][value]" class=" element-value-changer">
+                                        <option value="1" {% if condition['value'] == '1' %} 'selected="selected"' {% else %} '' {% endif %}>{{ lang('true') }}</option>
+                                        <option value="0" {% if condition['value'] == '0' %} 'selected="selected"' {% else %} '' {% endif %}>{{ lang('false')}}</option>
+                                    </select>
+                                </span>
+                            </span>&nbsp;:
+                            <ul class="rule-param-children">
+                                {% set sub_counter = 0 %}
+                                {% for key,data in rule %}
+                                    {% set sub_counter=sub_counter+1 %}
+                                    {% set key_counter = key|split("--") %}
+                                    {% set key_counter = key_counter[0] %}
+                                    {% if counter == key_counter %}
+                                        <li>
+                                            <input id="conditions__{{counter}}--{{sub_counter}}__type" name="rule[conditions][{{counter}}--{{sub_counter}}][type]" value="{{data['type']}}" class="hidden" type="hidden">
+                                            <input type="hidden" class="hidden" id="conditions__{{counter}}--{{sub_counter}}__attribute" name="rule[conditions][{{counter}}--{{sub_counter}}][attribute]" value="attribute_set_id"> {{data['data']['label']}}&nbsp;
+                                            <span class="rule-param"><a href="javascript:void(0)" class="label">{{ data['operator']|e }}</a>
+                                            <span class="element">
+                                            <select id="conditions__{{counter}}--{{sub_counter}}__operator" name="rule[conditions][{{counter}}--{{sub_counter}}][operator]" class=" element-value-changer">
+                                                {% for op,label in data['data']['operator']  %}
+                                                <option value="{{op}}" {{ data['operator'] == op ? 'selected="selected"' : '' }}>{{label}}</option>
+                                                {% endfor %}
+                                            </select>
+                                            </span></span>&nbsp;
+                                            <span class="rule-param"><a href="javascript:void(0)" class="label">{{data['data']['selected']}}</a>
+                                            <span class="element">
+                                                {% if data['data']['type'] == 'select' or data['data']['type'] == 'radio' or data['data']['type'] == 'select' %}
+                                                    <select id="conditions__{{counter}}--{{sub_counter}}__value" name="rule[conditions][{{counter}}--{{sub_counter}}][value]" class=" element-value-changer">
+                                                        <option value=""></option>
+                                                        {% for v in data['data']['values'] %}
+                                                            <option value="{{v['value_id']}}" {% if v['selected'] > 0 %} 'selected="selected"' {% else %} '' {% endif %}>{{v['name']}}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                {% else %}
+                                                    <input id="conditions__{{counter}}--{{sub_counter}}__value" name="rule[conditions][{{counter}}--{{sub_counter}}][value]" value="{{data['data']['selected']}}" type="text" class=" input-text element-value-changer">
+                                                {% endif %}
+                                            </span></span>&nbsp; <span class="rule-param"><a href="javascript:void(0)" class="rule-param-remove" title="{{ lang('Remove') }}"><img src="view/image/rewardpoints/rule_component_remove.gif" alt="" class="v-middle"></a></span>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                                <li>
+                                    <span class="rule-param rule-param-new-child">
+                                        <a href="javascript:void(0)" class="label"><img src="view/image/rewardpoints/rule_component_add.gif" class="rule-param-add v-middle" alt="" title="{{ lang('Add') }}"></a><span class="element">
+                                            <select id="conditions__{{counter}}__new_child" name="rule[conditions][{{counter}}][new_child]" class="element-value-changer">
+                                                <option value="" selected="selected">{{ lang('Please choose a condition to add...')}}</option>
+                                                <optgroup label="{{lang('text_product_option') }}">
+                                                    {% for product_attribute in product_attributes %}
+                                                    {% set addition_model=product_attribute['model'] %}
+                                                        {% if product_attribute['type'] is defined and product_attribute['type'] != '' %}
+                                                            {% set addition_model= addition_model ~ '-' ~ product_attribute['type'] %}
+                                                        {% endif %}
+                                                        {% if product_attribute['method'] is defined and product_attribute['method'] != '' %}
+                                                            {% set addition_model=addition_model ~ '-' ~ product_attribute['method'] %}
+                                                        {% endif %}
+
+                                                    <option value="{{ product_attribute['id'] is defined ? addition_model ~ '|' ~ product_attribute['id'] : '' }}">{{product_attribute['text']}}</option>
+                                                    {% endfor %}
+                                                </optgroup>
+                                                <optgroup label="{{ lang('text_cart_attribute') }}">
+                                                    {% for cart_attribute in cart_attributes %}>
+                                                    {% set addition_model=cart_attribute['model'] %}
+                                                    {% if cart_attribute['type'] is defined and cart_attribute['type'] != '' %}
+                                                        {% set addition_model= addition_model ~ '-' ~ cart_attribute['type'] %}
+                                                    {% endif %}
+                                                    {% if cart_attribute['method'] is defined and cart_attribute['method'] != '' %}
+                                                        {% set addition_model=addition_model ~ '-' ~ cart_attribute['method'] %}
+                                                    {% endif %}
+                                                    <option value="{{ cart_attribute['id'] is defined ? addition_model ~ '|' ~ cart_attribute['id'] : '' }}">{{cart_attribute['text']}}</option>
+                                                    {% endfor %}
+                                                </optgroup>
+                                            </select>
+                                    </span></span>&nbsp;
+                                </li>
+                            </ul>
+                        </fieldset>
+                        {% endfor %}
+                   </div> <!-- collapse -->
+                 </fieldset>
+            </div>
+        </div>
+        <!-- /a legend -->
+    </div>
+    <!-- col-md-6 -->
+    <div class="col-md-6">
+        <div class="panel panel-flat">
+            <div class="panel-body">
+               <fieldset>
+                   <legend class="text-semibold">
+                       <i class="fas fa-check-circle fa-lg position-left"></i>
+                       {{ lang('tab_rule_actions')|trim(':') }}
+                       <a class="control-arrow" data-toggle="collapse" data-target="#panel1">
+                           <i class="icon-circle-down2"></i>
+                       </a>
+                   </legend>
+                   <div class="collapse in" id="panel1" >
+                        <div class="form-group" id="actions-group">
+                            <label> {{ lang('text_apply') }}</label>
+                            <select id="actions_ids"  name="actions"  class="form-control select2">
+                               <option value="1" > {{ lang('Fixed Reward Points per item(X)') }} </option>
+                               <option value="2" > {{ lang('Spend (Y) Get (X) Reward Points per item') }} </option>
+                            </select>
+                            <span class="help-block"></span>
+                        </div>
+                        <div class="form-group" id="reward_point-group">
+                            <label> {{ lang('Reward Points (X)') }} <span class="text-danger"> *</span></label>
+                            <input type="text" id="name" value="{{reward_point}}" name="reward_point" class="form-control" />
+                            <span class="help-block"></span>
+                        </div>
+                        <div class="form-group" id="reward_per_spent-group">
+                            <label> {{ lang('Per (Y) money Spent') }} <span class="text-danger"> *</span></label>
+                            <input type="text" id="name" value="{{reward_per_spent}}" name="reward_per_spent" class="form-control" />
+                            <span class="help-block"> {{ lang('Skip if Fixed Reward Points chosen') }}</span>
+                        </div>
+                        <!-- form-group -->
+                        <div class="form-group id="stop_rules_processing-group">
+                            <label for="stop_rules_processing" class="control-label"> {{ lang('Stop Further Rule Processing') }} </label>
+                            <!-- Switchery -->
+                            <div class="checkbox checkbox-switchery">
+                                <label>
+                                    <input type="checkbox" onchange="changeStatus(this,'{{lang('yes')}}','{{lang('no')}}');" name="stop_rules_processing" class="switchery" {{ stop_rules_processing in ['1', 1, 'on'] ? 'checked' }}>
+                                    <span class="switchery-status">{{ stop_rules_processing in [1, '1', 'on'] ? lang('yes') : lang('no') }}</span>
+                                </label>
+                            </div>
+                            <!-- /Switchery -->
+                            <span class="help-block"></span>
+                        </div>
+                        <div class="form-group" id="rule_position-group">
+                            <label> {{ lang('Priority') }}</label>
+                            <input type="text" id="rule_position" name="rule_position" value="{{rule_position}}" class="form-control" />
+                            <span class="help-block"></span>
+                        </div>
+                   </div> <!-- collapse -->
+                 </fieldset>
+            </div>
+        </div>
+        <!-- /a legend -->
+    </div>
+    <!-- /col-md-6 -->
+</form>
+<!-- End Form -->
+
+<!-- Lower Buttons -->
+<div class="row">
+    <div class="col-md-12 text-right">
+        <hr/>
+        <a type="button" class="btn btn-default" href="{{ cancel }}"" > {{ lang('button_cancel') }}</a>
+        <button type="button" class="btn btn-primary" onclick="$('.form').submit();"><i class="far fa-save fa-lg position-left"></i> {{ lang('button_save') }}</button>
+        <a onclick="$('#apply_rule').val(1);$('#form').submit();" class="button btn btn-primary">{{lang('button_save_and_apply') }}</a>
+
+    </div>
+</div>
+<!-- End Lower Buttons -->
+{% endblock content %}
+{% block scripts %}
+    {{ parent() }}
+    {% import _self as dtControls %}
+    <script>
+    $(document).ready(function() {
+
+        $('#date_start').pickadate({format: 'yyyy-mm-dd'});
+        $('#date_end').pickadate({format: 'yyyy-mm-dd'});
+        $('.select2').select2();
+        $('.touchspinney').TouchSpin({
+            'postfix': '{{ current_currency_code }}',
+            'decimals': 2,
+        });
+    });
+    function changeStatus(checkbox,op1,op2)
+    {
+        var self = $(checkbox);
+        var switch_status = self.siblings('.switchery-status');
+
+        if ( self.is(':checked') )
+        {
+            switch_status.html(op1);
+        }
+        else
+        {
+            switch_status.html(op2);
+        }
+    }
+</script>
+<script type="text/template" id="rule-condition-li">
+        <li>
+            <input id="conditions__1--<%= counter %>__type" name="rule[conditions][1--<%= counter %>][type]" value="<%= condition_model %>" class="hidden" type="hidden">
+            <input id="conditions__1--<%= counter %>__text" name="rule[conditions][1--<%= counter %>][text]" value="<%= condition_label %>" class="hidden" type="hidden">
+            <input type="hidden" class="hidden" id="conditions__1--<%= counter %>__attribute" name="rule[conditions][1--<%= counter %>][attribute]" value="attribute_set_id"> <%= condition_label %>&nbsp;
+        <span class="rule-param"><a href="javascript:void(0)" class="label"><?php echo $this->language->get('is'); ?></a>
+        <span class="element">
+        <%= condition_operator %>
+        </span></span>&nbsp;
+        <span class="rule-param"><a href="javascript:void(0)" class="label"><%= condition_value_selected %></a>
+            <span class="element">
+        <%= condition_options_value %>
+        </span></span>&nbsp; <span class="rule-param"><a href="javascript:void(0)" class="rule-param-remove" title="<?php echo $this->language->get('Remove'); ?>"><img src="view/image/rewardpoints/rule_component_remove.gif" alt="" class="v-middle"></a></span>
+        </li>
+    </script>
+
+	<script type="text/template" id="rule-condition-li-wait">
+        <li class="rule-param-wait"><?php echo $this->language->get('text_rule_condition_wait')?></li>
+    </script>
+
+	<script type="text/template" id="rule-condition-operator">
+        <select id="conditions__1--<%= counter %>__operator" name="rule[conditions][1--<%= counter %>][operator]" class=" element-value-changer select">
+        <% _.each(operator, function(text, op){ %>
+	        <option value="<%= op%>"><%= text%></option>
+        <% });%>
+    </select>
+    </script>
+
+	<script type="text/template" id="rule-condition-value">
+    <% if(type == 'select' || type == 'radio' || type == 'checkbox') { %>
+	    <select id="conditions__1--<%= counter %>__value" name="rule[conditions][1--<%= counter %>][value]" class=" element-value-changer select">
+            <option value="" selected="selected"></option>
+		    <% _.each(values, function(value){ %>
+			    <option value="<%= value.value_id%>"><%= value.name%></option>
+		    <% });%>
+    </select>
+    <% }else{ %>
+	    <input id="conditions__1--<%= counter %>__value" name="rule[conditions][1--<%= counter %>][value]" value="" type="text" style='width:100px !important;' class=" input-text element-value-changer">
+    <% } %>
+    </script>
+
+{% endblock scripts %}

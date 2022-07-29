@@ -1,0 +1,38 @@
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `customer` (
+  `customer_id` int(11) NOT NULL AUTO_INCREMENT,
+  `store_id` int(11) NOT NULL DEFAULT 0,
+  `expand_id` int(11) NULL DEFAULT NULL,
+  `firstname` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+  `lastname` varchar(32) NOT NULL,
+  `email` varchar(96) NOT NULL,
+  `telephone` varchar(32) NOT NULL,
+  `fax` varchar(32) NOT NULL,
+  `password` varchar(40) NOT NULL,
+  `salt` varchar(9) NOT NULL,
+  `cart` text DEFAULT NULL,
+  `wishlist` text DEFAULT NULL,
+  `newsletter` tinyint(1) NOT NULL DEFAULT 0,
+  `address_id` int(11) NOT NULL DEFAULT 0,
+  `customer_group_id` int(11) NOT NULL,
+  `ip` varchar(40) NOT NULL DEFAULT '0',
+  `status` tinyint(1) NOT NULL,
+  `approved` tinyint(1) NOT NULL,
+  `token` varchar(255) NOT NULL,
+  `firebase_token` varchar(255) DEFAULT NULL,
+  `device_type` varchar(50) DEFAULT NULL,
+  `date_added` datetime NOT NULL DEFAULT current_timestamp(),
+  `language_id` int(11) DEFAULT NULL,
+  `security_code` varchar(191) DEFAULT NULL,
+  `dob` date NULL,
+  `gender` varchar(10) DEFAULT NULL,
+  `company` VARCHAR(256) NULL DEFAULT NULL,
+  `updated_at` TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  `expand_updated_at` TIMESTAMP NULL DEFAULT NULL,
+  `force_logout` INT(9) NOT NULL DEFAULT 0,
+  `create_by_admin` tinyint(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`customer_id`),
+  INDEX (`expand_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;

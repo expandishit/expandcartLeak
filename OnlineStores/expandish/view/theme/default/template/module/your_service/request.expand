@@ -1,0 +1,143 @@
+<script>
+    var settings = JSON.parse(window.ys_settings);
+</script>
+<style>
+    #description-section,
+    #ys-file-error {
+        display: none;
+    }
+    #description {
+        min-height:200px;
+        resize:vertical;
+    }
+</style>
+<div id="content row">
+    <!-- breadcrumb -->
+    <div class="breadcrumb-page">
+        <ol class="breadcrumb">
+            {% for breadcrumb in breadcrumbs %}
+                {% if loop.last %}
+                    <li class="active">{{ breadcrumb['text'] }}</li>
+                {% else %}
+                    <li><a href="{{ breadcrumb['href'] }}">{{ breadcrumb['text'] }}</a></li>
+                {% endif %}
+            {% endfor %}
+        </ol>
+    </div> <!-- breadcrumb -->
+
+    <div class="page-title-base">
+        {% if success is defined %}
+        <div class="alert alert-success">
+            {{ success }}
+        </div>
+        {% endif %}
+        {% if error is defined %}
+        <div class="alert alert-danger">
+            {{ error }}
+        </div>
+        {% endif %}
+        <h1 id="ys-title-base" class="title-base"></h1>
+        <hr>
+        <h4>{{ lang('ys_select_service') }}</h4>
+        <hr>
+        <form method="post" enctype="multipart/form-data" action="{{ submit_service_request_link }}" id="ys-form">
+            <input type="hidden" name="requester_id" value="{{ requester_id }}"/>
+            <div class="col-md-3">
+                <ul>
+                    {% for service in services %}
+                        <li><a href="{{ service.ys_service_id }}" class="service">{{ service.name }}</a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="col-md-3">
+                <ul id="sub-services" class="list-unstyled"></ul>
+            </div>
+            <div class="col-md-6" id="description-section">
+                <div style="{{ requester_id > 0 ? 'display:none' }}">
+                    <div class="form-group">
+                        <label for="requester-name">{{ lang('ys_requester_name') }} <span class="text-danger">*</span></label>
+                        <input type="text" id="requester-name" name="requester_name" class="form-control" value="{{ requester_name }}" required/>
+                    </div>
+                    <div class="row">
+                        <div class="form-group col-md-6">
+                            <label for="requester-email">{{ lang('ys_requester_email') }} <span class="text-danger">*</span></label>
+                            <input type="email" id="requester-email" name="requester_email" class="form-control" value="{{ requester_email }}" required/>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="requester-telephone">{{ lang('ys_requester_telephone') }}</label>
+                            <input type="text" id="requester-telephone" name="requester_telephone" class="form-control" value="{{ requester_telephone }}"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="description">{{ lang('ys_request_description') }}</label>
+                    <textarea id="description" name="description" class="form-control"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="attachment">{{ lang('ys_attachment') }}</label>
+                    <input type="file" id="attachment" name="attachment" accept=".png,.jpg,.doc,.docx,.pdf"/>
+                    <span class="text-info">{{ lang('ys_file_max_size') }}</span>
+                    <span class="text-danger" id="ys-file-error">{{ lang('ys_error_file_size') }}</span>
+                </div>
+                <div class="form-group">
+                    <button class="btn btn-success"><i class="fa fa-check"></i> {{ lang('ys_submit') }}</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+</div>
+<script>
+    window.addEventListener('DOMContentLoaded', function () {
+        var fileError = false;
+        $('#ys-form').on('submit', function (e) {
+            if (fileError)
+            {
+                e.preventDefault();
+            }
+        });
+        $('.service').on('click', function (e) {
+            e.preventDefault();
+            $('#description-section').hide();
+            var ele = $(this);
+            var serviceId = ele.attr('href');
+            if (ele.attr('disabled')) {
+                return;
+            }
+            ele.append('<i class="fa fa-fw fa-pulse fa-spinner fa-spin"></i>').parent().siblings().find('a').attr('disabled', 'disabled');
+            $.ajax({
+                method: 'POST',
+                url: '{{ sub_services_link }}',
+                data: {
+                    service_id: serviceId
+                },
+                success: function (res) {
+                    var subServices = JSON.parse(res);
+                    $('#sub-services').html('');
+                    subServices.forEach(function (value) {
+                        $('#sub-services').append('<li><input type="radio" id="'+value.ys_service_id+'" value="'+value.ys_service_id+'" name="service_id" class="sub-service"/> <label for="'+value.ys_service_id+'">'+value.name+'</label></li>');
+                    });
+                },
+                complete: function() {
+                    ele.find('i').remove();
+                    $('a').removeAttr('disabled');
+                }
+            });
+        });
+        $('body').on('change', '.sub-service', function () {
+            $('#description-section').show();
+        });
+        $('#attachment').on('change', function(){
+            var file = document.getElementById('attachment');
+            let fileSize = file.files[0]["size"];
+            let sizeMB = Math.round((fileSize / 1024));
+            if (sizeMB > 2048) {
+                fileError = true;
+                $('#ys-file-error').css('display', 'block');
+            } else {
+                fileError = false;
+                $('#ys-file-error').css('display', 'none');
+            }
+        });
+    });
+</script>

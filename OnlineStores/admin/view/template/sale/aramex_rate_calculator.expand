@@ -1,0 +1,269 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block title %}
+    {{ lang('heading_title') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+
+{% block headelements %}
+
+    {% if not is_shipment %}
+        <div style="display: inline-block;">
+            <!-- Switchery -->
+            <div class="checkbox checkbox-switchery">
+                <label class="control-label">{{ lang('entry_notify_customer') }}</label>
+                <label>
+                    <input type="checkbox" onchange="changeStatus(this);" name="aramex_email_customer" class="switchery" {{ aramex_email_customer not in [0, '0', 'off'] or aramex_email_customer is null ? 'checked' }}>
+                    <span class="switchery-status">{{ aramex_email_customer not in [0, '0', 'off'] or aramex_email_customer is null ? lang('text_enabled') : lang('text_disabled') }}</span>
+                </label>
+            </div>
+            <!-- /Switchery -->
+        </div>
+        &nbsp; &nbsp;
+    {% endif %}
+
+    <a href="{{ back_to_order }}" class="btn btn-success"> {{ text_back_to_order }} </a>
+
+    <a href="{{ aramex_rate_calculator }}"  class="button btn btn-warning">{{ text_rate_calculator }}</a>
+
+    {% if is_shipment %}
+
+        <a href="{{ aramex_create_sipment }}" class="button btn btn-primary">{{ text_return_shipment }}</a>
+        <a href="{{ aramex_print_label }}" target="_blank" class="button btn btn-primary">{{ text_print_label }}</a>
+        <a href="{{ aramex_schedule_pickup }}"  class="button btn btn-primary">{{ text_schedule_pickup }}</a>
+        <a href="{{ aramex_traking }}"  class="button btn btn-primary">{{ text_track }}</a>
+
+    {% else %}
+			
+        <a onclick="$('.form').submit()" class="button btn btn-primary">{{ text_create_sipment }}</a>
+
+    {% endif %}
+	
+    {# {% include "includes/buttons_top.expand" %} #}
+
+{% endblock headelements %}
+{% block content %}
+  <!--  code -->
+  <form enctype="multipart/form-data" action="" method="post" id="calculate_rate" novalidate="novalidate">
+    <div class="row">
+		{% if rate_html is defined and rate_html != "" %}
+			<div class="alert alert-success">
+	 			{{ rate_html }}
+			</div>
+		{% endif %}
+        {% if eRRORS is defined and eRRORS != '' %}
+			<div class="alert alert-danger">
+			{% for val in eRRORS  %}
+				{{ val }}<br>
+			{% endfor %}
+			</div>
+		{% endif %}
+	 	<div class="col-md-12" id="aramex_shipment_creation_general_info">
+            <div class="panel panel-white">
+                <div class="panel-heading">
+                    <h6 class="panel-title"><span class="text-bold">{{ lang('text_ship_origin') }}</span></h6>
+                    <div class="heading-elements not-collapsible">
+                        <ul class="icons-list">
+                            <li><a data-action="collapse" class=""></a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="collapse in" id="fields-panel">
+						<div class="row">
+							<div class="col-md-6">
+							<div class="form-group" id="">
+							<label class="control-label">{{ lang('entry_country') }} <span class="required">*</span></label>    
+								<select name="origin_country" id="origin_country" class="aramex_countries validate-select valid">
+									{% for country in countries %}
+										{% if country['iso_code_2'] == origin_country %}
+											<option value="{{ country['iso_code_2'] }}" selected="selected">{{ country['name'] }}</option>
+										{% else %}
+											<option value="{{ country['iso_code_2'] }}">{{ country['name'] }}</option>
+										{% endif %}
+									{% endfor %}
+								</select>
+							</div>
+							<div class="form-group" id="">
+							<label class="control-label">{{ lang('entry_city') }}</label>    
+							<input class="form-control"  type="text" name="origin_city" value="{{ origin_city }}" id="origin_city">                    
+							</div>
+							<div class="form-group" id="">
+							<label class="control-label">{{ lang('entry_postal_code') }}</label>    
+							<input class="form-control"  type="text" name="origin_zipcode" value="{{ origin_zipcode }}" id="origin_zipcode">                    
+							</div>
+							<div class="form-group" id="">
+							<label class="control-label">{{ lang('entry_state') }}</label>    
+							<input class="form-control"  type="text" name="origin_state" value="{{ origin_state }}" id="origin_state">                    
+							</div>
+							<div class="form-group" id="">
+								<div class="row">
+									<div class="col-md-12">
+										<label class="control-label">{{ lang('text_ship_dest') }}</label>    
+									</div>
+									<div class="col-md-6">
+										<label class="control-label">{{ lang('entry_country') }}<span class="required">*</span></label>    
+										<select name="destination_country" id="destination_country" class="aramex_countries validate-select valid">
+						
+											{% for country in countries %}
+												{% if country['iso_code_2'] == destination_country %}
+													<option value="{{ country['iso_code_2'] }}" selected="selected">{{ country['name'] }}</option>
+												{% else %}
+													<option value="{{ country['iso_code_2'] }}">{{ country['name'] }}</option>
+												{% endif %}
+											{% endfor %}
+											
+										</select>
+									</div>
+									<div class="col-md-6">
+										<div class="form-group" id="">
+											<label class="control-label">{{ lang('entry_city') }}</label>    
+											<input class="form-control"  type="text" name="destination_city" value="{{destination_city}}" id="destination_city">                    
+									
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="form-group" id="">
+								<label class="control-label">{{ lang('entry_postal_code') }}</label>    
+								<input class="form-control"  type="text" name="destination_zipcode" value="{{destination_zipcode }}" id="destination_zipcode">                    
+							</div>
+							
+						</div>
+						<div class="col-md-6">
+							<div class="form-group" id="">
+								<label class="control-label">{{ lang('entry_state') }}</label>    
+								<input class="form-control"  type="text" name="destination_state" value="{{ destination_state }}" id="destination_state">                    
+								<input type="hidden" name="destination_state_id" value="{{ destination_state_id }}" />
+                                
+							</div>
+							<div class="form-group" id="">
+								<label class="control-label">{{ lang('entry_payment_type') }}<span class="required">*</span></label>    
+								<select name="payment_type" id="payment_type" class="aramex_all_options">
+									<option value="P" {{ pay_type=='P' ? 'selected="selected"' }}>{{ text_prepaid }}</option>
+									<option value="C" {{ pay_type=='C' ? 'selected="selected"' }}>{{ text_collect }}</option>
+									<option value="3" {{ pay_type=='3' ? 'selected="selected"' }}>{{ text_third_party }}</option>
+								</select>
+							</div>
+							<div class="form-group" id="">
+								<label class="control-label">{{ lang('entry_product_group') }}</label>    
+								{% set checkCountry=false %}
+								{% if group=='' %}
+									{% set checkCountry=(origin_country == destination_country)?true:false %}
+								{% endif %}
+								
+								<select class="aramex_all_options" id="product_group" name="product_group"  >
+									<option {{ (group =='DOM' or checkCountry) ? 'selected="selected"' : '' }} value="DOM">{{ text_domestic }}</option>
+									<option {{ (group =='EXP' or (group=='' and checkCountry != false)) ? 'selected="selected"' : '' }} value="EXP">{{ text_inter_express }}</option>
+								</select>
+								<div id="aramex_shipment_info_product_group_div" style="display: none;"></div>
+									
+							</div>
+							<div class="form-group" id="">
+								<label class="control-label">{{ lang('entry_service_type') }}<span class="required">*</span></label>    
+								{% set notHide='' %}
+								{% if origin_country == destination_country and type=='' %}
+									{% set notHide='display: none'  %}
+								{% endif %}
+								{% set checkCountry=false %}
+								{% if type=='' %}
+									{% set checkCountry=(origin_country == destination_country)?true:false  %}
+								{% endif %}
+								{% set allowed_domestic_methods = aramex_allowed_domestic_methods %}
+								{% set allowed_international_methods =  aramex_allowed_international_methods %}
+								{% set domestic_methods = all_allowed_domestic_methods %}
+								{% set international_methods = all_allowed_international_methods %} 
+								
+								<select class="aramex_all_options" id="service_type" name="service_type">
+						
+								{% if allowed_domestic_methods|length > 0 %} 
+									{% set i=1 %}
+									{% for key,val in domestic_methods %}
+										{% if val['value'] in allowed_domestic_methods %}
+											{% set selected_str='' %}
+											{% if i==1 %} 
+												{% set selected_str =(type ==val['value'] or checkCountry) ? 'selected="selected"' : '' %}
+											{% else %}
+												{% set selected_str =(type ==val['value']) ? 'selected="selected"' : '' %}
+											{% endif %}
+											<option {{ selected_str }} value="{{ val['value'] }}" id="{{ val['value'] }}"  class="DOM">{{ val['label'] }}</option>
+											{% set i=i+1 %}
+										{% endif %}
+									{% endfor %}							
+								{% endif %}
+								
+								{% if allowed_international_methods|length > 0 %}
+									{% set i=1 %}
+									{% for key,val in international_methods %}
+										{% if val['value'] in allowed_international_methods %}						    
+											{% set selected_str='' %}
+											{% if i==1 %} 
+												{% if type == val['value'] or checkCountry!= false and type=='' %}
+													{% set selected_str = 'selected="selected"' %}
+												{% endif %}
+											{% else %}
+												{% if type == val['value'] %}
+													{% set selected_str = 'selected="selected"' %}
+												{% endif %}												
+											{% endif %}
+											<option {{ selected_str }} value="{{ val['value'] }}" id="{{ val['value'] }}" class="EXP">{{ val['label'] }}</option>
+											{% set i=i+1 %}
+										{% endif %}									    
+									{% endfor %}								 
+								{% endif %}
+								</select>
+							</div>
+							<div class="form-group" id="">
+								<div class="row">
+									<div class="col-md-12">
+										<label class="control-label"><span class="required">*</span>{{ lang('entry_total_weight') }}</label>    
+										<div style="display:none" class="text_short">{{ entry_total_weight }} <span id="order-total-weight">210.00</span> {{ text_kg }}</div>
+									</div>
+									<div class="col-md-6">
+										<input type="text" class="form-control" value="{{ weighttot }}" name="text_weight">
+									</div>
+									<div class="col-md-6">
+									
+										<select class="fl width-60" name="weight_unit">
+											<option value="KG" {{ weight_unit|upper =='KG' ?'selected="selected"':'' }}>{{ text_kg }}</option>
+											<option value="LB" {{ weight_unit|upper =='LB' ?'selected="selected"':'' }}>{{ text_lb }}</option>
+										</select>
+									</div>
+								</div>
+							</div>
+							<div class="form-group" id="">
+								<label class="control-label">{{ lang('entry_no_of_pieces') }}</label>    
+								<input type="text" value="{{ no_of_item }}" name="total_count" class="form-control fl" />
+							</div>
+							<input type="hidden" value="{{ reference }}" name="reference" />
+						</div>
+
+					
+					  </div> <!-- row -->
+					  	<div class="buttons">
+							<a class="button btn btn-primary" onclick="$('#calculate_rate').submit();" id="aramex_shipment_creation_submit_id"><?php echo $text_calc_rates; ?></a>
+							
+						<div>
+  					</div> <!-- collapse -->
+                </div> <!-- panel body -->
+            </div> <!-- panel white -->
+        </div> <!-- col-md-12 -->
+	</div> <!-- row -->
+</form>	
+<script>
+$(document).ready(function() {
+    $('select').select2();
+    $('.touchspinney').TouchSpin({
+        min: 1
+    });
+	$('.timepicker').pickatime({formatSubmit: 'HH:i',
+  hiddenName: true});
+});
+</script>
+{% endblock %}

@@ -1,0 +1,337 @@
+{% import "controls/forms.expand" as forms %}
+{% set dualMenuEnabled = false %}
+
+
+
+{# Start Form #}
+<form id="form-aymakan" class="form" action="{{ action }}" method="POST">
+    <div class="row">
+        {# Status #}
+        <div class="col-md-3">
+            <div class="panel panel-white">
+                <div class="panel-heading">
+                    <h6 class="panel-title"><span class="text-bold">{{ lang('entry_status')|trim(':') }}</span></h6>
+                    <div class="heading-elements not-collapsible">
+                        <ul class="icons-list">
+                            <li><a data-action="collapse" class=""></a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="collapse in" id="panel1">
+                        <div class="form-group col-md-12">
+                            <label class="control-label">{{ lang('entry_status') }}</label>
+                            <div class="checkbox checkbox-switchery">
+                                <label>
+                                    <input type="checkbox" onchange="changeStatus(this);" name="settings[status]"
+                                        class="switchery" {{ settings['status'] not in ['0', 0, 'off' ] ? 'checked' }}>
+                                    <span class="switchery-status">{{ settings['status'] not in ['0', 0, 'off'] ?
+                                        lang('text_enabled') : lang('text_disabled') }}</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel panel-white">
+                <div class="panel-heading">
+                    <h6 class="panel-title"><span class="text-bold">{{ lang('entry_contact_bm_delivery') }}</span></h6>
+                    <div class="heading-elements not-collapsible">
+                        <ul class="icons-list">
+                            <li><a data-action="collapse" class=""></a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <a href="https://bmdelivery.org/Contact" target="_blank">
+                        <img style="width: 100%" src="view/image/shipping/bm_delivery.png">
+                    </a>
+                </div>
+            </div>
+        </div>
+        {# End of Status #}
+
+        <div class="col-md-9">
+            <div class="panel panel-white">
+                <div class="panel-heading">
+                    <h6 class="panel-title"><span class="text-bold">{{ lang('text_settings') }}</span></h6>
+                    <div class="heading-elements not-collapsible">
+                        <ul class="icons-list">
+                            <li><a data-action="collapse" class=""></a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="collapse in" id="fields-panel">
+                        {# Auth #}
+
+                        {# db #}
+                        <div class="form-group col-md-6" id="auth_db-group">
+                            <label for="auth_db" class="control-label">{{ lang('entry_auth_db') }} <span
+                                    class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="auth_db" name="settings[auth][db]"
+                                value="{{ settings['auth']['db'] }}">
+                            <span class="help-block"></span>
+                            <span class="text-muted">{{ langempty('entry_auth_db_help') }}</span>
+                        </div>
+                        {# /db #}
+
+                        {# login #}
+                        <div class="form-group col-md-6" id="auth_login-group">
+                            <label for="auth_login" class="control-label">{{ lang('entry_auth_login') }} <span
+                                    class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="auth_login" name="settings[auth][login]"
+                                value="{{ settings['auth']['login'] }}">
+                            <span class="help-block"></span>
+                            <span class="text-muted">{{ langempty('entry_auth_login_help') }}</span>
+                        </div>
+                        {# /login #}
+
+                        <div class="clearfix"></div>
+
+                        {# password #}
+                        <div class="form-group col-md-6" id="auth_password-group">
+                            <label for="auth_password" class="control-label">{{ lang('entry_auth_password') }} <span
+                                    class="text-danger">*</span></label>
+                            <input type="password" class="form-control" id="auth_password"
+                                name="settings[auth][password]" value="{{ settings['auth']['password'] }}">
+                            <span class="help-block"></span>
+                            <span class="text-muted">{{ langempty('entry_auth_password_help') }}</span>
+                        </div>
+                        {# /password #}
+
+                        {# Account Currency #}
+                        {# <div class="form-group col-md-6">
+                            <label for="aymakan_account_currency" class="control-label">{{
+                                lang('entry_account_currency') }}</label>
+                            <select name="aymakan_account_currency" id="aymakan_account_currency" class="form-control">
+                                <option value="SAR" {{ aymakan_account_currency=='SAR' ? 'selected' :'' }}>SAR</option>
+                                <option value="USD" {{ aymakan_account_currency=='USD' ? 'selected' :'' }}>USD</option>
+                                <option value="AED" {{ aymakan_account_currency=='AED' ? 'selected' :'' }}>AED</option>
+                            </select>
+                            <span class="help-block"></span>
+                        </div> #}
+                        {# /Account Currency #}
+
+                        {# After Shipping Status #}
+                        <div class="form-group col-md-6" id="after_creation_status-group">
+                            <label for="after_creation_status" class="control-label">{{
+                                lang('entry_after_creation_status') }}</label>
+                            <select name="settings[after_creation_status]" id="after_creation_status"
+                                class="form-control">
+                                {% for order_status in order_statuses %}
+                                <option value="{{ order_status['order_status_id'] }}" {{
+                                    settings['after_creation_status']==order_status['order_status_id'] ? 'selected' }}>
+                                    {{ order_status['name'] }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <span class="help-block"></span>
+                            <span class="text-muted">{{ langempty('entry_after_creation_status_help') }}</span>
+                        </div>
+                        {# /After Shipping Status #}
+
+                        <div class="clearfix"></div>
+
+                        {# Tax Classes #}
+                        <div class="form-group col-md-6" id="tax_class_id-group">
+                            <label for="tax_class_id" class="control-label">{{ lang('entry_tax_class')
+                                }}</label>
+                            <select name="settings[tax_class_id]" id="tax_class_id" class="form-control">
+                                <option value="0">{{ lang('text_none') }}</option>
+                                {% for tax_class in tax_classes %}
+                                <option value="{{ tax_class['tax_class_id'] }}" {{
+                                    settings['tax_class_id']==tax_class['tax_class_id'] ? 'selected' }}>
+                                    {{ tax_class['title'] }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <span class="help-block"></span>
+                            <span class="text-muted">{{ langempty('entry_tax_class_help') }}</span>
+                        </div>
+                        {# /Tax Classes #}
+
+                        {# Geo Zone #}
+                        <div class="form-group col-md-6" id="geo_zone_id-group">
+                            <label for="geo_zone_id" class="control-label">{{ lang('entry_geo_zone') }}</label>
+                            <select name="settings[geo_zone_id]" id="geo_zone_id" class="form-control">
+                                <option value="0">{{ lang('text_all_zones') }}</option>
+                                {% for geo_zone in geo_zones %}
+                                <option value="{{ geo_zone['geo_zone_id'] }}" {{
+                                    settings['geo_zone_id']==geo_zone['geo_zone_id'] ? 'selected' }}>
+                                    {{ geo_zone['name'] }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {# /Geo Zone #}
+
+                        <div class="clearfix"></div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# Cost Block #}
+        <div class="col-md-9 col-md-offset-3">
+            <div class="panel panel-white">
+                <div class="panel-heading">
+                    <h6 class="panel-title"><span class="text-bold">{{ lang('head_global_settings')
+                            }}</span></h6>
+                    <div class="heading-elements not-collapsible">
+                        <ul class="icons-list">
+                            <li><a data-action="collapse" class=""></a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="collapse in" id="panel2">
+                        <div class="form-group">
+                            <div class="tabbable nav-tabs-vertical nav-tabs-left">
+                                <ul class="nav nav-tabs nav-tabs-highlight">
+                                    <li class="active">
+                                        <a href="#tab_general" data-toggle="tab">
+                                            <i class="icon-menu7 position-left"></i> {{
+                                            lang('tab_general') }}
+                                        </a>
+                                    </li>
+                                    {% for zone in geo_zones %}
+                                    <li>
+                                        <a href="#tab_{{ zone['geo_zone_id'] }}" data-toggle="tab">
+                                            <i class="icon-menu7 position-left"></i> {{ zone['name'] }}
+                                        </a>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                                <div class="tab-content">
+                                    <div class="tab-pane active has-padding active" id="tab_general">
+                                        <div class="form-group" id="weight_general_rate-group">
+                                            <label for="weight_general_rate" class="control-label">{{
+                                                lang('entry_general_price')
+                                                }}</label> <span class="text-danger">*</span>
+                                            <input class="form-control"
+                                                name="settings[price][weight_general_rate]"
+                                                value="{{ settings['price']['weight_general_rate'] }}"
+                                                id="weight_general_rate">
+                                            <span class="help-block"></span>
+                                            <span class="text-muted">{{ lang('entry_general_price_note') }}</span>
+                                        </div>
+                                    </div>
+                                    {% for zone in geo_zones %}
+                                    {% set rate = settings['price']['weight_' ~ zone['geo_zone_id'] ~ '_rate'] %}
+                                    {% set status = settings['price']['weight_' ~zone['geo_zone_id'] ~ '_status'] %}
+                                    <div class="tab-pane has-padding" id="tab_{{ zone['geo_zone_id'] }}">
+                                        <div class="form-group" id="weight_{{ zone['geo_zone_id'] }}_rate-group">
+                                            <label for="weight_{{ zone['geo_zone_id'] }}_rate"
+                                                class="control-label">{{ lang('entry_rate') }}</label>
+                                            <textarea
+                                                name="settings[price][weight_{{ zone['geo_zone_id'] }}_rate]" cols="40" class="form-control"
+                                                id="weight_{{ zone['geo_zone_id'] }}_rate" rows="1">{{ rate }}</textarea>
+                                            <span class="help-block"></span>
+                                            <span class="text-muted">{{ langempty('entry_rate_help')
+                                                }}</span>
+                                        </div>
+                                        <div class="form-group" id="weight_{{ zone['geo_zone_id'] }}_status-group">
+                                            <label for="weight_{{ zone['geo_zone_id'] }}_status"
+                                                class="control-label">{{ lang('entry_status') }}</label>
+                                            <!-- Switchery -->
+                                            <div class="checkbox checkbox-switchery">
+                                                <label>
+                                                    <input type="checkbox" onchange="changeStatus(this);"
+                                                        name="settings[price][weight_{{ zone['geo_zone_id'] }}_status]"
+                                                        class="switchery" {{ status in [1, '1' , 'on' ] ? 'checked' }}>
+                                                    <span class="switchery-status">{{ status in [1, '1',
+                                                        'on'] ? lang('text_enabled') :
+                                                        lang('text_disabled') }}</span>
+                                                </label>
+                                            </div>
+                                            <!-- /Switchery -->
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {# /Cost Block #}
+
+        <!-- Gateway Presentation Fields -->
+        <div class="col-md-9 col-md-offset-3">
+            <div class="panel panel-white">
+                <div class="panel-heading">
+                    <h6 class="panel-title"><span class="text-bold">{{ lang('entry_presentation') }}</span></h6>
+                    <div class="heading-elements not-collapsible">
+                        <ul class="icons-list">
+                            <li><a data-action="collapse" class=""></a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="collapse in" id="fields-panel">
+                        {# Payment Method Title #}
+                        <div class="">
+                            <div class="tabbable nav-tabs-vertical nav-tabs-right">
+                                <div class="tab-content">
+                                    {% for language in languages %}
+                                    <div class="tab-pane has-padding {{ loop.first ? 'active' }}"
+                                        id="display_name_{{ language['language_id'] }}">
+                                        <div class="form-group">
+                                            <label for="display_name" class="control-label">{{
+                                                lang('entry_display_name') }} ({{ language['name'] }})</label>
+                                            <input type="text" class="form-control" id="display_name"
+                                                name="settings[display_name][{{ language['language_id'] }}]"
+                                                value="{{ settings['display_name'][language['language_id']] }}">
+                                            <span class="text-muted">{{ lang('text_display_name_help') }}</span>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+
+                                <ul class="nav nav-tabs nav-tabs-highlight nav-tabs-lang">
+                                    {% for language in languages %}
+                                    <li class="{{ loop.first ? 'active' : '' }}">
+                                        <a href="#display_name_{{ language['language_id'] }}" data-toggle="tab"
+                                            aria-expanded="false">
+                                            <img src="view/image/flags/{{ language['image'] }}"
+                                                title="{{ language['name'] }}" class="pull-right">
+                                            <div> {{ language['name'] }}</div>
+                                        </a>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                        {# /Payment Method Title #}
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Gateway Presentation -->
+
+    </div>
+</form>
+{# End Form #}
+
+
+<script type="text/javascript">
+
+    $('select').select2();
+
+    function changeStatus(checkbox) {
+        var self = $(checkbox);
+        var switch_status = self.siblings('.switchery-status');
+
+        if (self.is(':checked')) {
+            switch_status.html("{{ lang('text_enabled') }}");
+        }
+        else {
+            switch_status.html("{{ lang('text_disabled') }}");
+        }
+    }
+</script>

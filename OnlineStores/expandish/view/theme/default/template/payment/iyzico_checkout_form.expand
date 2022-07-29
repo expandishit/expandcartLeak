@@ -1,0 +1,98 @@
+<!-- <div id="iyzico-loader"><img src="expandish/view/theme/default/image/payment/iyzico_checkout_form_spinner.gif" /></div> -->
+<style>
+.iyzi-form input{
+    direction: ltr;
+}
+.buyer-protection-holder{
+    text-align: left;
+}
+
+@media (max-width:786px){
+.css-1urg7a6-Body{
+min-width: 90% !important;
+}
+.css-1lwrbr2-Popup-Popup-Box{
+width: 90% !important;
+}
+}
+</style>
+{% if iyzico_error %}
+    <div class="alert alert-danger"><button type="button" class="close" data-dismiss="alert">x</button>{{ iyzico_error }}</div>
+{% endif %}
+
+<div class="iyzico_checkout_form_payment" style="display: none;">
+    <h2>{{ lang('text_title') }}</h2>
+
+    <div class="iyzico-payment-form-wrapper" id="payment"></div>
+    <div id="iyzipay-checkout-form" class="{{ form_class }}"></div>
+</div>
+
+<div class="iyzico_checkout_form_confirm">
+    <div class="buttons">
+        <div class="pull-right">
+            <input type="button" id="button-confirm" value="{{ button_confirm }}" onclick="showIyzico()" class="btn btn-inline" data-loading-text="Wait" />
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    function showIyzico(){
+	
+		if (typeof iyziInit != 'undefined') {
+                    delete iyziInit;
+                }
+		
+        $(".iyzico_checkout_form_payment").hide();
+        $.ajax({
+            url: 'index.php?route=payment/iyzico_checkout_form/gettoken',
+            type: 'post',
+            data: $('#payment :input'),
+            dataType: 'json',
+            cache: false,
+            /*beforeSend: function() {
+                $('#button-confirm').button('loading');
+            },
+            complete: function() {
+                $('#button-confirm').button('reset');
+            },*/
+            success: function(json) {
+                $('#qc_confirm_order').css('display','none');
+                $('#iyzico-loader').css('display','none');
+                if (json.display_direct_confirm == "yes" && typeof json.checkout_form_content != "undefined") {
+                    //zero cart total
+                }
+                else if (json.display_direct_confirm == "no" && typeof json.checkout_form_content != "undefined" && json.checkout_form_content != "") {
+                    $(".iyzico_checkout_form_payment").show();
+                    $('.iyzico-payment-form-wrapper').append(json.checkout_form_content);
+                } else {
+                    $(".iyzico_checkout_form_payment").show();
+                    $('.iyzico-payment-form-wrapper').append('<div class="alert alert-danger"><button type="button" class="close" data-dismiss="alert">x</button>' + json.error + '</div>');
+                    $('#iyzico-loader').css('display','none');
+                }
+            }
+        });
+
+    }
+
+    /*function confirmsubnmit(){
+        $.ajax({
+            type: 'get',
+            url: 'index.php?route=payment/iyzico_checkout_form/confirm',
+            cache: false,
+            beforeSend: function() {
+                $('#button-confirm').button('loading');
+            },
+            complete: function() {
+                $('#button-confirm').button('reset');
+            },
+            success: function(response) {
+                if(response) {
+                location = '{{ continue }}';
+                } else {
+                    location = '{{ error_page }}';
+            }
+            }
+        });
+    }*/
+
+</script>

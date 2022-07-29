@@ -1,0 +1,178 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block title %}
+    {{ lang('heading_title') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+    {% include "includes/buttons_top.expand" %}
+{% endblock headelements %}
+
+{% block content %}
+    <style>
+        .page-header-default {
+            background-color: transparent;
+        }
+        .page-header-content + .breadcrumb-line {
+            border: 0;
+        }
+    </style>
+
+    <div class="container">
+        <form class="form" method="post" action="{{ links['submit'] }}">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="panel panel-white">
+                        <div class="panel-heading">
+                            <h6 class="panel-title"><span class="text-bold">{{ lang('head_global_settings') }}</span></h6>
+                            <div class="heading-elements not-collapsible">
+                                <ul class="icons-list">
+                                    <li><a data-action="collapse" class=""></a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="panel-body">
+                            <div class="collapse in" id="panel2">
+                                <div class="form-group col-md-6" id="title-group">
+                                    <label for="title" class="control-label">
+                                        {{ lang('entry_title') }} <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="title" name="title"
+                                        value="{{ title }}">
+                                    <span class="help-block"></span>
+                                </div>
+
+                                <div class="form-group col-md-6" id="description-group">
+                                    <label for="description" class="control-label">
+                                        {{ lang('entry_description') }} <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="description" name="description"
+                                        value="{{ description }}">
+                                    <span class="help-block"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel panel-default">
+                        <div class="panel-body">
+                            <table id="tax-rule" class="table table-hover datatable-highlight">
+                                <thead>
+                                <tr>
+                                    <th>{{ lang('entry_rate') }}</th>
+                                    <th>{{ lang('entry_based') }}</th>
+                                    <th>{{ lang('entry_priority') }}</th>
+                                    <th>{{ lang('column_action') }}</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% set globalKey = 0 %}
+                                {% for key, rule in tax_rules %}
+                                    <tr id="tax-rule-row{{ key }}">
+                                        <td>
+                                            <select name="tax_rule[{{ key }}][tax_rate_id]">
+                                                {% for rate in tax_rates %}
+                                                    <option value="{{ rate['tax_rate_id'] }}"
+                                                            {{
+                                                                rate['tax_rate_id'] == rule['tax_rate_id'] ?
+                                                                'selected="true"' :
+                                                                ''
+                                                            }}>
+                                                        {{ rate['name'] }}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <select name="tax_rule[{{ key }}][based]">
+                                                <option value="shipping"
+                                                        {{ rule['based'] == 'shipping' ? 'selected="true"' : '' }}>
+                                                    {{ lang('text_shipping') }}
+                                                </option>
+                                                <option value="payment"
+                                                        {{ rule['based'] == 'payment' ? 'selected="true"' : '' }}>
+                                                    {{ lang('text_payment') }}
+                                                </option>
+                                                <option value="store"
+                                                        {{ rule['based'] == 'store' ? 'selected="true"' : '' }}>
+                                                    {{ lang('text_store') }}
+                                                </option>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <input type="text" class="form-control"
+                                                    name="tax_rule[{{ key }}][priority]"
+                                                    value="{{ rule['priority'] }}">
+                                        </td>
+                                        <td>
+                                            <a onclick="$('#tax-rule-row{{ key }}').remove();" class="button btn btn-primary">
+                                                {{ lang('button_remove') }}
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% set globalKey = key %}
+                                {% endfor %}
+                                </tbody>
+                                <tfoot>
+                                <tr>
+                                    <td colspan="5" class="text-center">
+                                        <a onclick="addRule();" class="button btn btn-primary">
+                                            {{ lang('button_add_rule') }}
+                                        </a>
+                                    </td>
+                                </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Lower Buttons -->
+    {% include "includes/buttons_bottom.expand" %}
+    <!-- End Lower Buttons -->
+
+    <script>
+        $('select').select2({
+            minimumResultsForSearch: 5
+        });
+
+        var tax_rule_row = {{ globalKey + 1 }};
+
+        function addRule() {
+            html  = '<tr id="tax-rule-row' + tax_rule_row + '">';
+            html += '<td class="left"><select name="tax_rule[' + tax_rule_row + '][tax_rate_id]">';
+            {% for rate in tax_rates %}
+            html += '<option value="{{ rate['tax_rate_id'] }}">{{ rate['name'] }}</option>';
+            {% endfor %}
+            html += '</select></td>';
+            html += '<td class="left"><select name="tax_rule[' + tax_rule_row + '][based]">';
+            html += '<option value="shipping">{{ lang('text_shipping') }}</option>';
+            html += '<option value="payment">{{ lang('text_payment') }}</option>';
+            html += '<option value="store">{{ lang('text_store') }}</option>';
+            html += '</select></td>';
+            html += '<td class="left"><input class="form-control" type="text" name="tax_rule[' + tax_rule_row + '][priority]" value="" size="1" /></td>';
+            html += '<td class="left"><a onclick="$(\'#tax-rule-row' + tax_rule_row + '\').remove();" ' +
+                'class="button btn btn-primary">' +
+                '{{ lang('button_remove') }}</a></td>';
+            html += '</tr>';
+
+            $('#tax-rule tbody').append(html);
+
+            $('select').select2({
+                minimumResultsForSearch: 5
+            });
+
+            tax_rule_row++;
+        }
+    </script>
+
+{% endblock %}

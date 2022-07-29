@@ -1,0 +1,40 @@
+{% set products_per_item = 1 %}
+
+{% if fields.Widget4_Type.field_value == 'LatestProducts' %}
+  {% set ProductsByType = getLatestProducts(fields['Widget4_limit']['field_value'], 595, 738) %}
+
+{% elseif fields.Widget4_Type.field_value == 'BestSellerProducts' %}
+  {% set ProductsByType = getBestSellerProducts(fields['Widget4_limit']['field_value'], 595, 738) %}
+
+{% elseif fields.Widget4_Type.field_value == 'SpecialProducts' %}
+  {% set ProductsByType = getSpecialProducts(fields['Widget4_limit']['field_value'], 595, 738) %}
+{% endif %}
+
+{% set items_products = ProductsByType|chunk(1) %}
+{% set items_count = items_products|length %}
+
+
+<div class="widget widget-top-seller" id="section-{{ section_id }}">
+    <h2 class="widget-title sub-title">{{ fields.Widget4_Title.field_value }}</h2>
+    <ul>
+        {% for product in ProductsByType %}
+        <li class="clearfix">
+            <div class="product-thumb">
+                <a href="{{ product.href }}" class="product-thumb-link"><img class="img-responsive" src="{{ product.thumb }}" alt="" /></a>
+            </div>
+            <h3 class="product-title"><a href="{{ product.href }}">{{ product.name }}</a></h3>
+            <div class="product-price">
+                {% if ('-1' in product.price) or ('-1' in product.special) %}
+                    <ins><span class="clickable" onclick="contact_us('{{ product.product_id }}');">{{ lang('button_req_quote') }}</span></ins>
+                    <div id="enquiry-{{ product.product_id }}"  style="display:none">{{ product.name }}:</div>
+                {% elseif product.special %}
+                    <del><span>{{ product.price }}</span></del>
+                    <ins><span>{{ product.special }}</span></ins>
+                {% else %}
+                    <ins><span>{{ product.price }}</span><ins>
+                {% endif %}
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+</div>

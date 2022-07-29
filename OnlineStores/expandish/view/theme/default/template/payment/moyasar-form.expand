@@ -1,0 +1,139 @@
+
+<div style="" id="moyasar_payment">
+    <div class="row">
+        <aside class="col-sm-12">
+            <article class="card">
+                <div class="card-body p-5">
+
+                    <div class="moyasar-errors" style="display: none;    color: #f90808;">
+                        <p class="alert alert-alert">Some text success or error</p>
+                    </div>
+
+                    <form role="form" id="moyasar-form" method="post" action="https://api.moyasar.com/v1/payments.html">
+                        <div class="form-group">
+                            <label for="username">{{ lang('card_holder_name') }}</label>
+                            <div class="input-group">
+                                <div class="input-group-addon">
+                                    <span class="input-group-text"><i class="fa fa-user"></i></span>
+                                </div>
+                                <input type="text" class="form-control username" name="source[name]"
+                                       value="{{ data['username'] }}"
+                                       placeholder="" required="">
+                            </div> <!-- input-group.// -->
+                        </div> <!-- form-group.// -->
+
+                        <div class="form-group">
+                            <label for="cardNumber">{{ lang('card_number') }}</label>
+                            <div class="input-group">
+                                <div class="input-group-addon">
+                                    <span class="input-group-text"><i class="fa fa-credit-card"></i></span>
+                                </div>
+                                <input type="text" class="form-control cardNumber" name="source[number]"
+                                       value="{{ data['cardNumber'] ?: '' }}" placeholder="">
+                            </div> <!-- input-group.// -->
+                        </div> <!-- form-group.// -->
+
+                        <div class="row">
+                            <div class="col-sm-8">
+                                <div class="form-group">
+                                    <label><span class="hidden-xs">{{ lang('expiration_date') }}</span> </label>
+                                    <div class="form-inline">
+                                        <select class="form-control month" name="source[month]" style="width:45%">
+                                            <option value="0">MM</option>
+                                            {% for k, month in months %}
+                                                <option {{ k == data['month'] ? 'selected' : '' }} value="{{ k }}">{{ month }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <span style="width:10%; text-align: center"> / </span>
+                                        <select class="form-control year" name="source[year]" style="width:45%">
+                                            <option value="0">YY</option>
+                                            {% for year in years %}
+                                                <option {{ year == data['year'] ? 'selected' : '' }} value="{{ year }}">{{ year }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-4">
+                                <div class="form-group">
+                                    <label data-toggle="tooltip" title=""
+                                           data-original-title="3 digits code on back side of the card">CVV <i
+                                                class="fa fa-question-circle"></i></label>
+                                    <input class="form-control cvc" name="source[cvc]"
+                                           value="{{ data['cvc'] }}" required="" type="text">
+                                </div> <!-- form-group.// -->
+                            </div>
+                        </div> <!-- row.// -->
+                    <input type="hidden" name="callback_url" value="{{ link('payment/moyasar/confirm') }}" />
+                    <input type="hidden" name="publishable_api_key" value="{{ moyasar_key }}">
+                    <input type="hidden" name="source[type]" value="creditcard">
+                    <input type="hidden" name="description" value="StoreOrder-{{ orderId }}">
+                    <!-- <input type="hidden" name="moyasar[currency]" value="{{ currency }}" /> -->
+                    <input type="hidden" name="amount" value="{{ amount }}" />
+                    <!-- <input type="hidden" name="moyasar[order_id]" value="{{ orderId }}" /> -->
+                    <!-- <input type="hidden" name="moyasar[order_name]" value="{{ orderName }}" /> -->
+                    </form>
+                </div> <!-- card-body.// -->
+            </article> <!-- card.// -->
+        </aside>
+    </div>
+    <div>
+    <br/>
+    <button type="button" class="text-uppercase bg-color btn btn-inline" id="confirm-payment">{{ lang('button_confirm') }}</button>
+
+    <div class="right" style="display:none;" ></div>
+    </div>
+</div>
+<script type="text/javascript">
+
+    $(window).on('load', function() {
+        console.log('Moyasar Loaded');
+        $('#qc_confirm_order').fadeOut();
+        $('#moyasar_payment').fadeIn();
+    });
+    
+    $("#confirm-payment").click(function(event){
+        paymentProccess();
+    });
+
+    function paymentProccess(){
+        var $e = $('.moyasar-errors p');
+
+        $e.text('');
+
+        if ($('#moyasar-form .username').val().length < 1) {
+            $e.text('{{ lang('error_username') }}');
+            $('.moyasar-errors').fadeIn();
+            return;
+        }
+
+        if (
+            $('#moyasar-form .cardNumber').val().length < 16 ||
+            Number.isInteger($('#moyasar-form .cardNumber').val().length) == false
+        ) {
+            $e.text('{{ lang('error_creditNumber') }}');
+            $('.moyasar-errors').fadeIn();
+            return;
+        }
+        
+        if ($('#moyasar-form .month').val() == 0) {
+            $e.text('{{ lang('error_month') }}');
+            $('.moyasar-errors').fadeIn();
+            return;
+        }
+
+        if ($('#moyasar-form .year').val() == 0) {
+            $e.text('{{ lang('error_year') }}');
+            $('.moyasar-errors').fadeIn();
+            return;
+        }
+
+        if ( $('#moyasar-form .cvc').val().length < 3) {
+            $e.text('{{ lang('error_cvc') }}');
+            $('.moyasar-errors').fadeIn();
+            return;
+        }
+
+        $('#moyasar-form').submit();
+    }
+</script>

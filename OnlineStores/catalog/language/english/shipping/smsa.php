@@ -1,0 +1,6 @@
+<?php
+
+$_ = [
+    'text_title' => 'SMSA Express',
+    'text_description' => 'Shipping with SMSA Express',
+];

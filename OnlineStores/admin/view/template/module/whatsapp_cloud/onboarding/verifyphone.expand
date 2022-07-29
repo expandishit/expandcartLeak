@@ -1,0 +1,229 @@
+{% extends "base.expand" %}
+{% import "controls/forms.expand" as forms %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+
+{% block title %}
+    {{ lang('heading_title', 'module/whatsapp') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block secondarymenu %}
+{% endblock secondarymenu %}
+
+{% block content %}
+
+<style>
+    .content-wrapper {
+        background-color: #f8f9ff;
+    }
+
+    .page-header-default {
+        background-color: transparent;
+    }
+    .page-header-content + .breadcrumb-line {
+        border: 0;
+    }
+
+</style>
+
+<div class="container-size-center">
+	<div class="text-center">
+        <img src="view/assets/images/whatsapp/WhatsApp_BgIcob.png" alt="icon">
+        <img src="view/assets/images/whatsapp/double.png" alt="icon" class="mr-10 ml-10">
+        <img src="view/assets/images/whatsapp/WhatsApp_expandcart.png" alt="icon">
+    </div>
+	  <h6 class="bold mb-20 mt-20 text-center">{{lang('text_connect_whatsApp_business_account')}}</h6>
+	
+	<div class="alert alert-danger" id="error-container" style="display:none">
+		  <strong> {{lang('text_error')}}</strong> {{lang('text_something_went_wrong')}}
+	</div>
+	
+	<div class="panel" id='sendcode-container'>
+		<div class="panel-body">
+		
+			<div class="row m-0">
+				<h5 class="bold tab-content-title col-md-12 center"> {{lang('text_phone_verification')}}</h5>
+			</div>
+			<div class="row m-0">
+				<div class="form-group col-md-8 col-md-offset-2">
+                    <label class="control-label" for="whatsapp_phone_number">{{ lang('entry_phone_number') }} <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="whatsapp_cloud_phone_number" name="whatsapp_cloud_phone_number" value="{{ whatsapp_cloud_phone_number }}" readonly>
+                    <span class="help-block"></span>
+                    <span class="text-muted"></span>
+                </div>
+				
+				<div class="form-group col-md-8 col-md-offset-2">
+                    <label class="control-label">{{ lang('entry_whatsapp_methods') }} <span class="text-danger">*</span> </label>
+					<select class="form-control" name='whatsapp_methods' id="whatsapp_methods">
+										  <option value='sms'>SMS</option>
+										  <option value='voice'>voice</option>
+					</select>
+                    <span class="help-block"></span>
+                    <span class="text-muted"></span>
+                </div>
+				<div class="form-group col-md-8 col-md-offset-2 center">
+                    <a class="btn btn-primary" id="send_btn" >{{ lang('text_send') }} </a>
+                </div>
+			</div>
+		</div>
+	</div>
+	
+	<div class="panel" id='verifycode-container'>
+
+		
+		<div class="panel-body">
+			<div class="row m-0">
+				<h5 class="bold tab-content-title col-md-12 center"> {{lang('text_phone_verification')}} </h5>
+			</div>
+			<div class="row m-0">
+				<div class="form-group col-md-8 col-md-offset-2">
+                    <label class="control-label" for="whatsapp_phone_number">{{ lang('entry_whatsapp_verification_code') }} <span class="text-danger">*</span></label>
+					<br>
+					<!--
+					<input type="text" class="form-control" id="whatsapp_verification_code" name="whatsapp_verification_code" value="{{ whatsapp_verification_code }}" >
+                   -->
+				   <form id='code-form'>
+					<div>
+						<div class="digit-group verify-input-holder" style="direction: ltr;">
+							<input type="text" class="codeInput" name="code[]" maxlength="1" autocomplete="off" required pattern="\d{1}" autofocus>
+							<input type="text" class="codeInput" name="code[]" maxlength="1" autocomplete="off" required pattern="\d{1}">
+							<input type="text" class="codeInput" name="code[]" maxlength="1" autocomplete="off" required pattern="\d{1}">
+							<input type="text" class="codeInput" name="code[]" maxlength="1" autocomplete="off" required pattern="\d{1}">
+							<input type="text" class="codeInput" name="code[]" maxlength="1" autocomplete="off" required pattern="\d{1}">
+							<input type="text" class="codeInput" name="code[]" maxlength="1" autocomplete="off" required pattern="\d{1}">
+						</div>
+					</div>
+					</form>
+
+				   <span class="help-block"></span>
+                    <span class="text-muted"></span>
+                </div>
+				<div class="form-group col-md-8 col-md-offset-2 center">
+					 <div class="d-flex j-content-between ai-center activate-controls mt-20">
+							<a class="btn btn-default" id="back_btn" > {{ lang('text_back') }}  </a>
+							<a class="btn btn-primary" id="verify_btn" > {{ lang('text_send') }} </a>
+									   
+						</div>
+                </div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script>
+
+var links  = {};
+	links['verification_url'] = '{{ link('module/whatsapp_cloud/phoneVerification?target=') }}';
+    links['notification_url'] = '{{ link('module/whatsapp_cloud') }}';
+
+		
+	//events 
+	//$('#sendcode-container').hide();  //fpr test - should be commented 
+	$('#verifycode-container').hide();	
+	hide_error();
+	
+	$('#send_btn').click(()=>{
+		whatsapp_methods = $("#whatsapp_methods").val();
+		phoneVerification("send_code",{whatsapp_methods: whatsapp_methods}, (response)=>{
+			if(response.hasErrors){
+				show_error();
+			}else{
+				$('#sendcode-container').hide();
+				$('#verifycode-container').show();
+			}
+		});
+		
+	});
+	
+	$('#verify_btn').click(()=>{
+		 const verification_code = [...document.getElementsByClassName('codeInput')]
+				.filter(({name})=>name)
+				.map(({value})=>value)
+				.join('');
+		  
+		phoneVerification("verify_code",{whatsapp_verification_code: verification_code}, (response)=>{
+			if(response.hasErrors){
+				show_error();
+			}else {
+			window.location.href = links['notification_url'];
+			}
+		});
+		
+	});
+	
+	$('#back_btn').click(()=>{
+		$('#sendcode-container').show();
+		$('#verifycode-container').hide();
+	});
+
+
+const $inp = $(".codeInput");
+   $inp.on({
+        paste(ev) { // Handle Pasting
+        
+            const clip = ev.originalEvent.clipboardData.getData('text').trim();
+            // Allow numbers only
+            if (!/\d{4}/.test(clip)) return ev.preventDefault(); // Invalid. Exit here
+            // Split string to Array or characters
+            const s = [...clip];
+            // Populate inputs. Focus last input.
+            $inp.val(i => s[i]).eq(3).focus(); 
+        },
+        input(ev) { // Handle typing
+            
+            const i = $inp.index(this);
+            if (this.value) $inp.eq(i + 1).focus();
+        },
+        keydown(ev) { // Handle Deleting
+            
+            const i = $inp.index(this);
+            if (!this.value && ev.key === "Backspace" && i) $inp.eq(i - 1).focus();
+        }
+    });
+	
+	////// hide submit if the required fields are empty.
+    function emptyInputVerify(){
+        var empty = false;
+        
+		$('#code-form .verify-input-holder input').each(function() {
+            if ($(this).val().length == 0) {
+                empty = true;
+            }
+        });
+            
+		if (empty) {
+            $('#verify_btn').addClass('disabled');
+        } else {
+            $('#verify_btn').removeClass('disabled');
+        }
+    };
+	
+    $('#code-form .verify-input-holder input').keyup(function() {
+        emptyInputVerify();
+    });
+		
+        emptyInputVerify();
+	function phoneVerification(target,data,callback){
+		hide_error();
+		$.ajax({
+			url: links['verification_url']+target,
+			method: 'POST',
+			data:data,
+			dataType:'JSON',
+			async:false,
+			success: callback
+		})
+	}
+
+	function hide_error(){
+		$('#error-container').hide();	
+	}
+	function show_error(){
+		$('#error-container').show();	
+	}
+</script>
+
+{% endblock content %}

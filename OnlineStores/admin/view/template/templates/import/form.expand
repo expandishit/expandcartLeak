@@ -1,0 +1,406 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+
+{% block title %}
+    {{ lang('heading_title') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block headelements %}
+    <a href="{{ link('setting/template') }}" class="btn btn-default top-cancel-button"> {{ lang('button_cancel') }}</a>
+{% endblock headelements %}
+
+{% block content %}
+<style>
+#progress-bar {
+    border: 1px solid #ccc;
+    margin: 0 30%;
+    margin-top: 0px;
+    margin-top: 30px;
+    border-radius: 5px;
+}
+
+#progress-bar #inner-progress-bar {
+    width: 0%;
+    background-color: tomato;
+    padding: 10px 0;
+    transition: width 5s ease;
+}
+
+#progress-bar #progress-bar-percentage {
+    position: relative;
+    z-index: 100000;
+    margin-top: -20px;
+}
+</style>
+    <form id="import-template" class="form0" method="POST" enctype="multipart/form-data">
+        <div class="panel panel-flat">
+            <div class="panel-body">
+                <fieldset>
+
+                    <legend class="text-semibold">
+                        <i class="fas fa-check-circle fa-lg position-left"></i>
+                        {{ lang('lbl_cod_settings', 'payment/cod') }}
+                        <a class="control-arrow" data-toggle="collapse" data-target="#fields-panel">
+                            <i class="icon-circle-down2"></i>
+                        </a>
+                    </legend>
+
+                    <div class="collapse in" id="fields-panel">
+                        <!--- Start Redesigner Upload File -->
+                        <div class="col-md-12 text-center upload-pg" id="username-group">
+                            <h2> {{lang('form_heading')}}</h2>
+                            <div class="box-upload">                                
+                                <input type="file" id="file-select" name="photos"/>
+                                <img src='view/image/icon-upload.png' alt='loading ...'>
+                                <p id='file_name'> {{lang('from_ParUpload')}} </p>
+                            </div>
+                            <button type="submit" id="upload-button" class="btn btn-upload">
+                                {{lang('from_btnUpload')}}
+                            </button>
+                            <div id="progress-bar" style="display: none;">
+                                <div id="inner-progress-bar"></div>
+                                <div id="progress-bar-percentage">0%</div>
+                            </div>
+                            <span class="help-block"></span>
+                        </div>
+
+                        
+                        <!--- End Redesigner Upload File -->
+                        
+                        <!-- id="username-group" -->
+                        <!-- <div class="form-group">
+                            <label for="template" class="control-label">
+                                {{ lang('entry_username') }} 
+                                <span class="text-danger">*</span>
+                            </label>
+                            <input type="file" id="file-select" name="photos"/>
+                            <button type="submit" id="upload-button">Upload</button>
+                            <span class="help-block"></span>
+                        </div> -->
+                    </div>
+                </fieldset>
+            </div>
+        </div>
+    <input type="hidden" name="{{ progress_id }}" value="import_template" />
+    </form>
+    <div class="row">
+        <div class="col-md-12 text-right">
+            <hr/>
+            <a  href="{{ link('setting/template') }}"
+                class="btn btn-default bottom-cancel-button"> {{ lang('button_cancel') }}</a>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modal-template-options">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger">
+                    <button type="button" class="close" data-dismiss="modal">×</button>
+                    <h4 class="modal-title">{{ lang('template_exists') }} <span id="ps-title"></span></h4>
+                </div>
+                <div class="modal-body">
+                    <div class="modal-errors"></div>
+                    <p>{{ lang('template_exists_messsage') }}</p>
+                    {#<p>{{ lang('action_1') }}</p>#}
+                    <p>{{ lang('action_2') }}</p>
+                </div>
+                <div class="modal-footer" style="display: flex; justify-content: center;">
+                    {#<button type="button" class="btn btn-danger"
+                            id="re-upload-theme">{{ lang('button_reupload') }}</button>#}
+                    <button type="button" class="btn btn-primary"
+                        id="update-template">{{ lang('button_update') }}</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{{ lang('button_cancel') }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        function checkProgress() {
+            $.ajax({
+                url: "{{ link('templates/import/uploadProgress') }}",
+                method: 'POST',
+                dataType: 'JSON',
+                data: {key: 'import_template'},
+                success: (r) => {
+                    if (typeof r.status !== 'undefined' && r.status === 'OK') {
+                        $('#inner-progress-bar').css('width', `${r.data.progress}%`);
+                        $('#progress-bar-percentage').html(`${r.data.progress}%`);
+
+                        if (r.data.progress < 100) {
+                            setTimeout("checkProgress()", 500);
+                        } else {
+                            $('#progress-bar').hide();
+                        }
+                    }
+                }
+            });
+        }
+        
+        $(document).ready(function () {
+
+            let _upload_update_link = "{{ link('templates/update/upload') }}";
+
+            function disableModalButtons() {
+                $('#modal-template-options').find('.modal-footer').find('button').attr('disabled', true);
+            }
+
+            function enableModalButtons() {
+                $('#modal-template-options').find('.modal-footer').find('button').attr('disabled', false);
+            }
+
+            function showContainerLoader() {
+                let t = `<span class="container-loading"><i class="fa fa-refresh fa-spin"></i></span>`;
+
+                $(t).appendTo('body');
+
+                let _c = $('.container-loading');
+
+                _c.css('width', $('body').css('width'))
+                _c.css('top', 0);
+                _c.css('position', 'fixed');
+                _c.css('z-index', '100000');
+                _c.css('height', '100%');
+                _c.css('font-size', '40px');
+                _c.css('text-align', 'center');
+                _c.css('background-color', 'rgba(0,0,0,0.5)');
+                _c.css('color', 'white');
+                _c.find('.fa-spin').css('top', '50%');
+                _c.find('.fa-spin').css('position', 'fixed');
+            }
+
+            function hideContainerLoader() {
+                $('.container-loading').remove();
+            }
+
+            function schemaGaurd(data) {
+                $.ajax({
+                    url: '{{ link('templates/import/schemaGaurd') }}',
+                    type: 'POST',
+                    data: {
+                        template: data['template'],
+                        basefile: data['base'],
+                        apply_template: data['apply_template']
+                    },
+                    dataType: 'JSON',
+                    success: function (response) {
+                        if (response['status'] == 'success') {
+                            hierarchyGaurd(response);
+                        } else {
+                            handleErrors(response['errors']);
+                        }
+                    }
+                });
+            }
+
+            function hierarchyGaurd(data) {
+                $.ajax({
+                    url: '{{ link('templates/import/hierarchyGaurd') }}',
+                    type: 'POST',
+                    data: {
+                        basefile: data['baseFile'],
+                        schemaPath: data['schemaPath'],
+                        apply_template: data['apply_template']
+                    },
+                    dataType: 'JSON',
+                    success: function (response) {
+                        if (response['status'] == 'success') {
+                            sectionGaurd(response);
+                        } else {
+                            handleErrors(response['errors']);
+                        }
+                    }
+                });
+            }
+
+            function sectionGaurd(data) {
+                $.ajax({
+                    url: '{{ link('templates/import/sectionGaurd') }}',
+                    type: 'POST',
+                    data: {
+                        basefile: data['baseFile'],
+                        schemaPath: data['schemaPath'],
+                        apply_template: data['apply_template']
+                    },
+                    dataType: 'JSON',
+                    headers: {
+                        'X-Source-Ajax': 'true'
+                    },
+                    success: function (r) {
+                        if (r['status'] == 'success') {
+                            if (typeof r['apply_template'] != 'undefined' && r['apply_template'] == true) {
+                                applyTemplate(r);
+                            } else {
+                                window.location = r['href'];
+                            }
+                        } else {
+                            handleErrors(r['errors']);
+                        }
+                    }
+                });
+            }
+
+            function applyTemplate(data) {
+                $.ajax({
+                    url: '{{ link("templates/template/apply") }}',
+                    type: 'POST',
+                    data: {template_id: data['template']['id']},
+                    dataType: 'JSON',
+                    headers: {
+                        'X-Source-Ajax': 'true'
+                    },
+                    success: (r) => {
+                        if (typeof r.status != 'undefined' && r.status == 'success') {
+                            window.location = data['href'];
+                        }
+                    }
+                });
+            }
+
+            function uploadTrigger(override) {
+                if ($('#file-select').val() != '') {
+
+                    showContainerLoader();
+
+                    $('#progress-bar').show();
+
+                    setTimeout("checkProgress()", 500);
+
+                    var formData = new FormData();
+                    formData.append('template', $('#file-select')[0].files[0]);
+                    formData.append('override', override);
+                    $.ajax({
+                        url: '{{ link('templates/import/uploadFile') }}',
+                        type: 'POST',
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        dataType: 'JSON',
+                        success: function (response) {
+                            $('#upload-button').attr('disabled', true);
+                            if (response['status'] == 'success') {
+                                schemaGaurd(response);
+                            } else if (response['status'] == 'warning') {
+                                /*handleErrors(`<div class="theme-options">
+                                    <div class="override-theme">
+                                    Template is already exists , uploading this file will override the old version
+                                    <br />
+                                    Are you sure that you want to upload it?<br />
+                                    <button type="button" class="btn btn-success" id="override-template">Confirm</button>
+                                    <button class="btn btn-default" onclick="return location.reload()">Reset</button>
+                                    <br />
+                                    </div>
+                                    <div class="upgrade-theme">Do you have a newer version?<br/>
+                                    <button type="button" class="btn btn-primary" id="update-template">Upgrade</button>
+                                    </div>
+                                </div>`);*/
+                                $('#modal-template-options').modal('toggle');
+                                $('#update-template').data('code', response['code']);
+
+                                // $('#override-template').click(function (e) {uploadTrigger(1)});
+                                // $('#update-template').click(function (e) {updateTrigger(response['code'])});
+
+                                $('#progress-bar').hide();
+
+                                hideContainerLoader();
+                            } else {
+                                handleErrors(response['errors']);
+
+                                hideContainerLoader();
+                            }
+                        }
+                    });
+
+                } else {
+                    handleErrors('Please Choose File Uploaded');
+                }
+            }
+
+            $('#modal-template-options').on('hide.bs.modal', function () {
+                $('#update-template').data('code', '');
+                $('#upload-button').attr('disabled', false);
+            });
+
+            $('#update-template').click(function (e) {
+                let t = $(this);
+                let code = t.data('code');
+                updateTrigger(code);
+            });
+
+            $('#re-upload-theme').click(function (e) {
+                $('#modal-template-options').modal('toggle');
+                uploadTrigger(1);
+            });
+
+            function updateTrigger(code) {
+
+                $('#progress-bar').show();
+
+                setTimeout("checkProgress()", 500);
+
+                showContainerLoader();
+                $('.modal-errors').html('');
+
+                $('.theme-options').find('button').attr('disabled', true);
+                var formData = new FormData();
+                formData.append('template', $('#file-select')[0].files[0]);
+                formData.append('code', code);
+                $.ajax({
+                    url: _upload_update_link,
+                    data: formData,
+                    method: 'POST',
+                    processData: false,
+                    contentType: false,
+                    dataType: 'JSON',
+                    success: (r) => {
+                        if (typeof r.status != 'undefined' && r.status == 'OK') {
+                            $('.theme-options').html('');
+                            $('.theme-options').append(`<div>${r.message}</div>`);
+                            $('.modal-errors').html(`<div class="alert alert-success">${r.message}</div>`);
+
+                            setTimeout(() => {
+                                location.reload();
+                            }, 3000);
+                        } else {
+                            $('.theme-options').html('<div class="errors"></div>');
+                            for (i in r.errors) {
+                                let e = r.errors[i];
+                                $('.modal-errors').append(`<div class="alert alert-danger">${e}</div>`);
+                            }
+
+                            hideContainerLoader();
+                        }
+                    }
+                });
+            }
+
+            function handleErrors(errors) {
+                if (!errors[0]['detailed_error']) {
+                    $('.help-block').empty().append(errors);
+
+                } else {
+                    $('.help-block').empty().append(errors[0]['detailed_error']);
+                }
+            }
+
+            $('#import-template').submit(function (e) {
+                e.preventDefault();
+
+                uploadTrigger(0);
+                
+            });
+            // Append File Upload 
+
+            $('#file-select').on('change',function(){
+                const FileName = $(this).val().split(/\\/).reverse()[0];
+                $('#file_name').empty().append(FileName + ' . . .');
+            })
+        });
+    </script>
+{% endblock %}

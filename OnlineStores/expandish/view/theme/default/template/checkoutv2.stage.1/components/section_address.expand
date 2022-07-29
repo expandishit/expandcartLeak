@@ -1,0 +1,608 @@
+<div id="payment_address_wrap">
+    {% if checkout_mode == '1' and is_logged %}
+        {% if addresses %}
+            <h2 class="h2 mb-3">{{ lang('text_select_address') }}</h2>
+        {% else %}
+            <h2 class="h2 mb-3">{{ lang('text_your_address') }}</h2>
+        {% endif %}
+    {% endif %}
+    <div class="box-content">
+            {% if payment_address['description'] %}<div class="description">{{ payment_address['description'] }}</div>{% endif %}
+
+            {% if not is_logged %}
+                <div class="box-content__sign-in d-flex align-items-center">
+                    <svg id="information" xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+                        <g id="Group_8640" data-name="Group 8640">
+                          <g id="Group_8639" data-name="Group 8639">
+                            <path id="Path_11142" data-name="Path 11142" d="M256,0C114.5,0,0,114.507,0,256S114.507,512,256,512,512,397.493,512,256,397.492,0,256,0Zm0,472A216,216,0,1,1,472,256,215.878,215.878,0,0,1,256,472Z" fill="#03a9f4"/>
+                          </g>
+                        </g>
+                        <g id="Group_8642" data-name="Group 8642">
+                          <g id="Group_8641" data-name="Group 8641">
+                            <path id="Path_11143" data-name="Path 11143" d="M256,214.33a20,20,0,0,0-20,20V363.123a20,20,0,1,0,40,0V234.33A20,20,0,0,0,256,214.33Z" fill="#03a9f4"/>
+                          </g>
+                        </g>
+                        <g id="Group_8644" data-name="Group 8644">
+                          <g id="Group_8643" data-name="Group 8643">
+                            <circle id="Ellipse_346" data-name="Ellipse 346" cx="27" cy="27" r="27" transform="translate(229 135.84)" fill="#03a9f4"/>
+                          </g>
+                        </g>
+                      </svg>
+                    <p>{{ lang('text_signin_note') }}</p>
+                    <button id="signin_action">{{ lang('text_signin') }}</button>
+                </div>
+            {% else %}
+            <form id="payment_address_form" >
+                <div>
+                    {% if addresses %}
+                        {% for address in addresses %}
+                            <div class="address-radio-box edit-address-area {{ google_map['status'] == 0 ? 'address--no-map' : '' }}">
+                                <div class="radio-input map-box" data-location="{{address['location']}}">
+                                    <div class="row no-gutters">
+                                        <div class="{{ google_map['status'] == 0 ? 'col-md-12' : 'col-md-6' }}">
+                                            <div class="radio-input__info-container">
+                                                <input class="payment--address" type="radio" name="payment_address[address_id]" value="{{ address['address_id'] }}" id="payment_address_exists_{{ address['address_id'] }}" {{ address['address_id'] == payment_address['address_id'] ? 'checked="checked"' : '' }} data-require="" class="styled" data-refresh="4" autocomplete='off' />
+                                                <span class="checkmark" for="payment_address_exists_{{ address['address_id'] }}"></span>
+                                                <label class="radio-input__info-container__label" for="payment_address_exists_{{ address['address_id'] }}">
+                                                    <span class="radio-input__full-name"> {{ isset(address['short_address']) ? address['short_address'] : address['address_1'] }}</span>
+                                                    <span class="thumb-address_1">  {{ address['address_1'] }}</span>
+                                                    <span class="thumb-area"> {{ address['area'] }}</span>
+                                                    <span class="thumb-zone"> {{ address['zone'] }}</span>
+                                                    <span class="thumb-country"> {{ address['country'] }}</span>
+                                                        <a class="radio-input__info-container__edit"
+                                                        href="#"
+                                                        data-address_id="{{ address['address_id'] }}"
+                                                        data-country_id="{{ address['country_id'] }}"
+                                                        data-zone_id="{{ address['zone_id'] }}"
+                                                        data-area_id="{{ address['area_id'] }}"
+                                                        data-city="{{ address['city'] }}"
+                                                        data-address_1="{{ address['address_1'] }}"
+                                                        data-address_2="{{ address['address_2'] }}"
+                                                        data-postcode="{{ address['postcode'] }}"
+                                                        data-location="{{ address['location'] }}"
+                                                        data-telephone="{{ address['telephone'] }}"
+                                                        data-default="{{ address['default'] }}"
+                                                        >{{ lang('edit', 'account/identity', true) }}</a>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        {% if google_map['status'] == 1 %}
+                                            <div class="col-md-6">
+                                                <div class="mapouter">
+                                                    <div class="map" style="width: 100%; height: 210px;"></div>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="address-toogle edit-form-box radio-input">
+                                </div>
+                                
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                
+                {# Add Address #}
+                <div class="add-address-area">
+                    <div class="add-address">
+                        <input type="radio" style="display: none;" name="payment_address[address_id]" value="0" id="payment_address_exists_0" {{ payment_address['address_id'] == 0 ? 'checked="checked"' : '' }} class="styled" data-refresh="4" autocomplete='off' />
+                        <label class="add--new-address" for="payment_address_exists_0"> + {{ lang('insert_address', 'account/identity', true) }}</label>
+                    </div>
+                    
+                    <div class="address-toogle">
+                        <div id="payment_address" class="add-payment-address">
+                            {% if google_map['status'] == 1 %}
+                                {# Location #}
+                                <div class="form-group col-md-12" data-sort="0">
+                                    <div class="map_cont">
+                                        <div id='map' class="w-100" style="width: 100%; height: 300px;"></div>
+                                        <input type="hidden" id="payment_address_location" name="payment_address[location]" value=""/>
+                                    </div>
+                                </div>
+                                {# /Location #}
+                            {% endif %}
+                            {# country #}
+                            {% if customer_fields['address']['country_id'] > -1 %}
+                                <div id="country_id_input" class="form-group col-md-6 select-input sort-item" data-sort="1">
+                                    <label class="font-12" for="payment_address_country_id">
+                                        <span class="text">{{ lang('entry_country', 'account/identity', true) }}</span> 
+                                        {% if customer_fields['address']['country_id'] == 1 %}<span class="required">*</span>{% endif %}
+                                    </label>
+                                    <select class="form-control form-control-lg mySelect" data-placeholder="{{ lang('text_select', 'account/identity', true) }}" name="payment_address[country_id]" data-require="{{customer_fields['address']['country_id'] == 1 ? 'require' : ''}}" data-require-msg="{{lang('required_input_country_id', 'account/identity', true)}}" data-refresh="4" id="payment_address_country_id" tabindex="-1" aria-hidden="true" data-select2-id="select2-data-payment_address_country_id">
+                                    <option value="">{{ lang('text_select', 'account/identity', true) }}</option>
+                                    {% if payment_address['country_id']['options'] %}
+                                        {% for option in payment_address['country_id']['options'] %}
+                                            {% if option['value'] == payment_address['country_id']['value'] %}
+                                            <option value="{{ option['value'] }}" data-code="{{option['iso_code_2']}}" selected="selected">{{ option['name'] }}</option>
+                                            {% else %}
+                                            <option value="{{ option['value'] }}" data-code="{{option['iso_code_2']}}">{{ option['name'] }}</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endif %}
+                                    </select>
+                                </div>
+                            {% endif %}
+                            {# /country #}
+                            {# region & state #}
+                            <div id="zone_id_input" class="form-group col-md-6 select-input sort-item" data-sort="2">
+                                <label class="font-12" for="payment_address_zone_id"> <span class="text">{{ lang('entry_zone_id', 'account/identity', true)  }}</span> 
+                                    {% if customer_fields['address']['zone_id'] == 1 %}<span class="required">*</span>{% endif %}
+                                </label>
+                                <select  class="form-control form-control-lg mySelect" data-placeholder="{{ lang('text_select', 'account/identity', true) }}" name="payment_address[zone_id]" data-require="{{customer_fields['address']['zone_id'] == 1 ? 'require' : '' }}" data-require-msg="{{lang('required_input_zone_id', 'account/identity', true)}}" data-refresh="4" id="payment_address_zone_id" tabindex="-1" aria-hidden="true" data-select2-id="select2-data-payment_address_zone_id" disabled>
+                                <option value="">{{ lang('text_select', 'account/identity', true) }}</option>
+                                </select>
+                            </div>
+                            {# / region & state #}
+                            {# city & area #}
+                            <div id="area_id_input" class="form-group col-md-6 select-input sort-item" data-sort="3">
+                                <label class="font-12" for="payment_address_area_id"><span class="text">{{ lang('entry_city', 'account/identity', true) }}</span> 
+                                    {% if customer_fields['address']['area_id'] == 1 %}<span class="required">*</span>{% endif %}
+                                </label>
+                                <select  class="form-control form-control-lg mySelect" data-placeholder="{{ lang('text_select',  'account/identity', true) }}" name="payment_address[area_id]"  data-require="{{customer_fields['address']['area_id'] == 1 ? 'require' : '' }}" data-require-msg="{{lang('required_input_city', 'account/identity', true)}}" data-refresh="4" id="payment_address_area_id" tabindex="-1" aria-hidden="true" data-select2-id="select2-data-payment_address_area_id">
+                                <option value="">{{ lang('text_select',  'account/identity', true) }}</option>
+                                </select>
+                            </div>
+                            {# /city #}
+                            <input type="hidden" name="payment_address[city]" id="payment_address_city" value="" >
+                            {# address 1 #}
+                            <div id="address_1_input" class="text-input form-group col-md-6  sort-item " data-sort="5">
+                                <label class="font-12" for="payment_address_address_1"><span class="text">{{ lang('entry_address_1', 'account/identity', true) }}</span> 
+                                    {% if customer_fields['address']['address_1'] == 1 %}<span class="required ">*</span>{% endif %}
+                                </label>
+
+                                <input type="text" class="form-control form-control-lg" autocomplete="on" name="payment_address[address_1]" id="payment_address_address_1" data-require="{{ customer_fields['address']['address_1'] == 1 ? 'require' : '' }}" data-require-msg="{{lang('required_input_address_1', 'account/identity', true)}}" data-refresh="0" value="{{ payment_address['address_1']['value'] ? payment_address['address_1']['value'] : '' }}" placeholder="{{  lang('entry_address_1', 'account/identity', true) }}">
+                            </div>
+                            {# /address 1 #}
+                            {# address 2 #}
+                            <div id="address_2_input" class="text-input form-group col-md-6  sort-item " data-sort="6">
+                                <label class="font-12" for="payment_address_address_2"> <span class="text">{{ lang('entry_address_2', 'account/identity', true) }}</span> 
+                                    {% if customer_fields['address']['address_2'] == 1 %}<span class="required ">*</span>{% endif %}
+                                </label>
+                                <input type="text" class="form-control form-control-lg" autocomplete="on" name="payment_address[address_2]" id="payment_address_address_2" data-require="{{ customer_fields['address']['address_2'] == 1 ? 'require' : '' }}"  data-require-msg="{{lang('required_input_address_2', 'account/identity', true)}}" data-refresh="0" value="{{ payment_address['address_2']['value'] ? payment_address['address_2']['value'] : '' }}" placeholder="{{ lang('entry_address_2', 'account/identity', true) }}">
+                            </div>
+                            {# /address 2 #}
+                            {# postcode #}
+                            <div id="postcode_input" class="text-input form-group col-md-6  sort-item " data-sort="6">
+                                <label class="font-12" for="payment_address_postcode"> <span class="text">{{ lang('entry_postcode', 'account/identity', true) }}</span> 
+                                    {% if customer_fields['address']['postcode'] == 1 %}<span class="required ">*</span>{% endif %}
+                                </label>
+
+                                <input type="text" class="form-control form-control-lg" autocomplete="on" name="payment_address[postcode]" id="payment_address_postcode" data-require="{{ customer_fields['address']['postcode'] == 1 ? 'require' : '' }}" data-require-msg="{{lang('required_input_postcode', 'account/identity', true)}}" data-type="integer" data-invalid-msg="{{lang('invalid_input_postcode', 'account/identity', true)}}" data-refresh="0" value="{{ payment_address['postcode']['value'] ? payment_address['postcode']['value'] : '' }}" placeholder="{{ lang('entry_postcode', 'account/identity', true) }}">
+                            </div>
+                            {# /postcode #}
+                            {# telephone #}
+                            <div id="telephone_input" class="text-input form-group col-md-6 sort-item " data-sort="7">
+                                <label class="font-12" for="payment_address_telephone"> <span class="text">{{ lang('entry_shipping_telephone', 'account/identity', true) }}</span> 
+                                    {% if customer_fields['address']['telephone'] == 1 %}<span class="required ">*</span>{% endif %}
+                                </label>
+                                <input type="text" class="form-control form-control-lg tel" autocomplete="on" name="payment_address[telephone]" id="payment_address_telephone" data-type="iti" data-require="{{ customer_fields['address']['telephone'] == 1 ? 'require' : '' }}" data-refresh="0" data-require-msg="{{lang('required_input_shipping_telephone', 'account/identity', true)}}" data-invalid-msg="{{lang('invalid_input_shipping_telephone', 'account/identity', true)}}" value="{{ payment_address['telephone']['value'] ? payment_address['telephone']['value'] : '' }}" placeholder="{{ lang('entry_shipping_telephone', 'account/identity', true) }}">
+                            </div>
+                            {# /telephone #}
+                            <div id="phonecode_input" class="text-input form-group col-md-6 qc-hide sort-item " data-sort="">
+                                <label class="font-12" for="payment_address_phonecode"> <span class="required qc-hide">*</span> <span class="text">phonecode</span> </label>
+                                <input type="text" class="form-control form-control-lg" autocomplete="on" name="payment_address[phonecode]" id="payment_address_phonecode" data-require="" data-refresh="1" value="" placeholder=" phonecode">
+                            </div>
+                            <div id="iso_code_2_input" class="text-input form-group col-md-6 qc-hide sort-item " data-sort="">
+                                <label class="font-12" for="payment_address_iso_code_2"> <span class="required qc-hide">*</span> <span class="text">iso_code_2</span> </label>
+                                <input type="text" class="form-control form-control-lg" autocomplete="on" name="payment_address[iso_code_2]" id="payment_address_iso_code_2" data-require="" data-refresh="1" value="" placeholder=" iso_code_2">
+                            </div>
+                            <div class="col-sm-12">
+                                <button type="button" class="btn address-toogle__save-btn" style="display:none;">{{lang('btn_save_changes', 'account/identity', true)}}</button>
+                                <button type="button" class="btn address-toogle__add-btn" style="display:none;">
+                                    {{ lang('btn_submit', 'account/identity', true) }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>                
+                </div>
+                {# /Add Address #}
+                
+                {%  if payment_address['send_as_gift']['status'] == 1  %}
+                    <div>
+                        <div id="payment_send_as_gift_block" class="checkbox-input">
+                            <input type="checkbox" name="payment_address[send_as_gift]"
+                                id="payment_address_send_as_gift"
+                                data-require="{{ payment_address['send_as_gift']['require'] ? 'require' : '' }}"
+                                data-refresh=""
+                                value="1"
+                                    {# {% if payment_address['send_as_gift']['value'] == 1 %} value="1" {% else %} value="0" {% endif %} #}
+                                    {% if payment_address['send_as_gift']['value'] == 1 %} checked="checked" {% endif %}
+                                class="styled"
+                                autocomplete='off' />
+                            <label for="payment_address_send_as_gift">{{ lang('send_as_gift') }}</label>
+                        </div>
+                    </div>
+                {% endif %}
+            </form>
+            {% endif %}
+            
+        </div> <!-- .box-content -->
+</div> <!-- #payment_address_wrap -->
+
+
+<script src="/expandish/view/javascript/common/checkout_phone_validation.js"></script>
+
+<script type="text/javascript">
+    var placeholder = 'select'; 
+    $(document).ready(function () {
+        $('#signin_action').closest('.wizard').children('.steps').addClass('user-not--logged').find('a').attr('href', '');
+        $('#signin_action').closest('.wizard').children('.actions').find('a[href="#next"]').remove();
+    });
+    /*$( document ).ready(function() {
+        var current_country = $('#payment_address_wrap select[name=\'payment_address[country_id]\']').val();
+        var current_zone    = "{{ payment_address['zone_id']['value'] }}";
+        var current_area    = "{{ payment_address['area_id']['value'] }}";
+        refreshPaymentAddessZone(current_country, current_zone, current_area);
+    });*/
+    
+    /*{% if payment_address['customer_group_id']['options'] %}
+    $(document).on('click', 'input[name=\'payment_address[customer_group_id]\']', function() {
+        var customer_group = [];
+
+        {% for customer_group in payment_address['customer_group_id']['options'] %}
+        customer_group[{{ customer_group['customer_group_id'] }}] = [];
+        customer_group[{{ customer_group['customer_group_id'] }}]['company_id_display'] = '{{ customer_group['company_id_display'] }}';
+        customer_group[{{ customer_group['customer_group_id'] }}]['company_id_required'] = '{{ customer_group['company_id_required'] }}';
+        customer_group[{{ customer_group['customer_group_id'] }}]['tax_id_display'] = '{{ customer_group['tax_id_display'] }}';
+        customer_group[{{ customer_group['customer_group_id'] }}]['tax_id_required'] = '{{ customer_group['tax_id_required'] }}';
+        {% endfor %}
+
+        if (customer_group[this.value]) {
+            if (customer_group[this.value]['company_id_display'] == '1') {
+                $('#company_id_input').show();
+            } else {
+                $('#company_id_input').hide();
+            }
+            if (customer_group[this.value]['tax_id_display'] == '1') {
+                $('#tax_id_input').show();
+            } else {
+                $('#tax_id_input').hide();
+            }
+            if (customer_group[this.value]['company_id_required'] == '1') {
+                $('#payment_address_company_id').attr('data-require', 'require');
+                $('label[for=\'payment_address_company_id\'] span.required.qc-hide').removeClass('qc-hide');
+            } else {
+                $('#payment_address_company_id').attr('data-require', '');
+                $('label[for=\'payment_address_company_id\'] span.required').addClass('qc-hide');
+            }
+            if (customer_group[this.value]['tax_id_required'] == '1') {
+                $('#payment_address_tax_id').attr('data-require', 'require');
+                $('label[for=\'payment_address_tax_id\'] span.required.qc-hide').removeClass('qc-hide');
+            } else {
+                $('#payment_address_tax_id').attr('data-require', '');
+                $('label[for=\'payment_address_tax_id\'] span.required').addClass('qc-hide');
+            }
+        }
+    });
+    {% endif %}*/
+    $(document).on('click', 'input[name=\'payment_address[exists]\']', function() {
+        if (this.value == '0') {
+            $('#payment_address_exists_list').hide();
+            $('#payment_address').show();
+        } else {
+            $('#payment_address_exists_list').show();
+            $('#payment_address').hide();
+        }
+    });
+
+    var _refreshPaymentAddessZoneSuccess = function(json, value, zone_id, area_id) {
+        var html = '<option value="">{{ lang('text_select') }}</option>';
+        
+        var selected_zone = 0;
+        var haveZones = json['zone'] && json['zone'] != '' && json['zone'].length;
+        
+        if (haveZones) document.querySelector('#payment_address_zone_id').removeAttribute('disabled');  
+
+        if ('zone' in json && json['zone'] != '') {
+            for (i = 0; i < json['zone'].length; i++) {
+                html += '<option value="' + json['zone'][i]['zone_id'] + '"';
+                if (json['zone'][i]['zone_id'] == zone_id) {
+                    html += ' selected="selected"';
+                    selected_zone = json['zone'][i]['zone_id'];
+                }
+
+                html += '>' + json['zone'][i]['name'] + '</option>';
+            }
+        } else {
+            html += '<option value="0" selected="selected">{{ lang('text_none') }}</option>';
+        }
+
+        if(selected_zone)
+            refreshPaymentAddessArea(selected_zone, area_id);
+
+        $('.register_payment select[name=\'payment_address[zone_id]\']').html(html);
+
+        // $('#payment_address_iso_code_2').val(json['iso_code_2']);
+        // $('#payment_address_phonecode').val(json['phonecode']);
+
+        if($("#payment_address_zone_id").val() != '0')
+            $("#payment_address_city").val($("#payment_address_zone_id option:selected").text());
+        
+        refreshStep(4);
+        
+    };
+    
+    var _refreshPaymentAddessZoneBeforeSend = function() {
+        var regionSelect = document.querySelector('#payment_address_zone_id');
+        regionSelect && regionSelect.setAttribute('disabled', 1);
+        refreshPhonecodeAndFlag();
+    };
+    
+    function refreshPaymentAddessZone(country_id, zone_id, area_id) {
+        if (typeof refreshPaymentAddessZone.resources === "undefined") {
+            refreshPaymentAddessZone.resources = {};
+        }
+        
+        if (country_id in refreshPaymentAddessZone.resources) {
+            if (refreshPaymentAddessZone.resources[country_id] !== null) {
+                _refreshPaymentAddessZoneBeforeSend();
+                _refreshPaymentAddessZoneSuccess(refreshPaymentAddessZone.resources[country_id], country_id, zone_id, area_id);
+            }
+            return;
+        }
+        
+        refreshPaymentAddessZone.resources[country_id] = null;
+        
+        $.ajax({
+            url: 'index.php?route=module/quickcheckoutv2/country&country_id=' + country_id,
+            type: 'post',
+            dataType: 'json',
+            beforeSend: _refreshPaymentAddessZoneBeforeSend,
+            success: function(json) {
+                refreshPaymentAddessZone.resources[country_id] = json;
+                _refreshPaymentAddessZoneSuccess(json, country_id, zone_id, area_id);
+            },
+            error: function(xhr, ajaxOptions, thrownError) {
+                console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+            }
+        });
+    }
+
+    function refreshPhonecodeAndFlag() {
+        var countrySelect = document.querySelector('[name="payment_address[country_id]"]');
+        if (!countrySelect) return;
+        var currentCountryOption = countrySelect.options[countrySelect.selectedIndex];
+        if (!currentCountryOption) return;
+        var telInput = document.querySelector('#payment_address_telephone');
+        if (!telInput || !telInput.iti || telInput.value.length) return;
+        var isoCode = currentCountryOption.dataset.code;
+        if (isoCode && isoCode.length) telInput.iti.setCountry(isoCode.toUpperCase());
+        
+        /*
+        var phoneWidth = "45%";
+        if(phonecode.length == 3)
+            phoneWidth = "43%";
+        else if(phonecode.length == 4)
+            phoneWidth = "42%";
+
+        if($('#telephone_div').length == 0) {
+            $('#payment_address_telephone').wrap("<div id='telephone_div' style='display:inline-block;width:53%;direction:ltr !important;white-space: nowrap;'></div>");
+            $('#payment_address_telephone').width(phoneWidth);
+            $('#payment_address_telephone').css('text-align', 'left');
+            $("<img id='imgPhonecode' src='admin/view/image/flags/" + iso_code_2.toLowerCase() + ".png' title='" + iso_code_2 + "' /><span id='spanPhonecode'> +" + phonecode + "  </span>").insertBefore('#payment_address_telephone');
+        }
+        else {
+            $("#imgPhonecode").attr("src","admin/view/image/flags/" + iso_code_2.toLowerCase() + ".png");
+            $("#spanPhonecode").text(" +" + phonecode + "  ");
+        }*/
+    }
+    
+    function refreshPaymentAddessArea(value, area_id) {
+        if (typeof refreshPaymentAddessArea.resources === "undefined") {
+            refreshPaymentAddessArea.resources = {};
+        }
+        
+        var beforeSend = function() {};
+                
+        var success = function(json) {
+                        
+            refreshPaymentAddessArea.resources[value] = json;
+            
+            var html = '<option value="">{{ lang('text_select') }}</option>';
+
+            if ('area' in json && json['area'] != '') {
+                for (i = 0; i < json['area'].length; i++) {
+                    html += '<option value="' + json['area'][i]['area_id'] + '"';
+                    if (json['area'][i]['area_id'] == area_id) {
+                        html += ' selected="selected"';
+                    }
+                    html += '>' + json['area'][i]['name'] + '</option>';
+                }
+            } else {
+                html += '<option value="0" selected="selected">{{ lang('text_none') }}</option>';
+            }
+
+            $('.register_payment select[name=\'payment_address[area_id]\']').html(html);
+            
+            refreshStep(4);
+            
+        };
+        
+        if (value in refreshPaymentAddessArea.resources) {
+            beforeSend();
+            success(refreshPaymentAddessArea.resources[value]);
+            return;
+        }
+        
+        refreshPaymentAddessArea.resources[value] = {};
+        
+        $.ajax({
+            url: 'index.php?route=module/quickcheckoutv2/zone&zone_id=' + value,
+            dataType: 'json',
+            type: 'post',
+            beforeSend: beforeSend,
+            success: success,
+            error: function(xhr, ajaxOptions, thrownError) {
+                console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+            }
+        });
+    }
+    
+    $('.register_payment select[name=\'payment_address[country_id]\']').bind('change', function() {
+        var country_id = $(this).val();
+        var zone_id = $('#payment_address_zone_id').val() || $('#payment_address_zone_id').attr('data-zone_id') || '';
+        var area_id = $('#payment_address_area_id').val() || $('#payment_address_area_id').attr('data-area_id') || '';
+        refreshPaymentAddessZone(country_id, zone_id, area_id);
+    });
+
+    $('.register_payment select[name=\'payment_address[zone_id]\']').bind('change', function(){
+        refreshPaymentAddessArea($(this).val(), $('#payment_address_area_id').val());
+    });
+    //switchery
+    // var elem = document.querySelector('.styled');
+    //   var init = new Switchery(elem);
+
+    $(function(){
+        // refreshPhonecodeAndFlag();
+        if($.isFunction($.fn.uniform)){
+            $(" .styled, input:radio.styled").uniform().removeClass('styled');
+        }
+
+
+        if($.isFunction($.fn.colorbox)){
+            $('.colorbox').colorbox({
+                width: 640,
+                height: 480
+            });
+        }
+        if($.isFunction($.fn.fancybox)){
+            $('.fancybox').fancybox({
+                width: 640,
+                height: 480
+            });
+        }
+    });
+    
+    $(function() {
+        $('body').click(function (e) {     
+            if (e.target.classList.contains('payment--address') || e.target.classList.contains('radio-input__info-container__label')) {
+                $('.map-box').show();
+                if (!$(e.target).closest('.radio-input').hasClass('active')) {
+                    $('.radio-input').removeClass('active');
+                    $(e.target).closest('.radio-input').addClass('active');
+                    $('.radio-input .radio-input__info-container__label span:not(.radio-input__full-name), .radio-input .radio-input__info-container__label a ,.radio-input  .mapouter').slideUp();
+                    $('.radio-input.active .radio-input__info-container__label span:not(.radio-input__full-name),.radio-input.active .radio-input__info-container__label a ,.radio-input.active  .mapouter').slideDown();
+                }
+                
+                $(".address-toogle").removeClass('added').slideUp();
+                $('#payment_address').removeClass('added');
+                
+                var currentAddress = $(e.target).closest('.radio-input').find('.radio-input__info-container__edit').get(0);
+                if (currentAddress) {                
+                    fillAddressFormData(currentAddress.dataset);
+                }
+                
+                // undimmed next action
+                var nextActionBtn = document.querySelector('.actions li a[href="#next"]');
+                if (nextActionBtn) {
+                    nextActionBtn.classList.remove('disabled');
+                }
+            }
+        });        
+    });
+
+
+//         $('.add-address').delegate('label','click' function(e){
+// // e.stopPropagation();
+//         })
+    
+        // $('.add-address').click(function (e){
+        //     $('.add-payment-address').slideToggle(function (){
+        //         if($(this).is(':visible')){
+        //             $('.add-payment-address').slideUp().stop();
+        //             // $(this).stop();
+        //             // return false
+        //         }
+        // else {
+        //     // $(this).stop();
+
+        //         $('.add-payment-address').slideDown().stop();
+        //         // return false
+        //     }
+        //         $('.edit--address-input').remove();
+        //     $('.add-payment-address').removeClass('edit--address');
+        //     });
+        // });
+        // $('.add--new-address').click();
+                
+        // $('#signin_action').click(function (e) {
+           // window.location.href = "{{ login_url }}";
+        // });
+        // 
+    // });
+  
+
+    $(function() {
+        var widthOfWizard =  $('.wizard.checkout_cont').width();
+        // $(".add-address-area , .radio-input__full-name  , .radio-input__info-container__edit").click(function (){
+        //     setTimeout(function(){ 
+        //         if (scrollBars().vertical) {
+        //           $('.wizard__controls').removeClass('fixed--wizard');
+        //         } else {
+        //           $('.wizard__controls').addClass('fixed--wizard');
+        //           $('.wizard__controls').css('width', widthOfWizard + 'px');
+        //       }
+        //     }, 400);
+        // });    
+        
+  
+        //     function scrollBars(){
+        //     var body= $('body')[0]
+        //     return {
+        //       vertical:body.scrollHeight>body.clientHeight,
+        //       horizontal:body.scrollWidth>body.clientWidth
+        //     }
+        //   }
+    });
+   
+</script>
+
+
+{% if is_logged %}
+<script id="address-box-tpl" type="text/template">
+    <div class="address-radio-box edit-address-area {{ google_map['status'] == 0 ? 'address--no-map' : '' }}">
+        <div class="radio-input map-box active" data-location="%LOCATION%">
+            <div class="row no-gutters">
+                <div class="{{ google_map['status'] == 0 ? 'col-md-12' : 'col-md-6' }}">
+                    <div class="radio-input__info-container">
+                        <input class="payment--address" type="radio" name="payment_address[address_id]" value="%ADDRESS_ID%" id="payment_address_exists_%ADDRESS_ID%" checked="checked" data-require="" class="styled" data-refresh="4" autocomplete='off' />
+                        <span class="checkmark" for="payment_address_exists_%ADDRESS_ID%"></span>
+                        <label class="radio-input__info-container__label" for="payment_address_exists_%ADDRESS_ID%">
+                            <span class="radio-input__full-name">%SHORT_ADDRESS%</span>
+                            <span class="thumb-address_1">%ADDRESS_1%</span>
+                            <span class="thumb-area">%AREA%</span>
+                            <span class="thumb-zone">%ZONE%</span>
+                            <span class="thumb-country">%COUNTRY%</span>
+                                <a class="radio-input__info-container__edit"
+                                href="#"
+                                data-address_id="%ADDRESS_ID%"
+                                data-country_id="%COUNTRY_ID%"
+                                data-zone_id="%ZONE_ID%"
+                                data-area_id="%AREA_ID%"
+                                data-city="%CITY%"
+                                data-address_1="%ADDRESS_1%"
+                                data-address_2="%ADDRESS_2%"
+                                data-postcode="%POSTCODE%"
+                                data-location="%LOCATION%"
+                                data-telephone="%TELEPHONE%"
+                                data-default="%DEFAULT%"
+                                >{{ lang('text_edit_address') }}</a>
+                        </label>
+                    </div>
+                </div>
+                {% if google_map['status'] == 1 %}
+                    <div class="col-md-6">
+                        <div class="mapouter">
+                            <div class="map" style="width: 100%; height: 210px;"></div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="address-toogle edit-form-box radio-input">
+        </div>
+    </div>
+</script>
+{% endif %}

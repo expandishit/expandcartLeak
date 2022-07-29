@@ -1,0 +1,217 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% set dualMenuEnabled = false %}
+
+{% block title %}
+    {{ lang('heading_title', 'localisation/zone') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+
+{% block headelements %}
+{% endblock headelements %}
+
+
+{% block content %}
+<div class = 'row'>
+    <div class="col-md-12">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                    <h5 class="panel-title">
+                        <i class="fas fa-building fa-lg position-left"></i>
+                        {{ lang('heading_title') }}
+                    </h5>
+                    <div class="heading-elements">
+                        <ul class="icons-list">
+                            <li><a data-action="collapse"></a></li>
+                        </ul>
+                    </div>
+                </div>
+            <div class="panel-body">
+                <fieldset>
+                    <div class="collapse in" id="panel1">
+                        <div class="form-group" id="status-group">
+                            <table cellpadding="0" cellspacing="0" border="0" class="table datatable-select-checkbox" id="datatables_zone">
+                                <thead>
+                                    <tr>
+                                        <th></th>
+                                        <th>{{ lang('column_name') }}</th>
+                                        <th>{{ lang('column_country') }}</th>
+                                        <th>{{ lang('column_code') }}</th>
+                                        <th>{{ lang('column_action') }}</th>
+
+                                    </tr>
+                                </thead>
+                            </table>
+                            <span class="help-block"></span>
+                        </div>
+                    </div>
+
+                </fieldset>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+
+{% block scripts %}
+{{ parent() }}
+{% import _self as dtControls %}
+
+<script>
+    var dataTable;
+    function removeZone(zone_id) {
+	    confirmMessage(function () {
+		    ajax("{{ link("localisation/zone/removeZone") }}", {zone_id: zone_id}, function (res) {
+			    reload();
+		    });
+	    });
+    }
+    function reload() {
+	    dataTable.ajax.reload();
+    }
+    $(function () {
+        dataTable = $('#datatables_zone').DataTable({
+            "processing": true,
+            "serverSide": true,
+            autoWidth: false,
+            "order": [[1, "asc"]],
+            dom: '<"datatable-header"fBl><"datatable-scroll-wrap"t><"datatable-footer"ip>',
+            language: locales['dt_language'],
+            "ajax": {
+            url: '{{ link('localisation/zone/handler') }}',
+                    type: "post",
+            },
+            buttons: 
+            [
+            {
+                text: "<i class='fa fa-trash position-left'></i> {{ lang('button_delete') }}",
+                className: 'btn btn-danger deleteBulk',
+                action: function(e, dataTable, node, config) 
+                {
+                     var selectedRows = dataTable.rows('.selected').data();
+                    var selectedIds = [];
+                    selectedRows.each(function(item) {
+                        selectedIds.push(item[0]);
+                    });
+
+                    if (checkbox_value.length > 0){
+                        confirmMessage(function () {
+    				        $.ajax({
+    				            url: '{{ link('localisation/zone/removeZoneBulk') }}',
+    				            type: 'post',
+    				            data: {zone_ids: checkbox_value},
+    				            success: function()
+                                {
+    					            reload();
+    				            }
+    				        });
+                        });
+                    }
+                }
+            },
+            {
+                extend: 'collection',
+                text: '<i class="icon-drawer-out"></i> <span class="caret"></span>',
+                className: 'btn bg-blue btn-icon',
+                buttons: [
+                    {
+                        extend: 'copyHtml5',
+                        text: locales['buttons']['copy'],
+                        exportOptions: {
+                            columns: ':visible'
+                        }
+                    },
+                    {
+                        extend: 'csvHtml5',
+                        text: locales['buttons']['export2csv'],
+                        fieldSeparator: ',',
+                        extension: '.csv',
+                        bom: "true",
+                        exportOptions: {
+                            columns: ':visible'
+                        }
+                    },
+                    {
+                        extend: 'excelHtml5',
+                        text: locales['buttons']['export2excel'],
+                        exportOptions: {
+                            columns: ':visible'
+                        }
+                    },
+                    {
+                        extend: 'pdfHtml5',
+                        text: locales['buttons']['export2pdf'],
+                        exportOptions: {
+                            columns: ':visible'
+                        }
+                    }
+                ]
+            },
+            {
+                extend: 'colvis',
+                text: '<i class="icon-grid3"></i> <span class="caret"></span>',
+                className: 'btn bg-indigo-400 btn-icon',
+                columns: [1, 2, 3]
+            },
+            {
+            text: "<i class='fa fa-plus-circle position-left'></i> {{ lang('button_insert') }}",
+            className: 'btn btn-success',
+            action: function (e, dataTable, node, config)
+                {
+                    window.location.href = '{{ insert }}';
+                }
+            }],
+            select: {
+                style: 'multi',
+                selector: 'td:first-child'
+            },
+            columns: [
+                {
+                    title:`<input type="checkbox" class="select-checkbox" onchange='toggleSelectAll(this);'>`,
+                    orderable: false,
+                    data: '0',
+                    width: "50px",
+                },
+                {data: '2'},
+                {data: '3'},
+            ],
+            "columnDefs": [
+            {
+                "render": function (data, type, row) {
+                    return row[4];
+                },
+                "targets": 3
+            },
+            {
+                orderable: false,
+                "render": function (data, type, row) {
+                    return "<a class='btn btn-primary' href='{{ genericUpdate }}" + row[0] + "'><i class='icon-pencil7'></i></a> <button type='button' class='btn btn-danger' onclick='removeZone(" + row[0] + ")'><i class='fa fa-trash'></i></button>";
+                },
+                "targets": 4
+            }
+            ]
+        });
+    });
+
+    function toggleSelectAll(checkbox)
+    {
+        if (checkbox.checked == true) {
+            dataTable.rows().select();
+        } else {
+            dataTable.rows().deselect();
+        }
+    }
+
+</script>
+{% endblock scripts %}
+
+{% macro itemSelector(id) %}
+    <input  type='checkbox' class='select-checkbox' name='country_id[]' value='{{ id }}' />
+{% endmacro itemSelector %}

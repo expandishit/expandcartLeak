@@ -1,0 +1,178 @@
+<style>
+    .setting, .input-group, .rule {
+        margin-bottom: 5px;
+    }
+
+    .rule {
+        font-size: 11px;
+    }
+
+    .rule select, .rule input {
+        display: inline-block;
+        font-size: inherit;
+        padding: 0 5px !important;
+        height: 2.5em;
+    }
+
+    .rule input[type="text"] {
+        width: auto !important;
+    }
+
+    .collapsed .rule {
+        padding-bottom: 8px;
+    }
+
+    input[type="text"].short {
+        width: 42px !important;
+    }
+</style>
+
+
+<div class="col-md-12">
+    <div class="panel panel-flat">
+        <div class="panel-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th>{{ lang('column_action') }}</th>
+                        <th>{{ lang('column_group') }}</th>
+                        <th>{{ lang('column_title') }}</th>
+                        <th>{{ lang('column_charge') }}</th>
+                        <th>{{ lang('column_rules') }}</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for key,charge in setting['charges'] %}
+                        <tr class="charge">
+                            <td>
+                                <div class="setting">
+                                    <a class="btn btn-warning add-button"
+                                       onclick="saveRow(copyRow($(this).parents('tr'))); $('.tooltip').hide();">
+                                        <i class="fa fa-copy fa-lg fa-fw"></i>
+                                    </a>
+                                </div>
+                                <div class="setting">
+                                    <a class="btn btn-danger" data-help="" onclick=" removeRow($(this).parents('tr'))"
+                                       title="" data-original-title="">
+                                        <i class="fa fa-trash-alt fa-lg fa-fw"></i>
+                                    </a>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="setting">
+                                    <input class="form-control short" name="charge_{{ key }}_group"
+                                           id="input-charge_{{ key }}_group"
+                                           data-help=""
+                                           maxlength="2" value="{{ saved['charge_' ~ key ~ '_group'] }}"
+                                           type="text">
+                                </div>
+                            </td>
+                            <td>
+                                <div class="setting">
+                                    <div class="input-group" data-help=""
+                                         title="" data-original-title="">
+                                        <span class="input-group-addon"><i class="fa fa-compass fa-lg"></i></span>
+                                        <input class="form-control " placeholder="{{ lang('text_admin_reference') }}"
+                                               name="charge_{{ key }}_title_admin"
+                                               value="{{ saved['charge_' ~ key ~ '_title_admin'] }}" type="text">
+                                    </div>
+                                    {% for lang in setting['languages'] %}
+                                        <div class="input-group" title=""
+                                             data-help="{{ lang('help_charge_title' ~ ' ' ~ lang['name']) }}"
+                                             data-original-title="{{ lang('help_charge_title' ~ ' ' ~ lang['name']) }}">
+                                            <span class="input-group-addon"><img
+                                                        src="view/image/flags/{{ lang['image'] }}"></span>
+                                            <input class="form-control "
+                                                   placeholder="{{ lang('placeholder_charge_title') ~ ' ' ~ lang['name'] }}"
+                                                   name="charge_{{ key }}_title_{{ lang['code'] }}"
+                                                   value="{{ saved['charge_' ~ key ~ '_title_' ~ lang['code']] }}"
+                                                   type="text">
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="setting">
+                                    <select class="form-control " name="charge_{{ key }}_type"
+                                            id="input-charge_{{ key }}_type"
+                                            data-help="{{ lang('help_charge_type') }}"
+                                            title=""
+                                            data-original-title="{{ lang('help_charge_type') }}">
+                                        {% set type = saved['charge_' ~ key ~ '_type'] %}
+                                        {% for optGroupKey,optGroup in setting['chargeOptGroups'] %}
+                                            <optgroup label="{{ lang(optGroupKey) }}">
+                                                {% for optKey,option in optGroup %}
+                                                    <option value="{{ optKey }}" {{ type == optKey ? 'selected' : '' }}>
+                                                        {{ lang(option) }}
+                                                    </option>
+                                                {% endfor %}
+                                            </optgroup>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+
+                                <div class="setting">
+                                    <textarea class="form-control" name="charge_{{ key }}_charges"
+                                              id="input-charge_{{ key }}_charges"
+                                              title="">{{ saved['charge_' ~ key ~ '_charges'] }}</textarea>
+                                    {#<span class="help-block"></span>#}
+                                    {#<span class="text-muted">{{ lang('help_charge_charges')|raw }}</span>#}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="setting">
+
+                                    {% for rule in newrules['charge']['charge_' ~ key ~ '_rule'] %}
+                                        {% set rule_type = saved['charge_' ~ key ~ '_rule_' ~ rule ~ '_type'] %}
+                                        {% set rule_comparison = saved['charge_' ~ key ~ '_rule_' ~ rule ~ '_comparison'] %}
+                                        {% set rule_value = saved['charge_' ~ key ~ '_rule_' ~ rule ~ '_value'] %}
+
+                                        {% set rule_type_html = ruleSelectorTemplate %}
+                                        {% set rule_type_html = rule_type_html|replace(
+                                        {('<option value="' ~ rule_type ~ '"'): '<option value="' ~ rule_type ~ '" selected'}
+                                        ) %}
+                                        {% set fieldName = 'charge_' ~ key ~ '_rule_' ~ rule %}
+                                        {% set rule_type_html = rule_type_html|replace({'##': fieldName}) %}
+
+                                        {% set rule_comparison_value_html = ruleOptionTemplates[rule_type] %}
+                                        {% set rule_comparison_value_html = rule_comparison_value_html|replace({
+                                        '<input data-setting="comparison" value=""': '<input data-setting="comparison" value="'~rule_comparison~'"',
+                                        ('<option data-setting="comparison" value="' ~ rule_comparison ~ '"'): '<option data-setting="comparison" value="' ~ rule_comparison ~ '" selected="selected"',
+                                        '<input data-setting="value" value=""': '<input data-setting="value" value="' ~ rule_value ~ '"',
+                                        ('<option data-setting="value" value="' ~ rule_value ~ '"'): '<option data-setting="value" value="' ~ rule_value ~ '" selected'
+                                        }) %}
+                                        {% set rule_comparison_value_html = rule_comparison_value_html|replace({'##': fieldName}) %}
+                                        <div class="rule">
+                                            {{ rule_type_html }}
+                                            {{ rule_comparison_value_html }}
+                                        </div>
+
+                                    {% endfor %}
+
+                                    <a class="btn btn-success btn-xs add-button pad-top-sm" onclick="addRule($(this))"
+                                       data-help="{{ lang('help_add_rule') }}"
+                                       data-prefix="charge_{{ key }}_rule" title=""
+                                       data-original-title="{{ lang('help_add_rule') }}"><i
+                                                class="fa fa-plus"></i>{{ lang('button_add_rule') }}</a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                    <tfoot>
+                    <tr>
+                        <td colspan="10">
+                            <a class="btn btn-primary add-button"
+                               onclick="saveRow(clearRow(copyRow($(this).parents('table').find('tbody tr:last-child')), 'soft'))">
+                                <i class="fa fa-plus pad-right-sm"></i> {{ lang('button_add_charge') }}
+                            </a>
+                        </td>
+                    </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

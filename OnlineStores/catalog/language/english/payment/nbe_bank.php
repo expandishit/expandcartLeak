@@ -1,0 +1,30 @@
+<?php
+
+$_ = [
+    "nbe_heading_title" => "NBE Bank",
+    "text_title" => "Secure Card Payment Service",
+    "text_credit_card" => "Card Details",
+    "text_wait" => "Please wait!",
+    "text_payment" => "payment",
+    "text_preauth" => "authorization",
+    "text_approved" => "approved.",
+    "text_declined" => "declined.",
+    "text_receipt_number" => "Receipt number =>",
+    "credit_card_charged_info" => "Your credit card will be charged for ",
+    "text_month" => "Month",
+    "text_year" => "Year",
+    "entry_cc_owner" => "Cardholder name =>",
+    "entry_cc_number" => "Card number =>",
+    "entry_cc_expire_date" => "Expiry date =>",
+    "entry_cc_cvv2" => "CVN =>",
+    "entry_cc_cvv2_placeholder" => "Card Verification Number",
+    "error_declined" => "Your payment has declined",
+    "error_decline_reason" => "Decline reason =>",
+    "error_request" => "Error processing your request. Please contact the store administrator.",
+    "error_invalid_creditcard" => "Please enter a valid card number.",
+    "error_expiration_date" => "Incorrect expiry date.",
+    "error_invalid_cvn" => "Invalid CVN (Card Verification Number).",
+    "error_is_empty" => "This is a required field.",
+    "error_common" => "Please correct the following errors",
+    "test_mode_warning" => "You are in test mode, all transactions will be processed will not be paid"
+];

@@ -1,0 +1,239 @@
+{% set bodyClasses = "has-detached-right sidebar-detached-hidden" %}
+
+<!-- Start Form -->
+<div class="create-product-page">
+    <div class="panel-body pt-20 pb-20">
+        <fieldset>
+            <div id="panel1">
+                <div class="row">
+                    <div class="col-md-12 p-2">
+                        {% if facebook_token %}
+                            <h5 class="text-semibold mb-20">
+                                {{lang('fc_export')}}
+                            </h5>
+                            <div id="loader" class="hidden" style="padding: 10px 0;"><div class="inline-loader"></div></div>
+                            <div class="alert alert-danger hidden" id="errors"></div>
+                            <div class="alert alert-success hidden" id="success"></div>
+                            <div class="row">
+                                <div class="col-md-6" style="padding: 10px" id="business-div">
+                                    <label>{{lang('select_business')}}</label>
+                                    <select class="form-control">
+                                        <option></option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6" style="padding: 10px" id="catalog-div">
+                                    <label>{{lang('select_catalog')}}</label>
+                                    <select class="form-control" disabled>
+                                        <option></option>
+                                    </select>
+                                </div>
+                                <div class="col-md-12" style="margin:10px 0;">
+                                    <button class="btn btn-success" id="export_selected">{{lang('export_s_btn')}}</button>
+                                    <button class="btn btn-success" id="export_all">{{lang('export_a_btn')}}</button>
+                                </div>
+                            </div>
+                            {% include "module/facebook_import/list.expand" %}
+                        {% else %}
+                            {% include 'module/facebook_import/no_token.expand' %}
+                        {% endif %}
+                    </div>
+                    <!-- col-md-12 -->
+                    <div class="col-md-2">
+                        <!-- Detached sidebar -->
+                        {% include "catalog/product/filter.expand" %}
+                        <!-- /detached sidebar -->
+                    </div>
+                </div>
+                <!-- row -->
+            </div>
+        </fieldset>
+    </div>
+</div>
+<!-- End Form -->
+
+<!-- End Lower Buttons -->
+
+
+{% block scripts %}
+	{% import _self as dtControls %}
+
+	<script>
+                                    
+        let actionBtns = [
+            `<button class="btn btn-success" id="export_selected">{{lang('export_s_btn')}}</button>`,
+            `<button class="btn btn-success" id="export_all">{{lang('export_a_btn')}}</button>`
+        ]
+        function toggleFilter(el) {
+            //debugger;
+            var isFilterHidden = $('body').hasClass('sidebar-detached-hidden');
+
+            if(isFilterHidden) $(el).children('a').children('span').text('{{ lang('lbl_hide_filter') }}');
+            else $(el).children('a').children('span').text('{{ lang('lbl_filter') }}');
+        }
+
+
+		$(document).ready(function () {
+            $('#resetList').click(function () {
+                $(':input', '#filter')
+                    .not(':button, :submit, :reset, :hidden')
+                    .val('')
+                    .prop('checked', false)
+                    .prop('selected', false);
+
+                $('#filter').find('select').each(function () {
+                    this.value = '';
+                }).trigger('change');
+
+                $('#filter').find('.noui-slider-primary').each(function () {
+                    $(this).data('ionRangeSlider').reset();
+                });
+
+                table.on('preXhr.dt', function (e, settings, data) {
+                    return $.extend(data, {filter: null});
+                });
+
+                table.ajax.reload();
+                /*$.ajax({
+                    url: listLink,
+                    method: 'get',
+                    success: function (response) {
+                        $('#product-grid').html(response);
+                    }
+                });*/
+            });
+            $('#errors').addClass('hidden');
+            $('#success').addClass('hidden');
+
+            //load businesses
+            $('#loader').removeClass('hidden');
+            $.getJSON('/admin/module/facebook_import/getBusinesses', function(res) {
+                if(res.items.length > 0){
+                    $.each(res.items,function( key, val ) {
+                        $('#business-div select').append("<option value='" + val.id + "'>" + val.name + "</option>");
+                    })
+                }else{
+                    $('#errors').html(`<p>{{lang('no_businesses')}}</p>`);
+                    $('#errors').removeClass('hidden');
+                }
+            }).done(function(){
+                $('#loader').addClass('hidden');
+            });
+
+            //load catalogs on business change
+            $('#business-div select').change(function(e){
+                $('#errors').addClass('hidden');
+                $('#success').addClass('hidden');
+
+                if(this.value == '' || this.value == null || this.value == undefined){
+                    $('#catalog-div select').attr('disabled','disabled');
+                }else{
+                    $('#catalog-div select').html('<option></option>');
+                    $('#catalog-div select').attr('disabled','disabled');
+
+                    $('#loader').removeClass('hidden');
+                    
+                    $.getJSON('/admin/module/facebook_import/getCatalogs?business_id='+this.value, function(res) {
+                        if(!res.owned_product_catalogs || res.owned_product_catalogs.data.length < 1){
+                            $('#catalog-div select').attr('disabled','disabled');
+                            $('#errors').removeClass('hidden');
+                            $('#errors').html(`<p>{{lang('no_catalogs')}}</p>`);
+                        }else{
+                            $.each(res.owned_product_catalogs.data,function( key, val ) {
+                                $('#catalog-div select').append("<option value='" + val.id + "'>" + val.name + "</option>");
+                            });
+                            $('#catalog-div select').removeAttr('disabled');
+                        }
+                    }).done(function(){
+                        $('#loader').addClass('hidden');
+                    });
+                }
+            });
+            //send export request with selected products
+
+
+            $('#export_selected').click(function () {
+                // $('#errors').addClass('hidden');
+                // $('#success').addClass('hidden');
+                let ids=[];
+                let selected_products = $('tr.selected td.select-checkbox');
+
+                selected_products.toArray().map((i) => {ids.push(i.innerText)});
+
+                if($('#business-div select').val() == '' || $('#business-div select').val() == null || $('#business-div select').val() == undefined){
+                    $('#errors').html(`<p>{{lang('no_business_selected')}}</p>`);
+                    $('#errors').removeClass('hidden');
+                }else if($('#catalog-div select').val() == '' || $('#catalog-div select').val() == null || $('#catalog-div select').val() == undefined){
+                    $('#errors').html(`<p>{{lang('no_catalog_selected')}}</p>`);
+                    $('#errors').removeClass('hidden');
+                }else if(ids.length < 1){
+                    $('#errors').html(`<p>{{lang('no_products_selected')}}</p>`);
+                    $('#errors').removeClass('hidden');
+                }else{
+                    //Send the request to export the products
+                    $('#loader').removeClass('hidden');
+
+                    $.ajax({
+                        url: '/admin/module/facebook_import/handleExport',
+                        method: "POST",
+                        dataType: 'JSON',
+                        data: {
+                            products: ids,
+                            catalog_id: $('#catalog-div select').val()
+                        }
+                    }).done(function(res){
+                        if(res.status == 'success'){
+                            $('#success').html(`<p>${res.message}</p>`);
+                            $('#success').removeClass('hidden');
+                        }else{
+                            $('#errors').html(`<p>${res.message}</p>`);
+                            $('#errors').removeClass('hidden');
+                        }
+                        $('#loader').addClass('hidden');
+                        console.log(res);
+                    });
+
+                    $('#errors').addClass('hidden');
+                }
+
+
+            });
+
+            $('#export_all').click(function () {
+
+                if($('#business-div select').val() == '' || $('#business-div select').val() == null || $('#business-div select').val() == undefined){
+                    $('#errors').html(`<p>{{lang('no_business_selected')}}</p>`);
+                    $('#errors').removeClass('hidden');
+                }else if($('#catalog-div select').val() == '' || $('#catalog-div select').val() == null || $('#catalog-div select').val() == undefined){
+                    $('#errors').html(`<p>{{lang('no_catalog_selected')}}</p>`);
+                    $('#errors').removeClass('hidden');
+                }else{
+                    //Send the request to export the products
+                    $('#loader').removeClass('hidden');
+
+                    $.ajax({
+                        url: '/admin/module/facebook_import/handleExportAll',
+                        method: "POST",
+                        dataType: 'JSON',
+                        data: {
+                            catalog_id: $('#catalog-div select').val()
+                        }
+                    }).done(function(res){
+                        if(res.status == 'success'){
+                            $('#success').html(`<p>${res.message}</p>`);
+                            $('#success').removeClass('hidden');
+                        }else{
+                            $('#errors').html(`<p>${res.message}</p>`);
+                            $('#errors').removeClass('hidden');
+                        }
+                        $('#loader').addClass('hidden');
+                        console.log(res);
+                    });
+
+                    $('#errors').addClass('hidden');
+                }
+
+
+            });
+        });
+	</script>
+{% endblock scripts %}

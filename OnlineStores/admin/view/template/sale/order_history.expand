@@ -1,0 +1,315 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+
+{% block title %}
+{{ lang('heading_title', 'sale/order') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+{{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+{% block content %}
+
+<!-- Detached sidebar -->
+<div class="sidebar-detached">
+    <div class="sidebar sidebar-default sidebar-separate">
+        <div class="sidebar-content">
+
+            <!-- User details -->
+            <div class="content-group">
+                <div class="panel-body bg-primary-400 border-radius-top text-center">
+                    <div class="content-group-sm">
+                        <h6 class="text-semibold">
+                            Order NO <span class="text-primary bg-white label">#{{order_id}}</span>
+                        </h6>
+                    </div>
+                </div>
+
+                <div class="panel no-border-top no-border-radius-top">
+                    <ul class="navigation">
+                        <li class="navigation-header">Order Data</li>
+                        <li><a><i class="icon-files-empty"></i> Status
+                                {% if order_status_color %}
+                                    <span class="label" style="background-color: {{ order_status_color }}">{{ order_status }}</span>
+                                {% else %}
+                                    <span class="label bg-primary-400">{{ order_status }}</span>
+                                {% endif %}
+
+                            </a></li>
+                        <li><a><i class="icon-files-empty"></i> Total granted<span
+                                    class="label bg-primary-400">
+                                    {% for total in totals %}
+                                        {% if  total['code'] == 'total'  %}
+                                            {{ total['value'] }}
+                                        {% endif %}
+                                     {% endfor %}
+                                     </span></a></li>
+                        <li><a><i class="icon-files-empty"></i>
+                                            Order Date <span class="label bg-primary-400">{{ date_added }}</span> </a></li>
+                        <li class="navigation-divider"></li>
+                        <li><a href="{{ link('sale/order/info') }}?order_id={{ order_id }}"><i class="icon-link"></i>View Order</a></li>
+                        <li><a href="{{ link('sale/order/quick_update') }}?order_id={{ order_id }}"><i class="icon-pen"></i> Edit Order</a></li>
+                    </ul>
+                </div>
+            </div>
+            <!-- /user details -->
+
+        </div>
+    </div>
+</div>
+<!-- /detached sidebar -->
+
+
+<!-- Detached content -->
+<div class="container-detached">
+    <div class="content-detached">
+        <div class="navbar navbar-default navbar-component navbar-xs" style="position: relative; z-index: 17;">
+            <div class="navbar-collapse collapse" id="navbar-form-multiselect">
+                <ul class="nav navbar-nav navbar-left" style="padding:10px">
+                    <li style="font-size: 26px;">
+                        <label class="label label-success" style="font-size: 20px;">{{ lang('lbl_order_created') }}</label>
+                        <div class="text-muted"><strong>{{ lang('lbl_on') }}: </strong> {{ date_added }}</div>
+                    </li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+
+                    <li class="daterange-custom" id="reportrange">
+                        <a>
+                            <span class="daterange-custom-display"></span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        
+        <!-- Tab content -->
+        <div class="tab-content">
+            <div class="tab-pane fade in active" id="profile">
+                <!-- Timeline -->
+                <div class="timeline timeline-left content-group">
+                    <div class="timeline-container" id="filter">
+                        <!-- Invoices -->
+                        {% for oh in order_histories %}
+                            {% if oh['status_id'] %}
+                            <div class="timeline-row" >
+                                <div class="timeline-icon">
+                                    <div class="bg-success-400">
+                                        <i class="icon-cash3"></i>
+                                    </div>
+                                </div>
+                                <div class="panel border-left-lg border-left-success-400 invoice-grid timeline-content">
+                                    <div class="panel-body">
+                                        <div class="row">
+                                            <div class="col-sm-6">
+                                                <h6 class="text-semibold no-margin-top">{{ order_modifi_status[oh['status_id']] }}
+                                                </h6>
+                                            </div>
+
+                                            <div class="col-sm-6">
+                                                <ul class="list list-unstyled text-right">
+                                                    <li>By: <span class="text-semibold">Admin ({{ oh['firstname']~oh['lastname'] }})</span></li>
+                                                    <li>Email: <span class="text-semibold">{{ oh['email'] }}</span></li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="panel-footer panel-footer-condensed">
+                                        <div class="heading-elements">
+                                            <span class="heading-text">
+                                                <span class="status-mark border-success-400 position-left"></span>
+                                                Date: <span class="text-semibold">{{ oh['date_added'] }}</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                                {% else %}
+                                    <div class="timeline-row" >
+                                        <div class="timeline-icon">
+                                            <div class="bg-info-400">
+                                                <i class="icon-cash3"></i>
+                                            </div>
+                                        </div>
+                                        <div class="panel border-left-lg border-left-info-400 invoice-grid timeline-content">
+                                            <div class="panel-body">
+                                                <div class="row">
+                                                    <div class="col-sm-6">
+                                                        <h6 class="text-semibold no-margin-top">Order Status :
+                                                            {% if oh['status_color'] %}
+                                                                <label class="label"style="background-color: {{ oh['status_color'] }}">{{ oh['status'] }}</label>
+                                                            {% else %}
+                                                                <label class="label label-info">{{ oh['status'] }}</label>
+                                                            {% endif %}
+
+                                                        </h6>
+                                                        <p class="no-margin-bottom">{{ oh['comment']| replace({"\\n":"<br>"}) }}</p>
+                                                    </div>
+
+                                                    <div class="col-sm-6">
+                                                        <ul class="list list-unstyled text-right">
+                                                            <li>Notify Customer: <span
+                                                                        class="text-semibold label label-success">{{oh['notify'] == 1 ? 'Yes' : 'No'}}</span>
+                                                            <li>By: 
+                                                                <span class="text-semibold">
+                                                                    Admin
+                                                                    {% if oh['firstname'] or oh['lastname'] %}
+                                                                        ({{ oh['firstname'] }} {{ oh['lastname'] }})
+                                                                    {% endif %}
+                                                                </span>
+                                                            </li>
+                                                            {#<li>Email: <span class="text-semibold">{{ oh['email'] }}</span></li>#}
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="panel-footer panel-footer-condensed">
+                                                <div class="heading-elements">
+                                            <span class="heading-text">
+                                                <span class="status-mark border-info-400 position-left"></span>
+                                                Date: <span class="text-semibold">{{ oh['date_added'] }}</span>
+                                            </span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                            {% endif %}
+                        {% endfor %}
+
+
+                    </div>
+                </div>
+                <!-- /timeline -->
+
+            </div>
+        </div>
+        <!-- /tab content -->
+
+    </div>
+</div>
+<!-- /detached content -->
+<script src="/view/assets/js/plugins/forms/selects/bootstrap_multiselect.js"></script>
+<script src="/view/assets/js/plugins/forms/selects/bootstrap_select.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Setup
+        $('#reportrange').daterangepicker(
+            {
+                startDate: moment().subtract(29, 'days'),
+                endDate: moment(),
+                minDate: '01/01/2020',
+                maxDate: '02/31/2020',
+                dateLimit: {
+                    days: 60
+                },
+                opens: $('html').attr('dir') == 'rtl' ? 'right' : 'left',
+                buttonClasses: ['btn'],
+                applyClass: 'btn-small btn-info btn-block',
+                cancelClass: 'btn-small btn-default btn-block',
+                separator: ' to ',
+                locale: {
+                    applyLabel: 'Submit',
+                    fromLabel: 'From',
+                    toLabel: 'To',
+                    customRangeLabel: 'Custom Range',
+                    daysOfWeek: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
+                    monthNames: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+                    firstDay: 1,
+                    direction: $('html').attr('dir') == 'rtl' ? 'rtl' : 'ltr'
+                }
+            },
+            function (start, end) {
+
+                // Format date
+                $('#reportrange .daterange-custom-display').html(start.format('<i>D</i> <b><i>MMM</i> <i>YYYY</i></b>') + '<em>&#8211;</em>' + end.format('<i>D</i> <b><i>MMM</i> <i>YYYY</i></b>'));
+            }
+
+        );
+
+        // Format date
+        $('#reportrange .daterange-custom-display').html(moment().subtract(29, 'days').format('<i>D</i> <b><i>MMM</i> <i>YYYY</i></b>') + '<em>&#8211;</em>' + moment().format('<i>D</i> <b><i>MMM</i> <i>YYYY</i></b>'));
+        // Enable filtering
+
+
+
+        // Styled checkboxes, radios
+        $(".styled").uniform();
+
+
+        // Styled file input
+        $(".file-styled").uniform({
+            fileButtonClass: 'action btn btn-default btn-icon',
+            fileButtonHtml: '<i class="icon-upload"></i>'
+        });
+
+        $('body').addClass('has-detached-left');
+    });
+
+    // Multiselect
+        $('.multiselect').multiselect({
+            buttonWidth: 200,
+        });
+        $(document).ready(function(){
+             $('body').on("click","button.applyBtn",function(){
+                 var start = $("input[name='daterangepicker_start']").val();
+                 var end = $("input[name='daterangepicker_end']").val();
+                 var html = '';
+                 $.ajax({
+                   url: "{{ link('sale/order/orderHistoryFilter') }}",
+                   method: 'POST',
+                   dataType: 'JSON',
+                   data: {
+                     start: start,
+                     end: end,
+                     order_id:{{order_id}}
+                   },
+                    success: function (response) {
+                        if (response['status'] == 'success') {
+                            $('#filter').html('');
+                            var data = response['data'];
+                            var sts_color = '';
+
+                            data.forEach(function (dataElement) {
+                                if(dataElement['status_color'])
+                                    sts_color = 'class="label" style="background-color:'+dataElement['status_color']+"';
+                                else
+                                    sts_color = '';
+
+                                html += '<div class="timeline-row" ><div class="timeline-icon">';
+                                html +='<div class="bg-info-400"><i class="icon-cash3"></i>';
+                                html +='</div></div>';
+                                html +='<div class="panel border-left-lg border-left-info-400 invoice-grid timeline-content">';
+                                html +='<div class="panel-body"><div class="row">';
+                                html +='<div class="col-sm-6"><h6 class="text-semibold no-margin-top">Order Status : <label '+sts_color+'>' + dataElement['status'] +'</label></h6>';
+                                html +='<p class="no-margin-bottom"> '+ dataElement['comment'] +'</p></div>';
+                                html += '<div class="col-sm-6"><ul class="list list-unstyled text-right">';
+                                if(dataElement['notify'] == 1){
+                                 dataElement['notify'] = 'Yes' ;
+                                }else{
+                                dataElement['notify'] = 'No';
+                                }
+                                html += '<li>Notify Customer: <span class="text-semibold label label-success">'+ dataElement['notify'] + '</span>';
+                                html +='<li>By: <span class="text-semibold">Admin</span></li>';
+                                html +='</ul></div></div></div>';
+                                html +='<div class="panel-footer panel-footer-condensed"><div class="heading-elements"><span class="heading-text"><span class="status-mark border-info-400 position-left"></span>';
+                                html +='Date: <span class="text-semibold">' + dataElement['date_added'] + '</span>';
+                                html +='</span></div></div></div></div>';
+                                $('#filter').html(html);
+                            })
+                      }else{
+                         $('#filter').html('');
+                         html +='<div class=" alert alert-info text-center"> <span class="text-semibold">No Data Found In This Date</span></div>';
+                         $('#filter').html(html);
+                      }
+                    }
+                 });
+             });
+        });
+</script>
+<!-- /user profile -->
+{% endblock content %}

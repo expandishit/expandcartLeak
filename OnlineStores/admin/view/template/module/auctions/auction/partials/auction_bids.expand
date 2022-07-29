@@ -1,0 +1,66 @@
+<div class="panel panel-flat">
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+            <tr>
+                <th>{{ lang('column_bidder_name', 'sale/order') }}</th>
+                <th>{{ lang('column_amount', 'sale/order') }}</th>
+                <th>{{ lang('column_date_added') }}</th>
+                {# <th>{{ lang('column_is_winner') }}</th> #}
+
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+
+                {% if auction.bids %}
+                    {% for bid in auction.bids %}
+                        <tr id="{{bid.bid_id}}">
+                            <td>
+                                <a href="{{ link('sale/customer/update?customer_id=' ~ bid['bidder_id']) }}">{{ bid['bidder_name'] }}</a>
+                            </td>
+                            <td>{{ bid['amount'] }}</td>
+                            <td>{{ bid['created_at'] }}</td>
+{#                             <td>
+                                <label class="{{ bid['is_winning'] ? 'label label-success' : ''}}">
+                                {{ (bid['is_winning']) ? lang('text_yes') : ' - ' }}
+                                </label>
+                            </td> #}
+
+                            <td>
+                                <a class='removeItem' data-bidid="{{bid.bid_id}}"><i class='icon-trash'></i></a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="8">{{ lang('text_no_results') }}</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script type="text/javascript">
+$('.removeItem').click(function () {
+
+  var bid_id = $(this).data('bidid');
+  var row = $('#'+bid_id);
+
+  confirmMessage(function () {
+      ajax(
+        "{{ link('sale/auction/deleteBid') }}", 
+        {
+            bid_id: [bid_id]
+        }, 
+        function (res) {
+          var response = JSON.parse(res);
+
+          if (response.success == '1'){
+              row.remove();
+          }
+      });
+  });
+});
+</script>

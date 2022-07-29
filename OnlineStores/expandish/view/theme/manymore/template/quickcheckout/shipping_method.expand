@@ -1,0 +1,144 @@
+<!-- Quick Checkout v4.0 by Dreamvention.com quickcheckout/shipping_method.tpl -->
+<div id="shipping_method_wrap" {% if not data['display'] %}class="qc-hide"{% endif %}>
+{% if error_warning %}
+<div class="error alert alert-danger">{{ error_warning }}</div>
+{% endif %}
+
+{% if shipping_methods or delivery_slot_status %}
+
+<div class="box box-border">
+<div class="box-heading ">
+    <span class="wrap">
+        <span class="qc-icon-shipping-method"></span>
+    </span> 
+    <span class="text">{{ data['title'] }}</span>
+</div>
+<div class="box-content">
+{% if data['description'] %} <div class="description">{{ data['description'] }}</div> {% endif %}
+
+<div class="{% if not data['display_options'] %}qc-hide{% endif %}">
+
+{% if data['input_style'] == 'select' %}
+<div class="select-input">
+    <select name="shipping_method" class="shipping-method-select" data-refresh="5">
+        {% for shipping_method in shipping_methods %}
+            {% for quote in shipping_method['quote'] %}
+                {% if quote['code'] == code or not code %}
+                {% set code = quote['code'] %}
+                <option  value="{{ quote['code'] }}" id="{{ quote['code'] }}" selected="selected" >{{ quote['title'] }} {{ quote['text'] }}</option>
+                {% else %}
+                <option  value="{{ quote['code'] }}" id="{{ quote['code'] }}" >{{ quote['title'] }} {{ quote['text'] }}</option>
+                {% endif %}
+            {% endfor %}
+        {% endfor %}
+    </select> 
+</div>
+{% else %}
+
+
+{% for shipping_method in shipping_methods %}
+    {% if data['display_title'] %}
+        <div class="title">{{ shipping_method['title'] }}</div>
+    {% endif %}
+    {% if not shipping_method['error'] %}
+        {% for quote in shipping_method['quote'] %}
+            <div class="radio-input">
+                {% if quote['code'] == code or not code %}
+                    {% set code = quote['code'] %}
+                    <input type="radio" name="shipping_method" value="{{ quote['code'] }}" id="{{ quote['code'] }}" checked="checked"  data-refresh="5" class="styled"/>
+                {% else %}
+                    <input type="radio" name="shipping_method" value="{{ quote['code'] }}" id="{{ quote['code'] }}"  data-refresh="5" class="styled"/>
+                {% endif %}
+                <label for="{{ quote['code'] }}"><span class="text">{{ quote['title'] }}</span><span class="price">{{ quote['text'] }}</span></label>
+            </div>
+        {% endfor %}
+    {% else %}
+    	<div class="error alert alert-danger">{{ shipping_method['error'] }}</div>
+    {% endif %}
+{% endfor %}
+<!-- Delivery Slots -->
+{{ include('souq/template/quickcheckout/delivery_slot.expand') }}
+<!-- Delivery Slots -->
+{% endif %}
+
+</div>
+<div class="clear"></div>
+</div>
+</div>
+
+{% endif %}
+</div>
+<!--<?php
+// echo '<pre>';
+// print_r($this->session->data['shipping_methods']);
+// echo '</pre>'; 
+?>
+<?php
+// echo '<pre>';
+// print_r($this->session->data['shipping_address']);
+// echo '</pre>'; 
+?>-->
+<script><!--
+$(function(){
+	if($.isFunction($.fn.uniform)){
+        $(" .styled, input:radio.styled").uniform().removeClass('styled');
+	}
+	if($.isFunction($.fn.colorbox)){
+		$('.colorbox').colorbox({
+			width: 640,
+			height: 480
+		});
+	}
+	if($.isFunction($.fn.fancybox)){
+		$('.fancybox').fancybox({
+			width: 640,
+			height: 480
+		});
+	}
+
+        $("#date").datepicker({
+            minDate: {{ day_index ? day_index : 0 }},
+            {% if slot_max_day and slot_max_day > 0  %}
+            maxDate : {{ slot_max_day }},
+            {% endif  %}
+            dateFormat: 'mm-dd-yy',
+            firstDay: 1,
+            onSelect: function(date, datepicker) {
+                var date = $(this).datepicker('getDate');
+                var dateValue = $(this).val();
+                var dayOfWeek = date.getUTCDay();
+
+                $.ajax({
+                    url: "{{ link('module/delivery_slot/getSlotsData') }}",
+                    type: "GET",
+                    data: {'dateValue': dateValue, 'dayOfWeek': dayOfWeek},
+                    success: function (resp)
+                    {
+
+                        var resp = JSON.parse(resp);
+                        var html = '';
+                        var lenthData = resp.length;
+                        if(lenthData > 0){
+                            for (var i = 0; i < lenthData; i++)
+                            {
+                                html += '<option class="slot-dir-left" value="' + resp[i].slot_id + '">' + resp[i].delivery_slot_data + '</option>';
+                            }
+                        }else{
+                            html += '<option value="0">{{ lang('text_no_slots') }}</option>';
+                        }
+
+                        $('#delivery_slot').html(html);
+
+                    }
+                });
+            },
+
+        });
+});
+//--></script>
+
+
+
+
+
+

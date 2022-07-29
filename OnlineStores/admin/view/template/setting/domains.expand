@@ -1,0 +1,231 @@
+{% extends "base.expand" %}
+
+{% set hideHeader = true %}
+
+{% block content %}
+    <style>
+        .page-header-default {
+            background-color: transparent;
+        }
+        .page-header-content + .breadcrumb-line {
+            border: 0;
+        }
+    </style>
+    {#<form id="integration-settings" class="form" action="{{ action }}">#}
+
+    <div class="list-wrapper splited-settings domains-page">
+        <div class="content-inner">
+            <div class="inner-settings-title mb-30 pt-0 orders-title">
+                <h4 class="fb-app-title">
+                    <span onclick="window.history.back(); return false;"><i class="icon-arrow-left52 position-left text-default"></i></span>
+                    {{ lang('heading_title', 'setting/domains') }}
+                </h4>
+                <div class="btns">
+                    <a href="{{ url_registerDomainLink }}" class="theme-btn primary-btn">
+                        {{ lang('text_buynewdomain') }}
+                    </a>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12 col-lg-4">
+                    <p class="split-title mb-20">
+                        {{lang('text_split_title')}}
+                    </p>
+                    <div class="split-content mb-15 black-color">
+                        {{lang('text_domain_mean')}}
+                    </div>
+                    <div class="split-content mb-15 black-color">
+                        {{lang('text_domain_count')}}
+                    </div>
+                    <div class="split-content mb-15 black-color">
+                        {{lang_printf('text_domain_external', url_registerDomainLink)}}
+                    </div>
+                    <div class="table-guide j-content-start mt-0">
+                        <i class="fas fa-info-circle"></i> {{lang('text_learn_more_about')}}&nbsp;<a href="{{ lang('link_learn_more_about') }}" target="_blank">{{lang('text_domains')}} <i class="fas fa-external-link-alt"></i></a>
+                    </div>
+                </div>
+                <div class="col-12 col-lg-8">
+                    <!-- Advanced legend -->
+                    <div class="panel panel-default no-margin">
+                        <div class="inner">
+                            {% if (domains|length == 0) and base.currentplan == 3 %}
+                                <div class="domain-alert-box">
+                                    <p class="first-ship-alert ai-center no-margin">
+                                        <img src="view/image/icons/lightbulb.svg" alt=""> &nbsp;&nbsp;
+                                        <span class="w-100 gray-color font-13 m-bold">{{lang_printf('text_free_domins', link('account/charge'))}}</span>
+                                    </p>
+                                </div>
+                            {% endif %}
+                            <p class="domain-input-title">
+                                {{lang('text_domain_input_title')}}
+                            </p>
+                            <div id="domain_name-group">
+                                <div id="input-row">
+                                    <div class="input-group">
+                                        {% if lang('direction') == 'rtl' %}
+                                            <input type="text" id="domainname" class="form-control" value=""  style="direction: ltr;" />
+                                            <span class="input-group-addon" style="direction: ltr;">
+                                                http(s)://
+                                            </span>
+                                        {% else %}
+                                            <span class="input-group-addon">
+                                                http(s)://
+                                            </span>
+                                            <input type="text" id="domainname" class="form-control" value="" />
+                                        {% endif %}
+                                    </div>
+                                    <a onclick="addDomain($('#domainname').val())" class="btn btn-primary add-domain"><i class="fa fa-plus position-left"></i>&nbsp;{{ lang("text_adddomain") }}</a>
+                                </div>
+                                <span class="help-block"></span>
+                            </div>
+                            <div class="table-responsive domains-table">
+                                <table class="table">
+                                    <tbody id="domains-table">
+                                        {% for domain in domains %}
+                                            <tr id="domain-{{ domain['UNIQUEID'] }}">
+                                                <td class=""><a target="_blank" href="http://{{ domain['DOMAINNAME']|lower }}">{{ domain['DOMAINNAME']|lower }}</a></td>
+                                                <td class="">
+                                                    <!--<a href="<?php echo $insert; ?>" class="button btn btn-primary">Update</a>-->
+                                                    <a onclick="deleteDomain({{ domain['UNIQUEID'] }})" class="remove">{{ lang("text_delete") }}</a>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="domain-instructions">
+                                <div class="domains-rows">
+                                    {% for domain in domains %}
+                                    <div class="domain-row">
+                                        <i class="fas fa-globe"></i>
+                                        http://{{ domain['DOMAINNAME']|lower }}
+                                        <span class="status {{domain.status == 1 ? 'connected'}}">
+                                            {% if domain.status == 1 %}
+                                                {{lang('status_connected')}}
+                                            {% else %}
+                                                {{lang('status_not_connected')}}
+                                            {% endif %}
+                                            
+                                        </span>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% if not domains_status %}
+                                <p class="subtitle">
+                                    {{lang('instructions_subtitle')}}
+                                </p>
+                                <table class="instructions-table">
+                                    <thead>
+                                        <tr>
+                                            <td>{{lang('instructions_type')}}</td>
+                                            <td>{{lang('instructions_name')}}</td>
+                                            <td>{{lang('instructions_value')}}</td>
+                                        </tr>
+                                        <tbody>
+                                            <tr>
+                                                <td>
+                                                    <span>A</span>
+                                                </td>
+                                                <td>
+                                                    <span>@</span>
+                                                </td>
+                                                <td>
+                                                    <span>34.107.102.192</span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <span>A</span>
+                                                </td>
+                                                <td>
+                                                    <span>www</span>
+                                                </td>
+                                                <td>
+                                                    <span>34.107.102.192</span>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </thead>
+                                </table>
+                                <p class="guide">
+                                    {{lang('instructions_guide')}} <a href="{{lang('instructions_video_link')}}" target="_blank">{{lang('instructions_video')}} <i class="fas fa-arrow-{{ DIRECTION == 'LTR' ? 'right' : 'left' }}"></i></a>
+                                </p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <!-- /a legend -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fieldset legend -->
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+
+            </div>
+        </div>
+    </div>
+
+    <!-- /fieldset legend -->
+    {#</form>#}
+{% endblock content %}
+
+{% block scripts %}
+    {{ parent() }}
+    <script>
+        function deleteDomain(uniqueid) {
+            ajax("{{ link("setting/domains/delete") }}", {UniqueId: uniqueid}, function(response) {
+                var json = JSON.parse(response);
+                if(json['deleted']) {
+                    $('#domain-' + uniqueid).remove();
+                    //notify('Success', 'success', json['success']);
+                }
+            });
+        }
+        function addDomain(domainname) {
+            if(domainname.trim() == "") return;
+            $('.add-domain').addClass('load-btn')
+            ajax("{{ link("setting/domains/insert") }}", {DomainName: domainname}, function(response) {
+                $('.add-domain').removeClass('load-btn')
+                var json = JSON.parse(response);
+                if(json['uniqueid'] > 0) {
+                    let appendRow = "";
+                    appendRow += `<tr id="domain-${json['uniqueid']}">`;
+                    appendRow += `<td>`;
+                    appendRow += `<a target="_blank" href="http://${json['domainname']}">`;
+                    appendRow += `www.${json['domainname']}`;
+                    appendRow += `</a>`;
+                    appendRow += `</td>`;
+                    appendRow += `<td>`;
+                    appendRow += `<a onclick="deleteDomain(${json['uniqueid']})" class="remove">`;
+                    appendRow += `<?= $text_delete ?>`;
+                    appendRow += `</a>`;
+                    appendRow += `</td>`;
+                    appendRow += `</tr>`;
+                    $('#domains-table').append(appendRow)
+                    $('#domainname').val('');
+                    //notify('Success', 'success', json['success']);
+
+                    let domainRowTemp = ''
+                    domainRowTemp += `<div class="domain-row">`
+                    domainRowTemp += `<i class="fas fa-globe"></i>`
+                    domainRowTemp += `http://${json['domainname']}`
+                    domainRowTemp += `<span class="status">`
+                    domainRowTemp += `{{lang('status_not_connected')}}`
+                    domainRowTemp += `</span>`
+                    domainRowTemp += `</div>`
+                    $('.domain-instructions').removeClass('hide');
+                    $('.domains-rows').append(domainRowTemp)
+                }
+                {# else {
+                    alert(json['errors']['error']);
+                } #}
+            });
+        }
+        
+    </script>
+{% endblock scripts %}

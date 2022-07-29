@@ -1,0 +1,283 @@
+{% extends "base.expand" %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+{% import "controls/forms.expand" as forms %}
+{% set dualMenuEnabled = true %}
+
+{% block title %}
+    {{ lang('heading_title_payment') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block secondarymenu %}
+    {% include 'multiseller/menu.expand' with {'active': '#transaction'} %}
+{% endblock secondarymenu %}
+
+{% block headelements %}
+    <a href="{{ link('multiseller/transaction') }}" class="btn btn-default"> {{ lang('button_cancel') }}</a>
+    <a class="btn btn-primary" onclick="validateAndSubmit()"><i
+                class="far fa-save fa-lg position-left"></i> {{ lang('button_save') }}</a>
+{% endblock headelements %}
+
+{% block scripts %}
+
+    <script>
+        $(document).ready(function () {
+            $('select').select2({
+                minimumResultsForSearch: 10
+            });
+
+
+        });
+
+        function validateAndSubmit() {
+
+            var $types = JSON.parse('{{ types|json_encode }}');
+
+            var $errors = 0;
+
+            var $from = $('#ms_from').val();
+            var $to = $('#ms_to').val();
+            var $amount = $('#ms_amount').val();
+            var $type = $('#ms_type').val();
+
+            $('.form-group').removeClass('has-error');
+            $('.text-muted').text('');
+
+            if ($from == '' || $to == '') {
+                $('#ms_from-group,#ms_to-group').addClass('has-error');
+                $('#ms_from-group .text-muted').text('{{ lang('ms_error_transaction_fromto') }}');
+                $('#ms_to-group .text-muted').text('{{ lang('ms_error_transaction_fromto') }}');
+
+                $errors++;
+            }
+
+            if ($from == $to) {
+                $('#ms_from-group,#ms_to-group').addClass('has-error');
+                $('#ms_from-group .text-muted').text('{{ lang('ms_error_transaction_fromto_same') }}');
+                $('#ms_to-group .text-muted').text('{{ lang('ms_error_transaction_fromto_same') }}');
+
+                $errors++;
+            }
+
+            if (typeof $from == 'undefined' || typeof $to == 'undefined') {
+                $('#ms_from-group,#ms_to-group').addClass('has-error');
+                $('#ms_from-group .text-muted').text('{{ lang('ms_error_transaction_fromto') }}');
+                $('#ms_to-group .text-muted').text('{{ lang('ms_error_transaction_fromto') }}');
+
+                $errors++;
+            }
+
+            if (($from != '0' && $to != '0')) {
+                $('#ms_from-group,#ms_to-group').addClass('has-error');
+                $('#ms_from-group .text-muted').text('{{ lang('ms_error_transaction_fromto') }}');
+                $('#ms_to-group .text-muted').text('{{ lang('ms_error_transaction_fromto') }}');
+
+                $errors++;
+            }
+
+            if ($amount <= 0) {
+                $('#ms_amount-group').addClass('has-error');
+                $('#ms_amount-group .text-muted').text('{{ lang('ms_error_payment_amount') }}');
+
+                $errors++;
+            }
+
+            if ($from == 0 && $.inArray(parseInt($type), $types) == -1) {
+                $('#ms_type-group').addClass('has-error');
+                $('#ms_type-group .text-muted').text('{{ lang('ms_error_payment_fromstore') }}');
+
+                $errors++;
+            } else if ($from > 0 && $.inArray(parseInt($type), $types) >= 0) {
+                console.log('aaaaaa');
+                $('#ms_type-group').addClass('has-error');
+                $('#ms_type-group .text-muted').text('{{ lang('ms_error_payment_tostore') }}');
+
+                $errors++;
+            }
+
+            if ($errors > 0) {
+                return;
+            }
+
+            $.ajax({
+                type: "POST",
+                dataType: "json",
+                url: 'multiseller/payment/jxSave',
+                data: $('#form').serialize(),
+                error: function (jqXHR, textStatus, errorThrown) {
+                    $('.warning').text(textStatus).show();
+                },
+                success: function (jsonData) {
+                    if (!jQuery.isEmptyObject(jsonData.errors)) {
+                        for (error in jsonData.errors) {
+                            $('[name="' + error + '"]').after('<p class="error">' + jsonData.errors[error] + '</p>');
+                        }
+                    } else {
+                        window.location = 'multiseller/payment';
+                    }
+                }
+            });
+        }
+    </script>
+
+{% endblock scripts %}
+
+{% block content %}
+
+    <form id="form" method="POST">
+        <div class="col-md-12">
+            <div class="panel panel-white">
+                <div class="panel-body">
+
+                    <legend class="text-semibold">
+                        <i class="fas fa-check-circle fa-lg position-left"></i>
+                        {{ lang('ms_transactions_heading') }}
+                    </legend>
+
+                    <div class="collapse in">
+                        <div class="form-group col-md-6" id="ms_from-group">
+                            <label for="ms_from" class="control-label text-semibold">
+                                {{ lang('ms_from') }}
+                            </label>
+
+                            <select id="ms_from" class="form-control" name="payment[from]">
+                                <optgroup label="{{ lang('ms_store') }}">
+                                    <option value="0">{{ store_name }}</option>
+                                </optgroup>
+                                <optgroup label="{{ lang('ms_seller') }}">
+                                    {% for seller in sellers %}
+                                        <option value="{{ seller['seller_id'] }}">
+                                            {{ seller['name'] }}
+                                        </option>
+                                    {% endfor %}
+                                </optgroup>
+                            </select>
+
+                            <span class="help-block"></span>
+                            <span class="text-muted"></span>
+                        </div>
+
+                        <div class="form-group col-md-6" id="ms_to-group">
+                            <label for="ms_to" class="control-label text-semibold">
+                                {{ lang('ms_to') }}
+                            </label>
+
+                            <select id="ms_to" class="form-control" name="payment[to]">
+                                <optgroup label="{{ lang('ms_store') }}">
+                                    <option value="0">{{ store_name }}</option>
+                                </optgroup>
+                                <optgroup label="{{ lang('ms_seller') }}">
+                                    {% for seller in sellers %}
+                                        <option value="{{ seller['seller_id'] }}">
+                                            {{ seller['name'] }}
+                                        </option>
+                                    {% endfor %}
+                                </optgroup>
+                            </select>
+
+                            <span class="help-block"></span>
+                            <span class="text-muted"></span>
+                        </div>
+
+                        <div class="clearfix"></div>
+
+                        <div class="form-group" id="ms_type-group">
+                            <label for="ms_type" class="control-label text-semibold">
+                                {{ lang('ms_type') }}
+                            </label>
+
+                            <select id="ms_type" class="form-control" name="payment[type]">
+                                {% for type, name in payment_types %}
+                                    <option value="{{ type }}">
+                                        {{ name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+
+                            <span class="help-block"></span>
+                            <span class="text-muted"></span>
+                        </div>
+
+                        <div class="form-group" id="ms_amount-group">
+                            <label for="ms_amount" class="control-label text-semibold">
+                                {{ lang('ms_amount') }} <span class="required">*</span>
+                            </label>
+
+                            <div class="input-group">
+                                <span class="input-group-addon">{{ leftCurrencySymbol }}</span>
+                                <input type="text" class="form-control" name="payment[amount]" id="ms_amount"/>
+                                <span class="input-group-addon">{{ rightCurrencySymbol }}</span>
+                            </div>
+
+                            <span class="help-block"></span>
+                            <span class="text-muted"></span>
+                        </div>
+
+                        <div class="form-group" id="ms_payment_method-group">
+                            <label for="ms_payment_method" class="control-label text-semibold">
+                                {{ lang('ms_payment_method') }}
+                            </label>
+
+                            <select id="ms_payment_method" class="form-control" name="payment[method]">
+                                <option value="{{ balanceMethod }}">{{ lang('ms_payment_method_balance') }}</option>
+                                <option value="{{ paypalMethod }}">{{ lang('ms_payment_method_paypal') }}</option>
+                            </select>
+
+                            <span class="help-block"></span>
+                            <span class="text-muted"></span>
+                        </div>
+
+                        <div class="form-group col-md-6" id="ms_payment_paid-group">
+                            <label for="ms_payment_paid" class="control-label text-semibold">
+                                {{ lang('ms_payment_paid') }}
+                            </label>
+
+                            <input type="checkbox" id="ms_payment_paid" class="styled" name="payment[paid]">
+
+                            <span class="help-block"></span>
+                            <span class="text-muted"></span>
+                        </div>
+
+                        <div class="form-group col-md-6" id="ms_payment_deduct-group">
+                            <label for="ms_payment_deduct" class="control-label text-semibold">
+                                {{ lang('ms_payment_deduct') }}
+                            </label>
+
+                            <input type="checkbox" id="ms_payment_deduct" class="styled" name="payment[deduct]">
+
+                            <span class="help-block"></span>
+                            <span class="text-muted"></span>
+                        </div>
+
+                        <div class="clearfix"></div>
+
+                        <div class="form-group" id="ms_description-group">
+                            <label for="ms_description" class="control-label text-semibold">
+                                {{ lang('ms_description') }}
+                            </label>
+
+                            <textarea id="ms_description" name="payment[description]"
+                                      type="text" class="form-control"></textarea>
+
+                            <span class="help-block"></span>
+                            <span class="text-muted"></span>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <div class="row">
+        <div class="col-md-12 text-right">
+            <hr/>
+            <a href="{{ links['cancel'] }}" class="btn btn-default"> {{ lang('button_cancel') }}</a>
+            <a class="btn btn-primary" onclick="$('.form').submit();"><i
+                        class="far fa-save fa-lg position-left"></i> {{ lang('button_save') }}</a>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,354 @@
+{% extends "base.expand" %}
+{% import "controls/forms.expand" as forms %}
+{% from "controls/breadcrumb.expand" import breadcrumb as breadcrumb %}
+
+{% block title %}
+    {{ lang('heading_title_expandship', 'extension/expandship') }}
+{% endblock title %}
+
+{% block breadcrumb %}
+    {{ breadcrumb(breadcrumbs) }}
+{% endblock breadcrumb %}
+
+{% block secondarymenu %}
+{% endblock secondarymenu %}
+
+{% block content %}
+
+    <style>
+        .content-wrapper {
+            background-color: #f8f9ff;
+        }
+
+        .page-header-default {
+            background-color: transparent;
+        }
+
+        .page-header-content + .breadcrumb-line {
+            border: 0;
+        }
+    </style>
+
+
+
+    <div class="panel">
+        <div class="panel-body">
+            <div class="login-block-center exLogin-first-step">
+                <div class="text-center">
+                    <img src="view/assets/images/logo_dark_icon.svg" class="expandItem-login-logo" alt="">
+                </div>
+                <p class="bold text-center expandItem-login-title">{{ lang('welcome_expandship') }}</p>
+                <p class="bold text-center expandItem-login-title font-16">{{ lang('expandship_login_title') }}</p>
+
+                <form id='email-form'>
+
+                    <input type="hidden" name="store_code" value="{{ constant('STORECODE') }}">
+                    <div class="form-group">
+                        <label for="" class="font-w-600">{{ lang('entry_email') }}</label>
+                        <div class="input-with-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+                                 version="1.1" id="Capa_1" x="0px" y="0px" viewBox="0 0 512 512"
+                                 style="enable-background:new 0 0 512 512;" xml:space="preserve" fill="#D2CFE4"
+                                 width="21px"><g>
+                                    <g>
+                                        <polygon points="339.392,258.624 512,367.744 512,144.896   "/>
+                                    </g>
+                                </g>
+                                <g>
+                                    <g>
+                                        <polygon points="0,144.896 0,367.744 172.608,258.624   "/>
+                                    </g>
+                                </g>
+                                <g>
+                                    <g>
+                                        <path d="M480,80H32C16.032,80,3.36,91.904,0.96,107.232L256,275.264l255.04-168.032C508.64,91.904,495.968,80,480,80z"/>
+                                    </g>
+                                </g>
+                                <g>
+                                    <g>
+                                        <path d="M310.08,277.952l-45.28,29.824c-2.688,1.76-5.728,2.624-8.8,2.624c-3.072,0-6.112-0.864-8.8-2.624l-45.28-29.856    L1.024,404.992C3.488,420.192,16.096,432,32,432h448c15.904,0,28.512-11.808,30.976-27.008L310.08,277.952z"/>
+                                    </g>
+                                </g>
+                                <g></g>
+                                <g></g>
+                                <g></g>
+                                <g></g>
+                                <g></g>
+                                <g></g>
+                                <g></g>
+                                <g></g>
+                                <g></g>
+                                <g></g>
+                                <g></g>
+                                <g></g>
+                                <g></g>
+                                <g></g>
+                                <g></g></svg>
+                            <input type="email" name="email" class="form-control exItem-login-input" value=""
+                                   placeholder="{{ lang('entry_your_email') }}">
+                            <span class="help-block"></span>
+                        </div>
+                    </div>
+                    <a class="btn btn-primary btn-expandItem-login" id='emailSubmit'>{{ lang('entry_next') }} <i
+                                class="fa fa-angle-right" aria-hidden="true"></i>
+                        <button type="button"
+                                class="btn btn-primary btn-sm custom-alert-onBtn loginloader alert-loading"
+                                style="display: none;"><i class="fas fa-spinner fa-spin"></i></button>
+                    </a>
+                </form>
+            </div>
+
+            <div class="login-block-center exLogin-second-step" style='display:none'>
+                <p class="bold text-center expandItem-login-title">{{ lang('verify_email') }}</p>
+                <p class=" text-center mb-20">{{ lang('verify_email_title') }}</p>
+                <p class=" text-center mb-20" id='text-mail'>{{ lang('check_email') }}</p>
+
+                <form id='code-form' action="{{ link('extension/expandpay/expandpayLogin') }}">
+                    <div class="digit-group verify-input-holder" style="direction: ltr;">
+                        <input type="text" class="passInput" name="pass[]" maxlength="1" autocomplete="off" required
+                               pattern="\d{1}" autofocus>
+                        <input type="text" class="passInput" name="pass[]" maxlength="1" autocomplete="off" required
+                               pattern="\d{1}">
+                        <input type="text" class="passInput" name="pass[]" maxlength="1" autocomplete="off" required
+                               pattern="\d{1}">
+                        <input type="text" class="passInput" name="pass[]" maxlength="1" autocomplete="off" required
+                               pattern="\d{1}">
+                    </div>
+                    <input type="hidden" id="email" name="email"/>
+                    <span class="help-block" style='text-align:center;color:red'></span>
+                    <div class="text-center counter-holder">
+                        <p class="counter-min"> 00:<span id="counter">60</span></p>
+                        <p class="hidden-resend resend-verify-code"><a>{{ lang('entry_resend') }}</a></p>
+                    </div>
+                    <a class="btn btn-primary btn-expandItem-login" id='verify'>{{ lang('entry_confirm') }}
+                        <button type="button" class="btn btn-primary btn-sm custom-alert-onBtn alert-loading-verify"
+                                style="display: none;"><i class="fas fa-spinner fa-spin"></i></button>
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        $(document).ready(function () {
+
+            ////// hide submit if the required fields are empty.
+            function emptyInputlogin() {
+                var empty = false;
+                $('#email-form .input-with-icon input').each(function () {
+                    if ($(this).val().length == 0) {
+                        empty = true;
+                    }
+                });
+                if (empty) {
+                    $('#emailSubmit').addClass('hiddenSubmit');
+                } else {
+                    $('#emailSubmit').removeClass('hiddenSubmit');
+                }
+            };
+            $('#email-form .input-with-icon input').keyup(function () {
+                emptyInputlogin();
+            });
+            emptyInputlogin();
+
+            ////// hide code submit if the required fields are empty.
+            function emptyInputVerify() {
+                var empty = false;
+                $('#code-form .verify-input-holder input').each(function () {
+                    if ($(this).val().length == 0) {
+                        empty = true;
+                    }
+                });
+                if (empty) {
+                    $('#code-form #verify').addClass('hiddenSubmit');
+                } else {
+                    $('#verify').trigger('click')
+                    $('#code-form #verify').removeClass('hiddenSubmit');
+                }
+            };
+            $('#code-form .verify-input-holder input').keyup(function () {
+                emptyInputVerify();
+            });
+            emptyInputVerify();
+
+            // verify input
+            const $inp = $(".passInput");
+
+            $inp.on({
+                paste(ev) { // Handle Pasting
+
+                    const clip = ev.originalEvent.clipboardData.getData('text').trim();
+                    // Allow numbers only
+                    if (!/\d{4}/.test(clip)) return ev.preventDefault(); // Invalid. Exit here
+                    // Split string to Array or characters
+                    const s = [...clip];
+                    // Populate inputs. Focus last input.
+                    $inp.val(i => s[i]).eq(3).focus();
+                },
+                input(ev) { // Handle typing
+
+                    const i = $inp.index(this);
+                    if (this.value) $inp.eq(i + 1).focus();
+                },
+                keydown(ev) { // Handle Deleting
+
+                    const i = $inp.index(this);
+                    if (!this.value && ev.key === "Backspace" && i) $inp.eq(i - 1).focus();
+                }
+            });
+
+            /// verify counter
+            function counterMin() {
+                $(".resend-verify-code").addClass("hidden-resend");
+                var count = 60;
+                $("#counter").html(count);
+
+                var timer = setInterval(function () {
+                    $("#counter").html(--count);
+                    if (count == 0) {
+                        clearInterval(timer);
+                        $(".resend-verify-code").removeClass("hidden-resend");
+                        $('.exLogin-second-step .counter-holder .counter-min').hide();
+                    }
+                }, 1000);
+            }
+
+            function getVerifyCode() {
+                $("input[name='email']").parent().removeClass('has-error')
+                $("input[name='email']").next().empty()
+
+                var $form = $('#email-form');
+                var formData = new FormData($("#email-form")[0]);
+                var $action = $form.attr('action');
+                // var $data = $form.serialize();
+                // localStorage.setItem("login_mail", $("input[name='login_mail']").val());
+
+                $.ajax({
+                    url: "{{ login_url }}",
+                    data: formData,
+                    dataType: 'JSON',
+                    method: 'POST',
+                    processData: false,
+                    contentType: false,
+                    success: function (response) {
+                        console.log(response);
+                        if (response.success == '0') {
+                            {# if (response.redirect == '1') { #}
+                            {# window.location.href = '{{ link('extension/expandpay') }}'; #}
+                            {# } else { #}
+                            $.each(response.errors, function (key, value) {
+                                // $("input[name='"+key+"']").parent().addClass('has-error');
+                                $("input[name='email']").closest('.form-group').addClass('has-error');
+                                $("input[name='email']").next().append(value[0]).append('<br>');
+                                // $("input[name='email']").closest('.form-group').find('.help-block').append(value[0]).append('<br>')
+                            });
+                            // for (err in response.fails) {
+                            //     $("input[name='" + err + "']").parent().addClass('has-error')
+                            //     $("input[name='" + err + "']").next().append(response.fails[err])
+                            // }
+                            $('.alert-loading.loginloader').hide();
+                            // }
+                        } else {
+                            addTextMail()
+                            $('#email').val($("input[name='email']").val());
+                            $('.exLogin-first-step').hide(500)
+                            $('.exLogin-second-step').show(500)
+                            localStorage.setItem("codeSend", 1);
+                            setTimeout(function () {
+                                localStorage.removeItem("codeSend", 1);
+                            }, 60 * 1000)
+                            counterMin();
+                        }
+                    }
+                });
+
+            }
+
+            function addTextMail() {
+                var text = $('#text-mail').text()
+                var login_mail = $("input[name='email']").val()
+
+                if (!text.includes(login_mail))
+                    $('#text-mail').append($("input[name='email']").val());
+            }
+
+            // counterMin();
+            $('.resend-verify-code a').click(function () {
+                counterMin();
+                getVerifyCode();
+                $('.exLogin-second-step .counter-holder .counter-min').show();
+            });
+
+            // handle form submit
+            $('#emailSubmit').click(function () {
+                getVerifyCode();
+                $('.alert-loading.loginloader').show();
+            })
+
+            $('.exItem-login-input').keypress(function (e) {
+                var key = e.which;
+                if (key == 13)  // the enter key code
+                {
+                    getVerifyCode();
+                    $('.alert-loading.loginloader').show();
+                    return false;
+                }
+            });
+            $('#verify').click(function () {
+                $("input[name='email']").next().empty();
+                $('.alert-loading-verify').show();
+                var $form = $('#code-form');
+                var formData = new FormData($("#code-form")[0]);
+                var $action = $form.attr('action');
+                var $data = $form.serialize();
+                // $.ajax({
+                //     url: $action,
+                //     data: formData,
+                //     dataType: 'JSON',
+                //     method: 'POST',
+                //     processData: false,
+                //     contentType: false,
+                //     success: function (response) {
+                //         if (response.success == 1) {
+
+                window.location.href = '{{ index_url }}';
+                //         } else {
+                //             for (err in response.fails) {
+                //                 $("input[name='email']").next().html('errror in code');
+                // }
+                // $('.alert-loading-verify').hide();
+                // }
+
+
+                // }
+                // });
+
+            })
+
+            // var login_mail = localStorage.getItem("login_mail");
+            //
+            // if (login_mail) {
+            //     $("input[name='login_mail']").val(login_mail)
+            //     $('#emailSubmit').removeClass('hiddenSubmit');
+            // }
+            //
+            // var codeSend = localStorage.getItem("codeSend");
+            // if (codeSend) {
+            //     $('.exLogin-first-step').css("display", "none");
+            //     $('.exLogin-second-step').show();
+            //     setTimeout(function () {
+            //         localStorage.removeItem("codeSend", 1);
+            //     }, 60 * 1000)
+            //     addTextMail();
+            //     counterMin();
+            // } else {
+            //     $('.exLogin-first-step').css("display", "block");
+            // }
+            // $('.page-title a').click(function (e) {
+            //     localStorage.removeItem("codeSend", 1);
+            // })
+        });
+    </script>
+
+{% endblock content %}

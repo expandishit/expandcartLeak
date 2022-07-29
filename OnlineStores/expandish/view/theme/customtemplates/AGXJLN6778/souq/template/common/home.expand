@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="{{ lang('code') }}" class="{{ lang('direction') == 'rtl' ? 'cms-rtl' : '' }}">
+<head>
+    <title>{{ document_title }}</title>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <base href="{{ base_url }}" />
+    {% if document_description != '' %}
+    <meta name="description" content="{{ document_description }}" />
+    {% endif %}
+
+    {% if document_keywords != '' %}
+    <meta name="keywords" content="{{ document_keywords }}" />
+    {% endif %}
+
+    {% if store_icon != '' %}
+    <link href="{{ store_icon }}" rel="icon" />
+    {% endif %}
+
+    {% for link in document_links %}
+        <link href="{{ link.href }}" rel="{{ link.rel }}" />
+    {% endfor %}
+
+    {% for style in document_styles %}
+        <link rel="{{ style.rel }}" type="text/css" href="{{ style.href }}" media="{{ style.media }}" />
+    {% endfor %}
+
+    {% if route == "product/product" %}
+      {% include 'default/template/structured_data/facebook_og.expand' %}
+    {% else %}
+      {% include 'default/template/structured_data/store.expand' %}
+    {% endif %}
+
+    <!-- Style CSS -->
+	<link rel="stylesheet" type="text/css"
+		  href="index.php?route=common/style{{ isdraft == 1 ? '&isdraft=1' : '' }}{{ config('tmp_prev') ? '&__p=' ~ config('tmp_prev') : '' }}">
+
+    <script type="text/javascript" src="{{ jslink('js/jquery.min.js') }}"></script>
+<script type="text/javascript" src="expandish/view/theme/abstract/js/rotate360.js"></script>
+   
+    <link rel="stylesheet" type="text/css" href="{{ csslink('css/jquery-ui-1.8.16.custom.css') }}" />
+	<link rel="stylesheet" type="text/css" href="{{ csslink('js/jquery/ui/themes/ui-lightness/jquery-ui-1.8.16.custom.css') }}" />
+
+
+    {% for script in document_scripts %}
+        <script type="text/javascript" src="{{ script }}"></script>
+	{% endfor %}
+
+	<!-- Inline Script:Start -->
+    {% for script in inline_scripts %}
+        {% if script['type'] == 'callable' %}
+            {{ script['script']|base64_decode }}
+        {% endif %}
+    {% endfor %}
+	<!-- Inline Script:End -->
+
+	<!--[if IE]>
+	<style>
+		.inner-adv-color-info {
+			left:-30px;
+		}
+	</style>
+	<![endif]-->
+	{{ google_analytics }}
+
+
+	{# ========= Start ::  Template Apps ================= #}
+		{# Enable Social Slides #}
+		{% if modules.socialslides.enabled %}
+		{{ modules.socialslides.content }}
+		{% endif %}
+
+        {# Enable Smartlook #}
+		{% if modules.smartlook.enabled %}
+		{{ modules.smartlook.content }}
+		{% endif %}
+
+		{# Enable Zopim Live Chat #}
+		{% if modules.zopim_live_chat.enabled %}
+		{{ modules.zopim_live_chat.content }}
+		{% endif %}
+
+		{# Enable Popup Window #}
+		{% if modules.popupwindow.enabled %}
+		{{ modules.popupwindow.content }}
+		{% endif %}
+	{# ====================================================== #}
+	{% if lang('direction') == 'ltr' %}
+	<style>
+		.show_bullets ul{
+			list-style: inherit;
+		}
+		@media (max-width: 767px){
+			img{
+				max-width: 100%;
+			}
+			p{
+				word-wrap: break-word;
+			}
+		}
+	</style>
+	{% endif %}
+
+	<script>
+      if (typeof addToWishListButtonLang === 'undefined') {
+          var addToWishListButtonLang = "{{ lang('button_wishlist') }}";
+      }
+      if (typeof addToCartButtonLang === 'undefined') {
+          var addToCartButtonLang = "{{ lang('button_cart') }}";
+      }
+      if (typeof slidesCountOnMobile === 'undefined') {
+          var slidesCountOnMobile = 2;
+      }
+	</script>
+	<link rel="stylesheet" type="text/css" href="{{ csslink('css//select2.min.css') }}" />
+	<script type="text/javascript" src="{{ jslink('js/libs/select2.min.js') }}"></script>
+</head>
+<body style="background:#fafafa">
+
+    {# include top banner app html ("topBannerFixed" parameter used to show fixed layout) #}
+    {% include "default/template/module/top_banner/index.expand" with {'topBannerFixed': false} %}
+
+	<nav class="{{ lang('direction') == 'rtl' ? 'push-sidebar push-sidebar-right' : 'push-sidebar' }} hidden" id="sidebar-left">
+		<ul class="nav  nav-stacked sidebar ">
+
+			<!-- <li class="nav-header">
+				<small>
+					{{ store_name }}
+				</small>
+			</li> -->
+			<!-- Divider -->
+			<!-- <li class="nav-divider"></li> -->
+			<!-- Main links -->
+       
+      {% if header_data.FirstLinkMenu.section_state == 'enabled'%}
+      <li class="">
+        <a href="{{ link('information/sitemap') }}">
+          <!-- {{lang('allCats')}} -->
+          {{ header_data.FirstLinkMenu.fields.Firstmain.value }}
+        </a>
+      </li>
+      {% endif %}
+
+			{% if header_data.fixedmainMenuLink.section_state == 'enabled' %}
+			{% for collection in header_data.fixedmainMenuLink.collections %}
+			<li class="">
+				<a href="{{ collection.itemlink.value }}">{{ collection.itemname.value }}</a>
+			</li>
+			{% endfor %}
+			{% endif %}
+
+			{% if header_data.fixedmegaMenuLink2.section_state == 'enabled' %}
+				{% for collection in header_data.fixedmegaMenuLink2.collections %}
+					{% set menu_item_category = getCategoryAndChildsBylevel(collection['categories']['value'], 170, 100, 5) %}
+
+					<li role="presentation" class="dropdown">
+						<a class="dropdown-toggle" data-toggle="dropdown" href="{{ item_category.href }}" role="button" aria-haspopup="true" aria-expanded="false">
+							{{ print_r(collection.ColumnTitle.value) }} <i class="fa fa-angle-down"></i>
+						</a>
+						<ul class="dropdown-menu">
+							{% for item_category in menu_item_category %}
+							{% set cat_sub = item_category["sub_categories"]|length %}
+							{% if  cat_sub == 0 %}
+							<li class="">
+								<a href="{{ item_category.href }}">{{item_category.name }}</a>
+							</li>
+							{% else %}
+							<li role="presentation" class="dropdown subLevel">
+								<a class="dropdown-toggle open-subLevel" data-toggle="dropdown" href="{{ item_category.href }}" role="button"
+								   aria-haspopup="true" aria-expanded="false">
+									{{ item_category.name }} <i class="fa fa-angle-down"></i>
+								</a>
+								<ul class="dropdown-menu ulSubmenu">
+									{% for sub_category in item_category["sub_categories"]|slice(0,9) %}
+										{% set cat_sub2 = sub_category["sub_categories"]|length %}
+										{% if  cat_sub2 == 0 %}
+										<li class="">
+											<a href="{{ sub_category.href }}">{{sub_category.name }}</a>
+										</li>
+									{% else %}
+										<li role="presentation" class="dropdown subLevel">
+											<a class="dropdown-toggle open-subLevel" data-toggle="dropdown" href="{{ sub_category.href }}" role="button"
+											   aria-haspopup="true" aria-expanded="false">
+												{{ sub_category.name }} <i class="fa fa-angle-down"></i>
+											</a>
+											<ul class="dropdown-menu ulSubmenu">
+												{% for cat_sub2 in sub_category["sub_categories"]|slice(0,9) %}
+												{% set cat_sub3 = cat_sub2["sub_categories"]|length %}
+												{% if  cat_sub3 == 0 %}
+												<li class="">
+													<a href="{{ cat_sub2.href }}">{{cat_sub2.name }}</a>
+												</li>
+												{% else %}
+												<li role="presentation" class="dropdown subLevel">
+													<a class="dropdown-toggle open-subLevel" data-toggle="dropdown" href="{{ cat_sub2.href }}" role="button"
+													   aria-haspopup="true" aria-expanded="false">
+														{{ cat_sub2.name }} <i class="fa fa-angle-down"></i>
+													</a>
+													<ul class="dropdown-menu ulSubmenu">
+														{% for cat_sub3 in cat_sub2["sub_categories"]|slice(0,9) %}
+														{% set cat_sub4 = cat_sub3["sub_categories"]|length %}
+														{% if  cat_sub4 == 0 %}
+														<li class="">
+															<a href="{{ cat_sub3.href }}">{{cat_sub3.name }}</a>
+														</li>
+														{% else %}
+														<li role="presentation" class="dropdown subLevel">
+															<a class="dropdown-toggle open-subLevel" data-toggle="dropdown" href="{{ cat_sub3.href }}" role="button"
+															   aria-haspopup="true" aria-expanded="false">
+																{{ cat_sub3.name }} <i class="fa fa-angle-down"></i>
+															</a>
+															<ul class="dropdown-menu ulSubmenu">
+																{% for cat_sub4 in cat_sub3["sub_categories"]|slice(0,9) %}
+																{% set cat_sub5 = cat_sub4["sub_categories"]|length %}
+																{% if  cat_sub5 == 0 %}
+																<li class="">
+																	<a href="{{ cat_sub4.href }}">{{cat_sub4.name }}</a>
+																</li>
+																{% else %}
+																<li role="presentation" class="dropdown subLevel">
+																	<a class="dropdown-toggle open-subLevel" data-toggle="dropdown" href="{{ cat_sub4.href }}"
+																	   role="button"
+																	   aria-haspopup="true" aria-expanded="false">
+																		{{ cat_sub4.name }} <i class="fa fa-angle-down"></i>
+																	</a>
+																	<ul class="dropdown-menu ulSubmenu">
+																		{% for cat_sub5 in cat_sub4["sub_categories"]|slice(0,9) %}
+																			<li class="submenu">
+																				<a href="{{ cat_sub5.href }}">{{ cat_sub5.name }}</a>
+																			</li>
+																		{% endfor %}
+																	</ul>
+																	{% endif %}
+																{% endfor %}
+															</ul>
+															{% endif %}
+														{% endfor %}
+													</ul>
+													{% endif %}
+												{% endfor %}
+											</ul>
+										{% endif %}
+									{%endfor%}
+								</ul>
+								{% endif %}
+								{% endfor %}
+						</ul>
+					</li>
+				{% endfor %}
+			{% endif %}
+
+			{% if header_data.fixedmainMenuCategories.section_state == 'enabled' %}
+			{% for collection in header_data.fixedmainMenuCategories.collections %}
+			<li>
+				<a href="{{ collection.itemlink.value }}">{{ collection.itemname.value }}</a>
+			</li>
+			{% endfor %}
+			{% endif %}
+
+			{% if header_data.fixedmainMenuLinkEnd.section_state == 'enabled' %}
+			{% for collection in header_data.fixedmainMenuLinkEnd.collections %}
+			<li class="">
+				<a href="{{ collection.itemlink.value }}">{{ collection.itemname.value }}</a>
+			</li>
+			{% endfor %}
+			{% endif %}
+		</ul>
+	</nav>
+	<div class="wrap canvas" id="canvas">
+		<div id="header">
+			<div class="header">
+				{%
+					if 	header_data.topHeaderSlogans.section_state == 'enabled' or  
+							languages|length > 1 or
+							currencies|length > 1 or
+							header_data.topHeaderLinKs.section_state == 'enabled'
+				%}
+				<div class="top-header top-header4">
+					<div class="container">
+						<div class="row">
+							{% if header_data.topHeaderSlogans.section_state == 'enabled' %}
+							<div class="col-md-6 hidden-sm hidden-xs">
+								<div class="account-login account-login6">
+									{% for collection in header_data.topHeaderSlogans.collections %}
+									<a href="{{ collection.sloganLink.value }}" data-toggle="tooltip" data-placement="bottom" title="{{ collection.sloganDescription.value }}"><i class="{{ collection.sloganIcon.value }}" aria-hidden="true"></i><span>{{ collection.sloganName.value }}</span></a>
+									{% endfor %}
+								</div>
+							</div>
+							{% endif %}
+							<div class="col-md-6 col-sm-12 col-xs-12">
+								<div class="currency-language currency-language6">
+									{% if languages|length > 1 %}
+									<div class="language-box">
+										<a href="#" class="language-current" titles="{{ current_language.name }}">
+											<img src="admin/view/image/flags/{{ current_language.image }}" alt="{{ current_language.name }}" />
+											<!-- <span>{{ current_language.name }}</span> -->
+										</a>
+										<form method="post" enctype="multipart/form-data">
+											<ul class="language-list list-unstyled">
+												{% for language in languages %}
+												<li>
+													<a href="#" title="{{ language.name }}" onclick="$('input[name=\'language_code\']').attr('value', '{{ language.code }}'); $(this).closest('form').submit(); return false;">
+														<img src="admin/view/image/flags/{{ language.image }}" alt="{{ language.name }}" /><span>{{ language.name }}</span>
+													</a>
+												</li>
+												{% endfor %}
+												<input type="hidden" name="language_code" value="" />
+												<input type="hidden" name="redirect" value="{{ redirect }}" />
+											</ul>
+										</form>
+									</div>
+									{% endif %}
+									{% if currencies|length > 1 %}
+									<div class="currency-box">
+										<a href="#" class="currency-current"><span>{{ current_currency.symbol }} - {{ current_currency.title }}</span></a>
+										<form action="{{ link('common/home') }}" method="post" enctype="multipart/form-data">
+										<ul class="currency-list list-unstyled">
+											{% for currency in currencies %}
+											<li>
+												<a href="#" onclick="$('input[name=\'currency_code\']').attr('value', '{{ currency.code }}'); $(this).closest('form').submit(); return false;">
+													<span class="currency-index">{{ currency.symbol }}</span>
+												</a>
+											</li>
+											{% endfor %}
+										</ul>
+										<input type="hidden" name="currency_code" value="" />
+										<input type="hidden" name="redirect" value="{{ redirect }}" />
+										</form>
+									</div>
+									{% endif %}
+								</div>
+								{% if header_data.topHeaderLinKs.section_state == 'enabled' %}
+								<div class="account-login lineLinks hidden-xs">
+									{% for collection in header_data.topHeaderLinKs.collections %}
+									<a href="{{ collection.itemlink.value }}">{{ collection.itemname.value }}</a>
+									{% endfor %}
+								</div>
+								{% endif %}
+							</div>
+						</div>
+					</div>
+				</div>
+				{% endif %}
+				<!-- End Top Header -->
+				<div class="main-header6">
+					<div class="container">
+						<div class="row">
+
+							<div class="col-md-2 col-sm-4 col-xs-12">
+									<!-- data-toggle="push" data-target="#sidebar-left" data-distance="{{ lang('direction') == 'rtl' ? '-250' : '250' }}" -->
+								<i id="canvasTrigger" type="button" class="pull-left"  title="Open left navigation">
+									<span class="fa fa-bars fa-2x" aria-hidden="true"></span>
+								</i>
+								{% if header_data.headermain.section_state == 'enabled' %}
+								<div class="logo logo6">
+									<h1 class="hidden">{{ store_name }}</h1>
+									<a href="{{ link('common/home') }}">
+										<!--- max-height:50px !important;-->
+										<img  src="{{ image(header_data.headermain.fields.logo.value) }}" title="{{ store_name }}" alt="{{ store_name }}" style="height: {{ header_data.headermain.fields.logoheight.value }}px; width:{{header_data.headermain.fields.logowidth.value}}%"/>
+									</a>
+								</div>
+								{% endif %}
+							</div>
+							<div class="col-md-10 col-sm-8 col-xs-12">
+								<div class="wrap-search-cart6">
+									<div class="search-form6">
+										<form class="smart-search-form border radius box-group" id="search">
+											<!-- <div class="submit-form">
+
+											</div> -->
+
+											<input type="text" name="search" class="" placeholder="{{ lang('text_search') }}" value="{{ search }}">
+											<div class="submit-form">
+												<input class="goSearch btn btn-search" type="button">
+											</div>
+										</form>
+
+									</div>
+									<div class="mini-cart-box mini-cart6">
+									 {% if customer.isCustomerAllowedToAdd_cart %}
+										<a class="mini-cart-link border radius" href="{{ link('checkout/cart') }}">
+											<span class="mini-cart-icon color"><i class="fa fa-shopping-cart" aria-hidden="true"></i></span>
+											<span class="mini-cart-number" id="counterLabel">{{ cart.countProducts() }}</span></span><strong>{{lang('shopping_cart')}}</strong>
+										</a>
+										 {% endif %}
+										<!--- Start Custom Icon --->
+										<div class="custom-icon hidden">
+										 {% if customer.isCustomerAllowedToView_products %}
+											<a href="{{ link('account/wishlist') }}">
+												<span class="mini-cart-icon color">
+													<i class="fa fa-heart" aria-hidden="true"></i>
+												</span>
+												<span class="mini-cart-number">{{ wishlist_count  }}</span>
+												 
+											</a>
+											 {% endif %}
+											<a href="{{ link('account/account') }}"> 
+												<span class="mini-cart-icon color">
+													<i class="fa fa-user" aria-hidden="true"></i>
+												</span>												
+											</a>
+										</div>										
+										<!--- End Custom Icon --->
+
+										<ul class="list-mini-cart-item list-unstyled " id="cartDropList">
+											{{ cart_content }}
+										</ul>
+									</div>
+
+									<div class="checkout-box userDropMenu">
+										{% if logged == false  %}
+										<a href="#" class="checkout-link">{{lang('helloo')}}<span class="caret"></span></a>
+										{% else %}
+										<a href="#" class="checkout-link">{{lang('greeting_msg')}} {{ username }}<span class="caret"></span></a>
+										{% endif %}
+										<ul class="list-checkout list-unstyled">
+												{% if logged == false  %}
+													<li><a href="{{ link('account/login') }}"> {{ lang('text_login_souq') }}</a></li>
+												{% else %}
+													<li><a href="{{ link('account/logout') }}" > {{ lang('text_logout') }}</a></li>
+												{% endif %}
+												<li><a href="{{ link('account/account') }}"> {{ lang('text_account') }}</a></li>
+												 {% if customer.isCustomerAllowedToView_products %}
+												<li><a href="{{ link('account/wishlist') }}"> {{ lang('text_wishlist')|format(wishlist_count)  }}</a></li>
+												<li><a href="{{ link('product/compare') }}"> {{ lang('text_compare_to') }}</a></li>
+												<li><a href="{{ link('checkout/checkout') }}"> {{ lang('text_checkout') }}</a></li>
+												 {% endif %}
+										</ul>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!-- End Main Header -->
+				<div class="header-nav6">
+					<div class="container">
+						<div class="row">
+							<div class="col-md-12 col-sm-12 col-xs-12">
+								{% if header_data.mainMenuLink.collections|length > 0 or
+								  header_data.mainMenuCategories.collections|length > 0  or
+								  header_data.mainMenuLinkEnd.collections|length > 0 or
+								  header_data.megaMenuLink2.collections|length > 0 %}
+								<nav class="main-nav main-nav6">
+									<ul>
+										{% if header_data.FirstLinkMenu.section_state == 'enabled'%}
+										<li class="">
+											<a href="{{ link('information/sitemap') }}">
+												<!-- {{lang('allCats')}} -->
+												{{ header_data.FirstLinkMenu.fields.Firstmain.value }}
+											</a>
+										</li>
+										{% endif %}
+										{% if header_data.mainMenuLink.section_state == 'enabled' %}
+										{% for collection in header_data.mainMenuLink.collections %}
+										<li class="">
+											<a href="{{ collection.itemlink.value }}">{{ collection.itemname.value }}</a>
+										</li>
+										{% endfor %}
+										{% endif %}
+
+										{% if header_data.mainMenuCategories.section_state == 'enabled' %}
+										{% for collection in header_data.mainMenuCategories.collections %}
+										{% set menu_item_category = getCategoryAndChilds(collection['categories']['value'], 500, 500) %}
+										
+										<li class="menu-item-has-children">
+											<a href="{{ menu_item_category[0].href }}">{{collection.itemname.value }}
+										   
+										</a>
+										
+										{% set cat_sub = menu_item_category[0].sub_categories%}
+	
+										{% if  cat_sub != 0 %}
+										<ul class="sub-menu">
+											{% for sub_category in cat_sub %}
+											<li>												
+												<a href="{{ sub_category.href }}">{{ sub_category.name }}</a>
+											   
+											</li>
+											{% endfor %}
+										</ul>
+									
+										{% endif %}
+	
+										
+										</li>
+										
+										{% endfor %}
+										{% endif %}
+										{% if header_data.megaMenuLink2.section_state == 'enabled' %}
+										{% for collection in header_data.megaMenuLink2.collections %}
+										<li class="has-mega-menu">
+											{% if collection.ColumnLink.value %}
+												<a href="{{collection.ColumnLink.value}}">{{ collection.ColumnTitle.value }} </a>
+											{% else %}
+												<a>{{ collection.ColumnTitle.value }} </a>
+											{% endif %}
+											{% set featured_categories =  getCategoryAndChilds(collection['categories']['value'], 500, 500) %}
+											{% set categories_count = featured_categories|length %}
+
+											{% set cat_width = 4 %}
+											{% if collection.displaySidead.value == 1   %}
+												{% if categories_count == 3 %}
+													{% set cat_width = 3 %}
+												{% elseif categories_count > 3 %}
+													{% set cat_width = 2 %}
+												{%endif%}
+											{% else %}
+												{% if categories_count == 2 %}
+													{% set cat_width = 6 %}
+												{% elseif categories_count == 3 %}
+													{% set cat_width = 4 %}
+												{% elseif categories_count == 4 %}
+													{% set cat_width = 3 %}
+												{% elseif categories_count > 4 %}
+													{% set cat_width = 2 %}
+												{%endif%}
+											{% endif %}
+
+											<div class="mega-menu">
+												<div class="row">
+													<div class="col-md-9 col-sm-9 col-xs-12">
+														<div class="mega-new-arrival catListing">
+                                                            {% for item_category in featured_categories %}
+                                                                {% if(loop.first or (loop.index-1)*cat_width == 12 ) %}
+                                                                    <div class="row">
+                                                                {% endif %}
+                                                                <div class="col-sm-{{cat_width}}">
+                                                                    <h4><a href="{{ item_category.href }}">{{ item_category.name }}</a></h4>
+                                                                    <ul class="list-none">
+                                                                        {% set subLength =  category["sub_categories"]|length %}
+                                                                        {% for sub_categories in item_category["sub_categories"]|slice(0, 10) %}
+                                                                        <li><a href="{{ sub_categories.href }}" title="{{sub_categories.name}}">{{ sub_categories.name }}</a></li>
+                                                                       {% endfor %}
+                                                                        {% if subLength > 10 %}
+                                                                        <li><a href="{{category.href}}">{{ lang('moreCat') }}</a></li>
+                                                                        {% endif %}
+                                                                    </ul>
+                                                                </div>
+                                                                {% if(12/loop.index == cat_width or loop.last) %}
+                                                                    </div>
+                                                                {% endif %}
+                                                            {% endfor %}
+															<div class="row">
+																{#% set featured_brands =  getBrands(collection['categories']['value'], 250, 200) %#}
+																{% set featured_brands =  getBrands(collection['brands']['value'], 250, 200) %}
+																<div class="col-md-12">
+																	<div class="wrap-brands">
+																		<div class="row">
+																			{% for item_brand  in featured_brands %}
+																			<div class="col-md-2">
+																				<div class="item-product-ajax item-product">
+																					<div class="product-thumb">
+																						<a href="{{item_brand.href}}" class="product-thumb-link">
+																							<img src="{{item_brand.thumb}}" alt="{{item_brand.slug}}">
+																						</a>
+																					</div>
+																				</div>
+																			</div>
+																			{% endfor %}
+																		</div>
+																		<!-- End Item -->
+																	</div>
+																</div>
+															</div>
+														</div>
+													</div>
+													{% if collection.displaySidead.value == 1 %}
+													<div class="col-md-3 col-sm-3 col-xs-12">
+														<div class="mega-adv">
+															<div class="banner-image">
+																<a href="{{ collection.sidedadlink.value }}"><img src="{{ image(collection.sideAdimg.value) }}"  /></a>
+															</div>
+														</div>
+													</div>
+													{% endif %}
+
+												</div>
+											</div>
+											<!-- End Mega Menu -->
+										</li>
+										{% endfor %}
+										{% endif %}
+
+										{% if header_data.mainMenuLinkEnd.section_state == 'enabled' %}
+										{% for collection in header_data.mainMenuLinkEnd.collections %}
+										<li class="">
+											<a href="{{ collection.itemlink.value }}">{{ collection.itemname.value }}</a>
+										</li>
+										{% endfor %}
+										{% endif %}
+										
+										<!-- Menu Additional Links -->
+
+										<li class="menu-item-has-children">
+											<a href="" class="additional-title">{{print_r(header_data.menuAdditionalLinKs.fields.collectionTitleAdditional.value)}}</a>
+											<ul class="sub-menu">
+												{% for collection in header_data.menuAdditionalLinKs.collections %}
+												<li class="">
+													<a href="{{ collection.itemlink.value }}">{{ collection.itemname.value }}</a>
+												</li>
+												{% endfor %}
+											</ul>
+										</li>
+
+
+
+									</ul>
+									<a data-toggle="push" data-target="#sidebar-left" data-distance="{{ lang('direction') == 'rtl' ? '-250' : '250' }}" title="Open navigation" class="toggle-mobile-menu"><span></span></a>
+								</nav>
+								<!-- End Main Nav -->
+								{% endif %}
+							</div>
+						</div>
+					</div>
+				</div>
+				<!-- End Header Nav -->
+			</div>
+		</div>
+		<!-- End Header -->
+
+		<div id="content-Page" class="contentwrapper {{ is_home_page ? '' : 'innerWrapper'}}">
+			<div class="container">
+				{% if is_home_page %}
+					{{ regions_data.maincontent.content }}
+				{% else %}
+					{% if (modules.filter.enabled and modules.filter.content) or (modules.mega_filter.enabled and modules.mega_filter.content) %}
+					<div class="col-md-2 filterHolder">
+						{% if modules.mega_filter.enabled %}{{ modules.mega_filter.content }}{% endif %}
+						{% if modules.filter.enabled %}{{ modules.filter.content }}{% endif %}
+					</div>
+					{% endif %}
+					<div id="content" class="{{ (modules.filter.enabled and modules.filter.content) or (modules.mega_filter.enabled and modules.mega_filter.content) ? 'col-md-10 ' : 'col-md-12 ' }}">
+						{{ page_content }}
+					</div>
+				{% endif %}
+
+			</div>
+			<div class="container bottomContent">
+				{{ regions_data.bottomcontent.content }}
+			</div>
+		</div>
+
+		{% if integration_settings['mn_criteo_status'] %}
+			{{ include('manymore/template/module/criteo/criteo_home.expand') }}
+		{% endif %}
+
+
+		<!-- End Content -->
+		<div id="footer">
+				<div class="footer footer4">
+					<div class="container">
+						<div class="footer-list-box">
+							<div class="row">
+
+								{% if footer_data.firstcolumnlinks.section_state == 'enabled' %}
+								<div class="col-md-3 col-xs-6 col-sm-4 {% if footer_data.storecontacts.section_state != 'enabled' %}pull-right{%endif%}" id="section-{{ footer_data.firstcolumnlinks.section_id }}">
+									<div class="menu-footer-box footer-box">
+										{% if footer_data.firstcolumnlinks.fields.displaycolumntitle.value == '1' %}
+										<h2 class="title14">{{ footer_data.firstcolumnlinks.fields.columntitle.value }}</h2>
+										{% endif %}
+										<ul class="list-unstyled">
+										{% for collection in footer_data.firstcolumnlinks.collections %}
+											<li><a href="{{ collection.link.value }}">{{ collection.linkname.value }}</a></li>
+										{% endfor %}
+										</ul>
+									</div>
+								</div>
+								{% endif %}
+								{% if footer_data.secondcolumnlinks.section_state == 'enabled' %}
+								<div class="col-md-3 col-xs-6 col-sm-4 {% if footer_data.storecontacts.section_state != 'enabled' %}pull-right{%endif%}" id="section-{{ footer_data.secondcolumnlinks.section_id }}">
+									<div class="menu-footer-box footer-box">
+										{% if footer_data.secondcolumnlinks.fields.displaycolumntitle.value == '1' %}
+										<h2 class="title14">{{ footer_data.secondcolumnlinks.fields.columntitle.value }}</h2>
+										{% endif %}
+										<ul class="list-unstyled">
+										{% for collection in footer_data.secondcolumnlinks.collections %}
+											<li><a href="{{ collection.link.value }}">{{ collection.linkname.value }}</a></li>
+										{% endfor %}
+										</ul>
+									</div>
+								</div>
+								{% endif %}
+
+								{% if footer_data.thirdcolumnlinks.section_state == 'enabled' %}
+								<div class="col-md-3 col-xs-6 col-sm-4 {% if footer_data.storecontacts.section_state != 'enabled' %}pull-right{%endif%}" id="section-{{ footer_data.thirdcolumnlinks.section_id }}">
+									<div class="menu-footer-box footer-box">
+										{% if footer_data.thirdcolumnlinks.fields.displaycolumntitle.value == '1' %}
+										<h2 class="title14">{{ footer_data.thirdcolumnlinks.fields.columntitle.value }}</h2>
+										{% endif %}
+										<ul class="list-unstyled">
+										{% for collection in footer_data.thirdcolumnlinks.collections %}
+											<li><a href="{{ collection.link.value }}">{{ collection.linkname.value }}</a></li>
+										{% endfor %}
+										</ul>
+									</div>
+								</div>
+								{% endif %}
+								{% if footer_data.socialcolumnlinks.section_state == 'enabled' %}
+								<div class="col-md-3 col-xs-12 col-sm-12" id="section-{{ footer_data.socialcolumnlinks.section_id }}">
+									<div class="social-footer footer-box">
+										{% if footer_data.socialcolumnlinks.fields.displaycolumntitle.value == '1' %}
+										<h2 class="title14">{{ footer_data.socialcolumnlinks.fields.columntitle.value }}</h2>
+										{% endif %}
+
+										<div class="list-social">
+											{% if footer_data.socialcolumnlinks.fields.facebooklink.value != '' %}
+											<a href="{{ footer_data.socialcolumnlinks.fields.facebooklink.value }}"><i class="fa fa-facebook" aria-hidden="true"></i></a>
+											{% endif %}
+
+											{% if footer_data.socialcolumnlinks.fields.twitterlink.value != '' %}
+											<a href="{{ footer_data.socialcolumnlinks.fields.twitterlink.value }}"><i class="fa fa-twitter" aria-hidden="true"></i></a>
+											{% endif %}
+
+											{% if footer_data.socialcolumnlinks.fields.linkedinlink.value != '' %}
+											<a href="{{ footer_data.socialcolumnlinks.fields.linkedinlink.value }}"><i class="fa fa-linkedin" aria-hidden="true"></i></a>
+											{% endif %}
+
+											{% if footer_data.socialcolumnlinks.fields.googlepluslink.value != '' %}
+											<a href="{{ footer_data.socialcolumnlinks.fields.googlepluslink.value }}"><i class="fa fa-google-plus" aria-hidden="true"></i></a>
+											{% endif %}
+
+											{% if footer_data.socialcolumnlinks.fields.pinterestlink.value != '' %}
+											<a href="{{ footer_data.socialcolumnlinks.fields.pinterestlink.value }}"><i class="fa fa-pinterest-p" aria-hidden="true"></i></a>
+											{% endif %}
+
+											{% if footer_data.socialcolumnlinks.fields.youtubelink.value != '' %}
+											<a href="{{ footer_data.socialcolumnlinks.fields.youtubelink.value }}"><i class="fa fa-youtube" aria-hidden="true"></i></a>
+											{% endif %}
+
+											{% if footer_data.socialcolumnlinks.fields.instagramlink.value != '' %}
+											<a href="{{ footer_data.socialcolumnlinks.fields.instagramlink.value }}"><i class="fa fa-instagram" aria-hidden="true"></i></a>
+											{% endif %}
+
+											{% if footer_data.socialcolumnlinks.fields.snapchatlink.value != '' %}
+											<a href="{{ footer_data.socialcolumnlinks.fields.snapchatlink.value }}"><i class="fa fa-snapchat" aria-hidden="true"></i></a>
+											{% endif %}
+
+											{% if footer_data.socialcolumnlinks.fields.whatsapplink.value != '' %}
+											<a href="{{ footer_data.socialcolumnlinks.fields.whatsapplink.value }}"><i class="fa fa-whatsapp" aria-hidden="true"></i></a>
+											{% endif %}
+										</div>
+									</div>
+								</div>
+								{% endif %}
+							</div>
+						</div>
+						<!-- End Footer List Box -->
+					</div>
+					<!-- Start Download App -->
+					{% if footer_data.DownloadApp.section_state == 'enabled' %}
+					<div class="payment-method downloadApp text-center" id="section-{{ footer_data.DownloadApp.section_id }}">
+							<a href="{{ footer_data.DownloadApp.fields.LinkappAndroid.value }}" class="wobble-vertical">
+								<img src="{{ image(footer_data.DownloadApp.fields.appAndroid.value ) }}" alt=""/>
+							</a>
+							<a href="{{ footer_data.DownloadApp.fields.LinkappIOS.value }}" class="wobble-vertical">
+								<img src="{{ image(footer_data.DownloadApp.fields.appIOS.value) }}" alt="" />
+							</a>
+					</div>
+					{% endif %}
+					<!-- End Download App -->
+					{% if footer_data.payments.section_state == 'enabled' %}
+					<div class="payment-method text-center" id="section-{{ footer_data.payments.section_id }}">
+						{% for collection in footer_data.payments.collections %}
+						<a href="{{ collection.link.value }}" class="wobble-vertical"><img src="{{ image(collection.paymentImage.value) }}" alt="" /></a>
+						{% endfor %}
+					</div>
+					{% endif %}
+					<!-- End Payment -->
+					{% set tabsWidth = 0 %}
+					{% if footer_data.categorylinks.collections|length == 1 %}
+						{% set tabsWidth = 12 %}
+					{% elseif footer_data.categorylinks.collections|length == 3 %} {% set tabsWidth = 4 %}
+					{% else %} {% set tabsWidth = 6 %}
+					{% endif %}
+
+					{% if footer_data.Copyrights.section_state == 'enabled' %}
+					<!-- End Footer Tab -->
+					<div class="footer-copyright" id="section-{{ footer_data.Copyrights.section_id }}">
+						<div class="container">
+							<div class="row">
+								<div class="col-md-8 col-sm-8 col-xs-12">
+									<p class="copyright">										
+										{% set Content_Footer = footer_data.Copyrights.fields.Copyrights.value %}
+										{% set replace_value = '[year]' %}											
+										{% set Current_year =  "now"|date('Y')  %}																							
+										{{ Content_Footer|replace({ (replace_value): Current_year}) }}	
+									</p>
+								</div>
+								<div class="col-md-4 col-sm-4 col-xs-12">
+									<p class="designby">
+											{% if PackageId in ['2', '3'] %}
+												{#<!-- hardcode the copyrights -->#}
+												{{lang('Copy_Right')}}
+											{% else %}											
+												{#<!--the copyrights can be editable from the editor -->#}
+												{{ footer_data.Copyrights.fields.copyrightsPowered.value | raw | html_decode }}													
+											{% endif %}										
+									</p>
+								</div>
+							</div>
+						</div>
+					</div>
+					{% endif %}
+					<!-- End Footer Copyright -->
+
+				</div>
+			</div>
+		<!-- End Footer -->
+		<a href="#" class="radius scroll-top"><i class="fa fa-angle-up" aria-hidden="true"></i></a>
+		<div class="modal-backdrop in hidden" id='cover'></div>
+	</div>
+
+
+
+	<script type="text/javascript" src="{{ jslink('js/libs/bootstrap.min.js') }}"></script>
+
+	<script type="text/javascript" src="{{ jslink('js/libs/owl.carousel.js') }}"></script>
+	<script type="text/javascript" src="{{ jslink('js/libs/jquery.mCustomScrollbar.js') }}"></script>
+	<script type="text/javascript" src="{{ jslink('js/libs/wow.js') }}"></script>
+	<script type="text/javascript" src="{{ jslink('js/libs/jquery.elevatezoom.js') }}"></script>
+	<script type="text/javascript" src="{{ jslink('js/libs/jquery.jcarousellite.js') }}"></script>
+	<script type="text/javascript" src="{{ jslink('js/libs/jquery.flexslider.js') }}"></script>
+
+
+	<script type="text/javascript" src="{{ jslink('js/libs/push.js') }}"></script>
+
+	<script type="text/javascript" src="{{ jslink('js/theme.js?v=2') }}"></script>
+
+	<!--  Common - ExpandCart Default 		-->
+	<script type="text/javascript" src="{{ jslink('js/common.js?v=1') }}"></script>
+	<script type="text/javascript" src="{{ commonLink('js/common.js?v=1') }}"></script>
+
+    {# include top banner app css and js #}
+    {% include "default/template/module/top_banner/includes.expand" %}
+
+	<form id="contact-form" action="{{ link('information/contact') }}"  method="POST" enctype="multipart/form-data" >
+		<input type="hidden" name="no-validate" value="1" />
+		<input type="hidden" name="name"  value="{{ (customer.getFirstname() ~ ' ' ~ customer.getLastname())|e }}"/>
+		<input type="hidden" name="email" value="{{ customer.getEmail() }}"/>
+		<input type="hidden" name="enquiry" />
+		<input type="hidden" name="captcha" />
+		<input type="hidden" name="product_id" />
+	</form>
+	<script type="text/javascript">
+      $('li.dropdown.subLevel').on('click','a.open-subLevel', function (e) {
+          e.stopPropagation();
+          e.preventDefault();
+          $(this).parent().toggleClass('open');
+      });
+			function contact_us(id) {
+			$('#contact-form input[name="enquiry"]').val($('#enquiry-'+id).html()+'\n');
+			$('#contact-form input[name="product_id"]').val(id);
+			$('#contact-form').submit();
+		}
+	</script>
+
+	{{ body_scripts }}
+	<script type="text/javascript" src="{{ jslink('js/jquery-ui.min.js') }}"></script>
+</body>
+</html>
